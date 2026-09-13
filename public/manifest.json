@@ -1,0 +1,24 @@
+{
+  "name": "Clikchat - Asistente de Ventas IA",
+  "short_name": "Clikchat",
+  "description": "SaaS Multi-Tenant de bots conversacionales de ventas con RAG de 3 niveles y alta conversión",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://api.iconify.design/lucide:bot.svg?color=%236366f1",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://api.iconify.design/lucide:bot.svg?color=%236366f1",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

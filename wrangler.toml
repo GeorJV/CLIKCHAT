@@ -1,0 +1,12 @@
+name = "clikchat"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "dist"
+
+[vars]
+NODE_ENV = "production"
+CF_PAGES_DOMAIN = "Clikchat.pages.dev"
+
+# Database & AI Secrets configured via Cloudflare Dashboard / Wrangler
+# DATABASE_URL = "postgresql://..."
+# OPENROUTER_API_KEY = "sk-or-v1-..."
+# GOOGLE_AI_STUDIO_KEY = "AQ.Ab8RN6..."

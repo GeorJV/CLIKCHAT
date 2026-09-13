@@ -1,0 +1,40 @@
+{
+  "name": "clikchat",
+  "version": "1.0.0",
+  "description": "SaaS Multi-Tenant B2B2C de Bots Conversacionales de Ventas con RAG de 3 Niveles",
+  "main": "server/index.js",
+  "scripts": {
+    "migrate": "node database/initDb.js",
+    "server": "node server/index.js",
+    "client": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "tunnel": "node scripts/start-tunnel.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.5",
+    "@supabase/supabase-js": "^2.116.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "localtunnel": "^2.0.2",
+    "pg": "^8.12.0",
+    "uuid": "^9.0.1",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "lucide-react": "^0.395.0",
+    "postcss": "^8.4.38",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.1"
+  }
+}
