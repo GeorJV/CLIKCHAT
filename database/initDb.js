@@ -1,42 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const { Pool } = require('pg');
+/**
+ * Database Initializer for ClikChat
+ * Validates Cloudflare D1 Database connectivity and schema
+ */
 require('dotenv').config();
-
-const connectionString = process.env.DATABASE_URL;
+const { query, D1_DATABASE_ID } = require('../server/db');
 
 async function runMigration() {
-  console.log('🚀 Iniciando inicialización de Base de Datos para Clikchat...');
-  
-  if (!connectionString) {
-    console.warn('⚠️ No se encontró DATABASE_URL en .env. Saltando migración directa.');
-    return;
-  }
-
-  const pool = new Pool({
-    connectionString,
-    ssl: { rejectUnauthorized: false }
-  });
-
+  console.log('🚀 Verificando Base de Datos Cloudflare D1 para Clikchat...');
   try {
-    const client = await pool.connect();
-    console.log('✅ Conexión establecida con Neon PostgreSQL.');
-
-    const schemaSql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
-    console.log('⏳ Ejecutando schema.sql (Tablas, RLS, Índices)...');
-    await client.query(schemaSql);
-    console.log('✅ Tablas y políticas RLS creadas exitosamente.');
-
-    const seedSql = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf-8');
-    console.log('⏳ Insertando datos semilla (seed.sql)...');
-    await client.query(seedSql);
-    console.log('✅ Datos semilla inicializados exitosamente.');
-
-    client.release();
+    const res = await query('SELECT count(*) as count FROM sqlite_master WHERE type="table"');
+    const tableCount = res.rows[0]?.count || 0;
+    console.log(`✅ Base de Datos Cloudflare D1 conectada y activa. Tablas existentes: ${tableCount} (D1 ID: ${D1_DATABASE_ID})`);
   } catch (err) {
-    console.error('❌ Error durante la migración de base de datos:', err.message);
-  } finally {
-    await pool.end();
+    console.error('❌ Error conectando con Cloudflare D1:', err.message);
   }
 }
 

@@ -182,14 +182,13 @@ ENLACE DE COMPRA: ${p.cta_url || ''}
   // -------------------------------------------------------------
   console.log(`⚠️ [RAG FALLBACK] Pregunta fuera del catálogo/FAQs. Activando Human-in-the-Loop.`);
 
-  let unresolvedId = null;
+  let unresolvedId = require('uuid').v4();
   try {
-    const unresolvedRes = await query(
-      `INSERT INTO unresolved_queries (tenant_id, session_id, user_question, user_lead_info, status)
-       VALUES ($1, $2, $3, $4, 'pending') RETURNING id`,
-      [actualTenantId, sessionId, userMessage, JSON.stringify(leadInfo)]
+    await query(
+      `INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')`,
+      [unresolvedId, actualTenantId, sessionId, userMessage, JSON.stringify(leadInfo)]
     );
-    unresolvedId = unresolvedRes.rows[0]?.id;
   } catch (err) {
     unresolvedId = 'mem_' + Date.now();
     localStore.unresolved.push({
@@ -224,16 +223,22 @@ Déjanos tu nombre o WhatsApp, o activa las notificaciones de la App para avisar
 
 // Helper to save messages
 async function saveChatMessage(tenantId, sessionId, userMsg, botMsg, level, context = {}) {
+  const { v4: uuidv4 } = require('uuid');
   try {
+    // 0. Ensure session exists
+    await query(
+      'INSERT INTO chat_sessions (id, tenant_id) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
+      [sessionId, tenantId]
+    );
     // 1. Save user message
     await query(
-      'INSERT INTO chat_messages (tenant_id, session_id, sender, message, rag_level_used) VALUES ($1, $2, $3, $4, $5)',
-      [tenantId, sessionId, 'user', userMsg, level]
+      'INSERT INTO chat_messages (id, tenant_id, session_id, sender, message, rag_level_used) VALUES ($1, $2, $3, $4, $5, $6)',
+      [uuidv4(), tenantId, sessionId, 'user', userMsg, level]
     );
     // 2. Save assistant response
     await query(
-      'INSERT INTO chat_messages (tenant_id, session_id, sender, message, rag_level_used, context_used) VALUES ($1, $2, $3, $4, $5, $6)',
-      [tenantId, sessionId, 'assistant', botMsg, level, JSON.stringify(context)]
+      'INSERT INTO chat_messages (id, tenant_id, session_id, sender, message, rag_level_used, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [uuidv4(), tenantId, sessionId, 'assistant', botMsg, level, JSON.stringify(context)]
     );
   } catch (err) {
     // Local memory fallback

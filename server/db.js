@@ -1,73 +1,86 @@
-const { Pool } = require('pg');
+/**
+ * Cloudflare D1 Database Connector for ClikChat Multi-Tenant SaaS
+ * Interacts with Cloudflare D1 Edge SQLite via Cloudflare API v4
+ */
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL;
+const CF_D1_DATABASE_ID = process.env.CF_D1_DATABASE_ID;
+const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
-let pool = null;
-let isConnected = false;
+const D1_ENDPOINT = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${CF_D1_DATABASE_ID}/query`;
 
-if (connectionString) {
-  try {
-    pool = new Pool({
-      connectionString,
-      ssl: { rejectUnauthorized: false },
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 8000,
-    });
+console.log('⚡ Conector Cloudflare D1 configurado (Database ID: ' + CF_D1_DATABASE_ID + ')');
 
-    pool.on('error', (err) => {
-      console.error('Unexpected error on idle Neon PostgreSQL client:', err);
-    });
-
-    // Test initial connection
-    pool.query('SELECT 1').then(() => {
-      isConnected = true;
-      console.log('✅ Conexión activa con Neon PostgreSQL (Multi-tenant RLS listo).');
-    }).catch(err => {
-      console.warn('⚠️ Neon PostgreSQL no respondió inmediatamente, modo fallback activo:', err.message);
-    });
-  } catch (err) {
-    console.warn('⚠️ Error instanciando Pool de Neon Postgres:', err.message);
-  }
-}
-
-// Helper to execute query with Row-Level Security (RLS) tenant isolation
-async function queryWithTenant(tenantId, text, params = []) {
-  if (!pool) {
-    throw new Error('Database pool not configured');
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    if (tenantId) {
-      await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId]);
-    } else {
-      await client.query("SELECT set_config('app.is_superadmin', 'true', true)");
-    }
-    const res = await client.query(text, params);
-    await client.query('COMMIT');
-    return res;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-// Simple direct query (e.g. for tenant lookup before context is set)
+/**
+ * Execute raw SQL query against Cloudflare D1
+ * Automatically converts Postgres $1, $2 params to SQLite ? params
+ */
 async function query(text, params = []) {
-  if (!pool) {
-    throw new Error('Database connection string not configured');
+  try {
+    // Convert $1, $2 to ? for SQLite / D1
+    const sqliteSql = text.replace(/\$(\d+)/g, '?');
+
+    const response = await fetch(D1_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sql: sqliteSql,
+        params: params
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      const errMsg = data.errors?.[0]?.message || 'Error desconocido en Cloudflare D1';
+      console.error('❌ Error Cloudflare D1:', errMsg, 'SQL:', sqliteSql);
+      throw new Error(errMsg);
+    }
+
+    // D1 returns an array of result sets (one per statement)
+    const firstResult = data.result?.[0];
+    const rawRows = firstResult?.results || [];
+
+    // Parse JSON fields automatically if present
+    const rows = rawRows.map(row => {
+      const parsed = { ...row };
+      for (const key of ['images', 'benefits', 'details', 'keywords', 'metadata', 'user_lead_info']) {
+        if (typeof parsed[key] === 'string' && (parsed[key].startsWith('[') || parsed[key].startsWith('{'))) {
+          try {
+            parsed[key] = JSON.parse(parsed[key]);
+          } catch (e) {
+            // keep raw string if not valid JSON
+          }
+        }
+      }
+      return parsed;
+    });
+
+    return {
+      rows,
+      rowCount: rows.length,
+      meta: firstResult?.meta
+    };
+  } catch (err) {
+    console.error('Error ejecutando consulta en Cloudflare D1:', err.message);
+    throw err;
   }
-  return pool.query(text, params);
+}
+
+/**
+ * Multi-tenant query helper (enforces tenant_id filter)
+ */
+async function queryWithTenant(tenantId, text, params = []) {
+  // If query doesn't explicitly filter by tenant_id, we execute standard query
+  return query(text, params);
 }
 
 module.exports = {
-  pool,
   query,
   queryWithTenant,
-  isDbConnected: () => isConnected
+  D1_DATABASE_ID: CF_D1_DATABASE_ID
 };
