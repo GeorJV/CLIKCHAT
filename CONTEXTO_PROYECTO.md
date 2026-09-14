@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 15:48 GMT-6
-- **Versión Actual:** 1.11.1 (Calibración Hexadecimal Exacta del Fondo #151414 & Grid 16px)
+- **Última Actualización:** 2026-09-14 15:56 GMT-6
+- **Versión Actual:** 1.12.0 (Purga Cromática Completa: Todos los componentes en Onyx Charcoal #151414 / #181717)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 70af364)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 41996f1)
 - **Estado Actual del Sistema:**
-  - Fondo muestreado píxel por píxel directamente de la captura del usuario: `#151414` (Warm Charcoal).
-  - Matriz de micro-puntos con separación exacta de 16px (`radial-gradient(rgba(255,255,255,0.09) 1px)`).
-  - Superficies de tarjetas (`#181717`) con bordes `#282626` y Command Bar en `#191817` con borde `#2E2B2B`.
-  - Sidebar calibrada en `#131212` con divisor `#222020` manteniendo armonía mate profunda.
+  - Erradicación 100% de azules marinos (slate-900/950) y gradientes violetas en QLink, Navbar, Sidebar y RAG cards.
+  - Tarjeta QLink y 3 Cards de diagnóstico RAG convertidas a `onyx-card` (`#181717`, border `#282626`).
+  - Botones alineados a estilo Linear/Keycap (`#1e1d1d`, border `#2e2b2b`) con acentos esmeralda finos.
+  - Modales de subida masiva de FAQs, edición de productos y login unificados a la textura #151414 con dot-grid 16px.
   - Componentes atómicos verificados bajo estándar ARQMODULAR (<150 líneas por archivo).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el resultado cromático final.
+- **Siguiente Paso Inmediato:** Validar con el usuario el resultado cromático unificado en producción.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
