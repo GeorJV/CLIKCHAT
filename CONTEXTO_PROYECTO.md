@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 17:00 GMT-6
-- **Versión Actual:** 1.12.2 (Sidebar Colapsado Angosto w-12 con Botones Cuadrados Centrados)
+- **Última Actualización:** 2026-09-14 17:31 GMT-6
+- **Versión Actual:** 1.13.0 (Ventana de Chat de Productos Dual Screen Operativa ARQMODULAR)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 3a29af8)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 04bb873)
 - **Estado Actual del Sistema:**
-  - Sidebar colapsado reducido de w-16 (64px) a w-12 (48px) ultra-estilizado tipo Linear / Raycast.
-  - Botones de navegación en modo colapsado transformados en cuadrados perfectos centrados (w-8 h-8).
-  - Pestaña de Conversaciones con transcripciones expandibles e insignias RAG.
-  - Paleta Onyx Charcoal #151414 / #181717 con dot-grid 16px libre de azules/violetas.
-  - Componentes atómicos verificados bajo estándar ARQMODULAR (<150 líneas por archivo).
+  - Ventana de chat de venta de productos dual integrada (chat interactivo IA + escaparate fotográfico).
+  - 8 submódulos atómicos bajo estándar ARQMODULAR (<150 líneas cada archivo) en `src/components/chat/product/`.
+  - Modales funcionales: Checkout express contra entrega/tarjeta, pantalla completa y ficha de beneficios/specs.
+  - Trazabilidad RAG con badge desplegable y respuestas contextualizadas por catálogo D1 y FAQs.
+  - Integrado a la barra de navegación global ("Chat Producto") y soporte de QLinks (`?p=...`).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la apariencia visual y proporción del sidebar colapsado.
+- **Siguiente Paso Inmediato:** Validar la experiencia de compra y respuesta del bot en el chat de producto.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
