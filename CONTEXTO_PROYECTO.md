@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
-- **Última Actualización:** 2026-09-13 22:42 GMT-6
-- **Versión Actual:** 1.1.0 (ARQMODULAR + Cloudflare D1)
-- **Última Tarea Completada:** Refactorización modular ARQMODULAR y vinculación a ARQ AI Studio (proj-1789360940430)
-- **Deploy en Vivo:** https://plastic-referring-announcements-macintosh.trycloudflare.com / https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/homilia7/clikchat
+- **Última Actualización:** 2026-09-13 22:54 GMT-6
+- **Versión Actual:** 1.2.0 (Despliegue Oficial en Cloudflare Pages)
+- **Última Tarea Completada:** Creación de repo GeorJV/CLIKCHAT y despliegue permanente en clikchat.pages.dev
+- **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Desplegado y verificado en producción en Cloudflare Pages (HTTP 200 OK).
+  - Repositorio oficial migrado a cuenta GeorJV: https://github.com/GeorJV/CLIKCHAT
   - Base de datos operativa en Cloudflare D1 (clikchat-db: e0f64033-4d16-41b9-800b-baae12787d1c).
-  - Motor RAG de 3 niveles activo (Memoria Episódica, FAQs Early Stopping, Catálogo D1, Fallback HITL).
-  - Componentes del chat desacoplados bajo estándar ARQMODULAR (<150 líneas por archivo).
-  - Proyecto registrado en ARQ AI Studio con control de cambios y lockedFiles activos.
-- **Siguiente Paso Inmediato:** Blindar cada nueva funcionalidad y registrarla en el historial de tareas de ARQ AI Studio.
+  - Motor RAG de 3 niveles activo con arquitectura ARQMODULAR (<150 líneas por archivo).
+  - Proyecto registrado y supervisado en ARQ AI Studio (proj-1789360940430).
+- **Siguiente Paso Inmediato:** Continuar con los requerimientos del producto sobre la URL permanente clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
-  - Leer CONTEXTO_PROYECTO.md al abrir cada nuevo chat (ahorro de tokens).
   - Prohibido modificar archivos en lockedFiles sin autorización explícita.
   - Sincronizar tareas a status: "ready_for_review" en ARQ AI Studio.
+  - Repositorio oficial de producción: https://github.com/GeorJV/CLIKCHAT.
