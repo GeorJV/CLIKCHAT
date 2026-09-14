@@ -8,8 +8,8 @@ import { UnresolvedQueriesTab } from './UnresolvedQueriesTab';
 import { FaqsManagerTab } from './FaqsManagerTab';
 import { ProductsManagerTab } from './ProductsManagerTab';
 import { DocumentsManagerTab } from './DocumentsManagerTab';
-import { ConversationsTab } from './ConversationsTab';
 import { BotSettingsTab } from './BotSettingsTab';
+import { BusinessSettingsTab } from './BusinessSettingsTab';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
@@ -88,8 +88,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           )}
 
           {activeTab === 'business' && (
-            <BotSettingsTab
+            <BusinessSettingsTab
               tenant={tenant}
+              tenantSlug={currentSlug}
               onUpdateSettings={updateSettings}
               saveSuccess={saveSuccess}
             />
