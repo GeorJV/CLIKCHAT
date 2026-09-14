@@ -38,7 +38,7 @@ export const SettingsWelcomeKitStep: React.FC<SettingsWelcomeKitStepProps> = ({
       </p>
 
       {/* URL Display */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-[#111010] rounded-xl border border-[#282626]">
         <div className="flex items-center gap-2 min-w-0 font-mono text-xs text-emerald-400">
           <span className="truncate">{qlinkUrl}</span>
           <span className="px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
@@ -49,7 +49,7 @@ export const SettingsWelcomeKitStep: React.FC<SettingsWelcomeKitStepProps> = ({
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white text-xs font-bold transition border border-slate-700 shrink-0 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg keycap hover:bg-[#252424] text-zinc-200 hover:text-white text-xs font-bold transition border-[#2e2b2b] shrink-0 cursor-pointer"
         >
           {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           <span>{copied ? '¡Copiado!' : 'Copiar QLink'}</span>

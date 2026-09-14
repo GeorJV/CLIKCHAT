@@ -45,9 +45,9 @@ export const FaqsHeader: React.FC<FaqsHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenFileModal}
-          className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
+          className="px-3.5 py-2 bg-[#1e1d1d] hover:bg-[#252424] border border-[#2e2b2b] hover:border-[#3e3b3b] text-zinc-200 hover:text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
         >
-          <UploadCloud className="w-4 h-4" />
+          <UploadCloud className="w-4 h-4 text-emerald-400" />
           <span>📁 Cargar Archivo (TXT, DOCX, PDF)</span>
         </button>
 

@@ -17,25 +17,25 @@ export const ProductMetricsDetail: React.FC<ProductMetricsDetailProps> = ({ prod
   const coldLeads = Math.max(3, views - buyClicks - warmLeads);
 
   return (
-    <div className="mt-3 pt-3 border-t border-slate-800/80 bg-slate-950/60 rounded-xl p-3 space-y-3">
+    <div className="mt-3 pt-3 border-t border-[#282626] bg-[#111010] rounded-xl p-3 space-y-3">
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-          <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-semibold uppercase">
-            <ShoppingBag className="w-3 h-3 text-teal-400" /> Clics Compra
+        <div className="bg-[#181717] border border-[#282626] rounded-lg p-2">
+          <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 font-semibold uppercase">
+            <ShoppingBag className="w-3 h-3 text-emerald-400" /> Clics Compra
           </div>
-          <span className="text-sm font-black text-teal-400">{buyClicks}</span>
+          <span className="text-sm font-black text-emerald-400">{buyClicks}</span>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-          <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-semibold uppercase">
+        <div className="bg-[#181717] border border-[#282626] rounded-lg p-2">
+          <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 font-semibold uppercase">
             <Eye className="w-3 h-3 text-sky-400" /> Vistas Ficha
           </div>
           <span className="text-sm font-black text-sky-400">{views}</span>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-          <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-semibold uppercase">
-            <Award className="w-3 h-3 text-purple-400" /> Beneficios
+        <div className="bg-[#181717] border border-[#282626] rounded-lg p-2">
+          <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 font-semibold uppercase">
+            <Award className="w-3 h-3 text-emerald-400" /> Beneficios
           </div>
-          <span className="text-sm font-black text-purple-400">{benefitViews}</span>
+          <span className="text-sm font-black text-emerald-400">{benefitViews}</span>
         </div>
       </div>
 

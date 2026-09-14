@@ -30,6 +30,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     if (tenant) {
       setName(tenant.name || '');
       setSlug(tenant.slug || tenantSlug || '');
+      setTone(tenant.tone_of_voice || 'Profesional y Cortés');
       setPrimaryColor(tenant.primary_color || '#32AAC8');
       if (tenant.system_prompt) setSystemPrompt(tenant.system_prompt);
     }
@@ -52,6 +53,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     await onUpdateSettings({
       name,
       slug,
+      tone_of_voice: tone,
       primary_color: primaryColor,
       system_prompt: systemPrompt
     });
@@ -59,60 +61,58 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   };
 
   return (
-    <div className="space-y-2.5 max-w-4xl text-slate-100 font-sans">
+    <div className="space-y-4 max-w-4xl text-slate-100 font-sans">
       <div>
         <h2 className="text-lg font-black tracking-tight text-white">Mi Negocio</h2>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-zinc-400 mt-0.5">
           Configura la identidad de tu marca, el slug público para clientes y el contexto base para el agente.
         </p>
       </div>
 
       <BusinessLandingCard slug={slug} />
 
-      <form onSubmit={handleSubmit} className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 space-y-2.5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      <form onSubmit={handleSubmit} className="onyx-card rounded-2xl p-5 space-y-4 shadow-xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Nombre del Negocio</label>
+            <label className="block text-xs font-bold text-zinc-300 mb-1">Nombre del Negocio</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] font-bold text-slate-300">Slug para la URL (Identificador Único)</label>
+              <label className="text-xs font-bold text-zinc-300">Slug para la URL</label>
               <button
                 type="button"
                 onClick={handleAutoSlug}
-                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition"
+                className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition cursor-pointer"
               >
-                Auto-generado <RefreshCw className="w-2.5 h-2.5" />
+                Auto-generar <RefreshCw className="w-2.5 h-2.5" />
               </button>
             </div>
-            <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus-within:border-indigo-500">
-              <span className="text-slate-500 font-mono mr-1.5 select-none">/</span>
+            <div className="flex items-center bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus-within:border-emerald-500">
+              <span className="text-zinc-500 font-mono mr-1.5 select-none">/</span>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="bg-transparent flex-1 text-white font-mono focus:outline-none text-xs"
+                placeholder="mi-tienda"
               />
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Solo letras minúsculas, números y guiones. Se actualiza automáticamente al guardar.
-            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Tono de Voz de la IA</label>
+            <label className="block text-xs font-bold text-zinc-300 mb-1">Tono de Voz de la IA</label>
             <select
               value={tone}
               onChange={(e) => setTone(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             >
               <option value="Profesional y Cortés">Profesional y Cortés</option>
               <option value="Amigable y Enérgico">Amigable y Enérgico</option>
@@ -122,10 +122,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Color Primario de la Marca</label>
-            <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1">
+            <label className="block text-xs font-bold text-zinc-300 mb-1">Color Primario de la Marca</label>
+            <div className="flex items-center gap-2 bg-[#111010] border border-[#282626] rounded-xl px-3 py-1.5">
               <label
-                className="w-6 h-6 rounded-md cursor-pointer border border-white/20 relative shrink-0 shadow-sm"
+                className="w-5 h-5 rounded-md cursor-pointer border border-white/20 relative shrink-0 shadow-sm"
                 style={{ backgroundColor: primaryColor }}
               >
                 <input
@@ -146,40 +146,37 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold text-slate-300 mb-1">
+          <label className="block text-xs font-bold text-zinc-300 mb-1">
             Descripción General (Contexto Base para RAG Nivel 1)
           </label>
           <textarea
             rows={3}
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"
+            className="w-full bg-[#111010] border border-[#282626] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 leading-relaxed"
           />
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            Esta información alimentará el Nivel 1 del RAG (Memoria Base) para que el bot conozca a qué se dedica tu negocio y responda de forma personalizada.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Logotipo</label>
-            <label className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-lg py-2.5 px-2.5 flex flex-col items-center justify-center cursor-pointer transition text-center">
-              <Upload className="w-4 h-4 text-slate-400 mb-0.5" />
-              <span className="text-[11px] text-slate-300 font-medium">Subir logo (PNG, JPG)</span>
+            <label className="block text-xs font-bold text-zinc-300 mb-1">Logotipo</label>
+            <label className="border border-dashed border-[#282626] hover:border-[#3e3b3b] bg-[#111010] rounded-xl py-3 px-3 flex flex-col items-center justify-center cursor-pointer transition text-center">
+              <Upload className="w-4 h-4 text-zinc-400 mb-1" />
+              <span className="text-xs text-zinc-300 font-medium">Subir logo (PNG, JPG)</span>
               <input type="file" accept="image/*" className="hidden" />
             </label>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Avatar del Agente IA</label>
-            <label className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-lg py-2.5 px-2.5 flex flex-col items-center justify-center cursor-pointer transition text-center">
-              <Upload className="w-4 h-4 text-slate-400 mb-0.5" />
-              <span className="text-[11px] text-slate-300 font-medium">Subir avatar (1:1)</span>
+            <label className="block text-xs font-bold text-zinc-300 mb-1">Avatar del Agente IA</label>
+            <label className="border border-dashed border-[#282626] hover:border-[#3e3b3b] bg-[#111010] rounded-xl py-3 px-3 flex flex-col items-center justify-center cursor-pointer transition text-center">
+              <Upload className="w-4 h-4 text-zinc-400 mb-1" />
+              <span className="text-xs text-zinc-300 font-medium">Subir avatar (1:1)</span>
               <input type="file" accept="image/*" className="hidden" />
             </label>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-1.5 border-t border-slate-800/60">
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#282626]">
           {saveSuccess && (
             <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 animate-fade-in">
               <CheckCircle2 className="w-3.5 h-3.5" /> ¡Guardado en D1!
@@ -188,7 +185,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</span>

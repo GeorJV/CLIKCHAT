@@ -48,14 +48,14 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
                 isExpanded ? 'justify-between px-2.5' : 'justify-center px-0'
               } py-2 rounded-xl text-xs font-semibold transition relative group cursor-pointer ${
                 isActive
-                  ? 'bg-slate-900 border border-slate-700/80 text-emerald-400 font-bold shadow-sm shadow-emerald-500/5'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60'
+                  ? 'bg-[#1a1919] border border-[#2e2b2b] text-emerald-400 font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-[#181717]'
               }`}
             >
               <div className={`flex items-center ${isExpanded ? 'space-x-2.5' : 'justify-center'} min-w-0`}>
                 <Icon
                   className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
+                    isActive ? 'text-emerald-400' : 'text-zinc-400 group-hover:text-zinc-200'
                   }`}
                 />
                 {isExpanded && <span className="truncate text-left">{item.label}</span>}

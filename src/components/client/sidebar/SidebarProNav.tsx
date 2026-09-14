@@ -37,12 +37,12 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         title={label}
         className={`w-full flex items-center ${isExpanded ? 'justify-between px-2.5' : 'justify-center px-0'} py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
           isActive
-            ? 'bg-slate-900 border border-slate-700/80 text-emerald-400 font-bold shadow-sm'
-            : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60'
+            ? 'bg-[#1a1919] border border-[#2e2b2b] text-emerald-400 font-bold shadow-sm'
+            : 'text-zinc-400 hover:text-white hover:bg-[#181717]'
         }`}
       >
         <div className={`flex items-center ${isExpanded ? 'space-x-2' : 'justify-center'} min-w-0`}>
-          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-400'}`} />
           {isExpanded && <span className="truncate">{label}</span>}
         </div>
         {badge !== undefined && badge > 0 && isExpanded && (

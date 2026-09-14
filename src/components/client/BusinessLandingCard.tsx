@@ -19,9 +19,9 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
 
   return (
     <>
-      <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 space-y-2">
+      <div className="onyx-card rounded-xl p-3.5 space-y-2.5">
         <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <Globe className="w-3 h-3" /> Landingbot Público Activo
           </span>
           <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400">
@@ -31,21 +31,21 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
 
         <div>
           <h3 className="text-xs font-bold text-white">Enlace General de tu Tienda</h3>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-zinc-400">
             Comparte esta URL en tu biografía de Instagram, campañas generales o tarjetas de presentación.
           </p>
         </div>
 
-        <div className="flex items-center justify-between gap-2 bg-slate-950 border border-slate-800/90 rounded-lg p-1.5 pl-3">
+        <div className="flex items-center justify-between gap-2 bg-[#111010] border border-[#262424] rounded-lg p-1.5 pl-3">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="text-[10px] font-black uppercase text-slate-500 shrink-0">URL:</span>
-            <span className="text-xs font-mono text-slate-200 truncate">{publicUrl}</span>
+            <span className="text-[10px] font-black uppercase text-zinc-500 shrink-0">URL:</span>
+            <span className="text-xs font-mono text-emerald-400 truncate">{publicUrl}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm cursor-pointer"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               <span>{copied ? 'Copiado' : 'Copiar Enlace'}</span>
@@ -53,7 +53,7 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
             <button
               type="button"
               onClick={() => setShowQR(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-300 hover:text-white text-xs font-semibold transition shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md keycap hover:bg-[#252424] text-zinc-300 hover:text-white text-xs font-semibold transition border-[#2e2b2b] cursor-pointer"
             >
               <QrCode className="w-3 h-3" />
               <span>Código QR</span>
@@ -63,11 +63,11 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
       </div>
 
       {showQR && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 max-w-xs w-full text-center relative shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="onyx-card rounded-xl p-4 max-w-xs w-full text-center relative shadow-2xl">
             <button
               onClick={() => setShowQR(false)}
-              className="absolute top-2.5 right-2.5 text-slate-400 hover:text-white"
+              className="absolute top-2.5 right-2.5 text-zinc-400 hover:text-white cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -79,10 +79,10 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
                 className="w-36 h-36"
               />
             </div>
-            <p className="text-[10px] text-slate-400 break-all font-mono mb-2">{publicUrl}</p>
+            <p className="text-[10px] text-zinc-400 break-all font-mono mb-2">{publicUrl}</p>
             <button
               onClick={handleCopy}
-              className="w-full py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition"
+              className="w-full py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer"
             >
               {copied ? '¡Copiado!' : 'Copiar URL'}
             </button>

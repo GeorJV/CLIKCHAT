@@ -77,23 +77,23 @@ export const FaqFileUploadModal: React.FC<FaqFileUploadModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#09151c] border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="onyx-card w-full max-w-2xl rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between pb-2 border-b border-[#282626]">
           <div className="flex items-center gap-2">
-            <UploadCloud className="w-5 h-5 text-purple-400" />
+            <UploadCloud className="w-5 h-5 text-emerald-400" />
             <h3 className="text-sm font-bold text-white">Cargar Archivo de FAQs (.txt, .docx, .pdf)</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 cursor-pointer">
+          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {extractedFaqs.length === 0 && (
-          <div className="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-xl p-6 text-center space-y-3 bg-[#050e14]">
-            <UploadCloud className="w-8 h-8 text-purple-400 mx-auto animate-bounce" />
-            <p className="text-xs font-bold text-slate-200">Arrastra o selecciona tu archivo de preguntas frecuentes</p>
-            <p className="text-[11px] text-slate-400">Formatos admitidos: <strong>.TXT, .DOCX (Word), .PDF, .MD, .JSON</strong></p>
-            <label className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl cursor-pointer transition shadow-md">
+          <div className="border-2 border-dashed border-[#282626] hover:border-emerald-500/60 rounded-xl p-6 text-center space-y-3 bg-[#111010]">
+            <UploadCloud className="w-8 h-8 text-emerald-400 mx-auto animate-bounce" />
+            <p className="text-xs font-bold text-zinc-200">Arrastra o selecciona tu archivo de preguntas frecuentes</p>
+            <p className="text-[11px] text-zinc-400">Formatos admitidos: <strong>.TXT, .DOCX (Word), .PDF, .MD, .JSON</strong></p>
+            <label className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl cursor-pointer transition shadow-md">
               <FileText className="w-3.5 h-3.5" />
               <span>{isParsing ? 'Analizando documento...' : 'Elegir Archivo'}</span>
               <input type="file" accept=".txt,.docx,.doc,.pdf,.md,.json" onChange={handleFileChange} disabled={isParsing} className="hidden" />
@@ -104,11 +104,11 @@ export const FaqFileUploadModal: React.FC<FaqFileUploadModalProps> = ({
 
         {extractedFaqs.length > 0 && (
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
-            <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl text-xs">
+            <div className="flex items-center justify-between bg-[#181717] border border-[#282626] px-3 py-2 rounded-xl text-xs">
               <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" /> Se detectaron {extractedFaqs.length} preguntas en "{fileName}"
               </span>
-              <span className="text-slate-400 text-[11px]">{selectedCount} seleccionadas</span>
+              <span className="text-zinc-400 text-[11px]">{selectedCount} seleccionadas</span>
             </div>
             <div className="space-y-2">
               {extractedFaqs.map((faq, idx) => (
@@ -119,8 +119,8 @@ export const FaqFileUploadModal: React.FC<FaqFileUploadModalProps> = ({
         )}
 
         {extractedFaqs.length > 0 && (
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-            <button type="button" onClick={() => { setExtractedFaqs([]); setFileName(''); }} className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">
+          <div className="flex items-center justify-between pt-2 border-t border-[#282626]">
+            <button type="button" onClick={() => { setExtractedFaqs([]); setFileName(''); }} className="px-3 py-1.5 rounded-lg keycap hover:bg-[#252424] text-xs text-zinc-300 cursor-pointer">
               Cargar otro archivo
             </button>
             <button type="button" onClick={handleImport} disabled={selectedCount === 0 || isSubmitting} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer">

@@ -31,14 +31,14 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   };
 
   return (
-    <div className={`flex items-center ${isExpanded ? 'justify-between px-1.5 pb-2' : 'justify-center pb-2'} border-b border-slate-800/80`}>
+    <div className={`flex items-center ${isExpanded ? 'justify-between px-1.5 pb-2' : 'justify-center pb-2'} border-b border-[#282626]`}>
       {isExpanded && (
         <button
           onClick={handleToggleMode}
-          className="flex items-center space-x-2 text-[11px] font-bold tracking-wider text-slate-300 hover:text-white transition py-1 px-1.5 rounded-lg hover:bg-slate-900/80 cursor-pointer"
+          className="flex items-center space-x-2 text-[11px] font-bold tracking-wider text-zinc-300 hover:text-white transition py-1 px-1.5 rounded-lg hover:bg-[#1a1919] cursor-pointer"
           title="Haz clic para alternar entre Modo Simple y Modo Pro"
         >
-          <span className={`w-2 h-2 rounded-full ${isSimpleMode ? 'bg-emerald-400 animate-pulse' : 'bg-purple-400 shadow-sm shadow-purple-500/50'}`} />
+          <span className={`w-2 h-2 rounded-full ${isSimpleMode ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 shadow-sm shadow-amber-500/30'}`} />
           <span className="font-extrabold uppercase">{isSimpleMode ? 'MODO SIMPLE' : 'MODO PRO'}</span>
         </button>
       )}
@@ -47,8 +47,8 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
         onClick={handleTogglePin}
         className={`p-1.5 rounded-lg border transition cursor-pointer ${
           isPinned
-            ? 'bg-emerald-600/90 border-emerald-500 text-white shadow-sm shadow-emerald-600/20'
-            : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-slate-700'
+            ? 'bg-emerald-600/90 border-emerald-500/50 text-white shadow-sm'
+            : 'bg-[#181717] border-[#282626] text-zinc-400 hover:text-emerald-400 hover:border-[#383535]'
         }`}
         title={isPinned ? 'Desfijar menú (Contraer)' : 'Fijar menú (Mantener visible)'}
       >

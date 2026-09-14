@@ -51,7 +51,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white font-bold focus:outline-none focus:border-emerald-500"
+            className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-white font-bold focus:outline-none focus:border-emerald-500"
             placeholder="Ej. Boutique Bella Costa Rica"
           />
         </div>
@@ -62,7 +62,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().trim())}
-            className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
+            className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
             placeholder="Ej. 222 o mi-tienda"
           />
         </div>
@@ -73,7 +73,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
             type="text"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white font-mono font-bold focus:outline-none focus:border-emerald-500"
+            className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-white font-mono font-bold focus:outline-none focus:border-emerald-500"
             placeholder="8888-9999 o +506..."
           />
         </div>
@@ -86,7 +86,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
             type="text"
             value={agentName}
             onChange={(e) => setAgentName(e.target.value)}
-            className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white font-bold focus:outline-none focus:border-emerald-500"
+            className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-white font-bold focus:outline-none focus:border-emerald-500"
             placeholder="Ej. Jessy o Sofía"
           />
         </div>
@@ -97,7 +97,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
             type="text"
             value={agentRole}
             onChange={(e) => setAgentRole(e.target.value)}
-            className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white font-bold focus:outline-none focus:border-emerald-500"
+            className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-white font-bold focus:outline-none focus:border-emerald-500"
             placeholder="Ej. Asesor Comercial & Ventas"
           />
         </div>
@@ -109,7 +109,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
           rows={3}
           value={faqBase}
           onChange={(e) => setFaqBase(e.target.value)}
-          className="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-200 font-normal focus:outline-none focus:border-emerald-500 leading-relaxed text-xs"
+          className="w-full p-2.5 rounded-xl border border-[#282626] bg-[#111010] text-slate-200 font-normal focus:outline-none focus:border-emerald-500 leading-relaxed text-xs"
           placeholder="Horario: Lunes a Sábado de 9am a 6pm. Entregas a todo el país. Métodos de pago: Sinpe Móvil y efectivo."
         />
       </div>

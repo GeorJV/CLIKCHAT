@@ -54,13 +54,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+      <div className="onyx-card rounded-2xl p-5 flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-emerald-400" />
             <span>Auditoría de Conversaciones (RAG Nivel 1 & D1)</span>
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             Historial de chats en tiempo real con la traza de memoria y nivel de RAG utilizado.
           </p>
         </div>
@@ -70,34 +70,34 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
       </div>
 
       {isLoading && conversations.length === 0 ? (
-        <div className="py-12 text-center text-xs text-slate-500">Cargando conversaciones desde Cloudflare D1...</div>
+        <div className="py-12 text-center text-xs text-zinc-500">Cargando conversaciones desde Cloudflare D1...</div>
       ) : conversations.length === 0 ? (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">
+        <div className="onyx-card rounded-2xl p-8 text-center text-xs text-zinc-400">
           Aún no hay conversaciones registradas para esta tienda.
         </div>
       ) : (
         <div className="space-y-3">
           {conversations.map((c) => (
-            <div key={c.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2">
+            <div key={c.id} className="onyx-card rounded-2xl p-4 sm:p-5 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
                   <span>{new Date(c.created_at).toLocaleString()}</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="font-mono text-[11px] text-slate-500">{c.id.substring(0, 16)}...</span>
-                  {c.user_name && <span className="text-slate-200 font-semibold ml-1"><User className="w-3 h-3 inline" /> {c.user_name}</span>}
+                  <span className="text-zinc-600">•</span>
+                  <span className="font-mono text-[11px] text-zinc-500">{c.id.substring(0, 16)}...</span>
+                  {c.user_name && <span className="text-zinc-200 font-semibold ml-1"><User className="w-3 h-3 inline" /> {c.user_name}</span>}
                 </div>
                 <div className="flex items-center gap-2">
                   {getBadge(c.last_rag_level)}
-                  <span className="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                  <span className="text-[10px] text-zinc-400 bg-[#111010] px-2 py-0.5 rounded border border-[#282626]">
                     {c.total_messages} msgs
                   </span>
                 </div>
               </div>
 
               {c.last_message && (
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-300">
-                  <span className="text-slate-500 font-semibold mr-1">Último mensaje:</span>
+                <div className="bg-[#111010] p-3 rounded-xl border border-[#262424] text-xs text-zinc-300">
+                  <span className="text-zinc-500 font-semibold mr-1">Último mensaje:</span>
                   <span>"{c.last_message}"</span>
                 </div>
               )}

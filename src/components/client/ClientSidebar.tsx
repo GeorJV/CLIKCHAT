@@ -81,7 +81,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
 
       {/* Toast Flotante para Feedback Interactivo */}
       {toastMessage && (
-        <div className="absolute bottom-16 left-2 right-2 z-50 bg-slate-900 border border-emerald-500/50 text-emerald-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-xl text-center backdrop-blur-md animate-fade-in pointer-events-none">
+        <div className="absolute bottom-16 left-2 right-2 z-50 bg-[#1a1919] border border-emerald-500/50 text-emerald-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-xl text-center backdrop-blur-md animate-fade-in pointer-events-none">
           {toastMessage}
         </div>
       )}
