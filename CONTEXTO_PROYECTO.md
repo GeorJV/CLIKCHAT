@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 15:56 GMT-6
-- **Versión Actual:** 1.12.0 (Purga Cromática Completa: Todos los componentes en Onyx Charcoal #151414 / #181717)
+- **Última Actualización:** 2026-09-14 16:56 GMT-6
+- **Versión Actual:** 1.12.1 (Pestaña Conversaciones Operativa con Transcripciones Expandibles)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 41996f1)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: ccc1ffb)
 - **Estado Actual del Sistema:**
-  - Erradicación 100% de azules marinos (slate-900/950) y gradientes violetas en QLink, Navbar, Sidebar y RAG cards.
-  - Tarjeta QLink y 3 Cards de diagnóstico RAG convertidas a `onyx-card` (`#181717`, border `#282626`).
-  - Botones alineados a estilo Linear/Keycap (`#1e1d1d`, border `#2e2b2b`) con acentos esmeralda finos.
-  - Modales de subida masiva de FAQs, edición de productos y login unificados a la textura #151414 con dot-grid 16px.
+  - Pestaña de Conversaciones reparada al importar `ConversationsTab` en `ClientDashboard.tsx`.
+  - Visualización interactiva con acordeón expandible para inspeccionar la transcripción completa de mensajes.
+  - Insignias de nivel RAG (Caché $0, FAQ Nivel 2, Catálogo D1) con marcas de tiempo y datos de lead.
+  - Erradicación 100% de azules y violetas, todo en Onyx Charcoal #151414 / #181717 con dot-grid 16px.
   - Componentes atómicos verificados bajo estándar ARQMODULAR (<150 líneas por archivo).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el resultado cromático unificado en producción.
+- **Siguiente Paso Inmediato:** Validar con el usuario el funcionamiento de la pestaña Conversaciones.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
