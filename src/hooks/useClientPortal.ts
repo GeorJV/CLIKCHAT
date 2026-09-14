@@ -100,6 +100,24 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     return false;
   };
 
+  const createBulkFaqs = async (faqsToCreate: Array<{ question: string; answer: string; category?: string }>, source: string = 'archivo') => {
+    if (!tenant?.id || !faqsToCreate.length) return false;
+    try {
+      const res = await fetch('/api/faqs/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: tenant.id, faqs: faqsToCreate, source })
+      });
+      if (res.ok) {
+        await loadTenantData(tenantSlug);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error creating bulk FAQs:', err);
+    }
+    return false;
+  };
+
   const createProduct = async (productData: Partial<Product> & { name: string; price: number }) => {
     if (!tenant?.id || !productData.name) return false;
     try {
@@ -172,6 +190,6 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   return {
     tenantSlug, setTenantSlug, tenant, products, faqs, unresolved,
     availableTenants, isLoading, saveSuccess, loadTenantData,
-    resolveQuery, createFaq, deleteFaq, createProduct, updateProduct, deleteProduct, updateSettings
+    resolveQuery, createFaq, deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings
   };
 }

@@ -38,6 +38,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     resolveQuery,
     createFaq,
     deleteFaq,
+    createBulkFaqs,
     createProduct,
     updateProduct,
     deleteProduct,
@@ -84,7 +85,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'chatbot' && <ChatbotQLinkTab tenant={tenant} tenantSlug={currentSlug} onOpenLiveChat={onOpenLiveChat} />}
           {activeTab === 'business' && <BusinessSettingsTab tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} />}
           {activeTab === 'products' && <ProductsManagerTab products={products} tenantSlug={currentSlug} tenant={tenant} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />}
-          {activeTab === 'faqs' && <FaqsManagerTab faqs={faqs} onCreateFaq={createFaq} onDeleteFaq={deleteFaq} />}
+          {activeTab === 'faqs' && <FaqsManagerTab faqs={faqs} onCreateFaq={createFaq} onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} />}
           {activeTab === 'documents' && <DocumentsManagerTab tenantId={tenant?.id} />}
           {activeTab === 'audit' && <UnresolvedQueriesTab unresolved={unresolved} onResolve={resolveQuery} />}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
