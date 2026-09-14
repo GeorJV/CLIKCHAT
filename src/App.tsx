@@ -5,8 +5,10 @@ import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { MessageSquare, Briefcase, ShieldCheck, Smartphone, ExternalLink } from 'lucide-react';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'chat' | 'client' | 'admin'>('chat');
-  const [selectedTenantSlug, setSelectedTenantSlug] = useState('acme-store');
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isDirectChat = params?.get('view') === 'chat' || (params?.has('t') && !params?.has('panel'));
+  const [currentView, setCurrentView] = useState<'chat' | 'client' | 'admin'>(isDirectChat ? 'chat' : 'client');
+  const [selectedTenantSlug, setSelectedTenantSlug] = useState(params?.get('t') || 'acme-store');
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
