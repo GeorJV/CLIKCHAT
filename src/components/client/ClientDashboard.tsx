@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useClientPortal } from '../../hooks/useClientPortal';
 import { ClientTab } from '../../types/client';
-import { ClientHeader } from './ClientHeader';
+import { ClientSidebar } from './ClientSidebar';
 import { ClientLogin } from './ClientLogin';
+import { ChatbotQLinkTab } from './ChatbotQLinkTab';
 import { UnresolvedQueriesTab } from './UnresolvedQueriesTab';
 import { FaqsManagerTab } from './FaqsManagerTab';
 import { ProductsManagerTab } from './ProductsManagerTab';
+import { DocumentsManagerTab } from './DocumentsManagerTab';
+import { ConversationsTab } from './ConversationsTab';
 import { BotSettingsTab } from './BotSettingsTab';
 
 interface ClientDashboardProps {
@@ -20,7 +23,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   onSelectTenant
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [activeTab, setActiveTab] = useState<ClientTab>('audit');
+  const [activeTab, setActiveTab] = useState<ClientTab>('chatbot');
 
   const {
     tenantSlug: currentSlug,
@@ -45,10 +48,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     if (onSelectTenant) onSelectTenant(slug);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
   if (!isAuthenticated) {
     return (
       <ClientLogin
@@ -62,52 +61,82 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
-    <div className="min-h-full flex flex-col bg-slate-950 text-slate-100">
-      <ClientHeader
-        tenant={tenant}
+    <div className="h-full w-full flex bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* Dark Modern Sidebar */}
+      <ClientSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         unresolvedCount={pendingCount}
-        onOpenLiveChat={onOpenLiveChat}
-        onLogout={handleLogout}
+        tenantSlug={currentSlug}
       />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8">
-        {isLoading && !tenant && (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+      {/* Main Content Viewport */}
+      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-8 bg-slate-950/60">
+        <div className="max-w-5xl mx-auto">
+          {isLoading && !tenant && (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
 
-        {activeTab === 'audit' && (
-          <UnresolvedQueriesTab
-            unresolved={unresolved}
-            onResolve={resolveQuery}
-          />
-        )}
+          {activeTab === 'chatbot' && (
+            <ChatbotQLinkTab
+              tenant={tenant}
+              tenantSlug={currentSlug}
+              onOpenLiveChat={onOpenLiveChat}
+            />
+          )}
 
-        {activeTab === 'faqs' && (
-          <FaqsManagerTab
-            faqs={faqs}
-            onCreateFaq={createFaq}
-            onDeleteFaq={deleteFaq}
-          />
-        )}
+          {activeTab === 'business' && (
+            <BotSettingsTab
+              tenant={tenant}
+              onUpdateSettings={updateSettings}
+              saveSuccess={saveSuccess}
+            />
+          )}
 
-        {activeTab === 'products' && (
-          <ProductsManagerTab
-            products={products}
-            onCreateProduct={createProduct}
-          />
-        )}
+          {activeTab === 'products' && (
+            <ProductsManagerTab
+              products={products}
+              onCreateProduct={createProduct}
+            />
+          )}
 
-        {activeTab === 'settings' && (
-          <BotSettingsTab
-            tenant={tenant}
-            onUpdateSettings={updateSettings}
-            saveSuccess={saveSuccess}
-          />
-        )}
+          {activeTab === 'faqs' && (
+            <FaqsManagerTab
+              faqs={faqs}
+              onCreateFaq={createFaq}
+              onDeleteFaq={deleteFaq}
+            />
+          )}
+
+          {activeTab === 'documents' && (
+            <DocumentsManagerTab
+              tenantId={tenant?.id}
+            />
+          )}
+
+          {activeTab === 'audit' && (
+            <UnresolvedQueriesTab
+              unresolved={unresolved}
+              onResolve={resolveQuery}
+            />
+          )}
+
+          {activeTab === 'conversations' && (
+            <ConversationsTab
+              tenantId={tenant?.id}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <BotSettingsTab
+              tenant={tenant}
+              onUpdateSettings={updateSettings}
+              saveSuccess={saveSuccess}
+            />
+          )}
+        </div>
       </main>
     </div>
   );

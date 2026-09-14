@@ -10,6 +10,7 @@ const productsRoutes = require('./routes/products');
 const faqsRoutes = require('./routes/faqs');
 const auditRoutes = require('./routes/audit');
 const adminRoutes = require('./routes/admin');
+const documentsRoutes = require('./routes/documents');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -27,6 +28,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/tenants', tenantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/faqs', faqsRoutes);
+app.use('/api/documents', documentsRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
 

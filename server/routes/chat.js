@@ -128,4 +128,25 @@ router.get('/history/:sessionId', async (req, res) => {
   }
 });
 
+// Get recent conversations for tenant (Owner Portal audit)
+router.get('/tenant-conversations/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const sessions = await query(
+      `SELECT s.id, s.user_name, s.user_phone, s.created_at,
+              (SELECT message FROM chat_messages WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1) as last_message,
+              (SELECT rag_level_used FROM chat_messages WHERE session_id = s.id AND sender = 'assistant' ORDER BY created_at DESC LIMIT 1) as last_rag_level,
+              (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as total_messages
+       FROM chat_sessions s
+       WHERE s.tenant_id = $1
+       ORDER BY s.created_at DESC
+       LIMIT 20`,
+      [tenantId]
+    );
+    return res.json({ conversations: sessions.rows });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

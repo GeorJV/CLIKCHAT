@@ -1,6 +1,24 @@
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 
-export type ClientTab = 'audit' | 'faqs' | 'products' | 'settings';
+export type ClientTab =
+  | 'chatbot'
+  | 'business'
+  | 'products'
+  | 'faqs'
+  | 'documents'
+  | 'audit'
+  | 'conversations'
+  | 'settings';
+
+export interface KnowledgeDocument {
+  id: string;
+  tenant_id: string;
+  title: string;
+  category: string;
+  file_type: string;
+  chunks_count?: number;
+  created_at: string;
+}
 
 export interface ClientSession {
   isAuthenticated: boolean;
