@@ -64,7 +64,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
-    <div className="h-full w-full flex bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="h-full w-full flex bg-[#0B0C0E] text-slate-100 overflow-hidden font-sans">
       {/* Dark Modern Sidebar */}
       <ClientSidebar
         activeTab={activeTab}
@@ -73,8 +73,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         tenantSlug={currentSlug}
       />
 
-      {/* Main Content Viewport */}
-      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-8 bg-slate-950/60">
+      {/* Main Content Viewport with Dot Grid Texture */}
+      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-8 bg-dot-grid">
         <div className="max-w-5xl mx-auto">
           {isLoading && !tenant && (
             <div className="flex items-center justify-center py-16">

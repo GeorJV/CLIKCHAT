@@ -33,7 +33,7 @@ export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ me
   ];
 
   return (
-    <div className="bg-[#06181b]/95 border border-teal-900/50 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+    <div className="onyx-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
       {/* Header Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
@@ -56,7 +56,7 @@ export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ me
         {kpis.map((kpi, idx) => (
           <div
             key={idx}
-            className="bg-[#031114]/90 border border-teal-950 rounded-xl p-3 flex flex-col justify-between"
+            className="onyx-surface rounded-xl p-3 flex flex-col justify-between"
           >
             <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
               {kpi.label}

@@ -22,7 +22,7 @@ export const SettingsWelcomeKitStep: React.FC<SettingsWelcomeKitStepProps> = ({
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-4 shadow-sm">
+    <div className="onyx-card rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
           <QrCode className="w-4 h-4 text-emerald-400" />

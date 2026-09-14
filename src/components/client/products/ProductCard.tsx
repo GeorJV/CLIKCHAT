@@ -37,10 +37,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <div className="bg-[#09151c] border border-slate-800/90 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
+    <div className="onyx-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition">
       <div>
         {/* Product Image with Overlay Badge */}
-        <div className="relative rounded-xl overflow-hidden h-44 sm:h-48 w-full bg-slate-950">
+        <div className="relative rounded-xl overflow-hidden h-44 sm:h-48 w-full bg-[#0b0c0e]">
           <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
           <div className="absolute top-3 right-3 bg-[#0a2720]/90 backdrop-blur-sm border border-emerald-500/50 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -67,12 +67,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </p>
 
         {/* QLink Box */}
-        <div className="bg-[#050e14] border border-slate-800/90 rounded-xl p-3 mt-3.5 space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+        <div className="onyx-surface rounded-xl p-3 mt-3.5 space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
             QLINK DE VENTA DIRECTA
           </span>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-[#09151c] border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-400 font-mono truncate">
+            <div className="flex-1 bg-[#0b0c0e] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-emerald-400 font-mono truncate">
               {displayUrl}
             </div>
             <a

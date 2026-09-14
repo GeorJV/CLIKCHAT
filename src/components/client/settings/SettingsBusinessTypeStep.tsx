@@ -32,7 +32,7 @@ export const SettingsBusinessTypeStep: React.FC<SettingsBusinessTypeStepProps> =
   ];
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-4 shadow-sm">
+    <div className="onyx-card rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
           <Layers className="w-4 h-4 text-emerald-400" />
@@ -43,7 +43,7 @@ export const SettingsBusinessTypeStep: React.FC<SettingsBusinessTypeStepProps> =
         </span>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-zinc-400">
         Selecciona la industria principal de tu empresa para que la IA adapte los prompts, respuestas y embudos automáticamente.
       </p>
 
@@ -59,7 +59,7 @@ export const SettingsBusinessTypeStep: React.FC<SettingsBusinessTypeStepProps> =
               className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2.5 transition cursor-pointer ${
                 isSelected
                   ? 'border-emerald-500 bg-emerald-950/40 font-bold ring-2 ring-emerald-500 text-white shadow-md shadow-emerald-500/10'
-                  : 'bg-slate-950/60 border-slate-800 hover:bg-slate-800/60 text-slate-300'
+                  : 'onyx-surface hover:border-white/20 text-zinc-300'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${biz.colorClass}`}>

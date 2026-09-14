@@ -53,3 +53,51 @@
               opacity 0.25s ease-in-out,
               margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Linear / Raycast Onyx Dark Theme with Dot Grid */
+.bg-dot-grid {
+  background-color: #0b0c0e;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.bg-dot-grid-subtle {
+  background-color: #0d0e12;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.onyx-card {
+  background-color: #121316;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+.onyx-card:hover {
+  background-color: #16171b;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.onyx-surface {
+  background-color: #0f1013;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.onyx-input {
+  background-color: #0f1014;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+}
+
+.onyx-input:focus {
+  border-color: #10b981;
+  outline: none;
+}
+
+.keycap {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background-color: #1a1b20;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a1a1aa;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(0, 0, 0, 0.2);
+}
