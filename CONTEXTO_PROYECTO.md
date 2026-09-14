@@ -1,19 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 14:57 GMT-6
-- **Versión Actual:** 1.9.0 (Carga de Archivos TXT/DOCX/PDF & Manual en FAQs)
+- **Última Actualización:** 2026-09-14 15:15 GMT-6
+- **Versión Actual:** 1.10.0 (Réplica exacta de Menú Modo Simple y Configuración Onboarding de Qchatt)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: cd2997b)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: d27436a)
 - **Estado Actual del Sistema:**
-  - Sección de Preguntas Frecuentes (FAQ / RAG Nivel 2) con doble vía de ingesta:
-    1. Carga masiva de archivos (.txt, .docx, .pdf, .md, .json) con extracción inteligente, preview y guardado bulk en D1.
-    2. Subida manual pregunta por pregunta con categorización y Early Stopping (>= 0.65).
-  - Buscador en tiempo real, filtros por categoría y badges de procedencia (Manual / Archivo / HITL).
-  - Endpoint backend `POST /api/faqs/bulk` e integración en `useClientPortal`.
-  - Componentes atómicos en `src/components/client/faqs/` (< 120 líneas c/u) cumpliendo ARQMODULAR.
-  - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`).
-- **Siguiente Paso Inmediato:** Validar subida de documentos con el usuario y continuar con optimizaciones.
+  - Menú Modo Simple sincronizado idéntico a Qchatt con exactamente 7 opciones principales y promo card.
+  - Sección Configuración transformada en "Configuración del Negocio & Onboarding QChat" en 3 pasos:
+    1. Paso 1: Selector interactivo de 8 industrias (Tienda, Clínica, Restaurante, Abogado, Inmobiliaria, etc.).
+    2. Paso 2: Identidad comercial, QNumber/Slug, WhatsApp/Sinpe para comprobantes, rol y guardado en D1.
+    3. Paso 3: Identidad digital QLink y Kit de bienvenida con código QR e inicio de chatbot.
+  - Componentes atómicos en `src/components/client/settings/` (< 150 líneas c/u) cumpliendo ARQMODULAR.
+  - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
+- **Siguiente Paso Inmediato:** Validar con el usuario el flujo comercial y avanzar según prioridades.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
