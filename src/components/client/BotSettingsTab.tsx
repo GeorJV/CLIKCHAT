@@ -11,7 +11,7 @@ interface BotSettingsTabProps {
 export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({ tenant, onUpdateSettings, saveSuccess }) => {
   const [botName, setBotName] = useState(tenant?.bot_name || '');
   const [welcomeMsg, setWelcomeMsg] = useState(tenant?.welcome_message || '');
-  const [businessHours, setBusinessHours] = useState(tenant?.business_hours || 'Lunes a S·bado de 8:00 AM a 7:00 PM');
+  const [businessHours, setBusinessHours] = useState(tenant?.business_hours || 'Lunes a S√°bado de 8:00 AM a 7:00 PM');
   const [systemPrompt, setSystemPrompt] = useState(tenant?.system_prompt || '');
   const [ctaUrl, setCtaUrl] = useState(tenant?.cta_url || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -20,7 +20,7 @@ export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({ tenant, onUpdate
     if (tenant) {
       setBotName(tenant.bot_name || '');
       setWelcomeMsg(tenant.welcome_message || '');
-      setBusinessHours(tenant.business_hours || 'Lunes a S·bado de 8:00 AM a 7:00 PM');
+      setBusinessHours(tenant.business_hours || 'Lunes a S√°bado de 8:00 AM a 7:00 PM');
       setSystemPrompt(tenant.system_prompt || '');
       setCtaUrl(tenant.cta_url || '');
     }
@@ -45,13 +45,13 @@ export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({ tenant, onUpdate
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Settings className="w-4 h-4 text-indigo-400" />
-            <span>ConfiguraciÛn del Asesor & Horario Comercial</span>
+            <span>Configuraci√≥n del Asesor & Horario Comercial</span>
           </h3>
-          <p className="text-xs text-slate-400 mt-1">Personaliza la personalidad del bot y tu horario de atenciÛn para los clientes.</p>
+          <p className="text-xs text-slate-400 mt-1">Personaliza la personalidad del bot y tu horario de atenci√≥n para los clientes.</p>
         </div>
         {saveSuccess && (
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-fade-in">
-            <CheckCircle className="w-3.5 h-3.5" /> °Guardado en D1!
+            <CheckCircle className="w-3.5 h-3.5" /> ¬°Guardado en D1!
           </span>
         )}
       </div>
@@ -71,17 +71,17 @@ export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({ tenant, onUpdate
 
         <div>
           <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-400" /> Horario de AtenciÛn Humana (Para dudas no resueltas)
+            <Clock className="w-3.5 h-3.5 text-amber-400" /> Horario de Atenci√≥n Humana (Para dudas no resueltas)
           </label>
           <input
             type="text"
             value={businessHours}
             onChange={(e) => setBusinessHours(e.target.value)}
-            placeholder="Ej: Lunes a S·bado de 8:00 AM a 7:00 PM"
+            placeholder="Ej: Lunes a S√°bado de 8:00 AM a 7:00 PM"
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
           />
           <p className="text-[11px] text-slate-500 mt-1">
-            Si el cliente hace una pregunta que el bot no sabe, se le informar· tu horario para que sepa cu·ndo recibir· tu respuesta.
+            Si el cliente hace una pregunta que el bot no sabe, se le informar√° tu horario para que sepa cu√°ndo recibir√° tu respuesta.
           </p>
         </div>
 

@@ -38,7 +38,7 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({ products
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Package className="w-4 h-4 text-indigo-400" />
-            <span>Cat·logo Oficial de Productos / Servicios (RAG Nivel 3)</span>
+            <span>Cat√°logo Oficial de Productos / Servicios (RAG Nivel 3)</span>
           </h3>
           <p className="text-xs text-slate-400 mt-1">Datos reales (precio, specs, beneficios) que el bot usa para recomendar sin inventar.</p>
         </div>
@@ -54,7 +54,7 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({ products
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-5 space-y-3.5 shadow-xl">
           <h4 className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> Agregar Producto al Cat·logo D1
+            <Sparkles className="w-3.5 h-3.5" /> Agregar Producto al Cat√°logo D1
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -67,12 +67,12 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({ products
             </div>
           </div>
           <div>
-            <label className="block text-xs text-slate-300 mb-1 font-medium">DescripciÛn Corta / Ficha TÈcnica</label>
+            <label className="block text-xs text-slate-300 mb-1 font-medium">Descripci√≥n Corta / Ficha T√©cnica</label>
             <input type="text" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} placeholder="Specs principales..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
           </div>
           <div>
             <label className="block text-xs text-slate-300 mb-1 font-medium">Beneficios (separados por coma)</label>
-            <input type="text" value={benefitsStr} onChange={(e) => setBenefitsStr(e.target.value)} placeholder="Ej: BaterÌa 40h, Carga r·pida" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
+            <input type="text" value={benefitsStr} onChange={(e) => setBenefitsStr(e.target.value)} placeholder="Ej: Bater√≠a 40h, Carga r√°pida" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
           </div>
           <div className="flex items-center justify-between pt-1">
             <input type="text" value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="URL de Compra / WhatsApp" className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white w-60" />

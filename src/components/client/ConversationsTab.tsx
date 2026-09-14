@@ -40,15 +40,15 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
   const getBadge = (level?: string) => {
     switch (level) {
       case 'semantic_cache':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">? Caché $0</span>;
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">âš¡ CachÃ© $0</span>;
       case 'level_2_faq':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">?? FAQ Nivel 2</span>;
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">ðŸ’¡ FAQ Nivel 2</span>;
       case 'level_3_catalog':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">?? Catálogo D1</span>;
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">ðŸ“¦ CatÃ¡logo D1</span>;
       case 'unstructured_docs':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">?? Manuales</span>;
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">ðŸ“„ Manuales</span>;
       default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Conversación</span>;
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">ConversaciÃ³n</span>;
     }
   };
 
@@ -58,7 +58,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-emerald-400" />
-            <span>Auditoría de Conversaciones (RAG Nivel 1 & D1)</span>
+            <span>AuditorÃ­a de Conversaciones (RAG Nivel 1 & D1)</span>
           </h3>
           <p className="text-xs text-slate-400 mt-1">
             Historial de chats en tiempo real con la traza de memoria y nivel de RAG utilizado.
@@ -73,7 +73,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
         <div className="py-12 text-center text-xs text-slate-500">Cargando conversaciones desde Cloudflare D1...</div>
       ) : conversations.length === 0 ? (
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">
-          Aún no hay conversaciones registradas para esta tienda.
+          AÃºn no hay conversaciones registradas para esta tienda.
         </div>
       ) : (
         <div className="space-y-3">
@@ -83,7 +83,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
                 <div className="flex items-center gap-2 text-slate-400">
                   <Clock className="w-3.5 h-3.5 text-slate-500" />
                   <span>{new Date(c.created_at).toLocaleString()}</span>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-600">â€¢</span>
                   <span className="font-mono text-[11px] text-slate-500">{c.id.substring(0, 16)}...</span>
                   {c.user_name && <span className="text-slate-200 font-semibold ml-1"><User className="w-3 h-3 inline" /> {c.user_name}</span>}
                 </div>
@@ -97,7 +97,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ tenantId }) 
 
               {c.last_message && (
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-300">
-                  <span className="text-slate-500 font-semibold mr-1">Último mensaje:</span>
+                  <span className="text-slate-500 font-semibold mr-1">Ãšltimo mensaje:</span>
                   <span>"{c.last_message}"</span>
                 </div>
               )}

@@ -60,7 +60,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({ faqs, onCreateFa
               type="text"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ej: ¿Cuáles son las formas de pago?"
+              placeholder="Ej: Â¿CuÃ¡les son las formas de pago?"
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
@@ -69,7 +69,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({ faqs, onCreateFa
             <textarea
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Ej: Aceptamos transferencias, tarjetas de crédito y efectivo..."
+              placeholder="Ej: Aceptamos transferencias, tarjetas de crÃ©dito y efectivo..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
             />
           </div>
@@ -78,7 +78,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({ faqs, onCreateFa
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="Categoría (ej. pagos, envios)"
+              placeholder="CategorÃ­a (ej. pagos, envios)"
               className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white w-44"
             />
             <button

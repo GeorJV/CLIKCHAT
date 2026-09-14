@@ -28,10 +28,10 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
         </div>
 
         <h2 className="text-xl sm:text-2xl font-black text-center text-white tracking-tight">
-          Portal del Dueño de Negocio
+          Portal del DueÃ±o de Negocio
         </h2>
         <p className="text-xs sm:text-sm text-slate-400 text-center mt-1 mb-6">
-          Gestiona tu catálogo, configura el horario comercial y entrena a tu bot con las preguntas de tus clientes.
+          Gestiona tu catÃ¡logo, configura el horario comercial y entrena a tu bot con las preguntas de tus clientes.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,7 +73,7 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
             className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Acceso rápido demo: <strong>TechStore (acme-store)</strong></span>
+            <span>Acceso rÃ¡pido demo: <strong>TechStore (acme-store)</strong></span>
           </button>
           {onOpenChatPreview && (
             <button
@@ -81,7 +81,7 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
               onClick={() => onOpenChatPreview(selectedSlug)}
               className="text-[11px] text-slate-400 hover:text-white underline transition"
             >
-              Ver cómo ve el cliente el chat de esta tienda
+              Ver cÃ³mo ve el cliente el chat de esta tienda
             </button>
           )}
         </div>

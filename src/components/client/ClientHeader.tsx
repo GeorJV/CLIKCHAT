@@ -34,9 +34,9 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
           </div>
           <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
             <Bot className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Asesor IA: <strong>{tenant?.bot_name || 'SofÌa'}</strong></span>
-            <span className="text-slate-600">ï</span>
-            <span>Horario: {tenant?.business_hours || 'Lunes a S·bado 8am-7pm'}</span>
+            <span>Asesor IA: <strong>{tenant?.bot_name || 'Sof√≠a'}</strong></span>
+            <span className="text-slate-600">‚Ä¢</span>
+            <span>Horario: {tenant?.business_hours || 'Lunes a S√°bado 8am-7pm'}</span>
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
           }`}
         >
           <Package className="w-3.5 h-3.5" />
-          <span>Cat·logo (RAG N3)</span>
+          <span>Cat√°logo (RAG N3)</span>
         </button>
 
         <button

@@ -68,7 +68,7 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
             <span>Documentos y Manuales No Estructurados (RAG Bloque 2)</span>
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Manuales de garantía, guías de uso o políticas largas que el bot particiona en chunks para responder preguntas complejas.
+            Manuales de garantÃ­a, guÃ­as de uso o polÃ­ticas largas que el bot particiona en chunks para responder preguntas complejas.
           </p>
         </div>
         <button
@@ -87,17 +87,17 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-300 mb-1 font-medium">Título del Documento</label>
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Manual de Garantía Oficial 2026" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
+              <label className="block text-xs text-slate-300 mb-1 font-medium">TÃ­tulo del Documento</label>
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Manual de GarantÃ­a Oficial 2026" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
             </div>
             <div>
-              <label className="block text-xs text-slate-300 mb-1 font-medium">Categoría</label>
+              <label className="block text-xs text-slate-300 mb-1 font-medium">CategorÃ­a</label>
               <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ej: garantias, politicas, guias" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-slate-300 mb-1 font-medium">Texto Completo del Documento / Manual</label>
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Pega aquí el texto completo del manual, términos o especificaciones..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 min-h-[110px]" />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Pega aquÃ­ el texto completo del manual, tÃ©rminos o especificaciones..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 min-h-[110px]" />
           </div>
           <div className="flex justify-end">
             <button type="submit" disabled={!title.trim() || !content.trim() || isSubmitting} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition disabled:opacity-50">

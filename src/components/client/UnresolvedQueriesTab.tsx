@@ -42,8 +42,8 @@ export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unre
       {pending.length === 0 ? (
         <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-8 text-center">
           <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2 opacity-80" />
-          <h4 className="text-sm font-bold text-white">¡Bandeja al día!</h4>
-          <p className="text-xs text-slate-400 mt-1">No tienes consultas pendientes. Tu bot está respondiendo con las FAQs y catálogo.</p>
+          <h4 className="text-sm font-bold text-white">Â¡Bandeja al dÃ­a!</h4>
+          <p className="text-xs text-slate-400 mt-1">No tienes consultas pendientes. Tu bot estÃ¡ respondiendo con las FAQs y catÃ¡logo.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -71,7 +71,7 @@ export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unre
                   <textarea
                     value={answerText}
                     onChange={(e) => setAnswerText(e.target.value)}
-                    placeholder="Escribe la respuesta que aprenderá el bot..."
+                    placeholder="Escribe la respuesta que aprenderÃ¡ el bot..."
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 min-h-[65px]"
                   />
                   <div className="flex items-center justify-between gap-2">
@@ -79,7 +79,7 @@ export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unre
                       type="text"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      placeholder="Categoría"
+                      placeholder="CategorÃ­a"
                       className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white w-36"
                     />
                     <button
@@ -118,7 +118,7 @@ export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unre
                   <p className="font-semibold text-slate-200">"{r.user_question}"</p>
                   <p className="text-slate-400 text-[11px] mt-0.5">Resp: {r.human_answer || r.resolution_answer}</p>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 whitespace-nowrap ml-2">? Bot Auto-Entrenado</span>
+                <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 whitespace-nowrap ml-2">âœ¨ Bot Auto-Entrenado</span>
               </div>
             ))}
           </div>

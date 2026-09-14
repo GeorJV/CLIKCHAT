@@ -1,5 +1,5 @@
 /**
- * RAG Vectorial No Estructurado: Ingesta, chunking y recuperaciÛn de documentos/manuales
+ * RAG Vectorial No Estructurado: Ingesta, chunking y recuperaci√≥n de documentos/manuales
  */
 const { v4: uuidv4 } = require('uuid');
 const { query } = require('../db');
@@ -49,7 +49,7 @@ async function ingestDocument(tenantId, title, content, category = 'manuales', f
     
     // Extract keywords for dense hybrid matching
     const stopWords = new Set(['que', 'como', 'cuando', 'donde', 'por', 'para', 'con', 'los', 'las', 'una', 'uno', 'del', 'los', 'cual']);
-    const keywords = chunkTextContent.toLowerCase().replace(/[^a-z·ÈÌÛ˙Ò0-9\s]/gi, '').split(/\s+/).filter(w => w.length > 3 && !stopWords.has(w)).slice(0, 15);
+    const keywords = chunkTextContent.toLowerCase().replace(/[^a-z√°√©√≠√≥√∫√±0-9\s]/gi, '').split(/\s+/).filter(w => w.length > 3 && !stopWords.has(w)).slice(0, 15);
 
     await query(
       `INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords)
@@ -88,7 +88,7 @@ async function searchDocumentChunks(tenantId, queryText, limit = 2) {
       score: m.score
     }));
   } catch (err) {
-    console.warn('?? Error buscando document chunks en D1:', err.message);
+    console.warn('‚ö†Ô∏è Error buscando document chunks en D1:', err.message);
     return [];
   }
 }
