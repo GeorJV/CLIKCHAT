@@ -6,7 +6,11 @@ const { query } = require('../db');
 router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
-    const tenantRes = await query('SELECT * FROM tenants WHERE slug = $1', [slug]);
+    let tenantRes = await query('SELECT * FROM tenants WHERE slug = $1', [slug]);
+
+    if (tenantRes.rows.length === 0) {
+      tenantRes = await query('SELECT * FROM tenants LIMIT 1');
+    }
 
     if (tenantRes.rows.length === 0) {
       return res.status(404).json({ error: 'Inquilino (Tenant) no encontrado' });
