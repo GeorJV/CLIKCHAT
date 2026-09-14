@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
-- **Última Actualización:** 2026-09-13 22:54 GMT-6
-- **Versión Actual:** 1.2.0 (Despliegue Oficial en Cloudflare Pages)
-- **Última Tarea Completada:** Creación de repo GeorJV/CLIKCHAT y despliegue permanente en clikchat.pages.dev
+- **Última Actualización:** 2026-09-14 09:32 GMT-6
+- **Versión Actual:** 1.3.0 (RAG 3 Niveles 100% Operativo en Cloudflare D1)
+- **Última Tarea Completada:** Verificación y blindaje del RAG de 3 niveles en D1, stemmer español y auto-entrenamiento HITL
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 3c33f3c)
 - **Estado Actual del Sistema:**
-  - Desplegado y verificado en producción en Cloudflare Pages (HTTP 200 OK).
-  - Repositorio oficial migrado a cuenta GeorJV: https://github.com/GeorJV/CLIKCHAT
   - Base de datos operativa en Cloudflare D1 (clikchat-db: e0f64033-4d16-41b9-800b-baae12787d1c).
-  - Motor RAG de 3 niveles activo con arquitectura ARQMODULAR (<150 líneas por archivo).
+  - RAG Nivel 1 (Memoria de Sesión), Nivel 2 (FAQs con Early Stopping >= 0.65) y Nivel 3 (Catálogo) 100% verificados.
+  - Fallback HITL con auto-inyección a FAQs en D1 tras respuesta del dueño operativa y probada.
+  - Repositorio oficial sincronizado en cuenta GeorJV: https://github.com/GeorJV/CLIKCHAT
   - Proyecto registrado y supervisado en ARQ AI Studio (proj-1789360940430).
-- **Siguiente Paso Inmediato:** Continuar con los requerimientos del producto sobre la URL permanente clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Continuar con los requerimientos adicionales del chat y panel de cliente.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en lockedFiles sin autorización explícita.
-  - Sincronizar tareas a status: "ready_for_review" en ARQ AI Studio.
+  - Tareas sincronizadas a status: "ready_for_review" en ARQ AI Studio.
   - Repositorio oficial de producción: https://github.com/GeorJV/CLIKCHAT.
