@@ -100,7 +100,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     return false;
   };
 
-  const createProduct = async (productData: { name: string; price: number; short_description?: string; benefits?: string[]; cta_url?: string }) => {
+  const createProduct = async (productData: Partial<Product> & { name: string; price: number }) => {
     if (!tenant?.id || !productData.name) return false;
     try {
       const res = await fetch('/api/products', {
@@ -114,6 +114,36 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       }
     } catch (err) {
       console.error('Error creating product:', err);
+    }
+    return false;
+  };
+
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        await loadTenantData(tenantSlug);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error updating product:', err);
+    }
+    return false;
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => p.id !== id));
+        return true;
+      }
+    } catch (err) {
+      console.error('Error deleting product:', err);
     }
     return false;
   };
@@ -142,6 +172,6 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   return {
     tenantSlug, setTenantSlug, tenant, products, faqs, unresolved,
     availableTenants, isLoading, saveSuccess, loadTenantData,
-    resolveQuery, createFaq, deleteFaq, createProduct, updateSettings
+    resolveQuery, createFaq, deleteFaq, createProduct, updateProduct, deleteProduct, updateSettings
   };
 }

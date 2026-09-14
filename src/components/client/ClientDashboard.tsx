@@ -39,6 +39,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     createFaq,
     deleteFaq,
     createProduct,
+    updateProduct,
+    deleteProduct,
     updateSettings
   } = useClientPortal(tenantSlug);
 
@@ -79,64 +81,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </div>
           )}
 
-          {activeTab === 'chatbot' && (
-            <ChatbotQLinkTab
-              tenant={tenant}
-              tenantSlug={currentSlug}
-              onOpenLiveChat={onOpenLiveChat}
-            />
-          )}
-
-          {activeTab === 'business' && (
-            <BusinessSettingsTab
-              tenant={tenant}
-              tenantSlug={currentSlug}
-              onUpdateSettings={updateSettings}
-              saveSuccess={saveSuccess}
-            />
-          )}
-
-          {activeTab === 'products' && (
-            <ProductsManagerTab
-              products={products}
-              onCreateProduct={createProduct}
-            />
-          )}
-
-          {activeTab === 'faqs' && (
-            <FaqsManagerTab
-              faqs={faqs}
-              onCreateFaq={createFaq}
-              onDeleteFaq={deleteFaq}
-            />
-          )}
-
-          {activeTab === 'documents' && (
-            <DocumentsManagerTab
-              tenantId={tenant?.id}
-            />
-          )}
-
-          {activeTab === 'audit' && (
-            <UnresolvedQueriesTab
-              unresolved={unresolved}
-              onResolve={resolveQuery}
-            />
-          )}
-
-          {activeTab === 'conversations' && (
-            <ConversationsTab
-              tenantId={tenant?.id}
-            />
-          )}
-
-          {activeTab === 'settings' && (
-            <BotSettingsTab
-              tenant={tenant}
-              onUpdateSettings={updateSettings}
-              saveSuccess={saveSuccess}
-            />
-          )}
+          {activeTab === 'chatbot' && <ChatbotQLinkTab tenant={tenant} tenantSlug={currentSlug} onOpenLiveChat={onOpenLiveChat} />}
+          {activeTab === 'business' && <BusinessSettingsTab tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} />}
+          {activeTab === 'products' && <ProductsManagerTab products={products} tenantSlug={currentSlug} tenant={tenant} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />}
+          {activeTab === 'faqs' && <FaqsManagerTab faqs={faqs} onCreateFaq={createFaq} onDeleteFaq={deleteFaq} />}
+          {activeTab === 'documents' && <DocumentsManagerTab tenantId={tenant?.id} />}
+          {activeTab === 'audit' && <UnresolvedQueriesTab unresolved={unresolved} onResolve={resolveQuery} />}
+          {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
+          {activeTab === 'settings' && <BotSettingsTab tenant={tenant} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} />}
         </div>
       </main>
     </div>
