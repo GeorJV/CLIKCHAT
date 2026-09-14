@@ -1,17 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 13:56 GMT-6
-- **Versión Actual:** 1.7.0 (Rediseño Sección Mis Productos & QLinks ARQMODULAR)
+- **Última Actualización:** 2026-09-14 14:34 GMT-6
+- **Versión Actual:** 1.8.0 (Menú Modo Simple QChat Perfeccionado & Desplegado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 67d30d7)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 7e12b25)
 - **Estado Actual del Sistema:**
-  - Sección 'Mis Productos' rediseñada con fidelidad 100%: cabecera con '+ + Nuevo producto', 5 KPIs globales de analítica, banner explicativo de temperatura de venta por IA (Frío, Tibio, Caliente).
-  - Tarjetas de producto con badge '• Activo para Bot', caja QLink directa ('Abrir' y 'Copiar'), acordeón de métricas exactas y acciones 'Editar' y 'Eliminar'.
-  - Componentes divididos en `src/components/client/products/` todos estrictamente < 150 líneas.
-  - Compilación Vite exitosa (0 errores TypeScript).
+  - Menú lateral de Modo Simple de QChat portado con mejoras: Pin rotativo a 45° con hover expansivo, selector Modo Simple/Pro con indicador pulsante.
+  - Items oficiales de navegación (Chatbot & QLink, Mi Negocio, Mis Productos, Preguntas FAQ, Documentos, Entrenamiento IA con badge de dudas pendientes, Conversaciones, Configuración).
+  - Despliegue dinámico de categorías acordeón al activar Modo Pro (Agencia, Operaciones & CRM, Ventas & Canales).
+  - Tarjeta interactiva de Funnels y botón Invita & Gana con feedback toast al portapapeles.
+  - Componentes atómicos en `src/components/client/sidebar/` (< 110 líneas c/u).
+  - Despliegue permanente verificado en Cloudflare Pages (bundle `index-ipqb7Awm.js`).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`).
-- **Siguiente Paso Inmediato:** Validar despliegue en vivo en Cloudflare Pages y feedback del usuario.
+- **Siguiente Paso Inmediato:** Validar experiencia de navegación y continuar con requerimientos de usuario.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
