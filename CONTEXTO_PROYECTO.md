@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 16:56 GMT-6
-- **Versión Actual:** 1.12.1 (Pestaña Conversaciones Operativa con Transcripciones Expandibles)
+- **Última Actualización:** 2026-09-14 17:00 GMT-6
+- **Versión Actual:** 1.12.2 (Sidebar Colapsado Angosto w-12 con Botones Cuadrados Centrados)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: ccc1ffb)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 3a29af8)
 - **Estado Actual del Sistema:**
-  - Pestaña de Conversaciones reparada al importar `ConversationsTab` en `ClientDashboard.tsx`.
-  - Visualización interactiva con acordeón expandible para inspeccionar la transcripción completa de mensajes.
-  - Insignias de nivel RAG (Caché $0, FAQ Nivel 2, Catálogo D1) con marcas de tiempo y datos de lead.
-  - Erradicación 100% de azules y violetas, todo en Onyx Charcoal #151414 / #181717 con dot-grid 16px.
+  - Sidebar colapsado reducido de w-16 (64px) a w-12 (48px) ultra-estilizado tipo Linear / Raycast.
+  - Botones de navegación en modo colapsado transformados en cuadrados perfectos centrados (w-8 h-8).
+  - Pestaña de Conversaciones con transcripciones expandibles e insignias RAG.
+  - Paleta Onyx Charcoal #151414 / #181717 con dot-grid 16px libre de azules/violetas.
   - Componentes atómicos verificados bajo estándar ARQMODULAR (<150 líneas por archivo).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el funcionamiento de la pestaña Conversaciones.
+- **Siguiente Paso Inmediato:** Validar la apariencia visual y proporción del sidebar colapsado.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
