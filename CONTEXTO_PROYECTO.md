@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 10:28 GMT-6
-- **Versión Actual:** 1.5.0 (RAG Híbrido 4 Bloques 100% Completado & Sidebar Moderno)
+- **Última Actualización:** 2026-09-14 11:06 GMT-6
+- **Versión Actual:** 1.5.1 (Sidebar Ajustado & UTF-8 Corregido)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 9c4c633)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: ccd9306)
 - **Estado Actual del Sistema:**
   - 1. RAG Caché Semántico: Hit exacto >= 0.88 responde en <15ms con costo $0 sin tocar LLM.
   - 2. RAG No Estructurado: Tablas `knowledge_documents` y `document_chunks` en Cloudflare D1 operativas.
   - 3. RAG Estructurado: Catálogo oficial en D1 con precios y especificaciones inmutables.
   - 4. RAG Memoria Continua: Reconocimiento cross-sesión del cliente por teléfono/email.
-  - Menú lateral oscuro idéntico al diseño del usuario (Modo Simple, QLink, Entrenamiento IA 🔴, Docs, Conversaciones).
+  - Menú lateral: botones compactos y unidos (space-y-0.5, py-1.5), acentos UTF-8 limpios ("Configuración", "⭐").
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`).
-- **Siguiente Paso Inmediato:** Demostrar y disfrutar del bot con el usuario en vivo.
+- **Siguiente Paso Inmediato:** Validar visualmente en el navegador y continuar con pruebas en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
