@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 15:45 GMT-6
-- **Versión Actual:** 1.11.0 (Estética Linear/Raycast Dark: Textura Dot-Grid, Command Bar & Onyx Cards)
+- **Última Actualización:** 2026-09-14 15:48 GMT-6
+- **Versión Actual:** 1.11.1 (Calibración Hexadecimal Exacta del Fondo #151414 & Grid 16px)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: fec9f64)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 70af364)
 - **Estado Actual del Sistema:**
-  - Textura técnica de micro-puntos (*dot-grid*) en el fondo `#0B0C0E` del viewport del Dashboard.
-  - Tarjetas con superficie ónix (`#121316`), bordes hairline (`border-white/10`) y microinteracciones.
-  - Buscador en Preguntas FAQ renovado a Command Bar estilo Raycast con icono, atajo `Esc` y filtro.
-  - Métricas, Productos y Configuración integrados en el nuevo tema visual de alta ingeniería.
-  - Componentes atómicos cumpliendo estrictamente el estándar ARQMODULAR (<150 líneas por archivo).
+  - Fondo muestreado píxel por píxel directamente de la captura del usuario: `#151414` (Warm Charcoal).
+  - Matriz de micro-puntos con separación exacta de 16px (`radial-gradient(rgba(255,255,255,0.09) 1px)`).
+  - Superficies de tarjetas (`#181717`) con bordes `#282626` y Command Bar en `#191817` con borde `#2E2B2B`.
+  - Sidebar calibrada en `#131212` con divisor `#222020` manteniendo armonía mate profunda.
+  - Componentes atómicos verificados bajo estándar ARQMODULAR (<150 líneas por archivo).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar experiencia visual con el usuario y continuar según prioridades.
+- **Siguiente Paso Inmediato:** Validar con el usuario el resultado cromático final.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
