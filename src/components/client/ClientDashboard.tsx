@@ -89,7 +89,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'documents' && <DocumentsManagerTab tenantId={tenant?.id} />}
           {activeTab === 'audit' && <UnresolvedQueriesTab unresolved={unresolved} onResolve={resolveQuery} />}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
-          {activeTab === 'settings' && <BotSettingsTab tenant={tenant} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} />}
+          {activeTab === 'settings' && <BotSettingsTab tenant={tenant} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat} />}
         </div>
       </main>
     </div>

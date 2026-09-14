@@ -20,7 +20,6 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
     { id: 'business' as ClientTab, label: 'Mi Negocio', icon: Store },
     { id: 'products' as ClientTab, label: 'Mis Productos', icon: ShoppingBag },
     { id: 'faqs' as ClientTab, label: 'Preguntas FAQ', icon: BookOpen },
-    { id: 'documents' as ClientTab, label: 'Documentos & Manuales', icon: FileText },
     { id: 'audit' as ClientTab, label: 'Entrenamiento IA', icon: Brain, badge: unresolvedCount },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'settings' as ClientTab, label: 'Configuración', icon: Settings }
