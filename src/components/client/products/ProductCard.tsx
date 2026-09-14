@@ -130,17 +130,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </a>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEdit(product)}
-            className="px-3 py-1 bg-[#121f28] hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 rounded-lg transition"
-          >
+          <button onClick={() => onEdit(product)} className="px-3 py-1 bg-[#1c1b1b] hover:bg-[#252424] border border-[#2e2b2b] text-xs font-semibold text-zinc-200 rounded-lg transition">
             Editar
           </button>
-          <button
-            onClick={() => onDelete(product.id)}
-            className="text-slate-400 hover:text-red-400 p-1 transition"
-            title="Eliminar producto"
-          >
+          <button onClick={() => onDelete(product.id)} className="text-zinc-500 hover:text-red-400 p-1 transition" title="Eliminar producto">
             <X className="w-4 h-4" />
           </button>
         </div>

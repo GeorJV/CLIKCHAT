@@ -64,7 +64,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
-    <div className="h-full w-full flex bg-[#0B0C0E] text-slate-100 overflow-hidden font-sans">
+    <div className="h-full w-full flex bg-[#151414] text-slate-100 overflow-hidden font-sans">
       {/* Dark Modern Sidebar */}
       <ClientSidebar
         activeTab={activeTab}

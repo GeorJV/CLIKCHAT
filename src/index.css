@@ -54,38 +54,38 @@
               margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Linear / Raycast Onyx Dark Theme with Dot Grid */
+/* Exact Warm Charcoal Dark Theme with Dot Grid (Sampled from screenshot) */
 .bg-dot-grid {
-  background-color: #0b0c0e;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 18px 18px;
+  background-color: #151414;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 
 .bg-dot-grid-subtle {
-  background-color: #0d0e12;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-color: #151414;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 16px 16px;
 }
 
 .onyx-card {
-  background-color: #121316;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  background-color: #181717;
+  border: 1px solid #282626;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6);
 }
 
 .onyx-card:hover {
-  background-color: #16171b;
-  border-color: rgba(255, 255, 255, 0.14);
+  background-color: #1c1b1b;
+  border-color: #383535;
 }
 
 .onyx-surface {
-  background-color: #0f1013;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: #151414;
+  border: 1px solid #262424;
 }
 
 .onyx-input {
-  background-color: #0f1014;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #191817;
+  border: 1px solid #2e2b2b;
   color: #f4f4f5;
 }
 
@@ -96,8 +96,8 @@
 
 .keycap {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background-color: #1a1b20;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #1e1d1d;
+  border: 1px solid #2e2b2b;
   color: #a1a1aa;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(0, 0, 0, 0.2);
 }

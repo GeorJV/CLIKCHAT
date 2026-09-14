@@ -31,7 +31,7 @@ export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
   return (
     <div className="space-y-4">
       {/* Raycast / Linear Command Bar */}
-      <div className="flex items-center gap-3 p-2.5 sm:px-4 bg-[#111215] border border-white/10 rounded-2xl shadow-xl focus-within:border-white/25 transition">
+      <div className="flex items-center gap-3 p-2.5 sm:px-4 bg-[#191817] border border-[#2E2B2B] rounded-2xl shadow-xl focus-within:border-zinc-600 transition">
         <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
         <input
           type="text"
@@ -50,7 +50,7 @@ export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
               Esc
             </button>
           )}
-          <span className="w-px h-4 bg-white/10" />
+          <span className="w-px h-4 bg-[#2E2B2B]" />
           <Filter className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-200 cursor-pointer" />
         </div>
       </div>
@@ -64,7 +64,7 @@ export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition cursor-pointer ${
               activeCategory === cat
                 ? 'bg-emerald-500 text-slate-950 shadow-sm font-black'
-                : 'bg-[#121316] text-zinc-400 hover:text-white border border-white/[0.07]'
+                : 'bg-[#181717] text-zinc-400 hover:text-white border border-[#282626]'
             }`}
           >
             {cat}

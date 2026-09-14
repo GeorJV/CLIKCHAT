@@ -36,7 +36,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       className={`${
         isExpanded ? 'w-60 p-3' : 'w-16 px-1.5 py-3'
-      } transition-all duration-300 ease-in-out shrink-0 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between select-none h-full overflow-y-auto relative`}
+      } transition-all duration-300 ease-in-out shrink-0 bg-[#131212] border-r border-[#222020] flex flex-col justify-between select-none h-full overflow-y-auto relative`}
     >
       <div className="space-y-2.5">
         {/* Header con Alternador de Modo y Botón Pin */}
