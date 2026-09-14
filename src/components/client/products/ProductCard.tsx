@@ -19,9 +19,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [copied, setCopied] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
 
-  const qlinkUrl = `https://clikchat.pages.dev/?t=${tenantSlug}&p=${product.id}`;
-  const displayUrl = `https://qchatt.pages.dev/165/p/${product.slug || product.id.slice(0, 8)}...`;
-  const storeUrl = `https://clikchat.pages.dev/?t=${tenantSlug}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
+  const qlinkUrl = `${origin}/?t=${tenantSlug}&p=${product.id}`;
+  const displayUrl = `https://clikchat.pages.dev/p/${product.slug || product.id.slice(0, 8)}...`;
+  const storeUrl = `${origin}/?t=${tenantSlug}`;
 
   const defaultImg = product.name.toLowerCase().includes('zapato')
     ? 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80'

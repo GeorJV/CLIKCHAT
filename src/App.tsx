@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { MobileChatView } from './components/chat/MobileChatView';
+import { ProductChatView } from './components/chat/product/ProductChatView';
 import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
-import { MessageSquare, Briefcase, ShieldCheck, Smartphone, ExternalLink } from 'lucide-react';
+import { MessageSquare, Briefcase, ShieldCheck, Smartphone, ShoppingBag } from 'lucide-react';
 
 export function App() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isProductChat = params?.get('view') === 'product' || params?.has('p');
   const isDirectChat = params?.get('view') === 'chat' || (params?.has('t') && !params?.has('panel'));
-  const [currentView, setCurrentView] = useState<'chat' | 'client' | 'admin'>(isDirectChat ? 'chat' : 'client');
+  const initialView = isProductChat ? 'product' : isDirectChat ? 'chat' : 'client';
+  const [currentView, setCurrentView] = useState<'chat' | 'product' | 'client' | 'admin'>(initialView);
   const [selectedTenantSlug, setSelectedTenantSlug] = useState(params?.get('t') || 'acme-store');
 
   return (
@@ -36,6 +39,18 @@ export function App() {
           >
             <Smartphone className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Chat Móvil</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('product')}
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+              currentView === 'product'
+                ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Chat Producto</span>
           </button>
 
           <button
@@ -71,6 +86,16 @@ export function App() {
             <MobileChatView
               tenantSlug={selectedTenantSlug}
               onNavigateToPanel={() => setCurrentView('client')}
+            />
+          </div>
+        )}
+
+        {currentView === 'product' && (
+          <div className="h-full w-full overflow-hidden bg-[#131212]">
+            <ProductChatView
+              storeName="Clikchat Store"
+              agentName="Sofía"
+              onExit={() => setCurrentView('client')}
             />
           </div>
         )}
