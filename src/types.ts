@@ -41,6 +41,7 @@ export interface Tenant {
   plan: string;
   monthly_price: number;
   status: string;
+  business_hours?: string;
 }
 
 export interface ChatMessage {
@@ -67,8 +68,11 @@ export interface UnresolvedQuery {
     email?: string;
   };
   status: 'pending' | 'resolved' | 'dismissed';
+  human_answer?: string;
   resolution_answer?: string;
+  auto_trained_to_faq?: number;
   created_at: string;
+  resolved_at?: string;
 }
 
 export interface SaasMetrics {

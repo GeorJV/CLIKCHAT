@@ -34,23 +34,31 @@ router.post('/', async (req, res) => {
     }
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { v4: uuidv4 } = require('uuid');
+    const id = uuidv4();
 
-    const result = await query(
+    await query(
       `INSERT INTO products (
-        tenant_id, name, slug, price, currency, short_description,
+        id, tenant_id, name, slug, price, currency, short_description,
         full_description, images, benefits, details, cta_label, cta_url
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
-        tenant_id, name, slug, price, currency || 'USD',
+        id, tenant_id, name, slug, price, currency || 'USD',
         short_description || '', full_description || short_description || '',
         JSON.stringify(images || []), JSON.stringify(benefits || []),
         JSON.stringify(details || {}), cta_label || 'Comprar', cta_url || ''
       ]
     );
 
+    const createdProduct = {
+      id, tenant_id, name, slug, price, currency: currency || 'USD',
+      short_description: short_description || '', full_description: full_description || short_description || '',
+      images: images || [], benefits: benefits || [], details: details || {},
+      cta_label: cta_label || 'Comprar', cta_url: cta_url || '', is_active: true
+    };
+
     console.log(`📦 [PRODUCT CREATED] Producto "${name}" guardado y listo para RAG Nivel 3`);
-    return res.status(201).json({ success: true, product: result.rows[0] });
+    return res.status(201).json({ success: true, product: createdProduct });
   } catch (err) {
     console.error('Error creando producto:', err);
     return res.status(500).json({ error: err.message });

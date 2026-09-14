@@ -1,17 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
-- **Última Actualización:** 2026-09-14 09:32 GMT-6
-- **Versión Actual:** 1.3.0 (RAG 3 Niveles 100% Operativo en Cloudflare D1)
-- **Última Tarea Completada:** Verificación y blindaje del RAG de 3 niveles en D1, stemmer español y auto-entrenamiento HITL
+- **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG de 3 Niveles y Portal del Dueño (HITL).
+- **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
+- **Última Actualización:** 2026-09-14 09:50 GMT-6
+- **Versión Actual:** 1.4.0 (Construcción Modular del Portal del Dueño Multi-Tenant)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 3c33f3c)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Base de datos operativa en Cloudflare D1 (clikchat-db: e0f64033-4d16-41b9-800b-baae12787d1c).
-  - RAG Nivel 1 (Memoria de Sesión), Nivel 2 (FAQs con Early Stopping >= 0.65) y Nivel 3 (Catálogo) 100% verificados.
-  - Fallback HITL con auto-inyección a FAQs en D1 tras respuesta del dueño operativa y probada.
-  - Repositorio oficial sincronizado en cuenta GeorJV: https://github.com/GeorJV/CLIKCHAT
-  - Proyecto registrado y supervisado en ARQ AI Studio (proj-1789360940430).
-- **Siguiente Paso Inmediato:** Continuar con los requerimientos adicionales del chat y panel de cliente.
+  - Base de datos Cloudflare D1 nativa (`clikchat-db`: e0f64033-4d16-41b9-800b-baae12787d1c).
+  - RAG Nivel 1 (Memoria), Nivel 2 (FAQs Early Stopping >= 0.65) y Nivel 3 (Catálogo) 100% operativos.
+  - Multi-Tenant: Aislamiento estricto por `tenant_id` y `slug` en Cloudflare D1.
+  - Portal del Dueño: Login multi-tenant, bandeja HITL con auto-aprendizaje a FAQs, catálogo y horario comercial.
+  - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`).
+- **Siguiente Paso Inmediato:** Finalizar la modularización del panel del cliente y probar chat con dueño en vivo.
 - **Decisiones Técnicas Inmutables:**
-  - Prohibido modificar archivos en lockedFiles sin autorización explícita.
-  - Tareas sincronizadas a status: "ready_for_review" en ARQ AI Studio.
-  - Repositorio oficial de producción: https://github.com/GeorJV/CLIKCHAT.
+  - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
+  - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
+  - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.

@@ -6,7 +6,7 @@ import { MessageSquare, Briefcase, ShieldCheck, Smartphone, ExternalLink } from 
 
 export function App() {
   const [currentView, setCurrentView] = useState<'chat' | 'client' | 'admin'>('chat');
-  const [selectedTenantSlug, setSelectedTenantSlug] = useState('demo-store');
+  const [selectedTenantSlug, setSelectedTenantSlug] = useState('acme-store');
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
@@ -78,6 +78,7 @@ export function App() {
             <ClientDashboard
               tenantSlug={selectedTenantSlug}
               onOpenLiveChat={() => setCurrentView('chat')}
+              onSelectTenant={(slug) => setSelectedTenantSlug(slug)}
             />
           </div>
         )}

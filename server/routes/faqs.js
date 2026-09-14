@@ -29,13 +29,28 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Campos requeridos faltantes (tenant_id, question, answer)' });
     }
 
-    const result = await query(
-      `INSERT INTO faqs (tenant_id, question, answer, category, confidence_threshold, source)
-       VALUES ($1, $2, $3, $4, $5, 'manual') RETURNING *`,
-      [tenant_id, question, answer, category || 'general', confidence_threshold || 0.82]
+    const { v4: uuidv4 } = require('uuid');
+    const id = uuidv4();
+
+    const stopWords = new Set(['que', 'como', 'cuando', 'donde', 'por', 'para', 'con', 'los', 'las', 'una', 'uno', 'del', 'cual', 'cuanto', 'tiene', 'tienen', 'hacen']);
+    const keywords = question
+      .toLowerCase()
+      .replace(/[^a-záéíóúñ0-9\s]/gi, '')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !stopWords.has(w));
+
+    await query(
+      `INSERT INTO faqs (id, tenant_id, question, answer, keywords, category, confidence_threshold, source)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
+      [id, tenant_id, question, answer, JSON.stringify(keywords), category || 'general', confidence_threshold || 0.65]
     );
 
-    return res.status(201).json({ success: true, faq: result.rows[0] });
+    const createdFaq = {
+      id, tenant_id, question, answer, keywords, category: category || 'general',
+      confidence_threshold: confidence_threshold || 0.65, source: 'manual'
+    };
+
+    return res.status(201).json({ success: true, faq: createdFaq });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
