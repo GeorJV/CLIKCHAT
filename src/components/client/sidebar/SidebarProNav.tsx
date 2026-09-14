@@ -35,7 +35,9 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         key={label}
         onClick={() => setActiveTab(id)}
         title={label}
-        className={`w-full flex items-center ${isExpanded ? 'justify-between px-2.5' : 'justify-center px-0'} py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+        className={`${
+          isExpanded ? 'w-full justify-between px-2.5 py-1.5' : 'w-8 h-8 justify-center p-0 mx-auto'
+        } flex items-center rounded-lg text-xs font-semibold transition relative group cursor-pointer ${
           isActive
             ? 'bg-[#1a1919] border border-[#2e2b2b] text-emerald-400 font-bold shadow-sm'
             : 'text-zinc-400 hover:text-white hover:bg-[#181717]'
@@ -45,10 +47,14 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
           <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-400'}`} />
           {isExpanded && <span className="truncate">{label}</span>}
         </div>
-        {badge !== undefined && badge > 0 && isExpanded && (
-          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
-            {badge}
-          </span>
+        {badge !== undefined && badge > 0 && (
+          isExpanded ? (
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
+              {badge}
+            </span>
+          ) : (
+            <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+          )
         )}
       </button>
     );

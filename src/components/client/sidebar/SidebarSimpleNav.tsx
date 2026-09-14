@@ -44,9 +44,9 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               title={item.label}
-              className={`w-full flex items-center ${
-                isExpanded ? 'justify-between px-2.5' : 'justify-center px-0'
-              } py-2 rounded-xl text-xs font-semibold transition relative group cursor-pointer ${
+              className={`${
+                isExpanded ? 'w-full justify-between px-2.5 py-2 rounded-xl' : 'w-8 h-8 justify-center p-0 mx-auto rounded-lg'
+              } flex items-center text-xs font-semibold transition relative group cursor-pointer ${
                 isActive
                   ? 'bg-[#1a1919] border border-[#2e2b2b] text-emerald-400 font-bold shadow-sm'
                   : 'text-zinc-400 hover:text-white hover:bg-[#181717]'
@@ -68,7 +68,7 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
                     {item.badge}
                   </span>
                 ) : (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                 )
               )}
             </button>

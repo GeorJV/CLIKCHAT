@@ -45,7 +45,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
 
       <button
         onClick={handleTogglePin}
-        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition cursor-pointer ${
           isPinned
             ? 'bg-emerald-600/90 border-emerald-500/50 text-white shadow-sm'
             : 'bg-[#181717] border-[#282626] text-zinc-400 hover:text-emerald-400 hover:border-[#383535]'
