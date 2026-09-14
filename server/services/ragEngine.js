@@ -184,6 +184,12 @@ ENLACE DE COMPRA: ${p.cta_url || ''}
 
   let unresolvedId = require('uuid').v4();
   try {
+    // Ensure chat session exists before inserting unresolved query for foreign key integrity
+    await query(
+      'INSERT OR IGNORE INTO chat_sessions (id, tenant_id) VALUES ($1, $2)',
+      [sessionId, actualTenantId]
+    );
+
     await query(
       `INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status)
        VALUES ($1, $2, $3, $4, $5, 'pending')`,
@@ -253,14 +259,25 @@ async function saveChatMessage(tenantId, sessionId, userMsg, botMsg, level, cont
 
 // Auto-inject answered query into Level 2 FAQs (Self-learning loop)
 async function injectAnswerIntoFaq(tenantId, question, answer, category = 'general') {
+  const { v4: uuidv4 } = require('uuid');
+  const faqId = uuidv4();
+
+  // Extract keywords to guarantee strong vector/similarity matches for future queries
+  const stopWords = new Set(['que', 'como', 'cuando', 'donde', 'por', 'para', 'con', 'los', 'las', 'una', 'uno', 'del', 'cual', 'cuanto', 'tiene', 'tienen', 'hacen']);
+  const keywords = question
+    .toLowerCase()
+    .replace(/[^a-záéíóúñ0-9\s]/gi, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopWords.has(w));
+
   try {
-    const res = await query(
-      `INSERT INTO faqs (tenant_id, question, answer, confidence_threshold, category, source)
-       VALUES ($1, $2, $3, 0.65, $4, 'hitl_audit') RETURNING *`,
-      [tenantId, question, answer, category]
+    await query(
+      `INSERT INTO faqs (id, tenant_id, question, answer, keywords, confidence_threshold, category, source)
+       VALUES ($1, $2, $3, $4, $5, 0.65, $6, 'hitl_audit')`,
+      [faqId, tenantId, question, answer, JSON.stringify(keywords), category]
     );
-    console.log(`💡 [AUTO-LEARN] Pregunta agregada exitosamente a FAQs Nivel 2: "${question}"`);
-    return res.rows[0];
+    console.log(`💡 [AUTO-LEARN] Pregunta agregada exitosamente a FAQs Nivel 2 en Cloudflare D1: "${question}"`);
+    return { id: faqId, tenantId, question, answer, keywords, category };
   } catch (err) {
     console.error('Error auto-inyectando FAQ:', err.message);
     throw err;

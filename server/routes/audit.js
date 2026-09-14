@@ -53,14 +53,14 @@ router.post('/resolve/:id', async (req, res) => {
     }
 
     // Update query status to resolved
-    const updateRes = await query(
+    await query(
       `UPDATE unresolved_queries SET
         status = 'resolved',
-        resolution_answer = $1,
-        resolved_at = NOW(),
-        auto_injected_to_faq = $2
-       WHERE id = $3 RETURNING *`,
-      [answer.trim(), autoInjectToFaq, id]
+        human_answer = $1,
+        resolved_at = datetime('now'),
+        auto_trained_to_faq = $2
+       WHERE id = $3`,
+      [answer.trim(), autoInjectToFaq ? 1 : 0, id]
     );
 
     // Trigger Web Push Notification to user's mobile device
@@ -78,7 +78,7 @@ router.post('/resolve/:id', async (req, res) => {
     return res.json({
       success: true,
       message: 'Consulta resuelta exitosamente y auto-inyectada en FAQs (Nivel 2) del bot.',
-      resolvedQuery: updateRes.rows[0],
+      resolvedQuery: { id, status: 'resolved', human_answer: answer.trim() },
       injectedFaq: createdFaq
     });
   } catch (err) {

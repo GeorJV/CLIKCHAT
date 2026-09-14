@@ -25,8 +25,20 @@ function cosineSimilarity(vecA, vecB) {
 const STOP_WORDS = new Set([
   'de', 'la', 'los', 'las', 'el', 'en', 'por', 'para', 'con', 'y', 'a', 'que', 'del', 'al',
   'un', 'una', 'unos', 'unas', 'es', 'son', 'se', 'su', 'sus', 'lo', 'le', 'les', 'o', 'u',
-  'como', 'pero', 'mas', 'si', 'no', 'mi', 'tu', 'te', 'me', 'nos', 'the', 'of', 'and', 'to', 'in', 'is'
+  'como', 'pero', 'mas', 'si', 'no', 'mi', 'tu', 'te', 'me', 'nos', 'the', 'of', 'and', 'to', 'in', 'is',
+  'tiene', 'tienen', 'tienes', 'tengo', 'tenemos', 'hay', 'hace', 'hacen', 'haces', 'hago',
+  'puedo', 'puede', 'pueden', 'puedes', 'podria', 'podrian', 'saber', 'quiero', 'quisiera', 'deseo',
+  'favor', 'hola', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'gracias',
+  'todo', 'toda', 'todos', 'todas', 'algun', 'alguna', 'algunos', 'algunas', 'otro', 'otra', 'otros', 'otras',
+  'este', 'esta', 'estos', 'estas', 'ese', 'esa', 'esos', 'esas', 'aquel', 'aquella'
 ]);
+
+function stemSpanish(w) {
+  if (!w || w.length <= 3) return w;
+  return w
+    .replace(/(es|s)$/i, '')
+    .replace(/(ando|iendo|aron|eron|aban|abas|aba|aran|aras|ara|ado|ido|ar|er|ir|an|en|as|es|ó|o|a|e)$/i, '');
+}
 
 // Tokenizer & semantic hash vectorizer (Fast, reliable, zero-latency fallback)
 function createSemanticVector(text, dimensions = 128) {
@@ -36,7 +48,7 @@ function createSemanticVector(text, dimensions = 128) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
     .replace(/[^a-z0-9\s]/g, ' ');
 
-  const words = cleanText.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w));
+  const words = cleanText.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w)).map(stemSpanish);
   const vector = new Array(dimensions).fill(0);
 
   if (words.length === 0) return vector;
@@ -82,17 +94,33 @@ function computeWordOverlap(textA, textB) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w))
+    .map(stemSpanish);
 
-  const setA = new Set(getTokens(textA));
+  const tokensA = getTokens(textA);
+  const setA = new Set(tokensA);
   const setB = new Set(getTokens(textB));
   if (setA.size === 0 || setB.size === 0) return 0;
 
   let common = 0;
   for (const w of setA) {
-    if (setB.has(w)) common++;
+    if (setB.has(w)) {
+      common += 1.0;
+    } else {
+      for (const b of setB) {
+        if ((w.length >= 4 && b.startsWith(w)) || (b.length >= 4 && w.startsWith(b))) {
+          common += 0.85;
+          break;
+        }
+      }
+    }
   }
-  return (2 * common) / (setA.size + setB.size);
+
+  // Coverage of user query terms in knowledge item
+  const queryCoverage = Math.min(1.0, common / setA.size);
+  const dice = (2 * common) / (setA.size + setB.size);
+
+  return Math.max(queryCoverage, dice);
 }
 
 // Search items with vector similarity, Dice overlap and strict threshold
@@ -103,9 +131,9 @@ function rankBySimilarity(queryText, items, textField = 'text', threshold = 0.0)
     const targetText = typeof textField === 'function' ? textField(item) : item[textField];
     const itemVec = item._vector || createSemanticVector(targetText);
     const cosScore = cosineSimilarity(queryVec, itemVec);
-    const diceScore = computeWordOverlap(queryText, targetText);
-    // Combined metric handles synonyms, n-grams, and natural word reordering in chat
-    const score = Math.max(cosScore, (0.4 * cosScore) + (0.6 * diceScore));
+    const overlapScore = computeWordOverlap(queryText, targetText);
+    // Combined metric prioritizes high query coverage and semantic overlap
+    const score = Math.max(cosScore, overlapScore, (0.35 * cosScore) + (0.65 * overlapScore));
     return { item, score };
   });
 
