@@ -10,6 +10,7 @@ import { ProductsManagerTab } from './ProductsManagerTab';
 import { DocumentsManagerTab } from './DocumentsManagerTab';
 import { BotSettingsTab } from './BotSettingsTab';
 import { BusinessSettingsTab } from './BusinessSettingsTab';
+import { ConversationsTab } from './ConversationsTab';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
