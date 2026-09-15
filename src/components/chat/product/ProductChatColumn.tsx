@@ -43,9 +43,9 @@ export const ProductChatColumn: React.FC<Props> = ({
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
 
   return (
-    <section className="flex flex-col h-full bg-[#151414] border-b lg:border-b-0 lg:border-r border-[#262424] overflow-hidden relative min-h-0">
+    <section className="flex flex-col h-full bg-[#1e1d1d] border-b lg:border-b-0 lg:border-r border-[#2d2b2b] overflow-hidden relative min-h-0">
       {/* Slim Header */}
-      <header className="h-11 px-3 bg-[#111010] border-b border-[#262424] flex items-center justify-between z-10 shrink-0 select-none">
+      <header className="h-11 px-3 bg-[#171616] border-b border-[#2d2b2b] flex items-center justify-between z-10 shrink-0 select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
             <img src={agentAvatar || defaultAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
@@ -67,13 +67,13 @@ export const ProductChatColumn: React.FC<Props> = ({
       </header>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#141313] min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#1e1d1d] min-h-0">
         {messages.map((msg) => {
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
+                isAssistant ? 'bg-[#262424] border border-[#363333] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
@@ -96,7 +96,7 @@ export const ProductChatColumn: React.FC<Props> = ({
 
         {isLoading && (
           <div className="flex items-start justify-start animate-fade-in">
-            <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
+            <div className="bg-[#262424] border border-[#363333] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
@@ -108,8 +108,8 @@ export const ProductChatColumn: React.FC<Props> = ({
       </div>
 
       {/* Input Bar with Auto-Expand Multiline & Shift+Enter support - Optimized Minimal Height */}
-      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#111010] border-t border-[#262424] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
+      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#171616] border-t border-[#2d2b2b] shrink-0">
+        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#232121] border border-[#363333] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
           <textarea
             ref={textareaRef}
             rows={1}
