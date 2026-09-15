@@ -185,10 +185,16 @@ export async function onRequest(context) {
       const id = body.id || ('prod_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
       const slug = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+      let resolvedTenantId = tenant_id;
+      if (!resolvedTenantId || resolvedTenantId === 'tenant-demo') {
+        const t = await executeD1('SELECT id FROM tenants LIMIT 1');
+        resolvedTenantId = t[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+      }
+
       await executeD1(
         'INSERT INTO products (id, tenant_id, name, slug, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
         [
-          id, tenant_id || 'tenant-demo', name, slug, price, currency || 'USD',
+          id, resolvedTenantId, name, slug, price, currency || 'USD',
           short_description || '', full_description || short_description || '',
           JSON.stringify(images || []), JSON.stringify(benefits || []),
           JSON.stringify(details || {}), cta_label || 'Comprar', cta_url || ''
@@ -198,7 +204,7 @@ export async function onRequest(context) {
       // Initialize metrics strictly at 0 in D1
       await executeD1(
         'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
-        [id, tenant_id || 'tenant-demo']
+        [id, resolvedTenantId]
       );
 
       return jsonResponse({

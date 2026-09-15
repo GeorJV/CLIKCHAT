@@ -195,9 +195,10 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
 
   const createProduct = async (productData: Partial<Product> & { name: string; price: number }) => {
     if (!productData.name) return false;
+    const targetTenantId = tenant?.id || 'a0000000-0000-0000-0000-000000000001';
     const newProd: Product = {
       id: `prod_${Date.now()}`,
-      tenant_id: tenant?.id || 'tenant-demo',
+      tenant_id: targetTenantId,
       name: productData.name,
       slug: productData.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       price: productData.price,
@@ -219,15 +220,19 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
         hotLeads: 0
       }
     };
-    setProducts(prev => [newProd, ...prev]);
-    try {
-      if (tenant?.id) {
-        await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...newProd, tenant_id: tenant.id })
-        });
+    setProducts(prev => {
+      const next = [newProd, ...prev];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('clikchat_products', JSON.stringify(next));
       }
+      return next;
+    });
+    try {
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newProd, tenant_id: targetTenantId })
+      });
     } catch (err) {
       console.warn('Product saved locally, backend sync warning:', err);
     }
@@ -235,9 +240,15 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    setProducts(prev => {
+      const next = prev.map(p => p.id === id ? { ...p, ...updates } : p);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('clikchat_products', JSON.stringify(next));
+      }
+      return next;
+    });
     try {
-      await fetch(`/api/products/${id}`, {
+      await fetch(`/api/products/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
