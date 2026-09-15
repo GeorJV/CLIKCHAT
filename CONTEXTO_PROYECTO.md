@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:07 GMT-6
-- **Versión Actual:** 1.15.1 (Optimización Visual de Tarjetas de Conversaciones)
+- **Última Actualización:** 2026-09-14 19:11 GMT-6
+- **Versión Actual:** 1.15.2 (Respuestas de Mensajes en Acordeón con Edición y Guardado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 98b97aa)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1dc997f)
 - **Estado Actual del Sistema:**
-  - En las tarjetas de conversaciones, la hora se movió arriba junto al nombre del contacto.
-  - La etiqueta 'En Vivo' / 'Online' se renderiza limpia, sin borde ni relleno de fondo.
-  - Se removió por completo el badge técnico 'FAQ Nivel 2' de la lista y detalle de chats.
-  - Selector dinámico de categorías y creador custom '+' en FAQs operativo.
+  - Las respuestas en el detalle de conversación ahora se presentan en acordeón desplegable por interacción.
+  - Cada respuesta cuenta con botón 'Editar' que activa un editor inline con botones 'Guardar y Actualizar' y 'Cancelar'.
+  - Al guardar, la respuesta se actualiza reactivamente en la sesión y en la lista de chats.
+  - Tarjetas de conversaciones optimizadas con hora arriba y estado 'En Vivo' sin bordes ni relleno.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la vista de conversaciones y la interacción con los clientes.
+- **Siguiente Paso Inmediato:** Validar edición y despliegue del acordeón en chats en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
