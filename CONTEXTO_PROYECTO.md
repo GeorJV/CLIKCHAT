@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:44 GMT-6
-- **Versión Actual:** 1.15.5 (Cobertura Superior de Imagen, Botón Difuminado Verde y FAQs en Acordeón con Edición)
+- **Última Actualización:** 2026-09-14 19:47 GMT-6
+- **Versión Actual:** 1.15.6 (Avatar del Bot Removido de Burbujas y Esquinas Redondeadas Simétricas en Escaparate)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: b1f5b3b)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 7b5139a)
 - **Estado Actual del Sistema:**
-  - Cobertura de imagen superior (degradado y esquinas redondeadas) agregada simétricamente a la inferior.
-  - Botón "Comprar Ahora" actualizado a degradado verde difuminado con sombra suave y borde sutil.
-  - Preguntas frecuentes presentadas en acordeón interactivo con botón "Editar" y "Guardar" inline.
-  - Vista de auditoría de conversaciones restaurada al estilo WhatsApp con burbujas limpias.
+  - El avatar del bot fue removido de cada burbuja de mensaje; permanece únicamente en el header superior.
+  - La caja de imagen cuenta con esquinas redondeadas idénticas arriba y abajo (rounded-2xl con isolate).
+  - Cobertura de sombra y botón comprar ahora en verde difuminado totalmente operativos.
+  - Preguntas frecuentes en acordeón con edición y guardado inline.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar experiencia visual del cliente y edición de FAQs en vivo.
+- **Siguiente Paso Inmediato:** Validar experiencia visual en vivo del cliente.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
