@@ -1,17 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:56 GMT-6
-- **Versión Actual:** 1.14.9 (Barra Superior Oculta en Enlaces Públicos de Productos y Servicios)
+- **Última Actualización:** 2026-09-14 19:00 GMT-6
+- **Versión Actual:** 1.15.0 (Selector Dinámico de Categorías y Creador Custom en FAQs)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1587c93)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 74379a5)
 - **Estado Actual del Sistema:**
-  - La barra superior interna (SaaS Top Bar) se oculta automáticamente al abrir enlaces de productos o servicios (`?p=`, `?s=`, `?view=product`, `?view=service`, o direct chats).
-  - Experiencia 100% limpia y sin distracciones administrativas para el cliente final.
-  - El botón 'Salir' en los chats permite a los administradores regresar al Panel Cliente restaurando la barra.
+  - En 'Agregar Pregunta Frecuente (Manual)', el campo de categoría ahora es un selector dropdown dinámico.
+  - Carga categorías predefinidas y existentes del catálogo FAQ del tenant.
+  - Incluye botón '+' y opción en el dropdown para agregar y autoseleccionar categorías personalizadas al gusto.
+  - La barra superior interna permanece oculta en vistas y enlaces públicos de productos y servicios.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la apertura de enlaces directos sin la barra superior.
+- **Siguiente Paso Inmediato:** Validar creación de FAQs con selector y nuevas categorías.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
-  - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
+  - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
