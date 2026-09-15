@@ -76,11 +76,12 @@ export const ServiceChatColumn: React.FC<Props> = ({
       </header>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#141313] min-h-0">
-        {messages.map((msg) => {
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col bg-[#141313] min-h-0">
+        {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
+          const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
           return (
-            <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
+            <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] rounded-2xl px-3 py-1.5 text-xs sm:text-sm shadow-sm animate-bubble-in ${
                 isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs shadow-lg shadow-black/60' : 'bg-[#D79F4C]/50 backdrop-blur-md border border-[#D79F4C]/40 text-white rounded-tr-xs font-medium shadow-sm'
               }`}>
@@ -104,7 +105,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
         })}
 
         {isLoading && (
-          <div className="flex items-start justify-start animate-fade-in">
+          <div className="flex items-start justify-start animate-fade-in mt-1.5">
             <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5 shadow-lg shadow-black/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
