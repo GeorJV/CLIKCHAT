@@ -54,15 +54,15 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Encabezado con Botón Verde '+ + Nuevo producto' */}
+    <div className="space-y-3.5">
+      {/* 1. Encabezado con Botón Verde '+ Nuevo producto' */}
       <ProductsHeader onOpenCreate={handleOpenCreate} />
 
-      {/* 2. Banner de Analítica Global & Temperatura de Venta */}
+      {/* 2. Banner de Analítica Global Compacto */}
       <ProductsGlobalMetrics />
 
       {/* 3. Grid de Tarjetas de Productos & QLinks */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {displayProducts.map((prod) => (
           <ProductCard
             key={prod.id}

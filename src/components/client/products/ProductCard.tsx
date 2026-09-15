@@ -38,12 +38,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <div className="onyx-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition">
+    <div className="onyx-card rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition">
       <div>
         {/* Product Image with Overlay Badge */}
-        <div className="relative rounded-xl overflow-hidden h-44 sm:h-48 w-full bg-[#0b0c0e]">
+        <div className="relative rounded-lg overflow-hidden h-36 sm:h-40 w-full bg-[#0b0c0e]">
           <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
-          <div className="absolute top-3 right-3 bg-[#0a2720]/90 backdrop-blur-sm border border-emerald-500/50 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+          <div className="absolute top-2.5 right-2.5 bg-[#0a2720]/90 backdrop-blur-sm border border-emerald-500/50 text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>Activo para Bot</span>
           </div>
