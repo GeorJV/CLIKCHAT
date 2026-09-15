@@ -1,18 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:28 GMT-6
-- **Versión Actual:** 1.14.7 (Vista de Conversaciones en 2 Columnas con Chats Online e Historial)
+- **Última Actualización:** 2026-09-14 18:52 GMT-6
+- **Versión Actual:** 1.14.8 (Ajuste Fluido de Ancho Completo al Colapsar Menú Lateral)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1d64c05)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1c83c55)
 - **Estado Actual del Sistema:**
-  - Pestaña Conversaciones reestructurada en 2 columnas maestras:
-    - Izquierda: Selector de 'Chats Online' vs 'Historial' con listado de tarjetas y badge en vivo.
-    - Derecha: Transcripción detallada estilo WhatsApp con burbujas, RAG traces, horas y botón finalizar/reabrir chat.
-  - Cumplimiento estricto de ARQMODULAR (<150 líneas en `ConversationList.tsx`, `ConversationDetail.tsx`, `ConversationsTab.tsx`).
-  - Paleta Onyx Charcoal `#161515` y diseño de alta densidad de pantalla.
+  - Se eliminó la restricción `max-w-5xl mx-auto` que dejaba un hueco de más de 300px al cerrar el menú lateral.
+  - El viewport ahora se expande de forma fluida (`w-full`) aprovechando todo el ancho de pantalla disponible.
+  - La vista de Conversaciones en 2 columnas y el catálogo de productos se ajustan dinámicamente al colapsar/abrir el menú.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la visualización y experiencia de usuario en la auditoría de conversaciones.
+- **Siguiente Paso Inmediato:** Validar la expansión fluida con el usuario al abrir y cerrar la barra lateral.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
