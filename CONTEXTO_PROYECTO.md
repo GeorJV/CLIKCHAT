@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:52 GMT-6
-- **Versión Actual:** 1.14.8 (Ajuste Fluido de Ancho Completo al Colapsar Menú Lateral)
+- **Última Actualización:** 2026-09-14 18:56 GMT-6
+- **Versión Actual:** 1.14.9 (Barra Superior Oculta en Enlaces Públicos de Productos y Servicios)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1c83c55)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1587c93)
 - **Estado Actual del Sistema:**
-  - Se eliminó la restricción `max-w-5xl mx-auto` que dejaba un hueco de más de 300px al cerrar el menú lateral.
-  - El viewport ahora se expande de forma fluida (`w-full`) aprovechando todo el ancho de pantalla disponible.
-  - La vista de Conversaciones en 2 columnas y el catálogo de productos se ajustan dinámicamente al colapsar/abrir el menú.
+  - La barra superior interna (SaaS Top Bar) se oculta automáticamente al abrir enlaces de productos o servicios (`?p=`, `?s=`, `?view=product`, `?view=service`, o direct chats).
+  - Experiencia 100% limpia y sin distracciones administrativas para el cliente final.
+  - El botón 'Salir' en los chats permite a los administradores regresar al Panel Cliente restaurando la barra.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la expansión fluida con el usuario al abrir y cerrar la barra lateral.
+- **Siguiente Paso Inmediato:** Validar la apertura de enlaces directos sin la barra superior.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
