@@ -121,25 +121,25 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
       <div className="grid grid-cols-2 gap-2 mt-4">
         <button
           onClick={() => setActiveTab('benefits')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group ${
+          className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'benefits'
-              ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 text-amber-200 border border-amber-500/40 shadow-sm'
-              : 'bg-slate-800/80 text-slate-400 hover:text-[#FFD043] hover:bg-[#FFD043]/15 border border-transparent hover:border-[#FFD043]/60 hover:shadow-[0_0_14px_rgba(255,208,67,0.25)]'
+              ? 'bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-zinc-950 border border-[#FFA000]/60 shadow-md'
+              : 'bg-slate-800/90 text-amber-300 hover:text-zinc-950 hover:bg-gradient-to-r hover:from-[#FFB800] hover:to-[#FFA000] border border-slate-700/60 hover:border-[#FFA000]/60'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:text-[#FFD043] transition-colors" />
+          <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'benefits' ? 'text-zinc-950' : 'text-amber-400 group-hover:text-zinc-950'} transition-colors`} />
           <span>Beneficios</span>
         </button>
 
         <button
           onClick={() => setActiveTab('details')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group ${
+          className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'details'
-              ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 text-amber-200 border border-amber-500/40 shadow-sm'
-              : 'bg-slate-800/80 text-slate-400 hover:text-[#FFD043] hover:bg-[#FFD043]/15 border border-transparent hover:border-[#FFD043]/60 hover:shadow-[0_0_14px_rgba(255,208,67,0.25)]'
+              ? 'bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-zinc-950 border border-[#FFA000]/60 shadow-md'
+              : 'bg-slate-800/90 text-amber-300 hover:text-zinc-950 hover:bg-gradient-to-r hover:from-[#FFB800] hover:to-[#FFA000] border border-slate-700/60 hover:border-[#FFA000]/60'
           }`}
         >
-          <Info className="w-3.5 h-3.5 text-amber-400/80 group-hover:text-[#FFD043] transition-colors" />
+          <Info className={`w-3.5 h-3.5 ${activeTab === 'details' ? 'text-zinc-950' : 'text-amber-400 group-hover:text-zinc-950'} transition-colors`} />
           <span>Detalles del Producto</span>
         </button>
       </div>
