@@ -17,6 +17,9 @@ export const ProductShowcase: React.FC<Props> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = (product.images && product.images.length > 0 ? product.images : [product.image]).filter(Boolean);
+  const discount = product.originalPrice && product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 38;
 
   const handleNext = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const handlePrev = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
@@ -44,7 +47,7 @@ export const ProductShowcase: React.FC<Props> = ({
           <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/50 via-black/20 to-transparent h-12 pointer-events-none rounded-t-2xl" />
 
           <div className={`absolute top-3 left-3 ${themeStyles.tagDiscount} text-[11px] font-black px-2.5 py-1 shadow-lg z-10`}>
-            38% OFF
+            {discount}% OFF
           </div>
 
           <button

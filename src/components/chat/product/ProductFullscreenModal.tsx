@@ -58,7 +58,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
             <div className="space-y-2.5 animate-fade-in">
               <div className="relative w-full h-48 sm:h-56 rounded-xl overflow-hidden bg-[#111010] border border-[#262424]">
                 <img src={images[slide] || product.image} alt={product.title} className="w-full h-full object-cover" />
-                <span className="absolute top-2 left-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow">{discount}% OFF</span>
+                <span className="absolute top-2 left-2 bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-zinc-950 font-black text-[10px] px-2.5 py-0.5 rounded-lg shadow-md border border-[#FFA000]/40">{discount}% OFF</span>
                 <div className="absolute inset-x-0 bottom-0 p-2.5 bg-black/70 backdrop-blur-sm border-t border-white/10 text-white flex items-center justify-between text-[10px]">
                   <div className="flex items-center gap-1 text-emerald-300 font-semibold"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /><span>Stock Disponible</span></div>
                   <span className="text-zinc-300">{storeName}</span>
