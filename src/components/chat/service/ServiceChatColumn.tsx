@@ -83,7 +83,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] rounded-2xl ${isAssistant ? 'px-3 py-1.5' : 'px-2.5 py-0.5'} text-xs sm:text-sm shadow-sm animate-bubble-in ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md border border-[#D79F4C]/40 text-white rounded-tr-xs font-medium shadow-sm origin-bottom-right'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#2D2B2B] border border-[#3E3C3C] text-[#959497] rounded-tr-xs font-medium shadow-sm origin-bottom-right'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
@@ -96,7 +96,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                 ) : (
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span className="whitespace-pre-wrap leading-snug break-words">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end select-none tabular-nums ${isAssistant ? 'text-zinc-500' : 'text-zinc-900/70'}`}>{msg.timestamp || '08:22 PM'}</span>
+                    <span className={`text-[10px] shrink-0 self-end select-none tabular-nums ${isAssistant ? 'text-zinc-500' : 'text-[#959497]/70'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>
