@@ -101,13 +101,13 @@ export const ProductShowcase: React.FC<Props> = ({
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-2.5 shrink-0">
-          <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.benefitsBtn}`}>
-            <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-950 transition-colors duration-200 shrink-0" />
-            <span className="transition-colors duration-200">Beneficios</span>
+          <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.benefitsBtn}`}>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300 group-hover:text-white transition-colors duration-200 shrink-0" />
+            <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Beneficios</span>
           </button>
-          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>
-            <FileText className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-950 transition-colors duration-200 shrink-0" />
-            <span className="transition-colors duration-200">Detalle del Producto</span>
+          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>
+            <FileText className="w-3.5 h-3.5 text-teal-300 group-hover:text-white transition-colors duration-200 shrink-0" />
+            <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Detalle del Producto</span>
           </button>
         </div>
 

@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 17:05 GMT-6
-- **Versión Actual:** 1.20.31 (Botón Comprar Cuadro Amarillo Tornasol y Despliegue en Vivo)
+- **Última Actualización:** 2026-09-15 17:12 GMT-6
+- **Versión Actual:** 1.20.32 (Botones Beneficios y Detalle .cuadro-tornasol Cian/Esmeralda/Índigo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón de comprar con estilo exacto `.cuadro-amarillo-tornasol` (carbón cálido, luces tornasol oro solar, miel y cobre, borde dorado suave y sombra exterior cálida).
-  - Microinteracción de subida (roll-up) preservada: precio en reposo blanco contrastante que sube en hover revelando 'Comprar Ahora' en Cinzel con icono dorado de tarjeta.
+  - Botones 'Beneficios' y 'Detalle del Producto' con estilo exacto `.cuadro-tornasol` (base #101819, luces cian brillante #67BCD9, verde esmeralda y azul índigo, borde suave y sombra profunda).
+  - Botón 'Comprar Ahora' con estilo `.cuadro-amarillo-tornasol` y microinteracción roll-up.
   - Enrutamiento SPA activo con URLs dedicadas y reglas `public/_redirects` en Cloudflare Pages.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la apariencia e interacción del botón en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Validar visualmente la armonía tornasol de los 3 botones en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.

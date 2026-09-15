@@ -121,25 +121,25 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
       <div className="grid grid-cols-2 gap-2 mt-4">
         <button
           onClick={() => setActiveTab('benefits')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
+          className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'benefits'
-              ? 'bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-zinc-950 border border-[#FFA000]/60 shadow-md font-black'
-              : 'bg-slate-800/90 text-zinc-300 hover:text-zinc-950 hover:bg-gradient-to-r hover:from-[#FFB800] hover:to-[#FFA000] border border-slate-700/60 hover:border-[#FFA000]/60 hover:shadow-md'
+              ? 'cuadro-tornasol !border-cyan-400/60 shadow-lg text-white'
+              : 'cuadro-tornasol opacity-75 hover:opacity-100 text-white/90'
           }`}
         >
-          <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'benefits' ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-zinc-950'} transition-colors`} />
+          <Sparkles className="w-3.5 h-3.5 text-cyan-300 transition-colors" />
           <span>Beneficios</span>
         </button>
 
         <button
           onClick={() => setActiveTab('details')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
+          className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'details'
-              ? 'bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-zinc-950 border border-[#FFA000]/60 shadow-md font-black'
-              : 'bg-slate-800/90 text-zinc-300 hover:text-zinc-950 hover:bg-gradient-to-r hover:from-[#FFB800] hover:to-[#FFA000] border border-slate-700/60 hover:border-[#FFA000]/60 hover:shadow-md'
+              ? 'cuadro-tornasol !border-cyan-400/60 shadow-lg text-white'
+              : 'cuadro-tornasol opacity-75 hover:opacity-100 text-white/90'
           }`}
         >
-          <Info className={`w-3.5 h-3.5 ${activeTab === 'details' ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-zinc-950'} transition-colors`} />
+          <Info className="w-3.5 h-3.5 text-teal-300 transition-colors" />
           <span>Detalles del Producto</span>
         </button>
       </div>
