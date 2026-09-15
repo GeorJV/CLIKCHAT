@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FAQ } from '../../types';
 import { FaqsHeader } from './faqs/FaqsHeader';
 import { FaqList } from './faqs/FaqList';
@@ -20,6 +20,14 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({
 }) => {
   const [singleModalOpen, setSingleModalOpen] = useState(false);
   const [fileModalOpen, setFileModalOpen] = useState(false);
+
+  const existingCategories = useMemo(() => {
+    const cats = new Set<string>();
+    faqs.forEach(f => {
+      if (f.category?.trim()) cats.add(f.category.trim().toLowerCase());
+    });
+    return Array.from(cats);
+  }, [faqs]);
 
   const handleCreateSingle = async (question: string, answer: string, category: string) => {
     return await onCreateFaq(question, answer, category);
@@ -57,6 +65,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({
         isOpen={singleModalOpen}
         onClose={() => setSingleModalOpen(false)}
         onSubmit={handleCreateSingle}
+        existingCategories={existingCategories}
       />
 
       {/* 4. Modal para Carga de Archivos (.txt, .docx, .pdf) con Previsualización */}

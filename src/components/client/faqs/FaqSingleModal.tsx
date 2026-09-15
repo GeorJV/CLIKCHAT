@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Check } from 'lucide-react';
+import { FaqCategorySelector } from './FaqCategorySelector';
 
 interface FaqSingleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (question: string, answer: string, category: string) => Promise<boolean>;
+  existingCategories?: string[];
 }
 
 export const FaqSingleModal: React.FC<FaqSingleModalProps> = ({
   isOpen,
   onClose,
-  onSubmit
+  onSubmit,
+  existingCategories
 }) => {
   if (!isOpen) return null;
 
@@ -29,6 +32,7 @@ export const FaqSingleModal: React.FC<FaqSingleModalProps> = ({
       if (ok !== false) {
         setQuestion('');
         setAnswer('');
+        setCategory('general');
         onClose();
       }
     } catch (err) {
@@ -80,18 +84,11 @@ export const FaqSingleModal: React.FC<FaqSingleModalProps> = ({
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-              Categoría
-            </label>
-            <input
-              type="text"
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              placeholder="Ej: pagos, envios, horarios, general"
-              className="w-full bg-[#121111] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
+          <FaqCategorySelector
+            value={category}
+            onChange={setCategory}
+            existingCategories={existingCategories}
+          />
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#282626]">
             <button
