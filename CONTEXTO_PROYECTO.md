@@ -1,12 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 00:51 GMT-6
-- **Versión Actual:** 1.20.12 (Burbuja del Bot con Sombra de Elevación shadow-lg shadow-black/60)
+- **Última Actualización:** 2026-09-15 01:15 GMT-6
+- **Versión Actual:** 1.20.13 (Animación Microinteracción Avioncito de Papel Volador al Enviar)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Burbuja del bot con sombra pronunciada de elevación (`shadow-lg shadow-black/60`) que la despega visiblemente del fondo oscuro.
+  - Microinteracción de avioncito de papel amarillo dorado (`#FFB800`) despegando al enviar con vuelo curvo y fade-out (480ms).
+  - Burbuja del bot con sombra pronunciada de elevación (`shadow-lg shadow-black/60`).
   - Burbuja del usuario con 50% de transparencia (#D79F4C/50), glassmorphism y ajuste 'w-fit'.
   - Botones "Beneficios" y "Detalle del Producto" en carbón con hover a amarillo huevo (#FFB800).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).

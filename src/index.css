@@ -106,3 +106,27 @@
   color: #a1a1aa;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(0, 0, 0, 0.2);
 }
+
+/* Flying paper plane microinteraction */
+@keyframes paperPlaneFlight {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.9);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-20px, -45px) rotate(-16deg) scale(1.2);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-45px, -95px) rotate(-26deg) scale(0.95);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-65px, -145px) rotate(-34deg) scale(0.45);
+    opacity: 0;
+  }
+}
+
+.animate-paper-plane {
+  animation: paperPlaneFlight 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

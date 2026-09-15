@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Send, Sparkles, LogOut } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from '../product/ProductRAGBadge';
+import { FlyingPaperPlane } from '../FlyingPaperPlane';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
@@ -14,6 +15,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, serviceTitle,
   messages, inputValue, isLoading, onInputChange, onSendMessage, onExit
 }) => {
+  const [flightKey, setFlightKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,10 +35,17 @@ export const ServiceChatColumn: React.FC<Props> = ({
     }
   };
 
+  const handleSend = () => {
+    if (inputValue.trim() && !isLoading) {
+      setFlightKey(Date.now());
+      onSendMessage();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (inputValue.trim() && !isLoading) onSendMessage();
+      handleSend();
     }
   };
 
@@ -109,7 +118,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
 
       {/* Input Bar with Auto-Expand Multiline & Shift+Enter support - Optimized Minimal Height */}
       <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#111010] border-t border-[#262424] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-end gap-1.5 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -124,6 +133,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           </button>
         </form>
       </footer>
+      <FlyingPaperPlane triggerKey={flightKey} />
     </section>
   );
 };

@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Send, LogOut, Paperclip } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
+import { FlyingPaperPlane } from '../FlyingPaperPlane';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
@@ -17,6 +18,7 @@ export const ProductChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, productTitle, messages, inputValue,
   isLoading, themeStyles, onInputChange, onSendMessage, onExit
 }) => {
+  const [flightKey, setFlightKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,10 +38,17 @@ export const ProductChatColumn: React.FC<Props> = ({
     }
   };
 
+  const handleSend = () => {
+    if (inputValue.trim() && !isLoading) {
+      setFlightKey(Date.now());
+      onSendMessage();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (inputValue.trim() && !isLoading) onSendMessage();
+      handleSend();
     }
   };
 
@@ -111,7 +120,7 @@ export const ProductChatColumn: React.FC<Props> = ({
 
       {/* Input Bar with Attachment Paperclip and Honey Amber Send Button */}
       <footer className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0`}>
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
           <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1 self-end mb-0.5 transition cursor-pointer" title="Adjuntar">
             <Paperclip className="w-3.5 h-3.5" />
           </button>
@@ -125,6 +134,7 @@ export const ProductChatColumn: React.FC<Props> = ({
           </button>
         </form>
       </footer>
+      <FlyingPaperPlane triggerKey={flightKey} />
     </section>
   );
 };
