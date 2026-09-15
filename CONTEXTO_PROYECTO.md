@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:16 GMT-6
-- **Versión Actual:** 1.15.3 (Burbujas de Mensajes Compactas y Hora Integrada Inline)
+- **Última Actualización:** 2026-09-14 19:32 GMT-6
+- **Versión Actual:** 1.15.4 (Input de Chat Multilínea con Soporte Shift+Enter y Auto-Ajuste)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: a07e51d)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 6b7c733)
 - **Estado Actual del Sistema:**
-  - El espacio interno (padding) y vertical de las burbujas de mensajes fue reducido para mayor compacidad.
-  - La hora ahora se ubica integrada al final del texto en la misma línea o junto al badge RAG.
-  - Acordeón interactivo con edición y guardado de respuestas en conversaciones activo.
-  - Tarjetas de conversaciones optimizadas con hora arriba y estado 'En Vivo' sin bordes ni relleno.
+  - El input de chat ahora es un textarea auto-ajustable que permite escribir texto con Shift+Enter para nuevas líneas.
+  - Al llegar al final de la barra, el texto baja automáticamente al segundo renglón expandiendo el campo.
+  - El botón Enter envía el mensaje directamente si no se presiona Shift.
+  - Burbujas de chat compactas con hora integrada al final de la línea.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar experiencia visual compacta del chat en vivo.
+- **Siguiente Paso Inmediato:** Validar escritura multilínea y envío en chats de producto y servicio.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
