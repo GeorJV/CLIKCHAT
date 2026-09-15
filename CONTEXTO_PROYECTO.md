@@ -1,17 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:24 GMT-6
-- **Versión Actual:** 1.14.6 (Guardado de Preguntas Frecuentes Solucionado & Persistencia Local-First)
+- **Última Actualización:** 2026-09-14 18:28 GMT-6
+- **Versión Actual:** 1.14.7 (Vista de Conversaciones en 2 Columnas con Chats Online e Historial)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 9ee3fd1)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1d64c05)
 - **Estado Actual del Sistema:**
-  - Botón 'Guardar Pregunta' en FaqSingleModal solucionado: cierre inmediato del modal e inserción optimista reactiva.
-  - Persistencia local-first en `localStorage` (`clikchat_faqs`) con sincronización resiliente al backend en D1.
-  - Modal de FAQs adaptado a la paleta Warm Charcoal Onyx (`#161515`, `#121111`, `#282626`).
-  - Cumplimiento estricto de ARQMODULAR (<150 líneas por archivo).
+  - Pestaña Conversaciones reestructurada en 2 columnas maestras:
+    - Izquierda: Selector de 'Chats Online' vs 'Historial' con listado de tarjetas y badge en vivo.
+    - Derecha: Transcripción detallada estilo WhatsApp con burbujas, RAG traces, horas y botón finalizar/reabrir chat.
+  - Cumplimiento estricto de ARQMODULAR (<150 líneas en `ConversationList.tsx`, `ConversationDetail.tsx`, `ConversationsTab.tsx`).
+  - Paleta Onyx Charcoal `#161515` y diseño de alta densidad de pantalla.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la adición y visualización de preguntas frecuentes con el usuario.
+- **Siguiente Paso Inmediato:** Validar la visualización y experiencia de usuario en la auditoría de conversaciones.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
