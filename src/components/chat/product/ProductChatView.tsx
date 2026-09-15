@@ -81,6 +81,7 @@ export const ProductChatView: React.FC<Props> = ({
     setMessages((prev) => [...prev, userMsg]);
     setInputValue('');
     setIsLoading(true);
+    trackEvent('chat_message');
     setTimeout(() => {
       setMessages((prev) => [...prev, {
         id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
@@ -94,6 +95,7 @@ export const ProductChatView: React.FC<Props> = ({
 
   const handleConfirmCheckout = (data: ProductCheckoutData) => {
     trackEvent('lead', 'hot');
+    trackEvent('buy_click');
     setMessages((prev) => [...prev, {
       id: `order-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
       content: `🛍️ **¡Pedido Registrado con Éxito!**\n\n- **Producto:** ${data.product.title} (x${data.quantity})\n- **Total:** $${data.totalAmount.toFixed(2)} ${data.product.currency}\n- **Destinatario:** ${data.customerName} (${data.customerPhone})\n- **Dirección:** ${data.shippingAddress}\n\nTe contactaremos a tu WhatsApp con el enlace de despacho.`,
@@ -112,8 +114,8 @@ export const ProductChatView: React.FC<Props> = ({
         <ProductShowcase
           product={selectedProduct}
           onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }}
-          onOpenSpecs={() => setDetailModal('specs')}
-          onOpenFullscreen={() => setFullscreenOpen(true)}
+          onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
+          onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }}
           onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
         />
       </div>
@@ -126,7 +128,7 @@ export const ProductChatView: React.FC<Props> = ({
       {fullscreenOpen && (
         <ProductFullscreenModal
           product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)}
-          onAskAboutProduct={(p) => { setFullscreenOpen(false); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
+          onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
           onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }}
         />
       )}

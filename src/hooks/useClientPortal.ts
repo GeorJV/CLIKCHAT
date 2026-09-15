@@ -78,6 +78,15 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   useEffect(() => { loadTenantsList(); }, [loadTenantsList]);
   useEffect(() => { if (tenantSlug) loadTenantData(tenantSlug); }, [tenantSlug, loadTenantData]);
 
+  // Periodic background refresh for real live metrics every 8 seconds
+  useEffect(() => {
+    if (!tenantSlug) return;
+    const interval = setInterval(() => {
+      loadTenantData(tenantSlug);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [tenantSlug, loadTenantData]);
+
   const resolveQuery = async (queryId: string, answer: string, category: string = 'consultas_resueltas') => {
     if (!answer.trim()) return false;
     try {

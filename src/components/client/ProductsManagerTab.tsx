@@ -9,6 +9,7 @@ interface ProductsManagerTabProps {
   products: Product[];
   tenantSlug?: string;
   tenant?: Tenant | null;
+  onRefresh?: () => void;
   onCreateProduct: (data: Partial<Product> & { name: string; price: number }) => Promise<boolean>;
   onUpdateProduct?: (id: string, updates: Partial<Product>) => Promise<boolean>;
   onDeleteProduct?: (id: string) => Promise<boolean>;
@@ -19,6 +20,7 @@ import { DEMO_PRODUCTS } from './products/productsDemo';
 export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
   products,
   tenantSlug = 'acme-store',
+  onRefresh,
   onCreateProduct,
   onUpdateProduct,
   onDeleteProduct
@@ -81,7 +83,7 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
       <ProductsHeader onOpenCreate={handleOpenCreate} tenantSlug={tenantSlug} />
 
       {/* 2. Banner de Analítica Global Compacto con Métricas Reales */}
-      <ProductsGlobalMetrics metrics={globalMetrics} />
+      <ProductsGlobalMetrics metrics={globalMetrics} onRefresh={onRefresh} />
 
       {/* 3. Grid de Tarjetas de Productos & QLinks */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

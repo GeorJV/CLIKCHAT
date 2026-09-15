@@ -15,9 +15,10 @@ interface ProductsGlobalMetricsProps {
     storeViews?: number;
     totalEvents?: number;
   };
+  onRefresh?: () => void;
 }
 
-export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ metrics }) => {
+export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ metrics, onRefresh }) => {
   const buyClicks = metrics?.buyClicks ?? 0;
   const descViews = metrics?.descriptionViews ?? 0;
   const benefitViews = metrics?.benefitViews ?? 0;
@@ -45,10 +46,15 @@ export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ me
           </h3>
         </div>
 
-        <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 text-[10px] font-semibold">
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-800/40 text-emerald-400 text-[10px] font-semibold cursor-pointer transition active:scale-95"
+          title="Click para sincronizar métricas en vivo"
+        >
           <Activity className="w-3 h-3 animate-pulse" />
-          <span>Métricas En Vivo</span>
-        </div>
+          <span>Métricas En Vivo ↺</span>
+        </button>
       </div>
 
       {/* 5 KPI Metric Cards en fila compacta */}

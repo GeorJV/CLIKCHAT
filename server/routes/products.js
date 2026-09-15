@@ -201,34 +201,49 @@ router.post('/:id/track', async (req, res) => {
     const { id } = req.params;
     const { event, temperature } = req.body || {};
 
-    // Ensure metric row exists in D1
-    await query(
-      `INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads)
-       SELECT id, tenant_id, 0, 0, 0, 0, 0, 0 FROM products WHERE id = $1 OR slug = $1
-       ON CONFLICT(product_id) DO NOTHING`,
+    // 1. Resolve real product ID and tenant ID
+    const pResult = await query(
+      'SELECT id, tenant_id FROM products WHERE id = $1 OR slug = $1 LIMIT 1',
       [id]
     );
 
-    let updateSql = '';
+    let targetId = id;
+    let targetTenant = 'a0000000-0000-0000-0000-000000000001';
+    if (pResult.rows.length > 0) {
+      targetId = pResult.rows[0].id;
+      targetTenant = pResult.rows[0].tenant_id || targetTenant;
+    }
+
+    // 2. Ensure metric row exists in D1
+    await query(
+      `INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads)
+       VALUES ($1, $2, 0, 0, 0, 0, 0, 0)
+       ON CONFLICT(product_id) DO NOTHING`,
+      [targetId, targetTenant]
+    );
+
+    let updateSql = `UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = $1`;
     if (event === 'buy_click') {
       updateSql = `UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
     } else if (event === 'benefit_view') {
       updateSql = `UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    } else if (event === 'detail_view' || event === 'spec_view' || event === 'fullscreen_view') {
+      updateSql = `UPDATE product_metrics SET views = views + 1, cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    } else if (event === 'chat_message' || event === 'message_sent') {
+      updateSql = `UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
     } else if (event === 'lead') {
       if (temperature === 'hot') {
-        updateSql = `UPDATE product_metrics SET hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+        updateSql = `UPDATE product_metrics SET hot_leads = hot_leads + 1, buy_clicks = buy_clicks + 1, updated_at = datetime('now') WHERE product_id = $1`;
       } else if (temperature === 'warm') {
         updateSql = `UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
       } else {
         updateSql = `UPDATE product_metrics SET cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
       }
-    } else {
-      // Default: view
-      updateSql = `UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = $1`;
     }
 
-    await query(updateSql, [id]);
-    return res.json({ success: true, event });
+    await query(updateSql, [targetId]);
+    const updated = await query('SELECT * FROM product_metrics WHERE product_id = $1', [targetId]);
+    return res.json({ success: true, event, productId: targetId, metrics: updated.rows[0] });
   } catch (err) {
     console.error('Error registrando métrica en D1:', err);
     return res.status(500).json({ error: err.message });

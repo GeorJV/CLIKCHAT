@@ -84,29 +84,47 @@ export async function onRequest(context) {
       try { body = await request.json(); } catch (e) {}
       const { event, temperature } = body;
 
-      // Ensure row exists in product_metrics
-      await executeD1(
-        'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) SELECT id, tenant_id, 0, 0, 0, 0, 0, 0 FROM products WHERE id = ?1 OR slug = ?1 ON CONFLICT(product_id) DO NOTHING',
+      // 1. Resolve real product ID and tenant ID
+      const pRows = await executeD1(
+        'SELECT id, tenant_id FROM products WHERE id = ?1 OR slug = ?1 LIMIT 1',
         [id]
       );
+      let targetId = id;
+      let targetTenant = 'a0000000-0000-0000-0000-000000000001';
+      if (pRows.length > 0) {
+        targetId = pRows[0].id;
+        targetTenant = pRows[0].tenant_id || targetTenant;
+      }
 
-      let updateSql = 'UPDATE product_metrics SET views = views + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+      // 2. Ensure row exists in product_metrics
+      await executeD1(
+        'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
+        [targetId, targetTenant]
+      );
+
+      // 3. Update counter for targetId
+      let updateSql = "UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = ?1";
       if (event === 'buy_click') {
-        updateSql = 'UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+        updateSql = "UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
       } else if (event === 'benefit_view') {
-        updateSql = 'UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+        updateSql = "UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'detail_view' || event === 'spec_view' || event === 'fullscreen_view') {
+        updateSql = "UPDATE product_metrics SET views = views + 1, cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'chat_message' || event === 'message_sent') {
+        updateSql = "UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
       } else if (event === 'lead') {
         if (temperature === 'hot') {
-          updateSql = 'UPDATE product_metrics SET hot_leads = hot_leads + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+          updateSql = "UPDATE product_metrics SET hot_leads = hot_leads + 1, buy_clicks = buy_clicks + 1, updated_at = datetime('now') WHERE product_id = ?1";
         } else if (temperature === 'warm') {
-          updateSql = 'UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+          updateSql = "UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
         } else {
-          updateSql = 'UPDATE product_metrics SET cold_leads = cold_leads + 1, updated_at = datetime(\'now\') WHERE product_id = ?1';
+          updateSql = "UPDATE product_metrics SET cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
         }
       }
 
-      await executeD1(updateSql, [id]);
-      return jsonResponse({ success: true, event });
+      await executeD1(updateSql, [targetId]);
+      const updated = await executeD1('SELECT * FROM product_metrics WHERE product_id = ?1', [targetId]);
+      return jsonResponse({ success: true, event, productId: targetId, metrics: updated[0] });
     }
 
     // SINGLE PRODUCT: GET /api/products/:id
