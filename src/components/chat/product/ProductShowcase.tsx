@@ -61,18 +61,10 @@ export const ProductShowcase: React.FC<Props> = ({
 
           {images.length > 1 && (
             <>
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/10 transition active:scale-90 cursor-pointer"
-              >
+              <button type="button" onClick={handlePrev} className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/10 transition active:scale-90 cursor-pointer">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/10 transition active:scale-90 cursor-pointer"
-              >
+              <button type="button" onClick={handleNext} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/10 transition active:scale-90 cursor-pointer">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </>
@@ -99,14 +91,7 @@ export const ProductShowcase: React.FC<Props> = ({
               {images.length > 1 && (
                 <div className="flex items-center gap-1 shrink-0 bg-black/50 px-2 py-1 rounded-full border border-white/10">
                   {images.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setCurrentImageIndex(i)}
-                      className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                        i === currentImageIndex ? 'bg-emerald-400 w-3' : 'bg-zinc-600 w-1.5'
-                      }`}
-                    />
+                    <button key={i} type="button" onClick={() => setCurrentImageIndex(i)} className={`h-1.5 rounded-full transition-all cursor-pointer ${i === currentImageIndex ? 'bg-emerald-400 w-3' : 'bg-zinc-600 w-1.5'}`} />
                   ))}
                 </div>
               )}
@@ -127,15 +112,27 @@ export const ProductShowcase: React.FC<Props> = ({
         </div>
 
         {/* Main CTA Button: Yellow Card Icon & Yellow 'Comprar Ahora' with White Price */}
+        {/* Main Animated CTA Button: Price in normal state -> Rolls up to 'Comprar Ahora' on hover */}
         <div className="mt-2.5 shrink-0">
           <button
             type="button"
             onClick={onBuyNow}
-            className={`w-full py-3 px-4 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer font-extrabold text-sm sm:text-base ${themeStyles.buyNowBtn}`}
+            className={`group relative w-full h-11 sm:h-12 px-4 backdrop-blur-sm overflow-hidden flex items-center justify-center transition active:scale-98 cursor-pointer rounded-xl font-extrabold ${themeStyles.buyNowBtn}`}
           >
-            <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 ${themeStyles.buyNowIconColor || 'text-[#D4AF37]'} shrink-0`} />
-            <span className={themeStyles.buyNowTextColor || 'text-[#D4AF37]'}>Comprar Ahora</span>
-            <span className="text-white font-bold">— ${product.price.toFixed(2)} ${product.currency}</span>
+            {/* Estado Normal: Solo el Precio que sube al hacer hover */}
+            <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0">
+              <span className="text-white text-base sm:text-lg font-black tracking-wide drop-shadow-sm">
+                ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto en dorado premium */}
+            <div className="absolute inset-0 flex items-center justify-center gap-2 transition-all duration-300 ease-out transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4AF37] shrink-0 drop-shadow-sm" />
+              <span className="text-[#D4AF37] text-sm sm:text-base font-extrabold tracking-wide drop-shadow-sm">
+                Comprar Ahora
+              </span>
+            </div>
           </button>
         </div>
       </div>
