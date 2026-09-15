@@ -128,8 +128,8 @@ export const ProductShowcase: React.FC<Props> = ({
 
             {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto en dorado premium */}
             <div className="absolute inset-0 flex items-center justify-center gap-2 transition-all duration-300 ease-out transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
-              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4AF37] shrink-0 drop-shadow-sm" />
-              <span className="text-[#D4AF37] text-sm sm:text-base font-extrabold tracking-wide drop-shadow-sm">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] shrink-0" />
+              <span className="font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 Comprar Ahora
               </span>
             </div>

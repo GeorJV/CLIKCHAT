@@ -83,7 +83,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] rounded-2xl px-3 py-1.5 text-xs sm:text-sm shadow-sm animate-bubble-in ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#1a1919]/65 backdrop-blur-md border border-[#282626] text-[#D7BA7D] font-medium shadow-md origin-bottom-right'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#1a1919]/35 backdrop-blur-[1px] border border-white/[0.14] text-[#D7BA7D] font-medium shadow-md origin-bottom-right'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">

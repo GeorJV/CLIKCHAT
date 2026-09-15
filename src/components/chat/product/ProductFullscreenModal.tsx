@@ -100,8 +100,8 @@ export const ProductFullscreenModal: React.FC<Props> = ({
               </span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ease-out transform translate-y-9 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
-              <CreditCard className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-              <span className="text-[#D4AF37] font-black text-xs tracking-wide">
+              <CreditCard className="w-3.5 h-3.5 text-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] shrink-0" />
+              <span className="font-['Cinzel',serif] text-xs font-bold tracking-[0.14em] uppercase bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Comprar Ahora
               </span>
             </div>
