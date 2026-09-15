@@ -72,29 +72,31 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-4xl bg-[#131b26] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
-        {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/90 bg-[#101721]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <ShoppingBag className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-4xl bg-[#161515] border border-[#2e2b2b] rounded-xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+        {/* Encabezado Delgado & Tema Web */}
+        <div className="flex items-center justify-between px-4 py-2.5 sm:px-5 sm:py-2.5 border-b border-[#282626] bg-[#121111]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h3 className="text-sm font-bold text-white tracking-tight leading-none">
                 {productToEdit ? 'Editar producto' : 'Crear producto'}
               </h3>
-              <p className="text-xs text-slate-400">Configura datos comerciales, foto, beneficios y especificaciones para tu tienda.</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5 leading-none">
+                Configura datos comerciales, foto, beneficios y especificaciones para tu tienda.
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-[#222020] transition-colors cursor-pointer" aria-label="Cerrar">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Cuerpo del formulario con 2 columnas */}
+        {/* Cuerpo del formulario con 2 columnas bien distribuidas */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-y-auto flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-5 overflow-y-auto flex-1 bg-[#161515]">
             <div className="lg:col-span-7">
               <ProductModalFieldsLeft
                 name={name} setName={setName} category={category} setCategory={setCategory}
@@ -109,13 +111,13 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
             </div>
           </div>
 
-          {/* Botones de acción Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-800/90 bg-[#0e141d]">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs sm:text-sm transition-colors cursor-pointer">
+          {/* Botones de acción Footer Delgado */}
+          <div className="flex items-center justify-end gap-2.5 px-4 py-2.5 sm:px-5 sm:py-2.5 border-t border-[#282626] bg-[#121111]">
+            <button type="button" onClick={onClose} className="px-3.5 py-1.5 rounded-lg bg-[#222020] hover:bg-[#2c2929] border border-[#333030] text-zinc-300 font-medium text-xs transition-colors cursor-pointer">
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting || !name.trim() || !price} className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer">
-              <Check className="w-4 h-4" />
+            <button type="submit" disabled={isSubmitting || !name.trim() || !price} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer">
+              <Check className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Guardando...' : 'Guardar producto'}</span>
             </button>
           </div>
