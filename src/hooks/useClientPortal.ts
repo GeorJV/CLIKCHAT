@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
 import { DEMO_PRODUCTS } from '../components/client/products/productsDemo';
+import { DEFAULT_FAQS } from '../components/client/faqs/faqsDemo';
 
 export function useClientPortal(initialSlug: string = 'acme-store') {
   const [tenantSlug, setTenantSlug] = useState<string>(initialSlug);
@@ -15,19 +16,28 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     }
     return DEMO_PRODUCTS;
   });
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('clikchat_faqs');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return DEFAULT_FAQS;
+  });
   const [unresolved, setUnresolved] = useState<UnresolvedQuery[]>([]);
   const [availableTenants, setAvailableTenants] = useState<TenantListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && products.length > 0) {
+    if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('clikchat_products', JSON.stringify(products));
+        if (products.length > 0) localStorage.setItem('clikchat_products', JSON.stringify(products));
+        if (faqs.length > 0) localStorage.setItem('clikchat_faqs', JSON.stringify(faqs));
       } catch (e) {}
     }
-  }, [products]);
+  }, [products, faqs]);
 
   const loadTenantsList = useCallback(async () => {
     try {
@@ -87,52 +97,65 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const createFaq = async (question: string, answer: string, category: string = 'general') => {
-    if (!tenant?.id || !question.trim() || !answer.trim()) return false;
+    if (!question.trim() || !answer.trim()) return false;
+    const newFaq: FAQ = {
+      id: `faq_${Date.now()}`,
+      tenant_id: tenant?.id || 'tenant-demo',
+      question: question.trim(),
+      answer: answer.trim(),
+      category: category.trim() || 'general',
+      confidence_threshold: 0.65,
+      source: 'manual'
+    };
+    setFaqs(prev => [newFaq, ...prev]);
     try {
-      const res = await fetch('/api/faqs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: tenant.id, question: question.trim(), answer: answer.trim(), category, confidence_threshold: 0.65 })
-      });
-      if (res.ok) {
-        await loadTenantData(tenantSlug);
-        return true;
+      if (tenant?.id) {
+        await fetch('/api/faqs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenant_id: tenant.id, question: question.trim(), answer: answer.trim(), category, confidence_threshold: 0.65 })
+        });
       }
     } catch (err) {
-      console.error('Error creating FAQ:', err);
+      console.warn('FAQ saved locally, backend sync warning:', err);
     }
-    return false;
+    return true;
   };
 
   const deleteFaq = async (id: string) => {
+    setFaqs(prev => prev.filter(f => f.id !== id));
     try {
-      const res = await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setFaqs(prev => prev.filter(f => f.id !== id));
-        return true;
-      }
+      await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
     } catch (err) {
-      console.error('Error deleting FAQ:', err);
+      console.warn('FAQ deleted locally:', err);
     }
-    return false;
+    return true;
   };
 
   const createBulkFaqs = async (faqsToCreate: Array<{ question: string; answer: string; category?: string }>, source: string = 'archivo') => {
-    if (!tenant?.id || !faqsToCreate.length) return false;
+    if (!faqsToCreate.length) return false;
+    const newFaqs: FAQ[] = faqsToCreate.map((f, i) => ({
+      id: `faq_${Date.now()}_${i}`,
+      tenant_id: tenant?.id || 'tenant-demo',
+      question: f.question.trim(),
+      answer: f.answer.trim(),
+      category: f.category?.trim() || 'general',
+      confidence_threshold: 0.65,
+      source
+    }));
+    setFaqs(prev => [...newFaqs, ...prev]);
     try {
-      const res = await fetch('/api/faqs/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: tenant.id, faqs: faqsToCreate, source })
-      });
-      if (res.ok) {
-        await loadTenantData(tenantSlug);
-        return true;
+      if (tenant?.id) {
+        await fetch('/api/faqs/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenant_id: tenant.id, faqs: faqsToCreate, source })
+        });
       }
     } catch (err) {
-      console.error('Error creating bulk FAQs:', err);
+      console.warn('Bulk FAQs saved locally, backend sync warning:', err);
     }
-    return false;
+    return true;
   };
 
   const createProduct = async (productData: Partial<Product> & { name: string; price: number }) => {
