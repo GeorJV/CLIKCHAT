@@ -89,7 +89,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
           <button type="button" onClick={() => onAskAboutProduct(product)} className="flex-1 py-2 px-3 rounded-xl border border-[#2e2b2b] bg-[#1a1919] hover:bg-[#242222] text-zinc-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
             <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /><span>Preguntar</span>
           </button>
-          <button type="button" onClick={() => onDirectCheckout(product)} className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 via-70% to-emerald-600 hover:from-yellow-300 hover:via-orange-400 hover:to-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/25 transition cursor-pointer">
+          <button type="button" onClick={() => onDirectCheckout(product)} className="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition cursor-pointer">
             <ShoppingBag className="w-3.5 h-3.5" /><span>Comprar Ahora</span>
           </button>
         </div>

@@ -180,7 +180,7 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           href={product.cta_url || 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar'}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 via-70% to-emerald-600 hover:from-yellow-300 hover:via-orange-400 hover:to-emerald-500 text-white font-extrabold text-sm shadow-xl shadow-amber-500/25 active:scale-98 transition group cursor-pointer"
+          className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-extrabold text-sm shadow-xl shadow-amber-500/10 active:scale-98 transition group cursor-pointer"
         >
           <ShoppingCart className="w-4 h-4" />
           <span>Realizar Compra • ${product.price} {product.currency}</span>
