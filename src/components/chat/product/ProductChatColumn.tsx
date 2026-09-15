@@ -1,18 +1,21 @@
 import React, { useRef, useEffect } from 'react';
-import { Send, Sparkles, LogOut } from 'lucide-react';
+import { Send, LogOut } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
+import { ProductChatTheme, ThemeStyles } from './productThemes';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
   productTitle: string; messages: ProductChatMessage[];
   inputValue: string; isLoading: boolean;
+  theme: ProductChatTheme; themeStyles: ThemeStyles;
+  onThemeChange: (t: ProductChatTheme) => void;
   onInputChange: (val: string) => void; onSendMessage: () => void; onExit?: () => void;
 }
 
 export const ProductChatColumn: React.FC<Props> = ({
-  storeName, agentName, agentAvatar, productTitle,
-  messages, inputValue, isLoading, onInputChange, onSendMessage, onExit
+  storeName, agentName, agentAvatar, productTitle, messages, inputValue,
+  isLoading, theme, themeStyles, onThemeChange, onInputChange, onSendMessage, onExit
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -43,50 +46,67 @@ export const ProductChatColumn: React.FC<Props> = ({
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
 
   return (
-    <section className="flex flex-col h-full bg-[#222020] border-b lg:border-b-0 lg:border-r border-[#363333] overflow-hidden relative min-h-0">
-      {/* Slim Header */}
-      <header className="h-11 px-3 bg-[#1c1a1a] border-b border-[#363333] flex items-center justify-between z-10 shrink-0 select-none">
-        <div className="flex items-center gap-2.5 min-w-0">
+    <section className={`flex flex-col h-full ${themeStyles.containerBg} border-b lg:border-b-0 lg:border-r ${themeStyles.chatColumnBorder} overflow-hidden relative min-h-0`}>
+      {/* Slim Header with Theme Switcher Pill */}
+      <header className={`h-11 px-3 ${themeStyles.headerBg} border-b ${themeStyles.headerBorder} flex items-center justify-between z-10 shrink-0 select-none`}>
+        <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
             <img src={agentAvatar || defaultAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#1c1a1a]" />
           </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">{storeName}</h2>
-            <span className="hidden sm:inline text-[11px] text-zinc-400 font-medium truncate">• {agentName}</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h2 className={`text-xs sm:text-sm font-bold ${themeStyles.textPrimary} tracking-tight truncate`}>{storeName}</h2>
+            <span className={`hidden sm:inline text-[11px] ${themeStyles.textSecondary} font-medium truncate`}>• {agentName}</span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> En línea
             </span>
           </div>
         </div>
-        {onExit && (
-          <button type="button" onClick={onExit} className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition text-xs font-bold p-1 cursor-pointer" title="Volver al panel">
-            <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Salir</span>
-          </button>
-        )}
+
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Theme Switcher Toggle Pill */}
+          <div className="flex items-center bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px]" title="Comparar temas de diseño">
+            <button
+              type="button" onClick={() => onThemeChange('classic')}
+              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${theme === 'classic' ? 'bg-zinc-700 text-white font-bold shadow-xs' : 'text-zinc-400 hover:text-zinc-200'}`}
+            >
+              Clásico
+            </button>
+            <button
+              type="button" onClick={() => onThemeChange('linear_dark')}
+              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${theme === 'linear_dark' ? 'bg-gradient-to-r from-lime-500 to-emerald-500 text-zinc-950 font-black shadow-xs' : 'text-zinc-400 hover:text-zinc-200'}`}
+            >
+              Linear Bento
+            </button>
+          </div>
+
+          {onExit && (
+            <button type="button" onClick={onExit} className={`flex items-center gap-1 text-xs font-bold p-1 cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Volver al panel">
+              <LogOut className="w-3.5 h-3.5" /> <span className="hidden md:inline">Salir</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#222020] min-h-0">
+      <div className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 ${themeStyles.messagesAreaBg} min-h-0`}>
         {messages.map((msg) => {
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#2c2a2a] border border-[#423e3e] text-zinc-100 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
-              }`}>
+              <div className={`max-w-[88%] sm:max-w-[80%] px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm ${isAssistant ? themeStyles.botBubble : themeStyles.userBubble}`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
                     <div className="flex items-center justify-between gap-2 pt-0.5">
                       <ProductRAGBadge trace={msg.ragTrace} />
-                      <span className="text-[10px] text-zinc-500 shrink-0 self-end select-none">{msg.timestamp || '08:22 PM'}</span>
+                      <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '08:22 PM'}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
                     <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-emerald-100/80'}`}>{msg.timestamp || '08:22 PM'}</span>
+                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? themeStyles.textSecondary : 'opacity-80'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>
@@ -96,31 +116,27 @@ export const ProductChatColumn: React.FC<Props> = ({
 
         {isLoading && (
           <div className="flex items-start justify-start animate-fade-in">
-            <div className="bg-[#2c2a2a] border border-[#423e3e] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
+            <div className={`${themeStyles.botBubble} px-3 py-2 flex items-center gap-1.5`}>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
-              <span className="text-xs text-zinc-300 ml-1">Consultando catálogo oficial...</span>
+              <span className={`text-xs ${themeStyles.textSecondary} ml-1`}>Consultando catálogo oficial...</span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support - Optimized Minimal Height */}
-      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#1c1a1a] border-t border-[#363333] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#282626] border border-[#423e3e] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
+      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support */}
+      <footer className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0`}>
+        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
           <textarea
-            ref={textareaRef}
-            rows={1}
-            value={inputValue}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            placeholder={`Pregúntale a ${agentName} sobre ${productTitle}... (Shift+Enter para nueva línea)`}
-            className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block"
+            ref={textareaRef} rows={1} value={inputValue} onChange={handleTextChange} onKeyDown={handleKeyDown}
+            placeholder={`Pregúntale a ${agentName} sobre ${productTitle}... (Shift+Enter nueva línea)`}
+            className={`flex-1 bg-transparent text-xs sm:text-sm ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block`}
           />
-          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer self-end mb-0.5" title="Enviar mensaje">
-            <Send className="w-3.5 h-3.5" />
+          <button type="submit" disabled={!inputValue.trim() || isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar mensaje">
+            <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />
           </button>
         </form>
       </footer>

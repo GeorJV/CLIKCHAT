@@ -1,22 +1,20 @@
-# Estado & Contexto del Proyecto: ClikchatWeb
+﻿# Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 21:12 GMT-6
-- **Versión Actual:** 1.16.1 (Tracking Real de Todos los Botones en D1 & Refresco En Vivo)
+- **Última Actualización:** 2026-09-14 21:32 GMT-6
+- **Versión Actual:** 1.17.0 (Temas Comparativos Clásico & Linear Bento Dark Minimal con Toggle)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Registro de métricas 100% real en Cloudflare D1 ante interacción con CUALQUIER botón (Comprar, Beneficios, Detalle, Chat, Checkout).
-  - Resolución inteligente de UUID/slug para actualizar siempre la fila correcta en `product_metrics`.
-  - Panel del dueño con refresco automático en segundo plano cada 8s y botón interactivo "Métricas En Vivo ↺".
-  - Métricas inicializadas estrictamente en 0 para productos nuevos sin simulación de hash.
-  - Enlaces universales QLink funcionales en cualquier navegador con fotos auténticas del dueño sin mocks.
-  - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el incremento en vivo de métricas al tocar botones en https://clikchat.pages.dev.
+  - Implementado sistema de temas para chat de producto (`classic` y `linear_dark`).
+  - Tema Linear Bento: Base `#1A1D1F` con micro-puntos al 4%, input sólido `#222020`, gradiente Esmeralda-Lima `#84CC16` a `#10B981` en Comprar y Enviar con texto `#111111`, badge 38% OFF en `#F59E0B`, micro-bordes 1px `border-white/[0.08]`, burbuja bot translúcida `#222020`/85 con backdrop blur.
+  - Conmutador interactivo pill `[ Clásico | Linear Bento ]` en cabecera del chat para comparar en vivo a 1 clic.
+  - Tracking de métricas real en Cloudflare D1 activo y preservado en todos los botones.
+  - Cumplimiento 100% de ARQMODULAR (<150 líneas por archivo) y candado de lockedFiles intacto.
+  - Supervisión en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
+- **Siguiente Paso Inmediato:** Validar con el usuario el aspecto comparativo de ambos temas en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
-
-

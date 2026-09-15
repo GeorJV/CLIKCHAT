@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck, ShoppingBag } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
+import { ThemeStyles } from './productThemes';
 
 interface Props {
   product: ProductItem;
+  themeStyles: ThemeStyles;
   onOpenBenefits: () => void;
   onOpenSpecs: () => void;
   onOpenFullscreen: () => void;
@@ -11,11 +13,7 @@ interface Props {
 }
 
 export const ProductShowcase: React.FC<Props> = ({
-  product,
-  onOpenBenefits,
-  onOpenSpecs,
-  onOpenFullscreen,
-  onBuyNow,
+  product, themeStyles, onOpenBenefits, onOpenSpecs, onOpenFullscreen, onBuyNow,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = (product.images && product.images.length > 0 ? product.images : [product.image]).filter(Boolean);
@@ -24,10 +22,10 @@ export const ProductShowcase: React.FC<Props> = ({
   const handlePrev = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <section className="flex flex-col h-full bg-[#222020] overflow-hidden relative min-h-0 select-none">
+    <section className={`flex flex-col h-full ${themeStyles.showcaseBg} overflow-hidden relative min-h-0 select-none`}>
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Photo Container */}
-        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#363333] bg-[#1c1a1a] shadow-2xl group min-h-0 isolate">
+        <div className={`flex-1 w-full relative rounded-2xl overflow-hidden border ${themeStyles.photoBorder} ${themeStyles.photoBg} shadow-2xl group min-h-0 isolate`}>
           {images.length > 0 && (images[currentImageIndex] || product.image) ? (
             <img
               src={images[currentImageIndex] || product.image}
@@ -35,17 +33,17 @@ export const ProductShowcase: React.FC<Props> = ({
               className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500 rounded-2xl"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#1c1a1a] text-zinc-500 p-6 text-center">
+            <div className={`w-full h-full flex flex-col items-center justify-center ${themeStyles.photoBg} text-zinc-500 p-6 text-center`}>
               <ShoppingBag className="w-14 h-14 text-emerald-500/30 mb-2" />
-              <span className="text-sm font-bold text-zinc-300">{product.title}</span>
-              <span className="text-xs text-zinc-500 mt-1">{product.category || 'Catálogo Oficial'}</span>
+              <span className={`text-sm font-bold ${themeStyles.textPrimary}`}>{product.title}</span>
+              <span className={`text-xs ${themeStyles.textSecondary} mt-1`}>{product.category || 'Catálogo Oficial'}</span>
             </div>
           )}
 
-          {/* Photo Top Overlay (Sombra Superior Sutil y Reducida) */}
+          {/* Photo Top Overlay */}
           <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/50 via-black/20 to-transparent h-12 pointer-events-none rounded-t-2xl" />
 
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-lg z-10">
+          <div className={`absolute top-3 left-3 ${themeStyles.tagDiscount} text-[11px] font-black px-2.5 py-1 shadow-lg z-10`}>
             38% OFF
           </div>
 
@@ -77,19 +75,19 @@ export const ProductShowcase: React.FC<Props> = ({
             </>
           )}
 
-          {/* Photo Bottom Overlay (Sombra Inferior Reducida) */}
+          {/* Photo Bottom Overlay */}
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pt-6 pb-2.5 px-3 sm:pb-3 sm:px-3.5 rounded-b-2xl">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-base font-extrabold text-white leading-tight truncate drop-shadow-sm">
+                <h1 className={`text-sm sm:text-base font-extrabold ${themeStyles.textPrimary} leading-tight truncate drop-shadow-sm`}>
                   {product.title}
                 </h1>
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-zinc-300">
+                <div className={`flex items-center gap-2 mt-1 text-[11px] ${themeStyles.textSecondary}`}>
                   <span className="flex items-center gap-1 text-emerald-400 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Stock Disponible
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 text-zinc-300">
+                  <span className="flex items-center gap-1">
                     <Truck className="w-3.5 h-3.5 text-teal-400" /> Envío 24/48h
                   </span>
                 </div>
@@ -115,11 +113,11 @@ export const ProductShowcase: React.FC<Props> = ({
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-2.5 shrink-0">
-          <button type="button" onClick={onOpenBenefits} className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98">
+          <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 ${themeStyles.benefitsBtn}`}>
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Beneficios</span>
           </button>
-          <button type="button" onClick={onOpenSpecs} className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98">
+          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 ${themeStyles.specsBtn}`}>
             <FileText className="w-3.5 h-3.5 text-teal-400" />
             <span>Detalle del Producto</span>
           </button>
@@ -129,10 +127,10 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onBuyNow}
-            className="w-full py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-xl shadow-amber-500/10 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer font-extrabold text-sm sm:text-base"
+            className={`w-full py-3 px-4 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer font-extrabold text-sm sm:text-base ${themeStyles.buyNowBtn}`}
           >
             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Comprar Ahora — ${product.price.toFixed(2)} {product.currency}</span>
+            <span>Comprar Ahora — ${product.price.toFixed(2)} ${product.currency}</span>
           </button>
         </div>
       </div>
