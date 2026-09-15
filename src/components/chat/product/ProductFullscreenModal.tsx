@@ -95,7 +95,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
             className="group relative flex-1 h-9 px-3 cuadro-amarillo-tornasol overflow-hidden flex items-center justify-center font-extrabold text-xs shadow-md transition active:scale-98 cursor-pointer"
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-9 group-hover:opacity-0 relative z-10">
-              <span className="text-white font-black text-xs tracking-wide">
+              <span className="text-[#16120C] font-black text-xs tracking-wide">
                 ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
               </span>
             </div>

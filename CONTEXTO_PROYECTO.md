@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 17:21 GMT-6
-- **Versión Actual:** 1.20.34 (Efecto Hover Tornasol Unificado para Botón de Compra y Botones Secundarios)
+- **Última Actualización:** 2026-09-15 17:38 GMT-6
+- **Versión Actual:** 1.20.35 (Botón de Precio en Beige Luxury Satinado con Alto Contraste y Hover Tornasol)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón 'Comprar Ahora' en reposo elegante carbón cálido con borde dorado suave y precio blanco; al pasar el cursor (hover) se enciende en resplandor oro/ámbar/cobre tornasol mientras sube el texto en Cinzel.
-  - Botones 'Beneficios' y 'Detalle del Producto' en reposo oscuro neutro, encendiéndose en cian/esmeralda/índigo al pasar el cursor.
+  - Botón de precio en reposo configurado en color beige luxury satinado (#EDE4D3 / #E8DFC8) con borde dorado suave y precio en carbón (#16120C) para máxima legibilidad.
+  - Al pasar el cursor (hover) se activa el resplandor tornasol oro/cobre mientras rueda hacia arriba revelando 'Comprar Ahora' en Cinzel.
   - Enrutamiento SPA activo con URLs dedicadas y reglas `public/_redirects` en Cloudflare Pages.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar visualmente la experiencia interactiva en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Validar la apariencia del botón beige en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.

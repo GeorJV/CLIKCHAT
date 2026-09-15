@@ -161,14 +161,15 @@
   animation: bubbleEntrance 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Botón Comprar: Cuadro Amarillo Tornasol (Color solo visible al pasar el ratón) */
+/* Botón Comprar: Cuadro Amarillo Tornasol (Reposo en Beige Luxury, Color Tornasol en Hover) */
 .cuadro-amarillo-tornasol {
   border-radius: 24px;
   overflow: hidden;
   position: relative;
-  background-color: #16120c;
-  border: 1px solid rgba(254, 215, 102, 0.22);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  background-color: #EDE4D3;
+  background-image: linear-gradient(180deg, #F4ECE1 0%, #E8DFC8 50%, #D8CCA8 100%);
+  border: 1px solid rgba(212, 195, 163, 0.75);
+  box-shadow: 0 6px 18px -3px rgba(0, 0, 0, 0.35), 0 0 16px -2px rgba(232, 222, 200, 0.25);
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

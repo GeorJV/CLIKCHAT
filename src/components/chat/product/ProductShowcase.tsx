@@ -121,7 +121,7 @@ export const ProductShowcase: React.FC<Props> = ({
           >
             {/* Estado Normal: Solo el Precio que sube al hacer hover */}
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0 relative z-10">
-              <span className="text-white text-base sm:text-lg font-black tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              <span className="text-[#16120C] text-base sm:text-lg font-black tracking-wide drop-shadow-sm">
                 ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
               </span>
             </div>

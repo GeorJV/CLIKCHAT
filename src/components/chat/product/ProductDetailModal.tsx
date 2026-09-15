@@ -112,7 +112,7 @@ export const ProductDetailModal: React.FC<Props> = ({
             className="group relative flex-1 h-10 px-3 cuadro-amarillo-tornasol overflow-hidden flex items-center justify-center font-bold text-xs shadow-md transition active:scale-98 cursor-pointer"
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-10 group-hover:opacity-0 relative z-10">
-              <span className="text-white font-black text-sm tracking-wide drop-shadow-sm">
+              <span className="text-[#16120C] font-black text-sm tracking-wide drop-shadow-sm">
                 ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
               </span>
             </div>

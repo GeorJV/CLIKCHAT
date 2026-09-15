@@ -180,10 +180,10 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           href={product.cta_url || 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar'}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 cuadro-amarillo-tornasol text-amber-400 font-extrabold text-sm shadow-xl active:scale-98 transition group cursor-pointer"
+          className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 cuadro-amarillo-tornasol text-[#16120C] group-hover:text-white font-extrabold text-sm shadow-xl active:scale-98 transition group cursor-pointer"
         >
-          <ShoppingCart className="w-4 h-4" />
-          <span>Realizar Compra • ${product.price} {product.currency}</span>
+          <ShoppingCart className="w-4 h-4 text-[#16120C] group-hover:text-[#FFD700] transition-colors relative z-10" />
+          <span className="relative z-10">Realizar Compra • ${product.price} {product.currency}</span>
         </a>
         <div className="flex items-center justify-center space-x-2 mt-2 text-[10px] text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
