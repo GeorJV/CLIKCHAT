@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClientPortal } from '../../hooks/useClientPortal';
+import { useAppRouter, TAB_ROUTE_MAP } from '../../hooks/useAppRouter';
 import { ClientTab } from '../../types/client';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientLogin } from './ClientLogin';
@@ -11,6 +12,9 @@ import { DocumentsManagerTab } from './DocumentsManagerTab';
 import { BotSettingsTab } from './BotSettingsTab';
 import { BusinessSettingsTab } from './BusinessSettingsTab';
 import { ConversationsTab } from './ConversationsTab';
+import { ClientsTab } from './ClientsTab';
+import { AgendaTab } from './AgendaTab';
+import { UserProfileTab } from './UserProfileTab';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
@@ -23,8 +27,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   onOpenLiveChat,
   onSelectTenant
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [activeTab, setActiveTab] = useState<ClientTab>('chatbot');
+  const { pathname, navigate, currentTab, isLoginUrl, isUserRoute, userId } = useAppRouter();
+  const [authOverride, setAuthOverride] = useState<boolean | null>(null);
+  const isAuthenticated = authOverride !== null ? authOverride : !isLoginUrl;
+  const activeTab: ClientTab = currentTab;
 
   const {
     tenantSlug: currentSlug,
@@ -50,8 +56,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   const handleLogin = (slug: string) => {
     setTenantSlug(slug);
-    setIsAuthenticated(true);
+    setAuthOverride(true);
+    navigate('/dashboard');
     if (onSelectTenant) onSelectTenant(slug);
+  };
+
+  const handleTabChange = (tab: ClientTab) => {
+    navigate(TAB_ROUTE_MAP[tab] || '/dashboard');
   };
 
   if (!isAuthenticated) {
@@ -71,7 +82,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       {/* Dark Modern Sidebar */}
       <ClientSidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         unresolvedCount={pendingCount}
         tenantSlug={currentSlug}
       />
@@ -103,6 +114,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'audit' && <UnresolvedQueriesTab unresolved={unresolved} onResolve={resolveQuery} />}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
           {activeTab === 'settings' && <BotSettingsTab tenant={tenant} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat} />}
+          {activeTab === 'clientes' && <ClientsTab />}
+          {activeTab === 'agenda' && <AgendaTab />}
+          {activeTab === 'user' && <UserProfileTab userId={userId} tenantName={tenant?.name} tenantSlug={currentSlug} />}
         </div>
       </main>
     </div>

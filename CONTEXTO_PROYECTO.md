@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 14:57 GMT-6
-- **Versión Actual:** 1.20.29 (Tipografía Cinzel Dorado Real y Burbuja Glassmorphism Translúcida)
+- **Última Actualización:** 2026-09-15 15:26 GMT-6
+- **Versión Actual:** 1.20.30 (Enrutamiento SPA Real con URLs Independientes y Reglas Cloudflare Pages)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Despliegue en Cloudflare Pages ejecutado (`d492c3b8.clikchat.pages.dev`).
-  - Botón 'Comprar Ahora' con tipografía de lujo Cinzel, degradado dorado metálico y brillo.
-  - Burbuja de usuario en cristal translúcido (/30 + blur 1px) dejando ver el fondo sutilmente.
-  - 4 esquinas redondeadas completas (rounded-2xl) simétricas al bot.
+  - Sistema de enrutamiento SPA activo con URLs dedicadas para cada sección: /dashboard, /productos, /conversaciones, /clientes, /agenda, /agente, /conocimiento, /super-admin, /login, /user/:userId.
+  - Reglas de reescritura SPA desplegadas en Cloudflare Pages (`public/_redirects`), evitando errores 404 al recargar.
+  - Sincronización completa de botones de navegación, barra superior y botones Atrás/Adelante del navegador.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar visualmente en https://clikchat.pages.dev con recarga forzada (Ctrl + F5).
+- **Siguiente Paso Inmediato:** Validar visualmente la navegación entre URLs en https://clikchat.pages.dev/dashboard.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.

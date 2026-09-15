@@ -8,7 +8,10 @@ export type ClientTab =
   | 'documents'
   | 'audit'
   | 'conversations'
-  | 'settings';
+  | 'settings'
+  | 'clientes'
+  | 'agenda'
+  | 'user';
 
 export interface KnowledgeDocument {
   id: string;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { MobileChatView } from './components/chat/MobileChatView';
 import { ProductChatView } from './components/chat/product/ProductChatView';
 import { ServiceChatView } from './components/chat/service/ServiceChatView';
@@ -6,35 +6,36 @@ import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
+import { useAppRouter, AppView } from './hooks/useAppRouter';
 
 const NAV_VIEWS = [
-  { id: 'chat', label: 'Chat Móvil', icon: Smartphone },
-  { id: 'product', label: 'Chat Producto', icon: ShoppingBag },
-  { id: 'service', label: 'Chat Servicio', icon: Calendar },
-  { id: 'client', label: 'Panel Cliente', icon: Briefcase },
-  { id: 'admin', label: 'Super Admin', icon: ShieldCheck },
+  { id: 'chat' as AppView, label: 'Chat Móvil', icon: Smartphone, path: '/chat' },
+  { id: 'product' as AppView, label: 'Chat Producto', icon: ShoppingBag, path: '/producto' },
+  { id: 'service' as AppView, label: 'Chat Servicio', icon: Calendar, path: '/servicio' },
+  { id: 'client' as AppView, label: 'Panel Cliente', icon: Briefcase, path: '/dashboard' },
+  { id: 'admin' as AppView, label: 'Super Admin', icon: ShieldCheck, path: '/super-admin' },
 ] as const;
 
 export function App() {
-  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const { pathname, search, currentView, navigate } = useAppRouter();
+  const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
-  const isServiceChat = params?.get('view') === 'service' || params?.has('s') || params?.has('service');
-  const isProductChat = params?.get('view') === 'product' || params?.has('p');
-  const isDirectChat = params?.get('view') === 'chat' || (params?.has('t') && !params?.has('panel'));
-  const initialView = isServiceChat ? 'service' : isProductChat ? 'product' : isDirectChat ? 'chat' : 'client';
-  const [currentView, setCurrentView] = useState<'chat' | 'product' | 'service' | 'client' | 'admin'>(initialView);
-  const [selectedTenantSlug, setSelectedTenantSlug] = useState(params?.get('t') || 'acme-store');
+  const selectedTenantSlug = params?.get('t') || 'acme-store';
   const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
 
-  // Cuando se genera el link de producto, servicio o chat directo, la barra superior no debe aparecer
-  const hideTopBar = isProductChat || isServiceChat || isDirectChat || currentView === 'product' || currentView === 'service';
+  useEffect(() => {
+    if (pathname === '/' && !params?.has('p') && !params?.has('s') && !params?.has('view') && !params?.has('t')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [pathname, params, navigate]);
+
+  const hideTopBar = currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
-      {/* SaaS Global Top Bar (Oculta automáticamente en links de producto, servicio o chats de clientes) */}
       {!hideTopBar && (
         <nav className="h-12 shrink-0 bg-[#151414] border-b border-[#282626] flex items-center justify-between px-3 md:px-6 z-40">
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <div className="w-7 h-7 rounded-lg bg-[#1a1919] border border-[#2e2b2b] flex items-center justify-center font-mono font-black text-emerald-400 text-xs shadow-sm">
               CK
             </div>
@@ -44,10 +45,10 @@ export function App() {
           </div>
 
           <div className="flex items-center space-x-1 bg-[#111010] p-1 rounded-xl border border-[#282626]">
-            {NAV_VIEWS.map(({ id, label, icon: Icon }) => (
+            {NAV_VIEWS.map(({ id, label, icon: Icon, path }) => (
               <button
                 key={id}
-                onClick={() => setCurrentView(id)}
+                onClick={() => navigate(path)}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                   currentView === id
                     ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm'
@@ -68,7 +69,7 @@ export function App() {
           <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
             <MobileChatView
               tenantSlug={selectedTenantSlug}
-              onNavigateToPanel={() => setCurrentView('client')}
+              onNavigateToPanel={() => navigate('/dashboard')}
             />
           </div>
         )}
@@ -87,7 +88,7 @@ export function App() {
                 agentAvatar={agentAvatar}
                 initialProduct={productItem || undefined}
                 products={productItem ? [productItem] : []}
-                onExit={() => setCurrentView('client')}
+                onExit={() => navigate('/dashboard')}
               />
             )}
           </div>
@@ -98,7 +99,7 @@ export function App() {
             <ServiceChatView
               storeName="Centro Estético Aura"
               agentName="Dra. Elena"
-              onExit={() => setCurrentView('client')}
+              onExit={() => navigate('/dashboard')}
             />
           </div>
         )}
@@ -107,7 +108,7 @@ export function App() {
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
             <ClientDashboard
               tenantSlug={selectedTenantSlug}
-              onOpenLiveChat={() => setCurrentView('chat')}
+              onOpenLiveChat={() => navigate('/chat')}
               onSelectTenant={(slug) => setSelectedTenantSlug(slug)}
             />
           </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClientTab } from '../../../types/client';
-import { Bot, Store, ShoppingBag, BookOpen, FileText, Brain, MessageSquare, Settings } from 'lucide-react';
+import { Bot, Store, ShoppingBag, BookOpen, Brain, MessageSquare, Settings, Users, Calendar } from 'lucide-react';
 
 interface SidebarSimpleNavProps {
   activeTab: ClientTab;
@@ -16,13 +16,14 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
   unresolvedCount
 }) => {
   const navItems = [
-    { id: 'chatbot' as ClientTab, label: 'Mi Chatbot & QLink', icon: Bot },
+    { id: 'chatbot' as ClientTab, label: 'Dashboard Principal', icon: Bot },
     { id: 'business' as ClientTab, label: 'Mi Negocio', icon: Store },
-    { id: 'products' as ClientTab, label: 'Mis Productos', icon: ShoppingBag },
-    { id: 'faqs' as ClientTab, label: 'Preguntas FAQ', icon: BookOpen },
-    { id: 'audit' as ClientTab, label: 'Entrenamiento IA', icon: Brain, badge: unresolvedCount },
+    { id: 'products' as ClientTab, label: 'Catálogo de Productos', icon: ShoppingBag },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
-    { id: 'settings' as ClientTab, label: 'Configuración', icon: Settings }
+    { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
+    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar },
+    { id: 'settings' as ClientTab, label: 'Agente IA & Prompts', icon: Brain, badge: unresolvedCount },
+    { id: 'faqs' as ClientTab, label: 'Base de Conocimiento', icon: BookOpen },
   ];
 
   return (

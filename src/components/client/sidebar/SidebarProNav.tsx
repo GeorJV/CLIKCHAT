@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   ChevronDown, ChevronRight, LayoutDashboard, Users,
-  Store, MessageSquare, Brain, FileText, ShoppingBag, BookOpen, Settings
+  Store, MessageSquare, Brain, FileText, ShoppingBag, BookOpen, Settings, Calendar
 } from 'lucide-react';
 
 interface SidebarProNavProps {
@@ -73,9 +73,9 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         </button>
         {openCats.agencia && (
           <nav className="space-y-0.5">
-            {renderItem('chatbot', 'Dashboard Pro', LayoutDashboard)}
-            {renderItem('audit', 'Mis Clientes & Leads', Users)}
-            {renderItem('settings', 'Config Agencia', Settings)}
+            {renderItem('chatbot', 'Dashboard Principal', LayoutDashboard)}
+            {renderItem('clientes', 'Gestión de Clientes', Users)}
+            {renderItem('settings', 'Agente IA & Prompts', Settings)}
           </nav>
         )}
       </div>
@@ -92,9 +92,9 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         {openCats.operaciones && (
           <nav className="space-y-0.5">
             {renderItem('business', 'Mi Negocio', Store)}
-            {renderItem('conversations', 'Conversaciones (Inbox)', MessageSquare)}
-            {renderItem('audit', 'Entrenamiento IA', Brain, unresolvedCount)}
-            {renderItem('documents', 'Conocimiento RAG', FileText)}
+            {renderItem('conversations', 'Conversaciones', MessageSquare)}
+            {renderItem('agenda', 'Agenda de Citas', Calendar)}
+            {renderItem('faqs', 'Base de Conocimiento', BookOpen)}
           </nav>
         )}
       </div>
