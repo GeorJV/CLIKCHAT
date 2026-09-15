@@ -36,3 +36,18 @@
 - **Estado:** ✅ APROBADO & REGISTRADO
 - **Proyecto en ARQ AI Studio:** `ClikchatWeb` (ID: `proj-1789360940430`).
 - **Archivo de Enlace:** `.arqai.json` con `lockedFiles` para blindar archivos críticos.
+
+---
+
+## [Registro #004] - 2026-09-14: Acordeón FAQs con Edición Directa, Optimización de Chat y Botón Comprar Ahora
+- **Estado:** ✅ APROBADO & PROTEGIDO
+- **Módulos y Componentes Involucrados:**
+  - `src/components/client/faqs/FaqAccordionItem.tsx` y `FaqList.tsx`: Lista de preguntas frecuentes en formato acordeón colapsable con editor textarea inline ("Editar") y guardado directo ("Guardar" / "Cancelar").
+  - `src/hooks/useClientPortal.ts` y `server/routes/faqs.js`: Endpoint `PUT /api/faqs/:id` conectado a Cloudflare D1 para actualizar preguntas frecuentes en tiempo real con feedback visual.
+  - `src/components/client/conversations/ConversationDetail.tsx`: Preservación de la vista de conversaciones en formato WhatsApp con burbujas limpias, indicador de conexión y eliminación de badges técnicos.
+  - `src/components/chat/product/ProductChatColumn.tsx` y `ServiceChatColumn.tsx`: Eliminación del avatar repetitivo en cada mensaje del asistente (se mantiene centralizado en el header superior); reducción del padding vertical del input al mínimo funcional con soporte `Shift + Enter` multilínea.
+  - `src/components/chat/product/ProductShowcase.tsx` y `ServiceShowcase.tsx`: Esquinas redondeadas simétricas `rounded-2xl` con `isolate`; reducción drástica en rango y opacidad de sombras superior e inferior para fotos nítidas; botón "Comprar Ahora" con degradado difuminado amarillo anaranjado a verde (`from-amber-500 via-emerald-500 to-emerald-600`).
+  - `src/components/chat/product/ProductFullscreenModal.tsx` y `DesktopProductShowcase.tsx`: Unificación de estilos del botón "Comprar Ahora".
+- **Estándar Arquitectónico:** 100% ARQMODULAR (<150 líneas por componente), cero advertencias o errores de compilación (`npm run build`).
+- **Deploy en Vivo:** `https://clikchat.pages.dev` en Cloudflare Pages CDN.
+

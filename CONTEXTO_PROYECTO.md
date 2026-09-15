@@ -1,18 +1,21 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:54 GMT-6
-- **Versión Actual:** 1.15.9 (Botón Comprar Ahora Difuminado Amarillo Anaranjado a Verde)
+- **Última Actualización:** 2026-09-14 19:55 GMT-6
+- **Versión Actual:** 1.15.9 (Registro #004 en Historial de Cambios Aprobados - Memoria Protegida)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 57e3f74)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón Comprar Ahora con degradado difuminado entre amarillo anaranjado cálido y verde esmeralda.
-  - Sombras superior e inferior reducidas en rango y opacidad, dejando fotos limpias y nítidas.
-  - Barra de entrada de texto compacta y ajustada al mínimo espacio vertical funcional.
-  - Avatar del bot centralizado en header y caja de imagen simétricamente redondeada.
+  - Registro #004 blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
+  - Acordeón FAQs con edición directa en textarea y botón Guardar/Cancelar en tiempo real.
+  - Conversaciones restauradas a formato nativo WhatsApp sin badges técnicos.
+  - Input compacto optimizado al mínimo vertical y fotos nítidas con sombras reducidas.
+  - Botón "Comprar Ahora" con degradado difuminado amarillo anaranjado a verde.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar feedback del usuario.
+- **Siguiente Paso Inmediato:** Listo para nuevas directivas del usuario.
 - **Decisiones Técnicas Inmutables:**
+  - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
+
