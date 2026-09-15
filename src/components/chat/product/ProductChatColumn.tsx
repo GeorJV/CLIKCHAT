@@ -71,11 +71,8 @@ export const ProductChatColumn: React.FC<Props> = ({
         {messages.map((msg) => {
           const isAssistant = msg.sender === 'assistant';
           return (
-            <div key={msg.id} className={`flex gap-2 items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
-              {isAssistant && (
-                <img src={agentAvatar || defaultAvatar} alt="Avatar" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-emerald-500/30 shrink-0 mt-0.5" />
-              )}
-              <div className={`max-w-[90%] sm:max-w-[82%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
+            <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
+              <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
                 isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
               }`}>
                 {isAssistant && msg.ragTrace ? (
@@ -98,10 +95,7 @@ export const ProductChatColumn: React.FC<Props> = ({
         })}
 
         {isLoading && (
-          <div className="flex gap-2 items-start animate-fade-in">
-            <div className="w-6 h-6 rounded-full bg-[#1f1e1e] border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-              <Sparkles className="w-3 h-3 animate-spin" />
-            </div>
+          <div className="flex items-start justify-start animate-fade-in">
             <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />

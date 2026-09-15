@@ -23,15 +23,15 @@ export const ServiceShowcase: React.FC<Props> = ({
     <section className="flex flex-col h-full bg-[#131212] overflow-hidden relative min-h-0 select-none">
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Showcase Image Container */}
-        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#262424] bg-[#111010] shadow-2xl group min-h-0">
+        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#262424] bg-[#111010] shadow-2xl group min-h-0 isolate">
           <img
             src={images[currentImageIndex] || service.image}
             alt={service.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500"
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500 rounded-2xl"
           />
 
           {/* Photo Top Overlay (Cobertura Superior) */}
-          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent h-24 pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent h-24 pointer-events-none rounded-t-2xl" />
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap z-10">
@@ -65,7 +65,7 @@ export const ServiceShowcase: React.FC<Props> = ({
           )}
 
           {/* Bottom Overlay on Image */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 sm:p-4">
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 sm:p-4 rounded-b-2xl">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-base font-extrabold text-white leading-tight truncate drop-shadow-sm">{service.title}</h1>
