@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Check, ShoppingBag, ShieldCheck, MessageSquare } from 'lucide-react';
+import { X, Sparkles, Check, ShoppingBag, ShieldCheck, MessageSquare, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
 interface Props {
@@ -89,8 +89,22 @@ export const ProductFullscreenModal: React.FC<Props> = ({
           <button type="button" onClick={() => onAskAboutProduct(product)} className="flex-1 py-2 px-3 rounded-xl border border-[#2e2b2b] bg-[#1a1919] hover:bg-[#242222] text-zinc-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
             <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /><span>Preguntar</span>
           </button>
-          <button type="button" onClick={() => onDirectCheckout(product)} className="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition cursor-pointer">
-            <ShoppingBag className="w-3.5 h-3.5" /><span>Comprar Ahora</span>
+          <button
+            type="button"
+            onClick={() => onDirectCheckout(product)}
+            className="group relative flex-1 h-9 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 overflow-hidden flex items-center justify-center font-extrabold text-xs shadow-md shadow-amber-500/10 transition active:scale-98 cursor-pointer"
+          >
+            <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-9 group-hover:opacity-0">
+              <span className="text-white font-black text-xs tracking-wide">
+                ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
+              </span>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ease-out transform translate-y-9 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+              <CreditCard className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+              <span className="text-[#D4AF37] font-black text-xs tracking-wide">
+                Comprar Ahora
+              </span>
+            </div>
           </button>
         </div>
       </div>

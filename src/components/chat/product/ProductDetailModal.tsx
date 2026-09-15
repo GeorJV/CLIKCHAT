@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sparkles, FileText, Check } from 'lucide-react';
+import { X, Sparkles, FileText, Check, CreditCard } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
 interface Props {
@@ -109,9 +109,19 @@ export const ProductDetailModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => onProceedBuy(product)}
-            className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer"
+            className="group relative flex-1 h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 overflow-hidden flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-500/20 transition active:scale-98 cursor-pointer"
           >
-            Comprar (${product.price.toFixed(2)})
+            <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-10 group-hover:opacity-0">
+              <span className="text-white font-black text-sm tracking-wide drop-shadow-sm">
+                ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
+              </span>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ease-out transform translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+              <CreditCard className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+              <span className="text-[#D4AF37] font-black text-xs tracking-wide">
+                Comprar Ahora
+              </span>
+            </div>
           </button>
         </div>
       </div>

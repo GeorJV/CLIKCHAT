@@ -101,7 +101,7 @@ export const ProductChatView: React.FC<Props> = ({
 
   return (
     <div className={`w-full h-full flex flex-col ${themeStyles.containerBg} ${themeStyles.textPrimary} overflow-hidden font-sans transition-colors duration-300`}>
-      <div className="flex-1 w-full h-full grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0">
+      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-2 overflow-hidden min-h-0">
         <ProductChatColumn
           storeName={storeName} agentName={agentName} agentAvatar={agentAvatar}
           productTitle={selectedProduct.title} messages={messages} inputValue={inputValue}

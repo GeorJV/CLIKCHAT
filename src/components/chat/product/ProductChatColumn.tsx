@@ -55,7 +55,7 @@ export const ProductChatColumn: React.FC<Props> = ({
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
 
   return (
-    <section className={`flex flex-col h-full ${themeStyles.containerBg} border-b lg:border-b-0 lg:border-r ${themeStyles.chatColumnBorder} overflow-hidden relative min-h-0`}>
+    <section className={`flex flex-col h-full ${themeStyles.containerBg} border-b md:border-b-0 md:border-r ${themeStyles.chatColumnBorder} overflow-hidden relative min-h-0`}>
       {/* Header exactly matching reference photo */}
       <header className={`h-11 px-3.5 ${themeStyles.headerBg} border-b ${themeStyles.headerBorder} flex items-center justify-between z-10 shrink-0 select-none`}>
         <div className="flex items-center gap-2 min-w-0">
