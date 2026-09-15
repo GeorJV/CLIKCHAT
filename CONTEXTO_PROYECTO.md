@@ -1,18 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 23:38 GMT-6
-- **Versión Actual:** 1.20.4 (Mensaje 'Guardado correctamente' en Ajustes)
+- **Última Actualización:** 2026-09-15 00:20 GMT-6
+- **Versión Actual:** 1.20.5 (Botones en Carbón con Hover Amarillo Huevo #FFB800)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Mensaje de confirmación actualizado a 'Guardado correctamente' en Ajustes del Negocio e Identidad.
-  - Botones "Beneficios" y "Detalle del Producto" unificados en degradado amarillo huevo (#FFB800 a #FFA000).
-  - Etiqueta "38% OFF" con degradado amarillo huevo a juego.
-  - Selección y copia de texto habilitada en toda la web.
-  - 10 tonos de voz de IA y carga/pegado de logotipo y avatar persistiendo en Cloudflare D1.
+  - Botones "Beneficios" y "Detalle del Producto" siempre en color carbón elegante con texto e iconos en zinc claro.
+  - Al colocar el ratón encima (hover), los botones cambian completamente a color amarillo huevo (#FFB800 a #FFA000) con texto e iconos en negro de alto contraste.
+  - Etiqueta "38% OFF" en amarillo huevo idéntico.
+  - Mensaje 'Guardado correctamente' en Ajustes del Negocio e Identidad.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar el mensaje de guardado en el portal.
+- **Siguiente Paso Inmediato:** Validar el efecto hover en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
