@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:11 GMT-6
-- **Versión Actual:** 1.15.2 (Respuestas de Mensajes en Acordeón con Edición y Guardado)
+- **Última Actualización:** 2026-09-14 19:16 GMT-6
+- **Versión Actual:** 1.15.3 (Burbujas de Mensajes Compactas y Hora Integrada Inline)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 1dc997f)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: a07e51d)
 - **Estado Actual del Sistema:**
-  - Las respuestas en el detalle de conversación ahora se presentan en acordeón desplegable por interacción.
-  - Cada respuesta cuenta con botón 'Editar' que activa un editor inline con botones 'Guardar y Actualizar' y 'Cancelar'.
-  - Al guardar, la respuesta se actualiza reactivamente en la sesión y en la lista de chats.
+  - El espacio interno (padding) y vertical de las burbujas de mensajes fue reducido para mayor compacidad.
+  - La hora ahora se ubica integrada al final del texto en la misma línea o junto al badge RAG.
+  - Acordeón interactivo con edición y guardado de respuestas en conversaciones activo.
   - Tarjetas de conversaciones optimizadas con hora arriba y estado 'En Vivo' sin bordes ni relleno.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar edición y despliegue del acordeón en chats en vivo.
+- **Siguiente Paso Inmediato:** Validar experiencia visual compacta del chat en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
