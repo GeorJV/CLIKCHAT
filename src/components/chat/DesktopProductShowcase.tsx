@@ -123,24 +123,24 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           onClick={() => setActiveTab('benefits')}
           className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'benefits'
-              ? 'cuadro-tornasol !border-cyan-400/60 shadow-lg text-white'
-              : 'cuadro-tornasol opacity-75 hover:opacity-100 text-white/90'
+              ? 'cuadro-tornasol active !border-cyan-400/60 shadow-lg text-white'
+              : 'cuadro-tornasol hover:opacity-100 text-zinc-300'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-cyan-300 transition-colors" />
-          <span>Beneficios</span>
+          <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors relative z-10" />
+          <span className="relative z-10">Beneficios</span>
         </button>
 
         <button
           onClick={() => setActiveTab('details')}
           className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${
             activeTab === 'details'
-              ? 'cuadro-tornasol !border-cyan-400/60 shadow-lg text-white'
-              : 'cuadro-tornasol opacity-75 hover:opacity-100 text-white/90'
+              ? 'cuadro-tornasol active !border-cyan-400/60 shadow-lg text-white'
+              : 'cuadro-tornasol hover:opacity-100 text-zinc-300'
           }`}
         >
-          <Info className="w-3.5 h-3.5 text-teal-300 transition-colors" />
-          <span>Detalles del Producto</span>
+          <Info className="w-3.5 h-3.5 text-zinc-400 group-hover:text-teal-300 transition-colors relative z-10" />
+          <span className="relative z-10">Detalles del Producto</span>
         </button>
       </div>
 
