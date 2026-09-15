@@ -32,6 +32,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
   const [productItem, setProductItem] = useState<ProductItem>(DEFAULT_PRODUCT);
   const [storeName, setStoreName] = useState<string>('Clikchat Store');
   const [agentName, setAgentName] = useState<string>('Sofía');
+  const [agentAvatar, setAgentAvatar] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
             const tData = await tRes.json();
             if (tData.tenant?.name && isMounted) setStoreName(tData.tenant.name);
             if (tData.tenant?.bot_name && isMounted) setAgentName(tData.tenant.bot_name);
+            if (tData.tenant?.avatar_url && isMounted) setAgentAvatar(tData.tenant.avatar_url);
             if (tData.products && tData.products.length > 0 && isMounted) {
               setProductItem(toProductItem(tData.products[0]));
               return;
@@ -90,6 +92,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
           if (tData.tenant && isMounted) {
             if (tData.tenant.name) setStoreName(tData.tenant.name);
             if (tData.tenant.bot_name) setAgentName(tData.tenant.bot_name);
+            if (tData.tenant.avatar_url) setAgentAvatar(tData.tenant.avatar_url);
           }
           if (tData.products && Array.isArray(tData.products)) {
             const foundInTenant = tData.products.find((p: Product) => p.id === productId || p.slug === productId);
@@ -116,5 +119,5 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
     return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
-  return { productItem, storeName, agentName, isLoading };
+  return { productItem, storeName, agentName, agentAvatar, isLoading };
 }

@@ -50,6 +50,8 @@ export interface Tenant {
   monthly_price: number;
   status: string;
   business_hours?: string;
+  logo_url?: string;
+  tone_of_voice?: string;
 }
 
 export interface ChatMessage {

@@ -25,7 +25,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
   const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 38;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-md bg-[#181717] border border-[#282626] rounded-2xl shadow-2xl overflow-hidden flex flex-col justify-between max-h-[88vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#282626] bg-[#141313] shrink-0">

@@ -24,7 +24,7 @@ export function App() {
   const initialView = isServiceChat ? 'service' : isProductChat ? 'product' : isDirectChat ? 'chat' : 'client';
   const [currentView, setCurrentView] = useState<'chat' | 'product' | 'service' | 'client' | 'admin'>(initialView);
   const [selectedTenantSlug, setSelectedTenantSlug] = useState(params?.get('t') || 'acme-store');
-  const { productItem, storeName, agentName, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
+  const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
 
   // Cuando se genera el link de producto, servicio o chat directo, la barra superior no debe aparecer
   const hideTopBar = isProductChat || isServiceChat || isDirectChat || currentView === 'product' || currentView === 'service';
@@ -84,6 +84,7 @@ export function App() {
               <ProductChatView
                 storeName={storeName}
                 agentName={agentName}
+                agentAvatar={agentAvatar}
                 initialProduct={productItem || undefined}
                 products={productItem ? [productItem] : []}
                 onExit={() => setCurrentView('client')}

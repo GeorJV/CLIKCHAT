@@ -20,7 +20,7 @@ export const ServiceShowcase: React.FC<Props> = ({
   const handlePrev = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <section className="flex flex-col h-full bg-[#131212] overflow-hidden relative min-h-0 select-none">
+    <section className="flex flex-col h-full bg-[#131212] overflow-hidden relative min-h-0">
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Showcase Image Container */}
         <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#262424] bg-[#111010] shadow-2xl group min-h-0 isolate">

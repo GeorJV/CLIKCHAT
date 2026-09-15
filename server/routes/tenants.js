@@ -65,7 +65,7 @@ router.put('/:id', async (req, res) => {
     const {
       name, bot_name, avatar_url, welcome_message, system_prompt,
       primary_color, custom_llm_key, cta_text, cta_url, business_hours,
-      slug
+      slug, logo_url, tone_of_voice
     } = req.body;
 
     await query(
@@ -81,9 +81,11 @@ router.put('/:id', async (req, res) => {
         cta_url = COALESCE($9, cta_url),
         business_hours = COALESCE($10, business_hours),
         slug = COALESCE($11, slug),
+        logo_url = COALESCE($12, logo_url),
+        tone_of_voice = COALESCE($13, tone_of_voice),
         updated_at = datetime('now')
-       WHERE id = $12`,
-      [name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, custom_llm_key, cta_text, cta_url, business_hours, slug, id]
+       WHERE id = $14`,
+      [name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, custom_llm_key, cta_text, cta_url, business_hours, slug, logo_url, tone_of_voice, id]
     );
 
     const updatedRes = await query('SELECT * FROM tenants WHERE id = $1', [id]);

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../types';
 import { BusinessLandingCard } from './BusinessLandingCard';
-import { RefreshCw, Upload, Save, CheckCircle2 } from 'lucide-react';
+import { ImageUploadField } from './ImageUploadField';
+import { RefreshCw, Save, CheckCircle2 } from 'lucide-react';
 
 interface BusinessSettingsTabProps {
   tenant: Tenant | null;
@@ -20,6 +21,8 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   const [slug, setSlug] = useState(tenant?.slug || tenantSlug || 'aura-glow');
   const [tone, setTone] = useState(tenant?.tone_of_voice || 'Profesional y Cortés');
   const [primaryColor, setPrimaryColor] = useState(tenant?.primary_color || '#32AAC8');
+  const [logoUrl, setLogoUrl] = useState(tenant?.logo_url || '');
+  const [avatarUrl, setAvatarUrl] = useState(tenant?.avatar_url || '');
   const [systemPrompt, setSystemPrompt] = useState(
     tenant?.system_prompt ||
     'Eres Aria, asesora experta en ventas de Aura Glow. Responde con calidez, destaca los beneficios dermatológicos, y guía al cliente hacia la compra con naturalidad sin ser invasiva.'
@@ -35,6 +38,8 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
       setSlug(tenant.slug || tenantSlug || '');
       setTone(tenant.tone_of_voice || 'Profesional y Cortés');
       setPrimaryColor(tenant.primary_color || '#32AAC8');
+      setLogoUrl(tenant.logo_url || '');
+      setAvatarUrl(tenant.avatar_url || '');
       if (tenant.system_prompt) setSystemPrompt(tenant.system_prompt);
     }
   }, [tenant?.id, tenantSlug]);
@@ -61,7 +66,9 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
       slug,
       tone_of_voice: tone,
       primary_color: primaryColor,
-      system_prompt: systemPrompt
+      system_prompt: systemPrompt,
+      logo_url: logoUrl,
+      avatar_url: avatarUrl
     });
     if (success) {
       isDirtyRef.current = false;
@@ -132,11 +139,16 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
               }}
               className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             >
-              <option value="Profesional y Cortés">Profesional y Cortés</option>
-              <option value="Amigable y Enérgico">Amigable y Enérgico</option>
-              <option value="Experto Consultor y Técnico">Experto Consultor y Técnico</option>
-              <option value="Persuasivo y Enfocado a Cierre">Persuasivo y Enfocado a Cierre</option>
-              <option value="Cálido y Empático">Cálido y Empático</option>
+              <option value="Profesional y Cortés">🏢 Profesional y Cortés (Corporativo & Respetuoso)</option>
+              <option value="Amigable y Enérgico">⚡ Amigable y Enérgico (Cercano & Dinámico)</option>
+              <option value="Experto Consultor y Técnico">🔬 Experto Consultor y Técnico (Detallado & Preciso)</option>
+              <option value="Persuasivo y Enfocado a Cierre">🎯 Persuasivo y Enfocado a Cierre (Venta Activa & Cierres)</option>
+              <option value="Cálido y Empático">❤️ Cálido y Empático (Servicial, Paciente & Humano)</option>
+              <option value="Elegante y Exclusivo (Lujo)">✨ Elegante y Exclusivo (Sofisticado, VIP & Premium)</option>
+              <option value="Divertido y Creativo">🎉 Divertido y Creativo (Casual, Ingenioso & Desenfadado)</option>
+              <option value="Minimalista y Directo al Grano">⏱️ Minimalista y Directo al Grano (Respuestas Breves & Claras)</option>
+              <option value="Asesor Financiero y de Valor">💡 Asesor de Valor y Rentabilidad (Ahorro & Costo-Beneficio)</option>
+              <option value="Urgencia y Alta Conversión (Flash)">🔥 Urgencia y Alta Conversión (Ofertas & Stock Limitado)</option>
             </select>
           </div>
           <div>
@@ -185,22 +197,25 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-bold text-zinc-300 mb-1">Logotipo</label>
-            <label className="border border-dashed border-[#282626] hover:border-[#3e3b3b] bg-[#111010] rounded-xl py-3 px-3 flex flex-col items-center justify-center cursor-pointer transition text-center">
-              <Upload className="w-4 h-4 text-zinc-400 mb-1" />
-              <span className="text-xs text-zinc-300 font-medium">Subir logo (PNG, JPG)</span>
-              <input type="file" accept="image/*" className="hidden" />
-            </label>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-zinc-300 mb-1">Avatar del Agente IA</label>
-            <label className="border border-dashed border-[#282626] hover:border-[#3e3b3b] bg-[#111010] rounded-xl py-3 px-3 flex flex-col items-center justify-center cursor-pointer transition text-center">
-              <Upload className="w-4 h-4 text-zinc-400 mb-1" />
-              <span className="text-xs text-zinc-300 font-medium">Subir avatar (1:1)</span>
-              <input type="file" accept="image/*" className="hidden" />
-            </label>
-          </div>
+          <ImageUploadField
+            label="Logotipo del Negocio"
+            sublabel="Subir archivo o pegar con mouse/Ctrl+V"
+            value={logoUrl}
+            onChange={(val) => {
+              setLogoUrl(val);
+              isDirtyRef.current = true;
+            }}
+          />
+          <ImageUploadField
+            label="Avatar del Asesor IA"
+            sublabel="Subir foto 1:1 o pegar del portapapeles"
+            value={avatarUrl}
+            onChange={(val) => {
+              setAvatarUrl(val);
+              isDirtyRef.current = true;
+            }}
+            aspectRatio="square"
+          />
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#282626]">

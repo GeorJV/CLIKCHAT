@@ -22,7 +22,7 @@ export const ProductShowcase: React.FC<Props> = ({
   const handlePrev = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <section className={`flex flex-col h-full ${themeStyles.showcaseBg} overflow-hidden relative min-h-0 select-none`}>
+    <section className={`flex flex-col h-full ${themeStyles.showcaseBg} overflow-hidden relative min-h-0`}>
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Photo Container */}
         <div className={`flex-1 w-full relative rounded-2xl overflow-hidden border ${themeStyles.photoBorder} ${themeStyles.photoBg} shadow-2xl group min-h-0 isolate`}>

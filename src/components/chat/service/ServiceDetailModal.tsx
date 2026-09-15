@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { X, Sparkles, ShieldCheck, Check, Clock, Globe } from 'lucide-react';
 import { ServiceItem } from '../../../types/serviceChat';
 
@@ -18,7 +18,7 @@ export const ServiceDetailModal: React.FC<Props> = ({
   if (!service) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-md bg-[#181717] border border-[#282626] rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#282626] pb-3">
