@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:55 GMT-6
-- **Versión Actual:** 1.15.9 (Registro #004 en Historial de Cambios Aprobados - Memoria Protegida)
+- **Última Actualización:** 2026-09-14 19:58 GMT-6
+- **Versión Actual:** 1.15.10 (Botón Comprar Predominantemente Amarillo y Anaranjado con Acento Verde Reducido)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Botón Comprar Ahora ajustado: 70% amarillo y anaranjado cálido con leve acento verde difuminado.
   - Registro #004 blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Acordeón FAQs con edición directa en textarea y botón Guardar/Cancelar en tiempo real.
   - Conversaciones restauradas a formato nativo WhatsApp sin badges técnicos.
   - Input compacto optimizado al mínimo vertical y fotos nítidas con sombras reducidas.
-  - Botón "Comprar Ahora" con degradado difuminado amarillo anaranjado a verde.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Listo para nuevas directivas del usuario.
+- **Siguiente Paso Inmediato:** Validar satisfacción visual del usuario.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
