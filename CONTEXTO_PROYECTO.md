@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:16 GMT-6
-- **Versión Actual:** 1.14.3 (Header y Métricas de Productos Compactos & Alto Aprovechamiento de Espacio)
+- **Última Actualización:** 2026-09-14 18:20 GMT-6
+- **Versión Actual:** 1.14.4 (Modal Producto con Franjas Delgadas & Color de Tema Onyx Unificado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 5932a65)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 536476f)
 - **Estado Actual del Sistema:**
-  - Encabezado y banner de métricas globales compactados en >50% de altura para máximo aprovechamiento visual.
-  - Botón '+ Nuevo producto' estilizado, elegante y proporcionado.
-  - KPIs en una sola fila densa con etiquetas legibles y banner de temperatura de cliente de 1 línea.
-  - Tarjetas de catálogo y espaciados optimizados para visualizar el contenido sin desplazamiento excesivo.
+  - Encabezado y pie del modal de productos adelgazados (padding reducido a `py-2.5`) para eliminar espacio muerto.
+  - Paleta de color del modal alineada al 100% con el tema de la web: base Onyx Charcoal `#161515`, cabecera `#121111`, bordes `#282626` e inputs `#121111`.
+  - Campos distribuidos de forma compacta y legible en 2 columnas con tipografía ajustada.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el nuevo tamaño y distribución compacta.
+- **Siguiente Paso Inmediato:** Confirmar satisfacción visual del modal y flujos de edición.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
