@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:20 GMT-6
-- **Versión Actual:** 1.14.4 (Modal Producto con Franjas Delgadas & Color de Tema Onyx Unificado)
+- **Última Actualización:** 2026-09-14 18:22 GMT-6
+- **Versión Actual:** 1.14.5 (Botón '+ Nuevo producto' Reubicado al Lado del Título & Viewport Optimizado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 536476f)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 0de3045)
 - **Estado Actual del Sistema:**
-  - Encabezado y pie del modal de productos adelgazados (padding reducido a `py-2.5`) para eliminar espacio muerto.
-  - Paleta de color del modal alineada al 100% con el tema de la web: base Onyx Charcoal `#161515`, cabecera `#121111`, bordes `#282626` e inputs `#121111`.
-  - Campos distribuidos de forma compacta y legible en 2 columnas con tipografía ajustada.
+  - Botón '+ Nuevo producto' corrido al otro lado (ubicado directamente al lado del título) para aprovechar el espacio central vacío.
+  - Padding superior del viewport del dashboard reducido (`sm:pt-2.5`) para eliminar la franja vacía superior.
+  - Enlace rápido 'Ver tienda web' en el extremo derecho del encabezado aprovechando toda la fila.
+  - Modal de producto delgado y unificado con el tema Onyx Warm Charcoal (`#161515`).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Confirmar satisfacción visual del modal y flujos de edición.
+- **Siguiente Paso Inmediato:** Validar con el usuario la nueva distribución del encabezado.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
