@@ -130,8 +130,8 @@ export const ProductShowcase: React.FC<Props> = ({
             onClick={onBuyNow}
             className={`w-full py-3 px-4 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer font-extrabold text-sm sm:text-base ${themeStyles.buyNowBtn}`}
           >
-            <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 ${themeStyles.buyNowIconColor || 'text-[#CDB86F]'} shrink-0`} />
-            <span className={themeStyles.buyNowTextColor || 'text-[#CDB86F]'}>Comprar Ahora</span>
+            <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 ${themeStyles.buyNowIconColor || 'text-[#D4AF37]'} shrink-0`} />
+            <span className={themeStyles.buyNowTextColor || 'text-[#D4AF37]'}>Comprar Ahora</span>
             <span className="text-white font-bold">— ${product.price.toFixed(2)} ${product.currency}</span>
           </button>
         </div>

@@ -1,14 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 22:03 GMT-6
-- **Versión Actual:** 1.18.3 (Restauración Producto Real: Vendedor de AI Online con Foto del Robot)
+- **Última Actualización:** 2026-09-14 22:07 GMT-6
+- **Versión Actual:** 1.18.4 (Texto "Comprar Ahora" e Icono en Color Dorado Metálico #D4AF37)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
   - Restaurado el producto auténtico: **Vendedor de AI Online** ($25.00 USD) con la fotografía real del robot.
   - Eliminado el Sérum Facial de prueba de Cloudflare D1; métricas de Vendedor AI en D1 estrictamente en 0.
-  - Botón "Comprar Ahora" calibrado con borde dorado-oliva (`#94A37E`), icono/texto amarillo y precio blanco.
+  - Botón "Comprar Ahora": Texto "Comprar Ahora" e icono de tarjeta en auténtico color dorado metálico (`#D4AF37`).
+  - Contorno perimetral dorado-oliva (`#94A37E`) y precio en blanco nítido (`#FFFFFF`).
   - Fondo carbón `#1E2224` con micro-matriz de puntos 8px x 8px y botón de envío ámbar miel (#D79F4C).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Confirmar con el usuario la concordancia idéntica en https://clikchat.pages.dev.
