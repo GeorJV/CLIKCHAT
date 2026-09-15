@@ -1,16 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 01:50 GMT-6
-- **Versión Actual:** 1.20.21 (Grosor Esbelto de Burbuja de Usuario Igualado a la Píldora RAG Verde py-0.5)
+- **Última Actualización:** 2026-09-15 01:58 GMT-6
+- **Versión Actual:** 1.20.21 (Registro #005 Blindado en Memoria Protegida)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Grosor y altura vertical de la burbuja del usuario igualado al de la píldora verde RAG (`py-0.5 px-2.5`), esbelta y ceñida.
-  - Ventana de cortesía de 9 segundos para ráfagas continuas de mensajes del usuario.
-  - Panel showcase de producto/servicio con elevación 3D y sombra flotante hacia la pantalla.
+  - [Registro #005] registrado en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
+  - Vuelo suave de avioncito de papel y animación de expansión de burbujas en 0.68s.
+  - Ventana de cortesía de 9s (`useMessageBatcher.ts`) para ráfagas continuas.
+  - Burbuja de usuario esbelta (`py-0.5 px-2.5`) igualada a píldora RAG con glassmorphism 50%.
+  - Showcase con elevación 3D y sombra flotante sobre el chat.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la coherencia visual en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Rotar a nuevo chat para mantener agilidad y ahorro de tokens.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.

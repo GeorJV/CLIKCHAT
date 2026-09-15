@@ -83,4 +83,37 @@
       - Verificación de compilación limpia con `npm run build` sin errores.
 - **Deploy en Vivo:** `https://clikchat.pages.dev` en Cloudflare Pages CDN.
 
+---
+
+## [Registro #005] - 2026-09-15: Microinteracción de Vuelo, Ráfagas Unificadas (9s), Animación de Expansión, Espaciado Ceñido y Elevación 3D del Showcase
+- **Estado:** ✅ APROBADO & PROTEGIDO (Memoria Protegida Inmutable)
+- **Detalle Exhaustivo de Cambios Realizados y Verificados:**
+  1. **Microinteracción del Avioncito de Papel (`FlyingPaperPlane.tsx`):**
+     - Animación de vuelo parabólico suave (`paperPlaneFlight`) desde el botón de envío hasta la base de la burbuja.
+     - Calibración de trayectoria contenida (`translate(-18px, -54px)`) con inclinación angular y desaparición suave sin desbordamiento.
+  2. **Animación de Entrada de Burbujas con Expansión Progresiva (Blooming):**
+     - Entrada orgánica desde el punto de origen (`origin-bottom-right` en burbuja de usuario, `origin-bottom-left` en burbuja del bot).
+     - Curva `cubic-bezier(0.16, 1, 0.3, 1)` de 0.68s que crece desde escala 0.12 a 1.0 con fundido de opacidad, simulando eclosión física fluida.
+  3. **Motor de Ráfagas con Ventana de Cortesía de 9 Segundos (`useMessageBatcher.ts`):**
+     - Debounce y acumulación inteligente de 9000ms (`debounceMs = 9000`) para mensajes fragmentados consecutivos del usuario.
+     - Generación de una sola respuesta cohesiva por parte del asistente RAG evitando interrupciones prematuras.
+  4. **Espaciado Vertical Ultra Ceñido:**
+     - Margen entre mensajes continuos del mismo remitente compactado a `mt-0.5` (~2px, estilo WhatsApp).
+     - Margen entre turnos de conversación establecido en `mt-2` (~8px) optimizando el área visible.
+  5. **Burbuja de Usuario Esbelta en Glassmorphism:**
+     - Fondo dorado al 50% de opacidad (`bg-[#D79F4C]/50`) con desenfoque de fondo (`backdrop-blur-md`) y borde translúcido (`border-[#D79F4C]/30`).
+     - Grosor y altura vertical ceñida (`px-2.5 py-0.5`), perfectamente calibrada e igualada a la silueta de la píldora verde RAG.
+  6. **Elevación y Sombra Profunda en Burbujas del Bot:**
+     - Sombra de profundidad (`shadow-lg shadow-black/60`) y borde suave (`border-white/[0.12]`).
+  7. **Elevación 3D y Sombra Flotante del Showcase (`ProductShowcase.tsx`, `ServiceShowcase.tsx`):**
+     - Implementación de `z-10`, borde izquierdo `border-l border-white/[0.1]` y sombra proyectada hacia la izquierda (`lg:shadow-[-24px_0_50px_-5px_rgba(0,0,0,0.85)]`).
+     - Efecto visual de proximidad física en el que el panel de producto o servicio aparece en primer plano sobre el chat.
+  8. **Garantía ARQMODULAR y Blindaje Inmutable:**
+     - 100% de componentes frontend bajo el límite de 150 líneas.
+     - Cero modificaciones a los archivos en `lockedFiles`.
+     - Build de producción verificado y desplegado en Cloudflare Pages CDN.
+- **Deploy en Vivo:** `https://clikchat.pages.dev`
+- **Commits Clave:** `927e87b`, `c2f6d02`, `56a5bbb`, `eea2e85`, `2401295`
+
+
 
