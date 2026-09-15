@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Sparkles, Check, ShoppingBag, ShieldCheck, MessageSquare } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
@@ -89,7 +89,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
           <button type="button" onClick={() => onAskAboutProduct(product)} className="flex-1 py-2 px-3 rounded-xl border border-[#2e2b2b] bg-[#1a1919] hover:bg-[#242222] text-zinc-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
             <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /><span>Preguntar</span>
           </button>
-          <button type="button" onClick={() => onDirectCheckout(product)} className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition cursor-pointer">
+          <button type="button" onClick={() => onDirectCheckout(product)} className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-emerald-500 to-emerald-600 hover:from-amber-400 hover:via-emerald-400 hover:to-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition cursor-pointer">
             <ShoppingBag className="w-3.5 h-3.5" /><span>Comprar Ahora</span>
           </button>
         </div>

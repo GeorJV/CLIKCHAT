@@ -129,7 +129,7 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onBuyNow}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-500/30 border border-emerald-400/25 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-emerald-500 to-emerald-600 hover:from-amber-400 hover:via-emerald-400 hover:to-emerald-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-amber-500/20 border border-amber-400/25 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer drop-shadow-sm"
           >
             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Comprar Ahora — ${product.price.toFixed(2)} {product.currency}</span>
