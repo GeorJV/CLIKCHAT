@@ -1,18 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 22:32 GMT-6
-- **Versión Actual:** 1.19.0 (Hover Amarillo Dorado en Botones y Eliminación Real de Productos)
+- **Última Actualización:** 2026-09-14 22:47 GMT-6
+- **Versión Actual:** 1.19.1 (Protección de Edición en Mi Negocio contra Auto-Refresh de Fondo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botones "Beneficios" y "Detalle del Producto" con transición a color amarillo dorado (#FBBF24) en texto, iconos y borde en hover.
-  - Eliminación de productos corregida: vaciado real en Cloudflare D1 y localStorage, sin resurrección de demos.
-  - Catálogo vacío muestra estado descriptivo elegante en el portal del cliente.
-  - Producto activo en tienda: "Vendedor de AI Online" ($25.00 USD) con imagen oficial del robot.
-  - Botón "Comprar Ahora" con texto e icono en dorado metálico (#D4AF37) y precio blanco.
+  - Corregido el campo "Nombre del Negocio": protegido con `isDirtyRef` para no ser sobreescrito por el polling de métricas de fondo.
+  - Sincronización optimizada en `useClientPortal` preservando la identidad de estado del tenant.
+  - Botones "Beneficios" y "Detalle del Producto" con transición a color amarillo dorado (#FBBF24).
+  - Eliminación de productos persistente y definitiva en Cloudflare D1 y localStorage.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar eliminación y hover en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Probar edición de Nombre del Negocio en https://clikchat.pages.dev/client.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
