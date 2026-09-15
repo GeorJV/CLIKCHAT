@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:00 GMT-6
-- **Versión Actual:** 1.15.0 (Selector Dinámico de Categorías y Creador Custom en FAQs)
+- **Última Actualización:** 2026-09-14 19:07 GMT-6
+- **Versión Actual:** 1.15.1 (Optimización Visual de Tarjetas de Conversaciones)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 74379a5)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 98b97aa)
 - **Estado Actual del Sistema:**
-  - En 'Agregar Pregunta Frecuente (Manual)', el campo de categoría ahora es un selector dropdown dinámico.
-  - Carga categorías predefinidas y existentes del catálogo FAQ del tenant.
-  - Incluye botón '+' y opción en el dropdown para agregar y autoseleccionar categorías personalizadas al gusto.
-  - La barra superior interna permanece oculta en vistas y enlaces públicos de productos y servicios.
+  - En las tarjetas de conversaciones, la hora se movió arriba junto al nombre del contacto.
+  - La etiqueta 'En Vivo' / 'Online' se renderiza limpia, sin borde ni relleno de fondo.
+  - Se removió por completo el badge técnico 'FAQ Nivel 2' de la lista y detalle de chats.
+  - Selector dinámico de categorías y creador custom '+' en FAQs operativo.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar creación de FAQs con selector y nuevas categorías.
+- **Siguiente Paso Inmediato:** Validar la vista de conversaciones y la interacción con los clientes.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
