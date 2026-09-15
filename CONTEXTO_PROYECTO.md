@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 01:41 GMT-6
-- **Versión Actual:** 1.20.20 (Ventana de Cortesía Ampliada a 9 Segundos para Ráfagas de Mensajes)
+- **Última Actualización:** 2026-09-15 01:50 GMT-6
+- **Versión Actual:** 1.20.21 (Grosor Esbelto de Burbuja de Usuario Igualado a la Píldora RAG Verde py-0.5)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Ventana de cortesía para mensajes en ráfaga ampliada a 9 segundos (`debounceMs = 9000`), ritmo pausado y natural.
-  - Panel showcase de producto/servicio elevado (`z-10`, `lg:shadow-[-24px_0_50px_-5px_rgba(0,0,0,0.85)]` y `border-l border-white/[0.1]`).
-  - Animación de burbuja con expansión paulatina desde un punto de origen en 0.68s.
+  - Grosor y altura vertical de la burbuja del usuario igualado al de la píldora verde RAG (`py-0.5 px-2.5`), esbelta y ceñida.
+  - Ventana de cortesía de 9 segundos para ráfagas continuas de mensajes del usuario.
+  - Panel showcase de producto/servicio con elevación 3D y sombra flotante hacia la pantalla.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar la coherencia visual en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
