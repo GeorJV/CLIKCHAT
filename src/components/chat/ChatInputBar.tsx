@@ -45,7 +45,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   };
 
   return (
-    <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-end space-x-2">
+    <div className="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-end space-x-2">
       <textarea
         ref={textareaRef}
         rows={1}
@@ -55,16 +55,16 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={isLoading}
-        className="flex-1 text-xs px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition disabled:opacity-60 resize-none leading-snug min-h-[36px] max-h-[120px] overflow-y-auto"
+        className="flex-1 text-xs px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition disabled:opacity-60 resize-none leading-snug min-h-[24px] max-h-[100px] overflow-y-auto"
       />
 
       <button
         onClick={handleSend}
         disabled={!inputValue.trim() || isLoading}
-        className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5"
+        className="p-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5"
         aria-label="Enviar mensaje"
       >
-        <Send className="w-4 h-4" />
+        <Send className="w-3.5 h-3.5" />
       </button>
     </div>
   );

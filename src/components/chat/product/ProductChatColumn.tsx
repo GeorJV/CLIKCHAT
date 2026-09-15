@@ -107,9 +107,9 @@ export const ProductChatColumn: React.FC<Props> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support */}
-      <footer className="p-2.5 bg-[#111010] border-t border-[#262424] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-2 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-3 py-1.5 transition shadow-inner">
+      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support - Optimized Minimal Height */}
+      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#111010] border-t border-[#262424] shrink-0">
+        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -117,10 +117,10 @@ export const ProductChatColumn: React.FC<Props> = ({
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             placeholder={`Pregúntale a ${agentName} sobre ${productTitle}... (Shift+Enter para nueva línea)`}
-            className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 focus:outline-none resize-none leading-snug py-1 min-h-[26px] max-h-[120px] overflow-y-auto"
+            className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block"
           />
-          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer mb-0.5" title="Enviar mensaje">
-            <Send className="w-4 h-4" />
+          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer self-end mb-0.5" title="Enviar mensaje">
+            <Send className="w-3.5 h-3.5" />
           </button>
         </form>
       </footer>
