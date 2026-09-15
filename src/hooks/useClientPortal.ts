@@ -1,16 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
+import { DEMO_PRODUCTS } from '../components/client/products/productsDemo';
 
 export function useClientPortal(initialSlug: string = 'acme-store') {
   const [tenantSlug, setTenantSlug] = useState<string>(initialSlug);
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('clikchat_products');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return DEMO_PRODUCTS;
+  });
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [unresolved, setUnresolved] = useState<UnresolvedQuery[]>([]);
   const [availableTenants, setAvailableTenants] = useState<TenantListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && products.length > 0) {
+      try {
+        localStorage.setItem('clikchat_products', JSON.stringify(products));
+      } catch (e) {}
+    }
+  }, [products]);
 
   const loadTenantsList = useCallback(async () => {
     try {
@@ -119,51 +136,60 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const createProduct = async (productData: Partial<Product> & { name: string; price: number }) => {
-    if (!tenant?.id || !productData.name) return false;
+    if (!productData.name) return false;
+    const newProd: Product = {
+      id: `prod_${Date.now()}`,
+      tenant_id: tenant?.id || 'tenant-demo',
+      name: productData.name,
+      slug: productData.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      price: productData.price,
+      currency: productData.currency || 'USD',
+      short_description: productData.short_description || '',
+      full_description: productData.full_description || productData.short_description || '',
+      images: productData.images && productData.images.length > 0 ? productData.images : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'],
+      benefits: productData.benefits || [],
+      details: productData.details || { category: 'General', sku: `SKU-${Date.now().toString().slice(-4)}` },
+      cta_label: 'Comprar Ahora',
+      cta_url: productData.cta_url || `https://wa.me/50688888888?text=Hola,%20deseo%20${encodeURIComponent(productData.name)}`,
+      is_active: true
+    };
+    setProducts(prev => [newProd, ...prev]);
     try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...productData, tenant_id: tenant.id })
-      });
-      if (res.ok) {
-        await loadTenantData(tenantSlug);
-        return true;
+      if (tenant?.id) {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newProd, tenant_id: tenant.id })
+        });
       }
     } catch (err) {
-      console.error('Error creating product:', err);
+      console.warn('Product saved locally, backend sync warning:', err);
     }
-    return false;
+    return true;
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
     try {
-      const res = await fetch(`/api/products/${id}`, {
+      await fetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      if (res.ok) {
-        await loadTenantData(tenantSlug);
-        return true;
-      }
     } catch (err) {
-      console.error('Error updating product:', err);
+      console.warn('Product updated locally:', err);
     }
-    return false;
+    return true;
   };
 
   const deleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
     try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setProducts(prev => prev.filter(p => p.id !== id));
-        return true;
-      }
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
     } catch (err) {
-      console.error('Error deleting product:', err);
+      console.warn('Product deleted locally:', err);
     }
-    return false;
+    return true;
   };
 
   const updateSettings = async (updates: Partial<Tenant>) => {

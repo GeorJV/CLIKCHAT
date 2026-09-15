@@ -1,121 +1,122 @@
-import React, { useState } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, X, Check } from 'lucide-react';
 import { Product } from '../../../types';
+import { ProductModalFieldsLeft } from './ProductModalFieldsLeft';
+import { ProductModalFieldsRight } from './ProductModalFieldsRight';
 
-interface ProductModalProps {
+interface Props {
   isOpen: boolean;
   productToEdit: Product | null;
   onClose: () => void;
   onSubmit: (data: Partial<Product> & { name: string; price: number }) => Promise<boolean>;
 }
 
-export const ProductModal: React.FC<ProductModalProps> = ({
-  isOpen,
-  productToEdit,
-  onClose,
-  onSubmit
-}) => {
+export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, onSubmit }) => {
   if (!isOpen) return null;
 
-  const [name, setName] = useState(productToEdit?.name || '');
-  const [price, setPrice] = useState(productToEdit?.price ? String(productToEdit.price) : '');
-  const [currency, setCurrency] = useState(productToEdit?.currency || 'USD');
-  const [category, setCategory] = useState(productToEdit?.details?.category || 'General');
-  const [sku, setSku] = useState(productToEdit?.details?.sku || `SKU-${Date.now().toString().slice(-6)}`);
-  const [imageUrl, setImageUrl] = useState(productToEdit?.images?.[0] || '');
-  const [shortDesc, setShortDesc] = useState(productToEdit?.short_description || '');
-  const [benefits, setBenefits] = useState(productToEdit?.benefits?.join(', ') || '');
-  const [ctaUrl, setCtaUrl] = useState(productToEdit?.cta_url || '');
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('General');
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [sku, setSku] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [externalUrl, setExternalUrl] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [benefits, setBenefits] = useState('');
+  const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (productToEdit) {
+      setName(productToEdit.name || '');
+      setCategory(productToEdit.details?.category || 'General');
+      setPrice(productToEdit.price ? String(productToEdit.price) : '');
+      setCurrency(productToEdit.currency || 'USD');
+      setSku(productToEdit.details?.sku || `SKU-${Date.now().toString().slice(-6)}`);
+      setDescription(productToEdit.short_description || productToEdit.full_description || '');
+      setImageUrl(productToEdit.images?.[0] || '');
+      setExternalUrl(productToEdit.cta_url || '');
+      setIsActive(productToEdit.is_active ?? true);
+      setBenefits(productToEdit.benefits?.map(b => b.startsWith('•') ? b : `• ${b}`).join('\n') || '');
+      setDetails(productToEdit.details?.specifications || '');
+    } else {
+      setName(''); setCategory('General'); setPrice(''); setCurrency('USD');
+      setSku(`SKU-${Date.now().toString().slice(-6)}`);
+      setDescription(''); setImageUrl(''); setExternalUrl(''); setIsActive(true);
+      setBenefits('• Atención al cliente inmediata y disponible 24/7\n• Reducción de hasta un 80% en los tiempos de respuesta\n• Captación y calificación de clientes potenciales en piloto automático');
+      setDetails('Tecnología: IA generativa avanzada y Procesamiento de Lenguaje Natural (NLP)\n• Canales: Integrable en sitios web, WhatsApp, Facebook Messenger o Instagram\n• Idiomas: Soporte multilingüe (Español, Inglés, etc.)');
+    }
+  }, [productToEdit, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !price || isSubmitting) return;
     setIsSubmitting(true);
-    const benefitsList = benefits.split(',').map(b => b.trim()).filter(Boolean);
-    const success = await onSubmit({
-      name: name.trim(),
-      price: parseFloat(price),
-      currency,
-      short_description: shortDesc.trim(),
-      full_description: shortDesc.trim(),
-      images: imageUrl ? [imageUrl.trim()] : [],
-      benefits: benefitsList,
-      cta_url: ctaUrl.trim(),
-      details: { category: category.trim(), sku: sku.trim() },
-      is_active: true
-    });
-    setIsSubmitting(false);
-    if (success) onClose();
+    const parsedBenefits = benefits.split('\n').map(b => b.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
+    try {
+      const success = await onSubmit({
+        name: name.trim(), price: parseFloat(price) || 0, currency,
+        short_description: description.trim(), full_description: description.trim(),
+        images: imageUrl ? [imageUrl.trim()] : [], benefits: parsedBenefits,
+        cta_label: 'Comprar Ahora', cta_url: externalUrl.trim(),
+        details: { category: category.trim(), sku: sku.trim(), specifications: details.trim() },
+        is_active: isActive
+      });
+      setIsSubmitting(false);
+      if (success !== false) onClose();
+    } catch {
+      setIsSubmitting(false);
+      onClose();
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="onyx-card w-full max-w-lg rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-2 border-b border-[#282626]">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>{productToEdit ? 'Editar Producto & QLink' : 'Nuevo Producto & QLink Directo'}</span>
-          </h3>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 cursor-pointer">
-            <X className="w-4 h-4" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="w-full max-w-4xl bg-[#131b26] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
+        {/* Encabezado */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/90 bg-[#101721]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                {productToEdit ? 'Editar producto' : 'Crear producto'}
+              </h3>
+              <p className="text-xs text-slate-400">Configura datos comerciales, foto, beneficios y especificaciones para tu tienda.</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Nombre</label>
-              <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Chatbot con IA" className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        {/* Cuerpo del formulario con 2 columnas */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-y-auto flex-1">
+            <div className="lg:col-span-7">
+              <ProductModalFieldsLeft
+                name={name} setName={setName} category={category} setCategory={setCategory}
+                price={price} setPrice={setPrice} currency={currency} setCurrency={setCurrency}
+                sku={sku} setSku={setSku} description={description} setDescription={setDescription}
+                imageUrl={imageUrl} setImageUrl={setImageUrl} externalUrl={externalUrl} setExternalUrl={setExternalUrl}
+                isActive={isActive} setIsActive={setIsActive}
+              />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Precio & Moneda</label>
-              <div className="flex gap-2">
-                <input type="number" step="0.01" required value={price} onChange={e => setPrice(e.target.value)} placeholder="25.00" className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-                <input type="text" value={currency} onChange={e => setCurrency(e.target.value)} className="w-16 bg-[#111010] border border-[#282626] rounded-lg px-2 py-1.5 text-xs text-white text-center" />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Categoría</label>
-              <input type="text" value={category} onChange={e => setCategory(e.target.value)} placeholder="General" className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">SKU</label>
-              <input type="text" value={sku} onChange={e => setSku(e.target.value)} placeholder="SKU-49" className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+            <div className="lg:col-span-5">
+              <ProductModalFieldsRight benefits={benefits} setBenefits={setBenefits} details={details} setDetails={setDetails} />
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">URL Imagen</label>
-            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-            <div className="flex gap-2 mt-1.5">
-              <button type="button" onClick={() => setImageUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800')} className="text-[10px] keycap border-[#2e2b2b] px-2 py-0.5 rounded text-zinc-300 hover:text-white cursor-pointer">Preset Robot 3D</button>
-              <button type="button" onClick={() => setImageUrl('https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800')} className="text-[10px] keycap border-[#2e2b2b] px-2 py-0.5 rounded text-zinc-300 hover:text-white cursor-pointer">Preset Zapato Formal</button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Descripción Corta / Ficha Técnica</label>
-            <textarea rows={2} value={shortDesc} onChange={e => setShortDesc(e.target.value)} placeholder="Automatiza la atención al cliente..." className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Beneficios (separados por comas)</label>
-            <input type="text" value={benefits} onChange={e => setBenefits(e.target.value)} placeholder="Atención 24/7, Calificación de leads" className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Enlace de Compra Directa (WhatsApp o Checkout)</label>
-            <input type="text" value={ctaUrl} onChange={e => setCtaUrl(e.target.value)} placeholder="https://wa.me/..." className="w-full bg-[#111010] border border-[#282626] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#282626]">
-            <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg keycap text-xs font-semibold text-zinc-300 hover:text-white cursor-pointer">Cancelar</button>
-            <button type="submit" disabled={isSubmitting || !name.trim() || !price} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white disabled:opacity-50 cursor-pointer">
-              {isSubmitting ? 'Guardando...' : (productToEdit ? 'Actualizar Producto' : 'Crear Producto')}
+          {/* Botones de acción Footer */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-800/90 bg-[#0e141d]">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs sm:text-sm transition-colors cursor-pointer">
+              Cancelar
+            </button>
+            <button type="submit" disabled={isSubmitting || !name.trim() || !price} className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer">
+              <Check className="w-4 h-4" />
+              <span>{isSubmitting ? 'Guardando...' : 'Guardar producto'}</span>
             </button>
           </div>
         </form>
