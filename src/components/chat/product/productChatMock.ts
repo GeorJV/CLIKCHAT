@@ -1,23 +1,21 @@
-﻿import { ProductItem } from '../../../types/productChat';
+import { ProductItem } from '../../../types/productChat';
 
 export const DEFAULT_PRODUCT: ProductItem = {
-  id: 'prod_default',
-  title: 'Sérum Facial Rejuvenecedor con Ácido Hialurónico',
-  category: 'Cuidado Facial',
-  price: 29.99,
-  originalPrice: 48.00,
+  id: 'prod_vendedor_ai',
+  title: 'Vendedor de AI Online',
+  category: 'Software & Inteligencia Artificial',
+  price: 25.00,
+  originalPrice: 49.00,
   currency: 'USD',
-  stock: 15,
-  image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80',
+  stock: 50,
+  image: '/images/vendedor-ai-robot.jpeg',
   images: [
-    'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1608248597359-00f074a3f3b4?w=800&auto=format&fit=crop&q=80'
+    '/images/vendedor-ai-robot.jpeg'
   ],
   benefits: [
-    'Hidratación profunda 24h y restauración de la barrera cutánea.',
-    'Fórmula hipoalergénica con triple peso molecular de ácido hialurónico.',
-    'Resultados visibles de firmeza y luminosidad en 7 días.'
+    'Disponibilidad 24/7: Atención siempre activa, incluso fuera de horario.',
+    'Respuestas instantáneas: Reduce el tiempo de espera para tus clientes.',
+    'Mejora la satisfacción con experiencias personalizadas y reduce costos operativos.'
   ],
-  description: 'Fórmula dermatológica concentrada diseñada para nutrir, rejuvenecer y proteger la piel.'
+  description: 'Transforma tu negocio con un chatbot inteligente y vendedor de IA online disponible 24/7. Automatiza atención al cliente, califica leads y cierra ventas en piloto automático.'
 };

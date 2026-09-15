@@ -19,9 +19,9 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
     stock: 25,
     inStock: true,
     benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : [
-      'Hidratación profunda 24h y restauración de la barrera cutánea.',
-      'Fórmula hipoalergénica con triple peso molecular de ácido hialurónico.',
-      'Resultados visibles de firmeza y luminosidad en 7 días.'
+      'Disponibilidad 24/7: Atención siempre activa, incluso fuera de horario.',
+      'Respuestas instantáneas: Reduce el tiempo de espera para tus clientes.',
+      'Mejora la satisfacción con experiencias personalizadas y reduce costos operativos.'
     ],
     description: p.full_description || p.short_description || '',
     specifications: p.details || {}

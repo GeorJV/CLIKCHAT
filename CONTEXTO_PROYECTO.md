@@ -1,17 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 21:52 GMT-6
-- **Versión Actual:** 1.18.2 (Borde Dorado y Tarjeta/Texto Amarillo en Botón Comprar Ahora)
+- **Última Actualización:** 2026-09-14 22:03 GMT-6
+- **Versión Actual:** 1.18.3 (Restauración Producto Real: Vendedor de AI Online con Foto del Robot)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Muestreo pixel a pixel: Fondo carbón `#1E2224` y micro-matriz de puntos 8px x 8px.
-  - Botón "Comprar Ahora": Borde dorado-oliva (`#94A37E`), icono de tarjeta y texto en oro cálido (`#CDB86F`), precio en blanco (`#FFFFFF`).
-  - Botón de envío en ámbar miel (#D79F4C) con icono oscuro (#2A1E14) y placeholder "Pregúntale...".
-  - Etiqueta "38% OFF" en tono caramelo suave (#7A571F) con tipografía dorada (#FDE68A).
-  - Sérum Facial Rejuvenecedor fijado con métricas reales en 0 en D1 y carga instantánea.
-  - Estándar ARQMODULAR (<150 líneas) y lockedFiles blindados.
+  - Restaurado el producto auténtico: **Vendedor de AI Online** ($25.00 USD) con la fotografía real del robot.
+  - Eliminado el Sérum Facial de prueba de Cloudflare D1; métricas de Vendedor AI en D1 estrictamente en 0.
+  - Botón "Comprar Ahora" calibrado con borde dorado-oliva (`#94A37E`), icono/texto amarillo y precio blanco.
+  - Fondo carbón `#1E2224` con micro-matriz de puntos 8px x 8px y botón de envío ámbar miel (#D79F4C).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Confirmar con el usuario la concordancia idéntica en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**

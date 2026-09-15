@@ -1,20 +1,20 @@
-﻿import { Product } from '../../../types';
+import { Product } from '../../../types';
 
 export const DEMO_PRODUCTS: Product[] = [
   {
-    id: 'prod_demo_bot_49',
+    id: 'prod_vendedor_ai',
     tenant_id: 'tenant-demo',
-    name: 'Chatbot con IA para Negocios',
-    slug: 'chatbot-con-ia-para-negocios',
+    name: 'Vendedor de AI Online',
+    slug: 'vendedor-de-ai-online',
     price: 25.00,
     currency: 'USD',
-    short_description: 'Automatiza la atención al cliente, califica leads y aumenta las ventas con un asistente virtual 24/7.',
-    full_description: 'Automatiza la atención al cliente, califica leads y aumenta las ventas de tu negocio con un asistente virtual impulsado por IA.',
-    images: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'],
-    benefits: ['Atención 24/7', 'Calificación de Leads', 'RAG Multi-Nivel'],
-    details: { category: 'General', sku: 'SKU-BOT-01' },
+    short_description: 'Transforma tu negocio con un chatbot inteligente y vendedor de IA online disponible 24/7.',
+    full_description: 'Transforma tu negocio con un chatbot inteligente y vendedor de IA online. Automatiza la atención al cliente, califica leads y aumenta las ventas con un asistente virtual 24/7.',
+    images: ['/images/vendedor-ai-robot.jpeg'],
+    benefits: ['Disponibilidad 24/7', 'Respuestas Instantáneas', 'Reduce Costos Operativos'],
+    details: { category: 'Software & Inteligencia Artificial', sku: 'SKU-BOT-01' },
     cta_label: 'Comprar Ahora',
-    cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20el%20Chatbot%20con%20IA',
+    cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20el%20Vendedor%20de%20AI%20Online',
     is_active: true
   },
   {
