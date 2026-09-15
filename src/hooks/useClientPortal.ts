@@ -50,13 +50,26 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     }
   }, []);
 
-  const loadTenantData = useCallback(async (slugToLoad: string = tenantSlug) => {
-    setIsLoading(true);
+  const loadTenantData = useCallback(async (slugToLoad: string = tenantSlug, isBackground: boolean = false) => {
+    if (!isBackground) setIsLoading(true);
     try {
       const tRes = await fetch(`/api/tenants/${slugToLoad}`);
       if (tRes.ok) {
         const tData = await tRes.json();
-        setTenant(tData.tenant);
+        setTenant(prev => {
+          if (!prev) return tData.tenant;
+          if (
+            prev.id === tData.tenant?.id &&
+            prev.name === tData.tenant?.name &&
+            prev.slug === tData.tenant?.slug &&
+            prev.system_prompt === tData.tenant?.system_prompt &&
+            prev.primary_color === tData.tenant?.primary_color &&
+            prev.tone_of_voice === tData.tenant?.tone_of_voice
+          ) {
+            return prev;
+          }
+          return tData.tenant;
+        });
         setProducts(tData.products || []);
         setFaqs(tData.faqs || []);
         if (tData.tenant?.id) {
@@ -70,7 +83,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     } catch (err) {
       console.error('Error loading tenant data:', err);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   }, [tenantSlug]);
 
@@ -81,7 +94,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   useEffect(() => {
     if (!tenantSlug) return;
     const interval = setInterval(() => {
-      loadTenantData(tenantSlug);
+      loadTenantData(tenantSlug, true);
     }, 8000);
     return () => clearInterval(interval);
   }, [tenantSlug, loadTenantData]);

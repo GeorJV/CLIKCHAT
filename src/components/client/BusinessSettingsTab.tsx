@@ -25,16 +25,19 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     'Eres Aria, asesora experta en ventas de Aura Glow. Responde con calidez, destaca los beneficios dermatológicos, y guía al cliente hacia la compra con naturalidad sin ser invasiva.'
   );
   const [isSaving, setIsSaving] = useState(false);
+  const isDirtyRef = React.useRef(false);
+  const initializedIdRef = React.useRef<string | null>(null);
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant && (tenant.id !== initializedIdRef.current || !isDirtyRef.current)) {
+      initializedIdRef.current = tenant.id;
       setName(tenant.name || '');
       setSlug(tenant.slug || tenantSlug || '');
       setTone(tenant.tone_of_voice || 'Profesional y Cortés');
       setPrimaryColor(tenant.primary_color || '#32AAC8');
       if (tenant.system_prompt) setSystemPrompt(tenant.system_prompt);
     }
-  }, [tenant, tenantSlug]);
+  }, [tenant?.id, tenantSlug]);
 
   const handleAutoSlug = () => {
     const generated = name
@@ -44,19 +47,25 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-    if (generated) setSlug(generated);
+    if (generated) {
+      setSlug(generated);
+      isDirtyRef.current = true;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    await onUpdateSettings({
+    const success = await onUpdateSettings({
       name,
       slug,
       tone_of_voice: tone,
       primary_color: primaryColor,
       system_prompt: systemPrompt
     });
+    if (success) {
+      isDirtyRef.current = false;
+    }
     setIsSaving(false);
   };
 
@@ -78,7 +87,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                isDirtyRef.current = true;
+              }}
               className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
@@ -98,7 +110,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
               <input
                 type="text"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => {
+                  setSlug(e.target.value);
+                  isDirtyRef.current = true;
+                }}
                 className="bg-transparent flex-1 text-white font-mono focus:outline-none text-xs"
                 placeholder="mi-tienda"
               />
@@ -111,7 +126,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
             <label className="block text-xs font-bold text-zinc-300 mb-1">Tono de Voz de la IA</label>
             <select
               value={tone}
-              onChange={(e) => setTone(e.target.value)}
+              onChange={(e) => {
+                setTone(e.target.value);
+                isDirtyRef.current = true;
+              }}
               className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             >
               <option value="Profesional y Cortés">Profesional y Cortés</option>
@@ -131,14 +149,20 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
                 <input
                   type="color"
                   value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  onChange={(e) => {
+                    setPrimaryColor(e.target.value);
+                    isDirtyRef.current = true;
+                  }}
                   className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
                 />
               </label>
               <input
                 type="text"
                 value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
+                onChange={(e) => {
+                  setPrimaryColor(e.target.value);
+                  isDirtyRef.current = true;
+                }}
                 className="bg-transparent text-xs font-mono text-white focus:outline-none flex-1 uppercase"
               />
             </div>
@@ -152,7 +176,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           <textarea
             rows={3}
             value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
+            onChange={(e) => {
+              setSystemPrompt(e.target.value);
+              isDirtyRef.current = true;
+            }}
             className="w-full bg-[#111010] border border-[#282626] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 leading-relaxed"
           />
         </div>

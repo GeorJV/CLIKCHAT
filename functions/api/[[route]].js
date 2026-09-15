@@ -294,11 +294,11 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug } = body;
 
       await executeD1(
-        'UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), updated_at = datetime(\'now\') WHERE id = ?10',
-        [name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, id]
+        'UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), updated_at = datetime(\'now\') WHERE id = ?11',
+        [name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, id]
       );
 
       const updated = await executeD1('SELECT * FROM tenants WHERE id = ?1', [id]);
