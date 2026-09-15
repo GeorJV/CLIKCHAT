@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck } from 'lucide-react';
+import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck, ShoppingBag } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
 interface Props {
@@ -28,11 +28,19 @@ export const ProductShowcase: React.FC<Props> = ({
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Photo Container */}
         <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#363333] bg-[#1c1a1a] shadow-2xl group min-h-0 isolate">
-          <img
-            src={images[currentImageIndex] || product.image}
-            alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500 rounded-2xl"
-          />
+          {images.length > 0 && (images[currentImageIndex] || product.image) ? (
+            <img
+              src={images[currentImageIndex] || product.image}
+              alt={product.title}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500 rounded-2xl"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#1c1a1a] text-zinc-500 p-6 text-center">
+              <ShoppingBag className="w-14 h-14 text-emerald-500/30 mb-2" />
+              <span className="text-sm font-bold text-zinc-300">{product.title}</span>
+              <span className="text-xs text-zinc-500 mt-1">{product.category || 'Catálogo Oficial'}</span>
+            </div>
+          )}
 
           {/* Photo Top Overlay (Sombra Superior Sutil y Reducida) */}
           <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/50 via-black/20 to-transparent h-12 pointer-events-none rounded-t-2xl" />
@@ -107,19 +115,11 @@ export const ProductShowcase: React.FC<Props> = ({
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={onOpenBenefits}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98"
-          >
+          <button type="button" onClick={onOpenBenefits} className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Beneficios</span>
           </button>
-          <button
-            type="button"
-            onClick={onOpenSpecs}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98"
-          >
+          <button type="button" onClick={onOpenSpecs} className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98">
             <FileText className="w-3.5 h-3.5 text-teal-400" />
             <span>Detalle del Producto</span>
           </button>

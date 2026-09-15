@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Copy, Check, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { ExternalLink, Copy, Check, ChevronRight, ChevronDown, X, ShoppingBag } from 'lucide-react';
 import { Product } from '../../../types';
 import { ProductMetricsDetail } from './ProductMetricsDetail';
 
@@ -23,11 +23,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const qlinkUrl = `${origin}/?t=${tenantSlug}&p=${product.id}`;
   const displayUrl = `https://clikchat.pages.dev/p/${product.slug || product.id.slice(0, 8)}...`;
   const storeUrl = `${origin}/?t=${tenantSlug}`;
-
-  const defaultImg = product.name.toLowerCase().includes('zapato')
-    ? 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80'
-    : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
-  const imageUrl = product.images?.[0] || defaultImg;
+  const imageUrl = product.images?.[0] || '';
   const sku = product.details?.sku || `SKU-${product.id.slice(0, 10)}`;
   const category = product.details?.category || 'General';
 
@@ -42,7 +38,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div>
         {/* Product Image with Overlay Badge */}
         <div className="relative rounded-lg overflow-hidden h-36 sm:h-40 w-full bg-[#0b0c0e]">
-          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
+          {imageUrl ? (
+            <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#141416] text-zinc-500">
+              <ShoppingBag className="w-10 h-10 text-emerald-500/40 mb-1" />
+              <span className="text-[11px] font-medium text-zinc-400">Sin foto asignada</span>
+            </div>
+          )}
           <div className="absolute top-2.5 right-2.5 bg-[#0a2720]/90 backdrop-blur-sm border border-emerald-500/50 text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>Activo para Bot</span>
@@ -85,10 +88,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Abrir</span>
             </a>
-            <button
-              onClick={handleCopy}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition whitespace-nowrap"
-            >
+            <button onClick={handleCopy} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition whitespace-nowrap">
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? '¡Copiado!' : 'Copiar QLink'}</span>
             </button>

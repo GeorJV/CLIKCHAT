@@ -18,11 +18,11 @@ interface ProductsGlobalMetricsProps {
 }
 
 export const ProductsGlobalMetrics: React.FC<ProductsGlobalMetricsProps> = ({ metrics }) => {
-  const buyClicks = metrics?.buyClicks ?? 8;
-  const descViews = metrics?.descriptionViews ?? 194;
-  const benefitViews = metrics?.benefitViews ?? 73;
-  const storeViews = metrics?.storeViews ?? 15;
-  const totalEvents = metrics?.totalEvents ?? 286;
+  const buyClicks = metrics?.buyClicks ?? 0;
+  const descViews = metrics?.descriptionViews ?? 0;
+  const benefitViews = metrics?.benefitViews ?? 0;
+  const storeViews = metrics?.storeViews ?? 0;
+  const totalEvents = metrics?.totalEvents ?? 0;
 
   const kpis: MetricItem[] = [
     { label: 'CLICS "COMPRAR"', value: `${buyClicks} Clics`, colorClass: 'text-teal-400' },

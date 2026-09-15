@@ -5,6 +5,7 @@ import { ServiceChatView } from './components/chat/service/ServiceChatView';
 import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar } from 'lucide-react';
+import { useProductResolver } from './hooks/useProductResolver';
 
 const NAV_VIEWS = [
   { id: 'chat', label: 'Chat Móvil', icon: Smartphone },
@@ -16,12 +17,14 @@ const NAV_VIEWS = [
 
 export function App() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const productId = params?.get('p') || null;
   const isServiceChat = params?.get('view') === 'service' || params?.has('s') || params?.has('service');
   const isProductChat = params?.get('view') === 'product' || params?.has('p');
   const isDirectChat = params?.get('view') === 'chat' || (params?.has('t') && !params?.has('panel'));
   const initialView = isServiceChat ? 'service' : isProductChat ? 'product' : isDirectChat ? 'chat' : 'client';
   const [currentView, setCurrentView] = useState<'chat' | 'product' | 'service' | 'client' | 'admin'>(initialView);
   const [selectedTenantSlug, setSelectedTenantSlug] = useState(params?.get('t') || 'acme-store');
+  const { productItem, storeName, agentName, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
 
   // Cuando se genera el link de producto, servicio o chat directo, la barra superior no debe aparecer
   const hideTopBar = isProductChat || isServiceChat || isDirectChat || currentView === 'product' || currentView === 'service';
@@ -72,11 +75,20 @@ export function App() {
 
         {currentView === 'product' && (
           <div className="h-full w-full overflow-hidden bg-[#222020]">
-            <ProductChatView
-              storeName="Clikchat Store"
-              agentName="Sofía"
-              onExit={() => setCurrentView('client')}
-            />
+            {isResolvingProduct && !productItem ? (
+              <div className="h-full w-full flex flex-col items-center justify-center bg-[#222020] text-zinc-400">
+                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <span className="text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</span>
+              </div>
+            ) : (
+              <ProductChatView
+                storeName={storeName}
+                agentName={agentName}
+                initialProduct={productItem || undefined}
+                products={productItem ? [productItem] : []}
+                onExit={() => setCurrentView('client')}
+              />
+            )}
           </div>
         )}
 

@@ -196,12 +196,20 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       currency: productData.currency || 'USD',
       short_description: productData.short_description || '',
       full_description: productData.full_description || productData.short_description || '',
-      images: productData.images && productData.images.length > 0 ? productData.images : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'],
+      images: productData.images && productData.images.length > 0 ? productData.images : [],
       benefits: productData.benefits || [],
       details: productData.details || { category: 'General', sku: `SKU-${Date.now().toString().slice(-4)}` },
       cta_label: 'Comprar Ahora',
       cta_url: productData.cta_url || `https://wa.me/50688888888?text=Hola,%20deseo%20${encodeURIComponent(productData.name)}`,
-      is_active: true
+      is_active: true,
+      metrics: {
+        views: 0,
+        buyClicks: 0,
+        benefitViews: 0,
+        coldLeads: 0,
+        warmLeads: 0,
+        hotLeads: 0
+      }
     };
     setProducts(prev => [newProd, ...prev]);
     try {

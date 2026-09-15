@@ -7,14 +7,13 @@ interface ProductMetricsDetailProps {
 }
 
 export const ProductMetricsDetail: React.FC<ProductMetricsDetailProps> = ({ product }) => {
-  // Deterministic or stored metrics based on product id
-  const hash = product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const buyClicks = 4 + (hash % 15);
-  const views = 45 + (hash % 80);
-  const benefitViews = 18 + (hash % 35);
-  const hotLeads = Math.max(1, Math.floor(buyClicks * 0.4));
-  const warmLeads = Math.max(2, Math.floor(buyClicks * 0.5));
-  const coldLeads = Math.max(3, views - buyClicks - warmLeads);
+  // Real online metrics stored in D1 database (initialized strictly at 0)
+  const buyClicks = product.metrics?.buyClicks ?? 0;
+  const views = product.metrics?.views ?? 0;
+  const benefitViews = product.metrics?.benefitViews ?? 0;
+  const coldLeads = product.metrics?.coldLeads ?? 0;
+  const warmLeads = product.metrics?.warmLeads ?? 0;
+  const hotLeads = product.metrics?.hotLeads ?? 0;
 
   return (
     <div className="mt-3 pt-3 border-t border-[#282626] bg-[#111010] rounded-xl p-3 space-y-3">

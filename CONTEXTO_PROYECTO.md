@@ -1,22 +1,22 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 20:27 GMT-6
-- **Versión Actual:** 1.15.13 (Pantalla Completa de Chat de Producto Aclarada a #222020)
+- **Última Actualización:** 2026-09-14 21:05 GMT-6
+- **Versión Actual:** 1.16.0 (Métricas en 0, D1 100% Online, Links Universales y Fotos Reales)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Pantalla completa de producto (chat y escaparate) unificada y aclarada a `#222020` con tarjetas y botones `#2c2a2a`.
-  - Botón Comprar Ahora con relleno y bordes idénticos a Nivel 3 Catálogo (`bg-amber-500/10 text-amber-400 border-amber-500/30`).
-  - Registro #004 blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
-  - Acordeón FAQs con edición directa en textarea y botón Guardar/Cancelar en tiempo real.
-  - Conversaciones restauradas a formato nativo WhatsApp sin badges técnicos.
-  - Input compacto optimizado al mínimo vertical y fotos nítidas con sombras reducidas.
+  - Métricas de nuevos productos inicializadas estrictamente en cero (0) y persistidas en Cloudflare D1 (`product_metrics`).
+  - Tracking online en tiempo real para eventos `view`, `buy_click`, `benefit_view` y `lead` (frío, tibio, caliente).
+  - Eliminación total de fotos de prueba de Unsplash y Sérum mock; carga exclusiva de fotos subidas por el dueño.
+  - Resolución universal de links QLink (`?p=id` y `?t=slug&p=id`) en cualquier navegador mediante `useProductResolver` y Edge Functions.
+  - Interfaz de producto aclarada a `#222020` y botón Comprar Ahora unificado con estilo Nivel 3 Catálogo.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar satisfacción visual del usuario con la pantalla completa aclarada.
+- **Siguiente Paso Inmediato:** Validar con el usuario la creación de nuevos productos con métricas en 0 y fotos reales en clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
+
 

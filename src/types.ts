@@ -13,6 +13,14 @@ export interface Product {
   cta_label: string;
   cta_url: string;
   is_active: boolean;
+  metrics?: {
+    views: number;
+    buyClicks: number;
+    benefitViews: number;
+    coldLeads: number;
+    warmLeads: number;
+    hotLeads: number;
+  };
 }
 
 export interface FAQ {

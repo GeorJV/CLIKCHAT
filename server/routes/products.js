@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { queryWithTenant, query } = require('../db');
 
-// List products for a tenant
+// List products for a tenant with real metrics from D1
 router.get('/', async (req, res) => {
   try {
     const { tenantId } = req.query;
@@ -11,17 +11,39 @@ router.get('/', async (req, res) => {
     }
 
     const result = await query(
-      'SELECT * FROM products WHERE tenant_id = $1 ORDER BY created_at DESC',
+      `SELECT p.*,
+        COALESCE(m.views, 0) as m_views,
+        COALESCE(m.buy_clicks, 0) as m_buy_clicks,
+        COALESCE(m.benefit_views, 0) as m_benefit_views,
+        COALESCE(m.cold_leads, 0) as m_cold_leads,
+        COALESCE(m.warm_leads, 0) as m_warm_leads,
+        COALESCE(m.hot_leads, 0) as m_hot_leads
+      FROM products p
+      LEFT JOIN product_metrics m ON p.id = m.product_id
+      WHERE p.tenant_id = $1
+      ORDER BY p.created_at DESC`,
       [tenantId]
     );
 
-    return res.json({ products: result.rows });
+    const products = result.rows.map(row => ({
+      ...row,
+      metrics: {
+        views: Number(row.m_views) || 0,
+        buyClicks: Number(row.m_buy_clicks) || 0,
+        benefitViews: Number(row.m_benefit_views) || 0,
+        coldLeads: Number(row.m_cold_leads) || 0,
+        warmLeads: Number(row.m_warm_leads) || 0,
+        hotLeads: Number(row.m_hot_leads) || 0
+      }
+    }));
+
+    return res.json({ products });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// Create product (feeds RAG Level 3)
+// Create product (metrics initialized strictly at 0 in D1)
 router.post('/', async (req, res) => {
   try {
     const {
@@ -50,14 +72,30 @@ router.post('/', async (req, res) => {
       ]
     );
 
+    // Initialize metrics in D1 strictly at 0
+    await query(
+      `INSERT INTO product_metrics (
+        product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads
+      ) VALUES ($1, $2, 0, 0, 0, 0, 0, 0)`,
+      [id, tenant_id]
+    );
+
     const createdProduct = {
       id, tenant_id, name, slug, price, currency: currency || 'USD',
       short_description: short_description || '', full_description: full_description || short_description || '',
       images: images || [], benefits: benefits || [], details: details || {},
-      cta_label: cta_label || 'Comprar', cta_url: cta_url || '', is_active: true
+      cta_label: cta_label || 'Comprar', cta_url: cta_url || '', is_active: true,
+      metrics: {
+        views: 0,
+        buyClicks: 0,
+        benefitViews: 0,
+        coldLeads: 0,
+        warmLeads: 0,
+        hotLeads: 0
+      }
     };
 
-    console.log(`📦 [PRODUCT CREATED] Producto "${name}" guardado y listo para RAG Nivel 3`);
+    console.log(`📦 [PRODUCT CREATED] Producto "${name}" guardado con métricas en 0 en D1`);
     return res.status(201).json({ success: true, product: createdProduct });
   } catch (err) {
     console.error('Error creando producto:', err);
@@ -111,6 +149,88 @@ router.delete('/:id', async (req, res) => {
     await query('DELETE FROM products WHERE id = $1', [id]);
     return res.json({ success: true, message: 'Producto eliminado correctamente' });
   } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single product with real metrics (for QLinks / direct share)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      `SELECT p.*,
+        COALESCE(m.views, 0) as m_views,
+        COALESCE(m.buy_clicks, 0) as m_buy_clicks,
+        COALESCE(m.benefit_views, 0) as m_benefit_views,
+        COALESCE(m.cold_leads, 0) as m_cold_leads,
+        COALESCE(m.warm_leads, 0) as m_warm_leads,
+        COALESCE(m.hot_leads, 0) as m_hot_leads
+      FROM products p
+      LEFT JOIN product_metrics m ON p.id = m.product_id
+      WHERE p.id = $1 OR p.slug = $1
+      LIMIT 1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    const row = result.rows[0];
+    const product = {
+      ...row,
+      metrics: {
+        views: Number(row.m_views) || 0,
+        buyClicks: Number(row.m_buy_clicks) || 0,
+        benefitViews: Number(row.m_benefit_views) || 0,
+        coldLeads: Number(row.m_cold_leads) || 0,
+        warmLeads: Number(row.m_warm_leads) || 0,
+        hotLeads: Number(row.m_hot_leads) || 0
+      }
+    };
+
+    return res.json({ product });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Track real online metric events
+router.post('/:id/track', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { event, temperature } = req.body || {};
+
+    // Ensure metric row exists in D1
+    await query(
+      `INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads)
+       SELECT id, tenant_id, 0, 0, 0, 0, 0, 0 FROM products WHERE id = $1 OR slug = $1
+       ON CONFLICT(product_id) DO NOTHING`,
+      [id]
+    );
+
+    let updateSql = '';
+    if (event === 'buy_click') {
+      updateSql = `UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    } else if (event === 'benefit_view') {
+      updateSql = `UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    } else if (event === 'lead') {
+      if (temperature === 'hot') {
+        updateSql = `UPDATE product_metrics SET hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+      } else if (temperature === 'warm') {
+        updateSql = `UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+      } else {
+        updateSql = `UPDATE product_metrics SET cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+      }
+    } else {
+      // Default: view
+      updateSql = `UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    }
+
+    await query(updateSql, [id]);
+    return res.json({ success: true, event });
+  } catch (err) {
+    console.error('Error registrando métrica en D1:', err);
     return res.status(500).json({ error: err.message });
   }
 });
