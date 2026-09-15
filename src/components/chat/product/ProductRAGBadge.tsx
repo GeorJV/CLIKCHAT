@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, HelpCircle, Layers, UserCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProductRAGTrace } from '../../../types/productChat';
 
@@ -44,7 +44,7 @@ export const ProductRAGBadge: React.FC<Props> = ({ trace }) => {
   const Icon = config.icon;
 
   return (
-    <div className="mt-1.5 pt-1 text-[11px] font-sans select-none">
+    <div className="mt-0.5 text-[11px] font-sans select-none">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
