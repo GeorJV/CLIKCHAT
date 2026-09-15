@@ -113,13 +113,13 @@ export const ProductShowcase: React.FC<Props> = ({
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-2.5 shrink-0">
-          <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 ${themeStyles.benefitsBtn}`}>
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Beneficios</span>
+          <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.benefitsBtn}`}>
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:text-[#FBBF24] transition-colors duration-200" />
+            <span className="transition-colors duration-200">Beneficios</span>
           </button>
-          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 ${themeStyles.specsBtn}`}>
-            <FileText className="w-3.5 h-3.5 text-teal-400" />
-            <span>Detalle del Producto</span>
+          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>
+            <FileText className="w-3.5 h-3.5 text-teal-400 group-hover:text-[#FBBF24] transition-colors duration-200" />
+            <span className="transition-colors duration-200">Detalle del Producto</span>
           </button>
         </div>
 

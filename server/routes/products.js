@@ -145,8 +145,9 @@ router.put('/:id', async (req, res) => {
 // Delete product
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    await query('DELETE FROM products WHERE id = $1', [id]);
+    const id = decodeURIComponent(req.params.id);
+    await query('DELETE FROM product_metrics WHERE product_id = $1 OR product_id IN (SELECT id FROM products WHERE slug = $1)', [id]);
+    await query('DELETE FROM products WHERE id = $1 OR slug = $1', [id]);
     return res.json({ success: true, message: 'Producto eliminado correctamente' });
   } catch (err) {
     return res.status(500).json({ error: err.message });

@@ -171,9 +171,9 @@ export async function onRequest(context) {
 
     // DELETE PRODUCT: DELETE /api/products/:id
     if (segments[0] === 'products' && segments.length === 2 && request.method === 'DELETE') {
-      const id = segments[1];
-      await executeD1('DELETE FROM product_metrics WHERE product_id = ?1', [id]);
-      await executeD1('DELETE FROM products WHERE id = ?1', [id]);
+      const id = decodeURIComponent(segments[1]);
+      await executeD1('DELETE FROM product_metrics WHERE product_id = ?1 OR product_id IN (SELECT id FROM products WHERE slug = ?1)', [id]);
+      await executeD1('DELETE FROM products WHERE id = ?1 OR slug = ?1', [id]);
       return jsonResponse({ success: true, message: 'Producto eliminado' });
     }
 

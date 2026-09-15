@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
-import { DEMO_PRODUCTS } from '../components/client/products/productsDemo';
 import { DEFAULT_FAQS } from '../components/client/faqs/faqsDemo';
 
 export function useClientPortal(initialSlug: string = 'acme-store') {
@@ -11,10 +10,10 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('clikchat_products');
-        if (saved) return JSON.parse(saved);
+        if (saved !== null) return JSON.parse(saved);
       } catch (e) {}
     }
-    return DEMO_PRODUCTS;
+    return [];
   });
   const [faqs, setFaqs] = useState<FAQ[]>(() => {
     if (typeof window !== 'undefined') {
@@ -33,7 +32,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        if (products.length > 0) localStorage.setItem('clikchat_products', JSON.stringify(products));
+        localStorage.setItem('clikchat_products', JSON.stringify(products));
         if (faqs.length > 0) localStorage.setItem('clikchat_faqs', JSON.stringify(faqs));
       } catch (e) {}
     }
@@ -250,9 +249,15 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const deleteProduct = async (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+    setProducts(prev => {
+      const next = prev.filter(p => p.id !== id);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('clikchat_products', JSON.stringify(next));
+      }
+      return next;
+    });
     try {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      await fetch(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
     } catch (err) {
       console.warn('Product deleted locally:', err);
     }
