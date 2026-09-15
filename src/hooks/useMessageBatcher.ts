@@ -11,7 +11,7 @@ interface UseMessageBatcherOptions {
 
 export function useMessageBatcher({
   debounceMs = 7000,
-  deliveryDelayMs = 280,
+  deliveryDelayMs = 350,
   onDeliverUserMessage,
   onTriggerBotReply,
   onSetLoading,
