@@ -1,18 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 17:31 GMT-6
-- **Versión Actual:** 1.13.0 (Ventana de Chat de Productos Dual Screen Operativa ARQMODULAR)
+- **Última Actualización:** 2026-09-14 18:06 GMT-6
+- **Versión Actual:** 1.14.0 (Ventana de Chat de Servicios y Agendamiento de Citas Operativa)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 04bb873)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 3480168)
 - **Estado Actual del Sistema:**
-  - Ventana de chat de venta de productos dual integrada (chat interactivo IA + escaparate fotográfico).
-  - 8 submódulos atómicos bajo estándar ARQMODULAR (<150 líneas cada archivo) en `src/components/chat/product/`.
-  - Modales funcionales: Checkout express contra entrega/tarjeta, pantalla completa y ficha de beneficios/specs.
-  - Trazabilidad RAG con badge desplegable y respuestas contextualizadas por catálogo D1 y FAQs.
-  - Integrado a la barra de navegación global ("Chat Producto") y soporte de QLinks (`?p=...`).
+  - Ventana de chat de venta de servicios dual integrada (chat interactivo IA + escaparate de sesión 1 a 1).
+  - Modal de agendamiento interactivo (ServiceBookingModal) con selector de fechas en carrusel y turnos.
+  - Botones de consulta rápida "¿Qué incluye la sesión?" y "Requisitos y Garantía" limpios y transparentes.
+  - Botón principal de agendamiento sin precio numérico para incentivar la asesoría previa.
+  - Estándar ARQMODULAR (<150 líneas por archivo) cumplido en los 7 nuevos módulos de `src/components/chat/service/`.
+  - Barra de navegación global actualizada con selector "Chat Servicio" y soporte URL (`?view=service`).
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la experiencia de compra y respuesta del bot en el chat de producto.
+- **Siguiente Paso Inmediato:** Validar con el usuario los flujos de productos y servicios.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
