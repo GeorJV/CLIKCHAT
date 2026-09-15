@@ -39,15 +39,48 @@
 
 ---
 
-## [Registro #004] - 2026-09-14: Acordeón FAQs con Edición Directa, Optimización de Chat y Botón Comprar Ahora
-- **Estado:** ✅ APROBADO & PROTEGIDO
-- **Módulos y Componentes Involucrados:**
-  - `src/components/client/faqs/FaqAccordionItem.tsx` y `FaqList.tsx`: Lista de preguntas frecuentes en formato acordeón colapsable con editor textarea inline ("Editar") y guardado directo ("Guardar" / "Cancelar").
-  - `src/hooks/useClientPortal.ts` y `server/routes/faqs.js`: Endpoint `PUT /api/faqs/:id` conectado a Cloudflare D1 para actualizar preguntas frecuentes en tiempo real con feedback visual.
-  - `src/components/client/conversations/ConversationDetail.tsx`: Preservación de la vista de conversaciones en formato WhatsApp con burbujas limpias, indicador de conexión y eliminación de badges técnicos.
-  - `src/components/chat/product/ProductChatColumn.tsx` y `ServiceChatColumn.tsx`: Eliminación del avatar repetitivo en cada mensaje del asistente (se mantiene centralizado en el header superior); reducción del padding vertical del input al mínimo funcional con soporte `Shift + Enter` multilínea.
-  - `src/components/chat/product/ProductShowcase.tsx` y `ServiceShowcase.tsx`: Esquinas redondeadas simétricas `rounded-2xl` con `isolate`; reducción drástica en rango y opacidad de sombras superior e inferior para fotos nítidas; botón "Comprar Ahora" con degradado difuminado amarillo anaranjado a verde (`from-amber-500 via-emerald-500 to-emerald-600`).
-  - `src/components/chat/product/ProductFullscreenModal.tsx` y `DesktopProductShowcase.tsx`: Unificación de estilos del botón "Comprar Ahora".
-- **Estándar Arquitectónico:** 100% ARQMODULAR (<150 líneas por componente), cero advertencias o errores de compilación (`npm run build`).
+## [Registro #004] - 2026-09-14: Optimización Integral del Chat, Acordeón de FAQs, Rediseño Visual y Botón de Compra
+- **Estado:** ✅ APROBADO & PROTEGIDO (Memoria Protegida Inmutable)
+- **Detalle Exhaustivo de Cambios Realizados y Verificados:**
+  1. **Acordeón en Preguntas Frecuentes (FAQs):**
+     - Estructuración de las FAQs en formato de acordeón desplegable/colapsable (`FaqAccordionItem.tsx`, `FaqList.tsx`).
+     - Botón **"Editar"** en cada FAQ que abre un `<textarea>` inline con la respuesta para su modificación inmediata.
+     - Botón **"Guardar"** con feedback en tiempo real y botón **"Cancelar"**.
+     - Integración con el backend mediante endpoint `PUT /api/faqs/:id` en `server/routes/faqs.js` y `useClientPortal.ts`, persistiendo en Cloudflare D1.
+  2. **Espaciado Reducido de Mensajes y Reubicación de la Hora:**
+     - En `ConversationDetail.tsx`, compactación del espacio vertical entre burbujas de mensajes.
+     - Reubicación y ajuste tipográfico de la marca de tiempo (hora) para una apariencia más limpia, equilibrada y nativa.
+  3. **Entrada de Texto con Soporte Multilínea (`Shift + Enter`):**
+     - En `ChatInputBar.tsx`, `ProductChatColumn.tsx` y `ServiceChatColumn.tsx`, implementación de `<textarea>` con salto de línea al presionar `Shift + Enter` o al llegar al borde horizontal del contenedor.
+     - Envío instantáneo de mensaje con `Enter` solo sin modificador.
+  4. **Restauración de la Ventana de Conversaciones del Chat:**
+     - Reversión de las conversaciones a su formato de burbujas nativas tipo WhatsApp (descartando el acordeón en conversaciones y concentrándolo exclusivamente en FAQs).
+     - Conservación del indicador de usuario conectado (online) pulsante y eliminación de badges técnicos intrusivos.
+  5. **Caja de Imagen con Cobertura y Esquinas Redondeadas Simétricas:**
+     - Contenedores de imagen en `ProductShowcase.tsx` y `ServiceShowcase.tsx` con redondeo simétrico `rounded-2xl` tanto en la parte superior (`rounded-t-2xl`) como en la inferior (`rounded-b-2xl`).
+     - Cobertura superior agregada con aislamiento `isolate` para evitar fugas visuales en navegadores WebKit/Blink.
+  6. **Eliminación del Avatar Repetitivo del Bot en los Mensajes:**
+     - Remoción del icono/avatar del asistente al lado de cada mensaje individual y en los indicadores de "escribiendo...".
+     - Avatar mantenido de forma limpia y exclusiva en el encabezado (header) superior del chat.
+  7. **Optimización del Espacio Vertical en la Barra de Entrada de Texto:**
+     - Reducción drástica del padding vertical superior e inferior en el chat de producto y servicio:
+       - Contenedor footer: `py-1.5`
+       - Formulario input: `py-1`
+       - Área de texto: `py-0.5 min-h-[22px] max-h-[100px]`
+       - Botón de envío ceñido con icono de `14px`.
+     - Recuperación de más de 20px de espacio vertical en pantalla para mayor área visible de mensajes.
+  8. **Reducción de Sombras en las Fotos de Productos y Servicios:**
+     - Disminución sustancial del rango y opacidad de las sombras superpuestas sobre las fotografías.
+     - Sombra superior recortada a un velo suave (`h-12`, `from-black/50 via-black/20 to-transparent`).
+     - Sombra inferior ceñida a los textos de información (`pt-6 pb-2.5`, `from-black/70 via-black/35 to-transparent`), permitiendo apreciar las imágenes con total claridad y nitidez.
+  9. **Botón "Comprar Ahora" Predominantemente Amarillo y Anaranjado:**
+     - Rediseño del botón con degradado difuminado con más del **70% de color amarillo luminoso y anaranjado cálido**, y un sutil remate lateral difuminado en verde esmeralda (`from-yellow-400 via-orange-500 via-70% to-emerald-600`).
+     - Borde dorado suave (`border-amber-300/30`), sombra luminosa cálida (`shadow-amber-500/25`) y tipografía blanca con relieve `drop-shadow-sm`.
+     - Unificado en `ProductShowcase.tsx`, `DesktopProductShowcase.tsx` y `ProductFullscreenModal.tsx`.
+  10. **Blindaje de Calidad y Estándar ARQMODULAR:**
+      - 100% de los componentes frontend bajo el límite estricto de 150 líneas.
+      - Cero afectación o modificación de archivos en `lockedFiles`.
+      - Verificación de compilación limpia con `npm run build` sin errores.
 - **Deploy en Vivo:** `https://clikchat.pages.dev` en Cloudflare Pages CDN.
+
 
