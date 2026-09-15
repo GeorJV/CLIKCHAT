@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 13:58 GMT-6
-- **Versión Actual:** 1.20.25 (Animación Roll-Up en Botón Comprar Ahora con Precio Inicial y Dorado en Hover)
+- **Última Actualización:** 2026-09-15 14:01 GMT-6
+- **Versión Actual:** 1.20.26 (Burbuja de Usuario con Esquinas Redondeadas Idénticas al Bot y Fondo Translúcido)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón de compra muestra solo el precio en estado de reposo (ej: $29 / $49).
-  - Efecto roll-up suave al hacer hover: el precio sube y emerge 'Comprar Ahora' con tarjeta en dorado premium.
-  - Hora inline en último renglón y modal de producto ensanchado sin scrollbars activos.
+  - Burbuja del usuario con esquinas redondeadas completas (rounded-2xl) y padding idéntico al bot.
+  - Mismo fondo grafito del bot aplicado al usuario pero con transparencia elegante y backdrop-blur.
+  - Botón de compra animado (roll-up: precio en reposo, 'Comprar Ahora' en dorado premium en hover).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar visualmente en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
