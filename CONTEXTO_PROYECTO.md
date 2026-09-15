@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:49 GMT-6
-- **Versión Actual:** 1.15.7 (Espaciado Vertical del Input de Chat Minimizado y Ajustado con Precisión)
+- **Última Actualización:** 2026-09-14 19:52 GMT-6
+- **Versión Actual:** 1.15.8 (Sombras Superior e Inferior de Fotos Sustancialmente Reducidas en Rango y Opacidad)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 2773bf3)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 00371a8)
 - **Estado Actual del Sistema:**
-  - Espacio vertical superior e inferior de la barra de entrada de texto optimizado al mínimo funcional.
-  - Textarea ajustado con py-0.5, form con py-1 y footer con py-1.5 eliminando huecos innecesarios.
-  - Avatar del bot centralizado en el header y eliminado de las burbujas individuales.
-  - Caja de imagen del producto y servicio con esquinas simétricas redondeadas arriba y abajo.
+  - Sombra superior de la foto reducida al 50% de altura (h-12) con degradado sutil (from-black/50 via-black/20).
+  - Sombra inferior reducida y ceñida a los textos (pt-6, from-black/70 via-black/35) permitiendo ver la foto limpia.
+  - Input de texto ultra-compacto y ajustado al mínimo espacio funcional.
+  - Avatar del bot centralizado en header y caja de imagen simétricamente redondeada.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar experiencia visual en vivo del cliente.
+- **Siguiente Paso Inmediato:** Validar claridad fotográfica en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
