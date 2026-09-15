@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ProductItem } from '../types/productChat';
 import { Product } from '../types';
+import { DEFAULT_PRODUCT } from '../components/chat/product/productChatMock';
 
 export function toProductItem(p: Partial<Product> & { id: string; name: string; price: number }): ProductItem {
   const images = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
@@ -18,9 +19,9 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
     stock: 25,
     inStock: true,
     benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : [
-      'Atención y soporte personalizado con IA 24/7.',
-      'Garantía directa del negocio.',
-      'Seguimiento y despacho en tiempo real.'
+      'Hidratación profunda 24h y restauración de la barrera cutánea.',
+      'Fórmula hipoalergénica con triple peso molecular de ácido hialurónico.',
+      'Resultados visibles de firmeza y luminosidad en 7 días.'
     ],
     description: p.full_description || p.short_description || '',
     specifications: p.details || {}
@@ -28,23 +29,37 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
 }
 
 export function useProductResolver(productId: string | null, tenantSlug: string) {
-  const [productItem, setProductItem] = useState<ProductItem | null>(null);
-  const [storeName, setStoreName] = useState<string>('Tienda Oficial');
+  const [productItem, setProductItem] = useState<ProductItem>(DEFAULT_PRODUCT);
+  const [storeName, setStoreName] = useState<string>('Clikchat Store');
   const [agentName, setAgentName] = useState<string>('Sofía');
-  const [isLoading, setIsLoading] = useState<boolean>(Boolean(productId));
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!productId) {
-      setIsLoading(false);
-      return;
-    }
-
     let isMounted = true;
 
     async function resolve() {
       setIsLoading(true);
 
-      // 1. Check localStorage for instant preview
+      // If no productId, fetch first product of tenant or keep DEFAULT_PRODUCT
+      if (!productId) {
+        try {
+          const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug));
+          if (tRes.ok) {
+            const tData = await tRes.json();
+            if (tData.tenant?.name && isMounted) setStoreName(tData.tenant.name);
+            if (tData.tenant?.bot_name && isMounted) setAgentName(tData.tenant.bot_name);
+            if (tData.products && tData.products.length > 0 && isMounted) {
+              setProductItem(toProductItem(tData.products[0]));
+              return;
+            }
+          }
+        } catch (e) {}
+        if (isMounted) setProductItem(DEFAULT_PRODUCT);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check localStorage for instant preview
       try {
         const savedProds = localStorage.getItem('clikchat_products');
         if (savedProds) {
@@ -56,7 +71,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
         }
       } catch (e) {}
 
-      // 2. Fetch from Cloudflare D1 Edge
+      // Fetch from Cloudflare D1 Edge
       try {
         const [prodRes, tenantRes] = await Promise.allSettled([
           fetch('/api/products/' + encodeURIComponent(productId)),
@@ -84,7 +99,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
           }
         }
 
-        // 3. Track real online view in D1
+        // Track real view in D1
         fetch('/api/products/' + encodeURIComponent(productId) + '/track', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -98,10 +113,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
     }
 
     resolve();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
   return { productItem, storeName, agentName, isLoading };

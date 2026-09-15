@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Send, LogOut } from 'lucide-react';
+import { Send, LogOut, Paperclip } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
@@ -64,7 +64,6 @@ export const ProductChatColumn: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Theme Switcher Toggle Pill */}
           <div className="flex items-center bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px]" title="Comparar temas de diseño">
             <button
               type="button" onClick={() => onThemeChange('classic')}
@@ -74,7 +73,7 @@ export const ProductChatColumn: React.FC<Props> = ({
             </button>
             <button
               type="button" onClick={() => onThemeChange('linear_dark')}
-              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${theme === 'linear_dark' ? 'bg-gradient-to-r from-lime-500 to-emerald-500 text-zinc-950 font-black shadow-xs' : 'text-zinc-400 hover:text-zinc-200'}`}
+              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${theme === 'linear_dark' ? 'bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-500/40 shadow-xs' : 'text-zinc-400 hover:text-zinc-200'}`}
             >
               Linear Bento
             </button>
@@ -100,13 +99,13 @@ export const ProductChatColumn: React.FC<Props> = ({
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
                     <div className="flex items-center justify-between gap-2 pt-0.5">
                       <ProductRAGBadge trace={msg.ragTrace} />
-                      <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '08:22 PM'}</span>
+                      <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
                     <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? themeStyles.textSecondary : 'opacity-80'}`}>{msg.timestamp || '08:22 PM'}</span>
+                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? themeStyles.textSecondary : 'opacity-80'}`}>{msg.timestamp || '20:03'}</span>
                   </div>
                 )}
               </div>
@@ -127,12 +126,15 @@ export const ProductChatColumn: React.FC<Props> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support */}
+      {/* Input Bar with Attachment Paperclip and Amber Send Button */}
       <footer className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0`}>
         <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
+          <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1 self-end mb-0.5 transition cursor-pointer" title="Adjuntar comprobante">
+            <Paperclip className="w-3.5 h-3.5" />
+          </button>
           <textarea
             ref={textareaRef} rows={1} value={inputValue} onChange={handleTextChange} onKeyDown={handleKeyDown}
-            placeholder={`Pregúntale a ${agentName} sobre ${productTitle}... (Shift+Enter nueva línea)`}
+            placeholder="Pregúntale..."
             className={`flex-1 bg-transparent text-xs sm:text-sm ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block`}
           />
           <button type="submit" disabled={!inputValue.trim() || isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar mensaje">

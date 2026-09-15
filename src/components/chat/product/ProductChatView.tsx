@@ -6,12 +6,7 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { ProductFullscreenModal } from './ProductFullscreenModal';
 import { ProductCheckoutModal } from './ProductCheckoutModal';
 import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
-
-const BLANK_PRODUCT: ProductItem = {
-  id: '', title: 'Cargando producto...', category: 'General', price: 0, currency: 'USD',
-  stock: 0, image: '', images: [],
-  benefits: ['Atención directa con IA', 'Garantía oficial', 'Soporte personalizado'], description: ''
-};
+import { DEFAULT_PRODUCT } from './productChatMock';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -20,9 +15,9 @@ interface Props {
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Clikchat Store', agentName = 'Sofía', agentAvatar,
-  products = [], initialProduct, onExit,
+  products = [DEFAULT_PRODUCT], initialProduct, onExit,
 }) => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || BLANK_PRODUCT);
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || DEFAULT_PRODUCT);
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,12 +32,12 @@ export const ProductChatView: React.FC<Props> = ({
   }, [initialProduct]);
 
   useEffect(() => {
-    if (!selectedProduct.title || selectedProduct.title === 'Cargando producto...') return;
+    if (!selectedProduct.title) return;
     const welcomeMsg: ProductChatMessage = {
       id: `msg-${Date.now()}`, sessionId: `sess-${Date.now()}`, tenantId: 'tenant-demo', sender: 'assistant',
       content: `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      ragTrace: { levelUsed: 3, confidence: 0.98, executionTimeMs: 14, modelUsed: 'Catálogo D1 Edge', reasoning: 'Bienvenida contextualizada.' },
+      timestamp: '20:03',
+      ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 14, modelUsed: 'Catálogo D1', reasoning: 'Bienvenida contextualizada.' },
     };
     setMessages([welcomeMsg]);
   }, [selectedProduct.id, selectedProduct.title]);
@@ -70,7 +65,7 @@ export const ProductChatView: React.FC<Props> = ({
         id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
         content: `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 2, confidence: 0.96, executionTimeMs: 16, modelUsed: 'FAQ RAG Hybrid L2', reasoning: 'Respuesta validada.' },
+        ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 16, modelUsed: 'Catálogo D1', reasoning: 'Respuesta validada.' },
       }]);
       setIsLoading(false);
     }, 700);

@@ -1,18 +1,18 @@
 ﻿# Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 21:32 GMT-6
-- **Versión Actual:** 1.17.0 (Temas Comparativos Clásico & Linear Bento Dark Minimal con Toggle)
+- **Última Actualización:** 2026-09-14 21:38 GMT-6
+- **Versión Actual:** 1.18.0 (Fidelidad Total a Foto de Referencia & Limpieza de Mocks en D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Implementado sistema de temas para chat de producto (`classic` y `linear_dark`).
-  - Tema Linear Bento: Base `#1A1D1F` con micro-puntos al 4%, input sólido `#222020`, gradiente Esmeralda-Lima `#84CC16` a `#10B981` en Comprar y Enviar con texto `#111111`, badge 38% OFF en `#F59E0B`, micro-bordes 1px `border-white/[0.08]`, burbuja bot translúcida `#222020`/85 con backdrop blur.
-  - Conmutador interactivo pill `[ Clásico | Linear Bento ]` en cabecera del chat para comparar en vivo a 1 clic.
-  - Tracking de métricas real en Cloudflare D1 activo y preservado en todos los botones.
-  - Cumplimiento 100% de ARQMODULAR (<150 líneas por archivo) y candado de lockedFiles intacto.
-  - Supervisión en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar con el usuario el aspecto comparativo de ambos temas en https://clikchat.pages.dev.
+  - Eliminados de Cloudflare D1 los 2 productos simulados de prueba (Smartwatch y Audífonos).
+  - Insertado en D1 y fijado en Chat: Sérum Facial Rejuvenecedor ($29.99 USD) con métricas en 0 real.
+  - Paleta exacta a foto de referencia: Fondo carbón con dot grid visible al 8%, botón Comprar verde bosque (#226850), botón Enviar ámbar (#F59E0B) con icono oscuro, badge 38% OFF en ámbar/caramelo, placeholder "Pregúntale..." con clip.
+  - Fallback automático en `useProductResolver` para mostrar siempre el producto auténtico sin quedar en blanco.
+  - Cumplimiento estricto de ARQMODULAR (<150 líneas por archivo) y candado de `lockedFiles` intacto.
+  - Supervisado en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
+- **Siguiente Paso Inmediato:** Validar con el usuario la concordancia visual idéntica con su imagen en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
