@@ -73,7 +73,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-[#FDE68A] text-zinc-950 rounded-tr-xs font-medium shadow-sm'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
@@ -86,7 +86,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                 ) : (
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
                     <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-emerald-100/80'}`}>{msg.timestamp || '08:22 PM'}</span>
+                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-zinc-900/70'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>
