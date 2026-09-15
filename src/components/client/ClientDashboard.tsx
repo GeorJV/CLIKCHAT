@@ -75,7 +75,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       />
 
       {/* Main Content Viewport with Dot Grid Texture */}
-      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-8 bg-dot-grid">
+      <main className="flex-1 h-full overflow-y-auto p-3 sm:px-6 sm:pt-2.5 sm:pb-6 bg-dot-grid">
         <div className="max-w-5xl mx-auto">
           {isLoading && !tenant && (
             <div className="flex items-center justify-center py-16">

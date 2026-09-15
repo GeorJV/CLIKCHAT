@@ -54,9 +54,9 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
   };
 
   return (
-    <div className="space-y-3.5">
-      {/* 1. Encabezado con Botón Verde '+ Nuevo producto' */}
-      <ProductsHeader onOpenCreate={handleOpenCreate} />
+    <div className="space-y-2.5">
+      {/* 1. Encabezado con Botón Verde '+ Nuevo producto' al lado */}
+      <ProductsHeader onOpenCreate={handleOpenCreate} tenantSlug={tenantSlug} />
 
       {/* 2. Banner de Analítica Global Compacto */}
       <ProductsGlobalMetrics />
