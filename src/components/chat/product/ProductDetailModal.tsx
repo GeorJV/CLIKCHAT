@@ -109,7 +109,7 @@ export const ProductDetailModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => onProceedBuy(product)}
-            className="group relative flex-1 h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 overflow-hidden flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-500/20 transition active:scale-98 cursor-pointer"
+            className="group relative flex-1 h-10 px-3 cuadro-amarillo-tornasol overflow-hidden flex items-center justify-center font-bold text-xs shadow-md transition active:scale-98 cursor-pointer"
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-10 group-hover:opacity-0">
               <span className="text-white font-black text-sm tracking-wide drop-shadow-sm">

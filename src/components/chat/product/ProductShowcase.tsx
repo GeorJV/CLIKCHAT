@@ -117,18 +117,18 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onBuyNow}
-            className={`group relative w-full h-11 sm:h-12 px-4 backdrop-blur-sm overflow-hidden flex items-center justify-center transition active:scale-98 cursor-pointer rounded-xl font-extrabold ${themeStyles.buyNowBtn}`}
+            className={`group relative w-full h-11 sm:h-12 px-4 overflow-hidden flex items-center justify-center transition active:scale-98 cursor-pointer font-extrabold ${themeStyles.buyNowBtn}`}
           >
             {/* Estado Normal: Solo el Precio que sube al hacer hover */}
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0">
-              <span className="text-white text-base sm:text-lg font-black tracking-wide drop-shadow-sm">
+              <span className="text-white text-base sm:text-lg font-black tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                 ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
               </span>
             </div>
 
             {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto en dorado premium */}
             <div className="absolute inset-0 flex items-center justify-center gap-2 transition-all duration-300 ease-out transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
-              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] shrink-0" />
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] shrink-0" />
               <span className="font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 Comprar Ahora
               </span>

@@ -92,7 +92,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => onDirectCheckout(product)}
-            className="group relative flex-1 h-9 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 overflow-hidden flex items-center justify-center font-extrabold text-xs shadow-md shadow-amber-500/10 transition active:scale-98 cursor-pointer"
+            className="group relative flex-1 h-9 px-3 cuadro-amarillo-tornasol overflow-hidden flex items-center justify-center font-extrabold text-xs shadow-md transition active:scale-98 cursor-pointer"
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-9 group-hover:opacity-0">
               <span className="text-white font-black text-xs tracking-wide">

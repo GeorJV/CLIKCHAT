@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 15:26 GMT-6
-- **Versión Actual:** 1.20.30 (Enrutamiento SPA Real con URLs Independientes y Reglas Cloudflare Pages)
+- **Última Actualización:** 2026-09-15 17:05 GMT-6
+- **Versión Actual:** 1.20.31 (Botón Comprar Cuadro Amarillo Tornasol y Despliegue en Vivo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Sistema de enrutamiento SPA activo con URLs dedicadas para cada sección: /dashboard, /productos, /conversaciones, /clientes, /agenda, /agente, /conocimiento, /super-admin, /login, /user/:userId.
-  - Reglas de reescritura SPA desplegadas en Cloudflare Pages (`public/_redirects`), evitando errores 404 al recargar.
-  - Sincronización completa de botones de navegación, barra superior y botones Atrás/Adelante del navegador.
+  - Botón de comprar con estilo exacto `.cuadro-amarillo-tornasol` (carbón cálido, luces tornasol oro solar, miel y cobre, borde dorado suave y sombra exterior cálida).
+  - Microinteracción de subida (roll-up) preservada: precio en reposo blanco contrastante que sube en hover revelando 'Comprar Ahora' en Cinzel con icono dorado de tarjeta.
+  - Enrutamiento SPA activo con URLs dedicadas y reglas `public/_redirects` en Cloudflare Pages.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar visualmente la navegación entre URLs en https://clikchat.pages.dev/dashboard.
+- **Siguiente Paso Inmediato:** Validar la apariencia e interacción del botón en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
