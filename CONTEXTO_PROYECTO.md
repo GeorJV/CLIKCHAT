@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 18:13 GMT-6
-- **Versión Actual:** 1.14.2 (Modal de Crear / Editar Producto 100% Fiel a Referencia & Persistencia Activa)
+- **Última Actualización:** 2026-09-14 18:16 GMT-6
+- **Versión Actual:** 1.14.3 (Header y Métricas de Productos Compactos & Alto Aprovechamiento de Espacio)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 875a4c0)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 5932a65)
 - **Estado Actual del Sistema:**
-  - Modal de producto idéntico a referencia: Nombre, Categoría, Precio, Moneda, SKU, Descripción, URL / Subir imagen con miniatura y eliminar, URL externa, checkbox 'Producto activo en IA'.
-  - Columna derecha con Beneficios (badge verde 'Al lado de la foto') y Detalle del Producto (badge azul 'Al lado de la foto').
-  - Persistencia reactiva instantánea: botón 'Guardar producto' cierra el modal e inserta el producto inmediatamente en el catálogo.
-  - Arquitectura ARQMODULAR estricta (<150 líneas por archivo en todos los submódulos de `products/`).
+  - Encabezado y banner de métricas globales compactados en >50% de altura para máximo aprovechamiento visual.
+  - Botón '+ Nuevo producto' estilizado, elegante y proporcionado.
+  - KPIs en una sola fila densa con etiquetas legibles y banner de temperatura de cliente de 1 línea.
+  - Tarjetas de catálogo y espaciados optimizados para visualizar el contenido sin desplazamiento excesivo.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Probar la creación de productos y validar visualización en el catálogo.
+- **Siguiente Paso Inmediato:** Validar con el usuario el nuevo tamaño y distribución compacta.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-200 líneas por archivo en todo el frontend.
