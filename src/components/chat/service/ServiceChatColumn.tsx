@@ -15,9 +15,30 @@ export const ServiceChatColumn: React.FC<Props> = ({
   messages, inputValue, isLoading, onInputChange, onSendMessage, onExit
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (!inputValue && textareaRef.current) textareaRef.current.style.height = 'auto';
+  }, [inputValue]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onInputChange(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (inputValue.trim() && !isLoading) onSendMessage();
+    }
+  };
 
   const defaultAvatar = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120';
 
@@ -55,26 +76,20 @@ export const ServiceChatColumn: React.FC<Props> = ({
                 <img src={agentAvatar || defaultAvatar} alt="Avatar" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-emerald-500/30 shrink-0 mt-0.5" />
               )}
               <div className={`max-w-[90%] sm:max-w-[82%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant
-                  ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs'
-                  : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
                     <div className="flex items-center justify-between gap-2 pt-0.5">
                       <ProductRAGBadge trace={msg.ragTrace} />
-                      <span className="text-[10px] text-zinc-500 shrink-0 self-end select-none">
-                        {msg.timestamp || '08:22 PM'}
-                      </span>
+                      <span className="text-[10px] text-zinc-500 shrink-0 self-end select-none">{msg.timestamp || '08:22 PM'}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
                     <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-emerald-100/80'}`}>
-                      {msg.timestamp || '08:22 PM'}
-                    </span>
+                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-emerald-100/80'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>
@@ -98,15 +113,19 @@ export const ServiceChatColumn: React.FC<Props> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar */}
+      {/* Input Bar with Auto-Expand Multiline & Shift+Enter support */}
       <footer className="p-2.5 bg-[#111010] border-t border-[#262424] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); onSendMessage(); }} className="flex items-center gap-2 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-3 py-1.5 transition shadow-inner">
-          <input
-            type="text" value={inputValue} onChange={(e) => onInputChange(e.target.value)}
-            placeholder={`Consulta a ${agentName} sobre ${serviceTitle}...`}
-            className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 focus:outline-none"
+        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-2 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-3 py-1.5 transition shadow-inner">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={inputValue}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder={`Consulta a ${agentName} sobre ${serviceTitle}... (Shift+Enter para nueva línea)`}
+            className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 focus:outline-none resize-none leading-snug py-1 min-h-[26px] max-h-[120px] overflow-y-auto"
           />
-          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer">
+          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer mb-0.5" title="Enviar mensaje">
             <Send className="w-4 h-4" />
           </button>
         </form>
