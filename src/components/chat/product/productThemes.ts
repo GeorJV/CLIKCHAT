@@ -19,6 +19,8 @@ export interface ThemeStyles {
   benefitsBtn: string;
   specsBtn: string;
   buyNowBtn: string;
+  buyNowIconColor?: string;
+  buyNowTextColor?: string;
   tagDiscount: string;
   textPrimary: string;
   textSecondary: string;
@@ -46,6 +48,8 @@ export const PRODUCT_THEMES: Record<ProductChatTheme, ThemeStyles> = {
     benefitsBtn: 'border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white rounded-xl',
     specsBtn: 'border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white rounded-xl',
     buyNowBtn: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-xl shadow-amber-500/10 rounded-xl',
+    buyNowIconColor: 'text-amber-400',
+    buyNowTextColor: 'text-amber-400',
     tagDiscount: 'bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg',
     textPrimary: 'text-white',
     textSecondary: 'text-zinc-400',
@@ -70,7 +74,9 @@ export const PRODUCT_THEMES: Record<ProductChatTheme, ThemeStyles> = {
     sendIconColor: 'text-[#2A1E14]',
     benefitsBtn: 'border border-white/[0.08] bg-[#181B1D] hover:bg-[#202428] text-zinc-300 hover:text-white rounded-xl',
     specsBtn: 'border border-white/[0.08] bg-[#181B1D] hover:bg-[#202428] text-zinc-300 hover:text-white rounded-xl',
-    buyNowBtn: 'bg-gradient-to-r from-[#1D5647] via-[#2A6854] to-[#38785E] hover:brightness-110 text-[#E6F5ED] border border-[#3D8568]/40 shadow-lg font-bold rounded-xl',
+    buyNowBtn: 'bg-gradient-to-r from-[#1D5647] via-[#2A6854] to-[#38785E] hover:brightness-110 border border-[#94A37E] shadow-lg font-bold rounded-xl',
+    buyNowIconColor: 'text-[#CDB86F]',
+    buyNowTextColor: 'text-[#CDB86F]',
     tagDiscount: 'bg-[#7A571F]/90 text-[#FDE68A] border border-[#A16D28]/40 font-bold rounded-lg',
     textPrimary: 'text-[#F1F5F9]',
     textSecondary: 'text-[#94A3B8]',

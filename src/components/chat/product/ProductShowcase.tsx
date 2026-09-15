@@ -123,14 +123,16 @@ export const ProductShowcase: React.FC<Props> = ({
           </button>
         </div>
 
+        {/* Main CTA Button: Yellow Card Icon & Yellow 'Comprar Ahora' with White Price */}
         <div className="mt-2.5 shrink-0">
           <button
             type="button"
             onClick={onBuyNow}
             className={`w-full py-3 px-4 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer font-extrabold text-sm sm:text-base ${themeStyles.buyNowBtn}`}
           >
-            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Comprar Ahora — ${product.price.toFixed(2)} ${product.currency}</span>
+            <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 ${themeStyles.buyNowIconColor || 'text-[#CDB86F]'} shrink-0`} />
+            <span className={themeStyles.buyNowTextColor || 'text-[#CDB86F]'}>Comprar Ahora</span>
+            <span className="text-white font-bold">— ${product.price.toFixed(2)} ${product.currency}</span>
           </button>
         </div>
       </div>

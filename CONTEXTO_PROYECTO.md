@@ -1,14 +1,13 @@
-﻿# Estado & Contexto del Proyecto: ClikchatWeb
+# Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 21:44 GMT-6
-- **Versión Actual:** 1.18.1 (Calibración Pixel-Exacta con Muestreo de Imagen & Textura 8px)
+- **Última Actualización:** 2026-09-14 21:52 GMT-6
+- **Versión Actual:** 1.18.2 (Borde Dorado y Tarjeta/Texto Amarillo en Botón Comprar Ahora)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Muestreo pixel a pixel de la imagen del usuario: Fondo carbón pizarra `#1E2224`.
-  - Textura de micro-puntos calibrada a 8px x 8px con 12% de opacidad (`.bg-dot-linear`).
-  - Botón "Comprar Ahora" idéntico a foto: Gradiente verde bosque profundo (`#1D5647` a `#38785E`) con texto menta (`#E6F5ED`).
+  - Muestreo pixel a pixel: Fondo carbón `#1E2224` y micro-matriz de puntos 8px x 8px.
+  - Botón "Comprar Ahora": Borde dorado-oliva (`#94A37E`), icono de tarjeta y texto en oro cálido (`#CDB86F`), precio en blanco (`#FFFFFF`).
   - Botón de envío en ámbar miel (#D79F4C) con icono oscuro (#2A1E14) y placeholder "Pregúntale...".
   - Etiqueta "38% OFF" en tono caramelo suave (#7A571F) con tipografía dorada (#FDE68A).
   - Sérum Facial Rejuvenecedor fijado con métricas reales en 0 en D1 y carga instantánea.
