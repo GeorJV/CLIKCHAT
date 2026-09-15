@@ -37,6 +37,19 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
     }));
   };
 
+  const handleUpdateAnswer = (messageId: string, newAnswer: string) => {
+    setSessions(prev => prev.map(s => {
+      if (s.id !== selectedId) return s;
+      const updatedMessages = s.messages?.map(m => (m.id === messageId ? { ...m, text: newAnswer } : m));
+      const lastMsg = updatedMessages && updatedMessages.length > 0 ? updatedMessages[updatedMessages.length - 1].text : s.last_message;
+      return {
+        ...s,
+        messages: updatedMessages,
+        last_message: lastMsg
+      };
+    }));
+  };
+
   const selectedSession = sessions.find(s => s.id === selectedId) || null;
   const onlineCount = sessions.filter(s => s.status === 'online').length;
 
@@ -89,6 +102,7 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
           <ConversationDetail
             session={selectedSession}
             onToggleStatus={handleToggleStatus}
+            onUpdateAnswer={handleUpdateAnswer}
           />
         </div>
       </div>
