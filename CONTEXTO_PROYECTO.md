@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:32 GMT-6
-- **Versión Actual:** 1.15.4 (Input de Chat Multilínea con Soporte Shift+Enter y Auto-Ajuste)
+- **Última Actualización:** 2026-09-14 19:44 GMT-6
+- **Versión Actual:** 1.15.5 (Cobertura Superior de Imagen, Botón Difuminado Verde y FAQs en Acordeón con Edición)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 6b7c733)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: b1f5b3b)
 - **Estado Actual del Sistema:**
-  - El input de chat ahora es un textarea auto-ajustable que permite escribir texto con Shift+Enter para nuevas líneas.
-  - Al llegar al final de la barra, el texto baja automáticamente al segundo renglón expandiendo el campo.
-  - El botón Enter envía el mensaje directamente si no se presiona Shift.
-  - Burbujas de chat compactas con hora integrada al final de la línea.
+  - Cobertura de imagen superior (degradado y esquinas redondeadas) agregada simétricamente a la inferior.
+  - Botón "Comprar Ahora" actualizado a degradado verde difuminado con sombra suave y borde sutil.
+  - Preguntas frecuentes presentadas en acordeón interactivo con botón "Editar" y "Guardar" inline.
+  - Vista de auditoría de conversaciones restaurada al estilo WhatsApp con burbujas limpias.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar escritura multilínea y envío en chats de producto y servicio.
+- **Siguiente Paso Inmediato:** Validar experiencia visual del cliente y edición de FAQs en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
