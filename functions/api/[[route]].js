@@ -10,7 +10,7 @@ function getD1Token(env) {
   if (env?.CLOUDFLARE_API_TOKEN) return env.CLOUDFLARE_API_TOKEN;
   if (env?.CF_API_TOKEN) return env.CF_API_TOKEN;
   try {
-    return atob('Y2Z1dF9sRkl0aVBYbGZQMlo3V2dIU25JWHZuamtmYTNQTGo0UHM4cmVkWmRZYjFmN2JlM2E=');
+    return atob('Y2Z1dF9sRkl0aVBYbGZQMlo3V2dIU25JWXZuamtmYTNQTGo0UHM4cmVkWmRZYjFmN2JlM2E=');
   } catch (e) {
     return '';
   }
@@ -18,9 +18,9 @@ function getD1Token(env) {
 
 const D1_ENDPOINT = 'https://api.cloudflare.com/client/v4/accounts/' + CLOUDFLARE_ACCOUNT_ID + '/d1/database/' + CF_D1_DATABASE_ID + '/query';
 
-async function executeD1(sql, params = [], env = {}) {
+async function executeD1(sql, params = []) {
   const sqliteSql = sql.replace(/\$(\d+)/g, '?');
-  const token = getD1Token(env);
+  const token = getD1Token(currentEnv);
   const response = await fetch(D1_ENDPOINT, {
     method: 'POST',
     headers: {
