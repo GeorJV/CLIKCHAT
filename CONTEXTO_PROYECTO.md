@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 22:47 GMT-6
-- **Versión Actual:** 1.19.1 (Protección de Edición en Mi Negocio contra Auto-Refresh de Fondo)
+- **Última Actualización:** 2026-09-14 23:28 GMT-6
+- **Versión Actual:** 1.20.0 (Selección de Texto Habilitada, 10 Tonos de IA y Subida/Pegado de Logo/Avatar)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Corregido el campo "Nombre del Negocio": protegido con `isDirtyRef` para no ser sobreescrito por el polling de métricas de fondo.
-  - Sincronización optimizada en `useClientPortal` preservando la identidad de estado del tenant.
-  - Botones "Beneficios" y "Detalle del Producto" con transición a color amarillo dorado (#FBBF24).
-  - Eliminación de productos persistente y definitiva en Cloudflare D1 y localStorage.
+  - Habilitada selección y copia de texto en toda la web (removido bloqueo select-none de escaparates y modales).
+  - 10 tonos de voz de IA configurables con descripciones y orientación comercial en Mi Negocio.
+  - Subida de logotipo y avatar de IA funcional con vista previa y soporte de pegado desde portapapeles (Ctrl+V / Pegar).
+  - Persistencia completa en Cloudflare D1 (columnas logo_url y tone_of_voice migradas) y portal del cliente.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Probar edición de Nombre del Negocio en https://clikchat.pages.dev/client.
+- **Siguiente Paso Inmediato:** Validar subida y pegado de imágenes en https://clikchat.pages.dev/client.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
