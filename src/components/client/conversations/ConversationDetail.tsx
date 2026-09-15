@@ -22,19 +22,6 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
     );
   }
 
-  const renderBadge = (level?: string) => {
-    switch (level) {
-      case 'semantic_cache':
-        return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">⚡ Caché $0</span>;
-      case 'level_2_faq':
-        return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">💡 FAQ Nivel 2</span>;
-      case 'level_3_catalog':
-        return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">📦 Catálogo D1</span>;
-      default:
-        return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#1e1d1d] text-zinc-400 border border-[#2e2b2b]">Conversación</span>;
-    }
-  };
-
   return (
     <div className="onyx-card rounded-2xl p-4 sm:p-5 flex flex-col space-y-4 min-h-[500px]">
       {/* Encabezado del Chat Seleccionado */}
@@ -47,12 +34,12 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-white">{session.user_name || 'Cliente Anónimo'}</h4>
               {session.status === 'online' ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Online
                 </span>
               ) : (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#1e1d1d] text-zinc-400 border border-[#2e2b2b]">
+                <span className="text-[10px] font-medium text-zinc-500">
                   Cerrado
                 </span>
               )}
@@ -67,7 +54,6 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
         </div>
 
         <div className="flex items-center gap-2">
-          {renderBadge(session.last_rag_level)}
           <span className="text-xs text-zinc-400 bg-[#111010] px-2.5 py-1 rounded-lg border border-[#282626]">
             {session.total_messages} msgs
           </span>
