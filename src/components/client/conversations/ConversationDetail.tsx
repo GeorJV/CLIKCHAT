@@ -87,7 +87,7 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
                 className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-xs shadow-sm ${
                   m.sender === 'user'
                     ? 'bg-emerald-600 text-white rounded-tr-none'
-                    : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none'
+                    : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60'
                 }`}
               >
                 <p className="leading-relaxed">{m.text}</p>

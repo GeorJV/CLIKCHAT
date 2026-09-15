@@ -73,7 +73,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] rounded-2xl px-3 py-1.5 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-[#D79F4C]/50 backdrop-blur-md border border-[#D79F4C]/40 text-white rounded-tr-xs font-medium shadow-sm'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs shadow-lg shadow-black/60' : 'bg-[#D79F4C]/50 backdrop-blur-md border border-[#D79F4C]/40 text-white rounded-tr-xs font-medium shadow-sm'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
@@ -96,7 +96,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
 
         {isLoading && (
           <div className="flex items-start justify-start animate-fade-in">
-            <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
+            <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5 shadow-lg shadow-black/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
