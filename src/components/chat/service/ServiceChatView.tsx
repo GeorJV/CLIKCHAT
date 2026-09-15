@@ -48,7 +48,7 @@ export const ServiceChatView: React.FC<Props> = ({
   }, [selectedService.id]);
 
   const { sendMessage: sendBatchedMessage } = useMessageBatcher({
-    debounceMs: 7000,
+    debounceMs: 9000,
     deliveryDelayMs: 350,
     onDeliverUserMessage: (userMsg) => {
       setMessages((prev) => [...prev, userMsg]);

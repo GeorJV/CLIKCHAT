@@ -52,7 +52,7 @@ export const ProductChatView: React.FC<Props> = ({
   };
 
   const { sendMessage: sendBatchedMessage } = useMessageBatcher({
-    debounceMs: 7000,
+    debounceMs: 9000,
     deliveryDelayMs: 350,
     onDeliverUserMessage: (userMsg) => {
       setMessages((prev) => [...prev, userMsg]);
