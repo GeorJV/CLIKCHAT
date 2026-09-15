@@ -161,25 +161,41 @@
   animation: bubbleEntrance 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Botón Comprar: Cuadro Amarillo Tornasol */
+/* Botón Comprar: Cuadro Amarillo Tornasol (Color solo visible al pasar el ratón) */
 .cuadro-amarillo-tornasol {
   border-radius: 24px;
   overflow: hidden;
   position: relative;
+  background-color: #16120c;
+  border: 1px solid rgba(254, 215, 102, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cuadro-amarillo-tornasol::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
   background-color: #16120c;
   background-image:
     radial-gradient(ellipse 70% 55% at 50% 100%, rgba(254, 215, 102, 0.95) 0%, rgba(245, 158, 11, 0.65) 35%, rgba(180, 83, 9, 0.25) 65%, transparent 80%),
     radial-gradient(circle at 12% 95%, rgba(217, 149, 12, 0.85) 0%, rgba(133, 77, 14, 0.3) 40%, transparent 65%),
     radial-gradient(circle at 88% 95%, rgba(234, 88, 12, 0.85) 0%, rgba(154, 52, 18, 0.3) 40%, transparent 65%),
     linear-gradient(180deg, #15110c 0%, #201810 55%, #2d1f13 100%);
-  border: 1px solid rgba(254, 215, 102, 0.18);
-  box-shadow:
-    0 10px 30px -5px rgba(0, 0, 0, 0.6),
-    0 0 35px -5px rgba(245, 158, 11, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.cuadro-amarillo-tornasol:hover {
+.cuadro-amarillo-tornasol:hover::before,
+.cuadro-amarillo-tornasol:active::before {
+  opacity: 1;
+}
+
+.cuadro-amarillo-tornasol:hover,
+.cuadro-amarillo-tornasol:active {
   border-color: rgba(254, 215, 102, 0.45);
   box-shadow:
     0 14px 38px -5px rgba(0, 0, 0, 0.75),
