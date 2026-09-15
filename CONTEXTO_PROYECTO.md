@@ -1,12 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 02:18 GMT-6
-- **Versión Actual:** 1.20.22 (Burbuja de Cliente en Grafito #2D2B2B y Letras #959497)
+- **Última Actualización:** 2026-09-15 02:25 GMT-6
+- **Versión Actual:** 1.20.23 (Burbuja de Cliente en Grafito #2D2B2B y Letras Doradas #D7BA7D)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Burbuja del cliente adaptada exactamente a los tonos de la ventana: fondo `#2D2B2B` y tipografía `#959497`.
+  - Burbuja del cliente con fondo grafito `#2D2B2B` y tipografía dorada/arena `#D7BA7D`.
   - [Registro #005] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Vuelo de avioncito, expansión 0.68s, ráfagas de 9s y showcase 3D activos.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
