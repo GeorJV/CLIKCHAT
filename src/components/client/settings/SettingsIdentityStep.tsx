@@ -122,7 +122,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
           className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          <span>{isSaving ? 'Guardando en D1...' : '✓ Guardar y Sincronizar Configuración'}</span>
+          <span>{isSaving ? 'Guardando...' : '✓ Guardar y Sincronizar Configuración'}</span>
         </button>
 
         {onLivePreview && (
@@ -138,7 +138,7 @@ export const SettingsIdentityStep: React.FC<SettingsIdentityStepProps> = ({
 
         {saveSuccess && (
           <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4" /> ¡Sincronizado con éxito en D1!
+            <CheckCircle2 className="w-4 h-4" /> Guardado correctamente
           </span>
         )}
       </div>

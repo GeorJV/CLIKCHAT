@@ -221,7 +221,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#282626]">
           {saveSuccess && (
             <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 animate-fade-in">
-              <CheckCircle2 className="w-3.5 h-3.5" /> ¡Guardado en D1!
+              <CheckCircle2 className="w-3.5 h-3.5" /> Guardado correctamente
             </span>
           )}
           <button
