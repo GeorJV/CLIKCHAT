@@ -73,7 +73,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-[#FDE68A] text-zinc-950 rounded-tr-xs font-medium shadow-sm'
+                isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-[#F2E394] text-zinc-950 rounded-tr-xs font-medium shadow-sm'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
