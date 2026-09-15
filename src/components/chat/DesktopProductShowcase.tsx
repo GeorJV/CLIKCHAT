@@ -124,10 +124,10 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group ${
             activeTab === 'benefits'
               ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 text-amber-200 border border-amber-500/40 shadow-sm'
-              : 'bg-slate-800/80 text-slate-400 hover:text-[#FBBF24] hover:bg-[#FBBF24]/10 border border-transparent hover:border-[#FBBF24]/40 hover:shadow-[0_0_12px_rgba(251,191,36,0.15)]'
+              : 'bg-slate-800/80 text-slate-400 hover:text-[#FFD043] hover:bg-[#FFD043]/15 border border-transparent hover:border-[#FFD043]/60 hover:shadow-[0_0_14px_rgba(255,208,67,0.25)]'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:text-[#FBBF24] transition-colors" />
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:text-[#FFD043] transition-colors" />
           <span>Beneficios</span>
         </button>
 
@@ -136,10 +136,10 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group ${
             activeTab === 'details'
               ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 text-amber-200 border border-amber-500/40 shadow-sm'
-              : 'bg-slate-800/80 text-slate-400 hover:text-[#FBBF24] hover:bg-[#FBBF24]/10 border border-transparent hover:border-[#FBBF24]/40 hover:shadow-[0_0_12px_rgba(251,191,36,0.15)]'
+              : 'bg-slate-800/80 text-slate-400 hover:text-[#FFD043] hover:bg-[#FFD043]/15 border border-transparent hover:border-[#FFD043]/60 hover:shadow-[0_0_14px_rgba(255,208,67,0.25)]'
           }`}
         >
-          <Info className="w-3.5 h-3.5 text-amber-400/80 group-hover:text-[#FBBF24] transition-colors" />
+          <Info className="w-3.5 h-3.5 text-amber-400/80 group-hover:text-[#FFD043] transition-colors" />
           <span>Detalles del Producto</span>
         </button>
       </div>
