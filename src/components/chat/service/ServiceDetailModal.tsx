@@ -18,8 +18,8 @@ export const ServiceDetailModal: React.FC<Props> = ({
   if (!service) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-[#181717] border border-[#282626] rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-lg md:max-w-2xl lg:max-w-3xl bg-[#181717] border border-[#282626] rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#282626] pb-3">
           <div className="flex items-center gap-2.5">
@@ -30,7 +30,7 @@ export const ServiceDetailModal: React.FC<Props> = ({
               <h3 className="text-sm font-bold text-white">
                 {mode === 'includes' ? '¿Qué incluye la sesión?' : 'Requisitos y Garantía'}
               </h3>
-              <p className="text-[11px] text-zinc-400 truncate max-w-[240px]">{service.title}</p>
+              <p className="text-[11px] text-zinc-400 truncate max-w-[240px] sm:max-w-md">{service.title}</p>
             </div>
           </div>
           <button
@@ -43,7 +43,7 @@ export const ServiceDetailModal: React.FC<Props> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
+        <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden space-y-3 text-xs">
           {mode === 'includes' ? (
             <div className="space-y-2.5">
               <div className="p-3 rounded-xl bg-[#141313] border border-[#242222] flex items-center justify-between">

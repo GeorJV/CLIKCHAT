@@ -94,9 +94,9 @@ export const ServiceChatColumn: React.FC<Props> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <div className="flow-root">
                     <span className="whitespace-pre-wrap leading-snug break-words">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end select-none tabular-nums ${isAssistant ? 'text-zinc-500' : 'text-[#D7BA7D]/70'}`}>{msg.timestamp || '08:22 PM'}</span>
+                    <span className={`float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums ${isAssistant ? 'text-zinc-500' : 'text-[#D7BA7D]/70'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>
