@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 01:37 GMT-6
-- **Versión Actual:** 1.20.18 (Burbuja con Expansión Pausada desde Esquina de Contacto 0.68s)
+- **Última Actualización:** 2026-09-15 01:40 GMT-6
+- **Versión Actual:** 1.20.19 (Panel Showcase con Elevación 3D y Sombra Flotante hacia la Pantalla)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Panel showcase de producto/servicio elevado (`z-10`, `lg:shadow-[-24px_0_50px_-5px_rgba(0,0,0,0.85)]` y `border-l border-white/[0.1]`), visiblemente despegado y más cerca de la pantalla que el chat.
   - Animación de burbuja con expansión paulatina desde un punto de origen (`origin-bottom-right` / `origin-bottom-left`) en 0.68s.
-  - Trayectoria del avioncito ceñida (-18px, -54px) aterrizando exactamente sobre la base de la burbuja sin salirse.
-  - Ventana de cortesía de 7 segundos para ráfagas continuas de mensajes del usuario.
+  - Trayectoria del avioncito ceñida (-18px, -54px) y ventana de cortesía de 7 segundos.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar la coherencia visual en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
