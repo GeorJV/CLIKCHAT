@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { FAQ } from '../../../types';
-import { Globe, Filter, Trash2, HelpCircle, FileText, Bot, Sparkles } from 'lucide-react';
+import { Globe, Filter, HelpCircle } from 'lucide-react';
+import { FaqAccordionItem } from './FaqAccordionItem';
 
 interface FaqListProps {
   faqs: FAQ[];
   onDeleteFaq: (id: string) => Promise<boolean>;
+  onUpdateFaq?: (id: string, newAnswer: string) => Promise<boolean>;
 }
 
-export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
+export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq, onUpdateFaq }) => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('todas');
 
@@ -72,13 +74,13 @@ export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
         ))}
       </div>
 
-      {/* Results Header (Like in reference mockup) */}
+      {/* Results Header */}
       <div className="flex items-center justify-between px-1 pt-1">
-        <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Resultados FAQ</h4>
+        <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Preguntas Frecuentes (Acordeón)</h4>
         <span className="text-[11px] font-medium text-zinc-500">{filteredFaqs.length} total de preguntas</span>
       </div>
 
-      {/* 2-Column Grid of Sleek Onyx Cards */}
+      {/* Accordion List of Sleek Onyx Items */}
       {filteredFaqs.length === 0 ? (
         <div className="p-8 text-center onyx-card rounded-2xl space-y-2">
           <HelpCircle className="w-8 h-8 text-zinc-600 mx-auto" />
@@ -86,58 +88,16 @@ export const FaqList: React.FC<FaqListProps> = ({ faqs, onDeleteFaq }) => {
           <p className="text-[11px] text-zinc-500">Agrega una pregunta manual o sube un archivo .txt, .docx o .pdf arriba.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filteredFaqs.map(faq => {
-            const isFile = faq.source?.startsWith('archivo');
-            const isHitl = faq.source === 'hitl_audit';
-
-            return (
-              <div
-                key={faq.id}
-                className="onyx-card rounded-xl p-3.5 sm:p-4 flex flex-col justify-between gap-3 transition group"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <h5 className="font-bold text-xs text-white leading-snug group-hover:text-emerald-300 transition line-clamp-2">
-                      {faq.question}
-                    </h5>
-                    <button
-                      onClick={() => {
-                        if (window.confirm('¿Deseas eliminar esta pregunta frecuente?')) onDeleteFaq(faq.id);
-                      }}
-                      className="text-zinc-600 hover:text-rose-400 p-1 transition shrink-0 cursor-pointer"
-                      title="Eliminar FAQ"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
-                    {faq.answer}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.05] text-[10px]">
-                  <span className="px-2 py-0.5 rounded font-mono font-medium bg-white/[0.04] border border-white/[0.07] text-zinc-400">
-                    {faq.category || 'general'}
-                  </span>
-
-                  {isFile ? (
-                    <span className="px-2 py-0.5 rounded font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1">
-                      <FileText className="w-2.5 h-2.5" /> Archivo
-                    </span>
-                  ) : isHitl ? (
-                    <span className="px-2 py-0.5 rounded font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <Bot className="w-2.5 h-2.5" /> Auto HITL
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center gap-1">
-                      <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Manual
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="space-y-2.5">
+          {filteredFaqs.map((faq, idx) => (
+            <FaqAccordionItem
+              key={faq.id}
+              faq={faq}
+              defaultOpen={idx === 0 && filteredFaqs.length <= 3}
+              onDelete={onDeleteFaq}
+              onUpdateAnswer={onUpdateFaq}
+            />
+          ))}
         </div>
       )}
     </div>

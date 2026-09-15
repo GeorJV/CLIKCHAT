@@ -9,6 +9,7 @@ interface FaqsManagerTabProps {
   faqs: FAQ[];
   onCreateFaq: (question: string, answer: string, category?: string) => Promise<boolean>;
   onDeleteFaq: (id: string) => Promise<boolean>;
+  onUpdateFaq?: (id: string, newAnswer: string) => Promise<boolean>;
   onCreateBulkFaqs?: (faqs: Array<{ question: string; answer: string; category?: string }>, source?: string) => Promise<boolean>;
 }
 
@@ -16,6 +17,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({
   faqs,
   onCreateFaq,
   onDeleteFaq,
+  onUpdateFaq,
   onCreateBulkFaqs
 }) => {
   const [singleModalOpen, setSingleModalOpen] = useState(false);
@@ -58,6 +60,7 @@ export const FaqsManagerTab: React.FC<FaqsManagerTabProps> = ({
       <FaqList
         faqs={faqs}
         onDeleteFaq={onDeleteFaq}
+        onUpdateFaq={onUpdateFaq}
       />
 
       {/* 3. Modal para Subir Pregunta por Pregunta */}

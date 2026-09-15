@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
@@ -25,23 +25,26 @@ export const ProductShowcase: React.FC<Props> = ({
 
   return (
     <section className="flex flex-col h-full bg-[#131212] overflow-hidden relative min-h-0 select-none">
-      <div className="flex-1 flex flex-col px-3 pt-0 pb-3 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Photo Container */}
-        <div className="flex-1 w-full relative rounded-b-2xl overflow-hidden border-x border-b border-[#262424] bg-[#111010] shadow-2xl group min-h-0">
+        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#262424] bg-[#111010] shadow-2xl group min-h-0">
           <img
             src={images[currentImageIndex] || product.image}
             alt={product.title}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500"
           />
 
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-lg">
+          {/* Photo Top Overlay (Cobertura Superior) */}
+          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent h-24 pointer-events-none" />
+
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-lg z-10">
             38% OFF
           </div>
 
           <button
             type="button"
             onClick={onOpenFullscreen}
-            className="absolute top-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/10 transition active:scale-95 shadow-md cursor-pointer"
+            className="absolute top-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/10 transition active:scale-95 shadow-md cursor-pointer z-10"
             title="Ampliar vista del producto"
           >
             <Maximize2 className="w-4 h-4" />
@@ -126,7 +129,7 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onBuyNow}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-500/30 border border-emerald-400/25 backdrop-blur-sm flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
           >
             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Comprar Ahora — ${product.price.toFixed(2)} {product.currency}</span>

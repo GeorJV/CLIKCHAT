@@ -107,4 +107,40 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Update FAQ (edit answer, question or category)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { question, answer, category } = req.body;
+
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (question !== undefined) {
+      fields.push(`question = $${idx++}`);
+      values.push(question.trim());
+    }
+    if (answer !== undefined) {
+      fields.push(`answer = $${idx++}`);
+      values.push(answer.trim());
+    }
+    if (category !== undefined) {
+      fields.push(`category = $${idx++}`);
+      values.push(category.trim());
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
+    }
+
+    values.push(id);
+    await query(`UPDATE faqs SET ${fields.join(', ')} WHERE id = $${idx}`, values);
+
+    return res.json({ success: true, message: 'FAQ actualizada correctamente' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

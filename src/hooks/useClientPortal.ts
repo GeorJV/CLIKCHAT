@@ -132,6 +132,33 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
     return true;
   };
 
+  const updateFaq = async (id: string, answer: string, question?: string, category?: string) => {
+    if (!answer.trim()) return false;
+    setFaqs(prev => prev.map(f => {
+      if (f.id !== id) return f;
+      return {
+        ...f,
+        answer: answer.trim(),
+        ...(question ? { question: question.trim() } : {}),
+        ...(category ? { category: category.trim() } : {})
+      };
+    }));
+    try {
+      await fetch(`/api/faqs/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          answer: answer.trim(),
+          ...(question ? { question: question.trim() } : {}),
+          ...(category ? { category: category.trim() } : {})
+        })
+      });
+    } catch (err) {
+      console.warn('FAQ updated locally:', err);
+    }
+    return true;
+  };
+
   const createBulkFaqs = async (faqsToCreate: Array<{ question: string; answer: string; category?: string }>, source: string = 'archivo') => {
     if (!faqsToCreate.length) return false;
     const newFaqs: FAQ[] = faqsToCreate.map((f, i) => ({
@@ -239,6 +266,6 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   return {
     tenantSlug, setTenantSlug, tenant, products, faqs, unresolved,
     availableTenants, isLoading, saveSuccess, loadTenantData,
-    resolveQuery, createFaq, deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings
+    resolveQuery, createFaq, updateFaq, deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings
   };
 }

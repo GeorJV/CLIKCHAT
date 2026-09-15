@@ -1,15 +1,13 @@
 import React from 'react';
-import { User, Phone, MessageSquare } from 'lucide-react';
+import { User, Phone, CheckCheck, MessageSquare } from 'lucide-react';
 import { ConversationSession } from './conversationsDemo';
-import { ConversationAccordion } from './ConversationAccordion';
 
 interface ConversationDetailProps {
   session: ConversationSession | null;
   onToggleStatus?: (id: string) => void;
-  onUpdateAnswer?: (messageId: string, newAnswer: string) => void;
 }
 
-export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session, onToggleStatus, onUpdateAnswer }) => {
+export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session, onToggleStatus }) => {
   if (!session) {
     return (
       <div className="onyx-card rounded-2xl p-12 flex flex-col items-center justify-center text-center space-y-3 min-h-[460px]">
@@ -76,17 +74,37 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
 
       {/* Título de Transcripción */}
       <div className="flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-        <span>Respuestas & Mensajes del Bot (Acordeón)</span>
-        <span className="text-zinc-500 font-normal">Clic para desplegar / editar</span>
+        <span>Transcripción de la Conversación</span>
+        <span className="text-zinc-500 font-normal">Bot con RAG Activo</span>
       </div>
 
-      {/* Contenedor del Acordeón de Respuestas */}
-      <div className="flex-1 bg-[#111010] p-3 rounded-xl border border-[#262424] max-h-[480px] overflow-y-auto">
+      {/* Burbujas de Mensajes WhatsApp Style */}
+      <div className="flex-1 space-y-3 bg-[#111010] p-4 rounded-xl border border-[#262424] max-h-[460px] overflow-y-auto">
         {session.messages && session.messages.length > 0 ? (
-          <ConversationAccordion
-            messages={session.messages}
-            onUpdateAnswer={onUpdateAnswer}
-          />
+          session.messages.map(m => (
+            <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-xs shadow-sm ${
+                  m.sender === 'user'
+                    ? 'bg-emerald-600 text-white rounded-tr-none'
+                    : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none'
+                }`}
+              >
+                <p className="leading-relaxed">{m.text}</p>
+                <div className={`mt-1.5 pt-1 flex items-center justify-between text-[9px] ${
+                  m.sender === 'user' ? 'text-emerald-200 border-t border-white/10' : 'text-zinc-500 border-t border-white/[0.06]'
+                }`}>
+                  {m.rag_level ? (
+                    <span className="font-mono text-emerald-400">Traza RAG: {m.rag_level}</span>
+                  ) : <span />}
+                  <span className="flex items-center gap-1 font-mono">
+                    {m.time}
+                    {m.sender === 'user' && <CheckCheck className="w-3 h-3 text-emerald-300 inline" />}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
         ) : (
           <p className="text-center text-xs text-zinc-500 py-8">Sin mensajes en esta sesión.</p>
         )}
