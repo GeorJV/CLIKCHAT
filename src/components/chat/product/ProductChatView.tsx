@@ -7,6 +7,7 @@ import { ProductFullscreenModal } from './ProductFullscreenModal';
 import { ProductCheckoutModal } from './ProductCheckoutModal';
 import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
 import { DEFAULT_PRODUCT } from './productChatMock';
+import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -50,25 +51,42 @@ export const ProductChatView: React.FC<Props> = ({
     }).catch(() => {});
   };
 
-  const handleSendMessage = (customText?: string) => {
-    const text = (customText || inputValue).trim();
-    if (!text || isLoading) return;
-    setMessages((prev) => [...prev, {
-      id: `user-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
-    setInputValue('');
-    setIsLoading(true);
-    trackEvent('chat_message');
-    setTimeout(() => {
+  const { sendMessage: sendBatchedMessage } = useMessageBatcher({
+    debounceMs: 2500,
+    deliveryDelayMs: 280,
+    onDeliverUserMessage: (userMsg) => {
+      setMessages((prev) => [...prev, userMsg]);
+    },
+    onSetLoading: setIsLoading,
+    onTriggerBotReply: (batch) => {
+      const isMulti = batch.length > 1;
+      const combined = batch.join(' ').toLowerCase();
+      let reasoning = isMulti
+        ? `RAG L2: Análisis de ráfaga unificada (${batch.length} preguntas acumuladas).`
+        : 'Respuesta validada contra catálogo D1.';
+      let replyContent = `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`;
+
+      if (combined.includes('envio') || combined.includes('envío') || combined.includes('despacho') || combined.includes('medellin') || combined.includes('bogota') || combined.includes('ciudad')) {
+        replyContent = `¡Con gusto! Para **${selectedProduct.title}** contamos con despacho express en 24/48h a nivel nacional con seguimiento en tiempo real. Pulsa **"Comprar Ahora"** para apartar tu pedido.`;
+      } else if (combined.includes('precio') || combined.includes('cuanto') || combined.includes('costo') || combined.includes('vale')) {
+        replyContent = `El precio actual de **${selectedProduct.title}** es de **$${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}** con garantía oficial de 30 días.`;
+      }
+
       setMessages((prev) => [...prev, {
         id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-        content: `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`,
+        content: replyContent,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 16, modelUsed: 'Catálogo D1', reasoning: 'Respuesta validada.' },
+        ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 16, modelUsed: 'Catálogo D1', reasoning },
       }]);
-      setIsLoading(false);
-    }, 700);
+    },
+  });
+
+  const handleSendMessage = (customText?: string) => {
+    const text = (customText || inputValue).trim();
+    if (!text) return;
+    setInputValue('');
+    trackEvent('chat_message');
+    sendBatchedMessage(text);
   };
 
   const handleConfirmCheckout = (data: ProductCheckoutData) => {

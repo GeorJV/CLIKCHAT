@@ -85,7 +85,7 @@ export const ProductChatColumn: React.FC<Props> = ({
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
-              <div className={`w-fit max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm ${isAssistant ? themeStyles.botBubble : themeStyles.userBubble}`}>
+              <div className={`w-fit max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm animate-bubble-in ${isAssistant ? themeStyles.botBubble : themeStyles.userBubble}`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>

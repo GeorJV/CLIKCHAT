@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceChatColumn } from './ServiceChatColumn';
@@ -7,6 +7,7 @@ import { ServiceDetailModal } from './ServiceDetailModal';
 import { ServiceBookingModal } from './ServiceBookingModal';
 import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock';
+import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
   storeName?: string;
@@ -46,24 +47,19 @@ export const ServiceChatView: React.FC<Props> = ({
     setMessages([welcomeMsg]);
   }, [selectedService.id]);
 
-  const handleSendMessage = (customText?: string) => {
-    const text = (customText || inputValue).trim();
-    if (!text || isLoading) return;
+  const { sendMessage: sendBatchedMessage } = useMessageBatcher({
+    debounceMs: 2500,
+    deliveryDelayMs: 280,
+    onDeliverUserMessage: (userMsg) => {
+      setMessages((prev) => [...prev, userMsg]);
+    },
+    onSetLoading: setIsLoading,
+    onTriggerBotReply: (batch) => {
+      const isMulti = batch.length > 1;
+      const reasoning = isMulti
+        ? `RAG L2: Análisis unificado de ráfaga (${batch.length} preguntas acumuladas).`
+        : 'Respuesta validada contra condiciones del servicio.';
 
-    const userMsg: ProductChatMessage = {
-      id: `user-${Date.now()}`,
-      sessionId: 'sess',
-      tenantId: 'tenant',
-      sender: 'user',
-      content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInputValue('');
-    setIsLoading(true);
-
-    setTimeout(() => {
       const replyMsg: ProductChatMessage = {
         id: `asst-${Date.now()}`,
         sessionId: 'sess',
@@ -71,11 +67,17 @@ export const ServiceChatView: React.FC<Props> = ({
         sender: 'assistant',
         content: `¡Con gusto! **${selectedService.title}** es una sesión 1 a 1 (${selectedService.serviceModality === 'presencial' ? 'en cabina' : 'online por videollamada'}). Puedes pulsar **"Agendar Cita"** en el panel derecho para seleccionar el día y turno que mejor te acomode.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 2, confidence: 0.97, executionTimeMs: 15, modelUsed: 'FAQ RAG Hybrid L2', reasoning: 'Respuesta validada contra condiciones del servicio.' },
+        ragTrace: { levelUsed: 2, confidence: 0.97, executionTimeMs: 15, modelUsed: 'FAQ RAG Hybrid L2', reasoning },
       };
       setMessages((prev) => [...prev, replyMsg]);
-      setIsLoading(false);
-    }, 700);
+    },
+  });
+
+  const handleSendMessage = (customText?: string) => {
+    const text = (customText || inputValue).trim();
+    if (!text) return;
+    setInputValue('');
+    sendBatchedMessage(text);
   };
 
   const handleConfirmBooking = (data: ServiceBookingData) => {

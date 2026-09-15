@@ -1,15 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 01:15 GMT-6
-- **Versión Actual:** 1.20.13 (Animación Microinteracción Avioncito de Papel Volador al Enviar)
+- **Última Actualización:** 2026-09-15 01:25 GMT-6
+- **Versión Actual:** 1.20.14 (Sincronización Aterrizaje-Burbuja & Ráfaga de Mensajes Unificada)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Microinteracción de avioncito de papel amarillo dorado (`#FFB800`) despegando al enviar con vuelo curvo y fade-out (480ms).
-  - Burbuja del bot con sombra pronunciada de elevación (`shadow-lg shadow-black/60`).
-  - Burbuja del usuario con 50% de transparencia (#D79F4C/50), glassmorphism y ajuste 'w-fit'.
-  - Botones "Beneficios" y "Detalle del Producto" en carbón con hover a amarillo huevo (#FFB800).
+  - Sincronización exacta: la burbuja aparece con efecto 'pop' justo cuando el avioncito aterriza (280ms).
+  - Ráfagas de mensajes continuos (debounce 2.5s) con respuesta unificada del bot a todas las consultas.
+  - Burbuja del bot con elevación (`shadow-lg shadow-black/60`) y del usuario con 50% transparencia (#D79F4C/50).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar la coherencia visual en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**

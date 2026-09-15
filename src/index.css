@@ -128,5 +128,22 @@
 }
 
 .animate-paper-plane {
-  animation: paperPlaneFlight 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: paperPlaneFlight 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Smooth bubble entrance synchronized with paper plane arrival */
+@keyframes bubbleEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-bubble-in {
+  animation: bubbleEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
