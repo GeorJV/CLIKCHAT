@@ -106,7 +106,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
 
         {isLoading && (
           <div className="flex items-start justify-start animate-fade-in mt-1.5">
-            <div className="bg-[#1a1919] border border-[#282626] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5 shadow-lg shadow-black/60">
+            <div className="bg-[#1a1919] border border-[#282626] rounded-2xl px-3 py-2 flex items-center gap-1.5 shadow-lg shadow-black/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />

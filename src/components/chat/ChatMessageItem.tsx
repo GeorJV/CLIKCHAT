@@ -20,8 +20,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       <div
         className={`max-w-[86%] sm:max-w-[78%] rounded-2xl p-3 text-xs leading-relaxed transition-all shadow-sm ${
           isUser
-            ? 'bg-indigo-600 text-white rounded-tr-xs'
-            : 'bg-slate-800 text-slate-100 rounded-tl-xs border border-slate-700/70 shadow-lg shadow-black/60'
+            ? 'bg-indigo-600 text-white rounded-2xl'
+            : 'bg-slate-800 text-slate-100 rounded-2xl border border-slate-700/70 shadow-lg shadow-black/60'
         }`}
       >
         {/* RAG Level Indicator Badge */}

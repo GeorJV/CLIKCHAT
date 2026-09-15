@@ -1,16 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 14:11 GMT-6
-- **Versión Actual:** 1.20.27 (Sincronización de Botón Roll-Up en Modales y Showcase con Breakpoint md)
+- **Última Actualización:** 2026-09-15 14:50 GMT-6
+- **Versión Actual:** 1.20.28 (Despliegue en Vivo Cloudflare Pages: Burbujas Redondeadas y Botón Animado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón de compra animado (roll-up: precio en reposo, 'Comprar Ahora' en dorado en hover) unificado en showcase y modales.
-  - Breakpoint ajustado a md (768px) para que el showcase y botón se vean en pantallas intermedias (ej: 915px).
-  - Burbuja de usuario con esquinas redondeadas completas (rounded-2xl) y fondo grafito translúcido.
+  - Despliegue en Cloudflare Pages ejecutado con éxito (`1b188103.clikchat.pages.dev`).
+  - Burbuja de usuario con 4 esquinas redondeadas completas (rounded-2xl) idénticas al bot.
+  - Fondo de la burbuja con el mismo color del bot y transparencia glassmorphism (/65 + backdrop-blur-md).
+  - Botón de compra animado (roll-up: precio en reposo, 'Comprar Ahora' en dorado en hover).
+  - Breakpoint responsive a md (768px) para visualización inmediata en ventanas medianas.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar visualmente en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Validar visualmente en https://clikchat.pages.dev con recarga forzada (Ctrl + F5).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
