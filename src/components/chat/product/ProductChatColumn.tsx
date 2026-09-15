@@ -43,13 +43,13 @@ export const ProductChatColumn: React.FC<Props> = ({
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
 
   return (
-    <section className="flex flex-col h-full bg-[#1e1d1d] border-b lg:border-b-0 lg:border-r border-[#2d2b2b] overflow-hidden relative min-h-0">
+    <section className="flex flex-col h-full bg-[#222020] border-b lg:border-b-0 lg:border-r border-[#363333] overflow-hidden relative min-h-0">
       {/* Slim Header */}
-      <header className="h-11 px-3 bg-[#171616] border-b border-[#2d2b2b] flex items-center justify-between z-10 shrink-0 select-none">
+      <header className="h-11 px-3 bg-[#1c1a1a] border-b border-[#363333] flex items-center justify-between z-10 shrink-0 select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
             <img src={agentAvatar || defaultAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
-            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#111010]" />
+            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#1c1a1a]" />
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">{storeName}</h2>
@@ -67,13 +67,13 @@ export const ProductChatColumn: React.FC<Props> = ({
       </header>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#1e1d1d] min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-[#222020] min-h-0">
         {messages.map((msg) => {
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
-                isAssistant ? 'bg-[#262424] border border-[#363333] text-zinc-200 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
+                isAssistant ? 'bg-[#2c2a2a] border border-[#423e3e] text-zinc-100 rounded-tl-xs' : 'bg-emerald-600 text-white rounded-tr-xs font-medium shadow-emerald-600/20'
               }`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
@@ -96,11 +96,11 @@ export const ProductChatColumn: React.FC<Props> = ({
 
         {isLoading && (
           <div className="flex items-start justify-start animate-fade-in">
-            <div className="bg-[#262424] border border-[#363333] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
+            <div className="bg-[#2c2a2a] border border-[#423e3e] rounded-2xl rounded-tl-xs px-3 py-2 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
-              <span className="text-xs text-zinc-400 ml-1">Consultando catálogo oficial...</span>
+              <span className="text-xs text-zinc-300 ml-1">Consultando catálogo oficial...</span>
             </div>
           </div>
         )}
@@ -108,8 +108,8 @@ export const ProductChatColumn: React.FC<Props> = ({
       </div>
 
       {/* Input Bar with Auto-Expand Multiline & Shift+Enter support - Optimized Minimal Height */}
-      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#171616] border-t border-[#2d2b2b] shrink-0">
-        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#232121] border border-[#363333] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
+      <footer className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-[#1c1a1a] border-t border-[#363333] shrink-0">
+        <form onSubmit={(e) => { e.preventDefault(); if (inputValue.trim() && !isLoading) onSendMessage(); }} className="flex items-end gap-1.5 bg-[#282626] border border-[#423e3e] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
           <textarea
             ref={textareaRef}
             rows={1}

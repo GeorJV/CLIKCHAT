@@ -71,7 +71,7 @@ export function App() {
         )}
 
         {currentView === 'product' && (
-          <div className="h-full w-full overflow-hidden bg-[#131212]">
+          <div className="h-full w-full overflow-hidden bg-[#222020]">
             <ProductChatView
               storeName="Clikchat Store"
               agentName="Sofía"

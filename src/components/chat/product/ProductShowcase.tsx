@@ -24,10 +24,10 @@ export const ProductShowcase: React.FC<Props> = ({
   const handlePrev = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <section className="flex flex-col h-full bg-[#131212] overflow-hidden relative min-h-0 select-none">
+    <section className="flex flex-col h-full bg-[#222020] overflow-hidden relative min-h-0 select-none">
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 overflow-hidden min-h-0">
         {/* Photo Container */}
-        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#262424] bg-[#111010] shadow-2xl group min-h-0 isolate">
+        <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-[#363333] bg-[#1c1a1a] shadow-2xl group min-h-0 isolate">
           <img
             src={images[currentImageIndex] || product.image}
             alt={product.title}
@@ -110,7 +110,7 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onOpenBenefits}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#2e2b2b] bg-[#181717] hover:bg-[#222020] text-zinc-200 hover:text-white shadow-sm cursor-pointer active:scale-98"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Beneficios</span>
@@ -118,7 +118,7 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onOpenSpecs}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#2e2b2b] bg-[#181717] hover:bg-[#222020] text-zinc-200 hover:text-white shadow-sm cursor-pointer active:scale-98"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition border border-[#423e3e] bg-[#2c2a2a] hover:bg-[#383535] text-zinc-100 hover:text-white shadow-sm cursor-pointer active:scale-98"
           >
             <FileText className="w-3.5 h-3.5 text-teal-400" />
             <span>Detalle del Producto</span>

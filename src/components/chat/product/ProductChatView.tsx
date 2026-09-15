@@ -90,7 +90,7 @@ export const ProductChatView: React.FC<Props> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#1a1919] text-slate-100 overflow-hidden font-sans">
+    <div className="w-full h-full flex flex-col bg-[#222020] text-slate-100 overflow-hidden font-sans">
       <div className="flex-1 w-full h-full grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0">
         <ProductChatColumn
           storeName={storeName}
