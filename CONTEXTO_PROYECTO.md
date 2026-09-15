@@ -1,13 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 01:34 GMT-6
-- **Versión Actual:** 1.20.17 (Calibración de Vuelo del Avioncito y Entrada Suave Profesional de Burbuja)
+- **Última Actualización:** 2026-09-15 01:37 GMT-6
+- **Versión Actual:** 1.20.18 (Burbuja con Expansión Pausada desde Esquina de Contacto 0.68s)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Animación de burbuja con expansión paulatina desde un punto de origen (`origin-bottom-right` / `origin-bottom-left`) en 0.68s.
   - Trayectoria del avioncito ceñida (-18px, -54px) aterrizando exactamente sobre la base de la burbuja sin salirse.
-  - Animación de entrada de la burbuja suave, fluida y profesional (0.46s, blur disipante y ligera escala).
   - Ventana de cortesía de 7 segundos para ráfagas continuas de mensajes del usuario.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar la coherencia visual en https://clikchat.pages.dev.
