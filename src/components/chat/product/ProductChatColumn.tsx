@@ -76,7 +76,7 @@ export const ProductChatColumn: React.FC<Props> = ({
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm ${isAssistant ? themeStyles.botBubble : themeStyles.userBubble}`}>
+              <div className={`w-fit max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm ${isAssistant ? themeStyles.botBubble : themeStyles.userBubble}`}>
                 {isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
@@ -86,9 +86,9 @@ export const ProductChatColumn: React.FC<Props> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
-                    <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? themeStyles.textSecondary : 'opacity-80'}`}>{msg.timestamp || '20:03'}</span>
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="whitespace-pre-wrap leading-snug break-words">{msg.content}</span>
+                    <span className={`text-[10px] shrink-0 self-end select-none tabular-nums ${isAssistant ? themeStyles.textSecondary : 'opacity-70'}`}>{msg.timestamp || '20:03'}</span>
                   </div>
                 )}
               </div>

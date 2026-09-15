@@ -72,7 +72,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           const isAssistant = msg.sender === 'assistant';
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm shadow-sm ${
+              <div className={`w-fit max-w-[85%] sm:max-w-[78%] rounded-2xl px-3 py-1.5 text-xs sm:text-sm shadow-sm ${
                 isAssistant ? 'bg-[#1a1919] border border-[#282626] text-zinc-200 rounded-tl-xs' : 'bg-[#F2E394] text-zinc-950 rounded-tr-xs font-medium shadow-sm'
               }`}>
                 {isAssistant && msg.ragTrace ? (
@@ -84,9 +84,9 @@ export const ServiceChatColumn: React.FC<Props> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
-                    <span className="whitespace-pre-wrap leading-snug flex-1 min-w-[60px]">{msg.content}</span>
-                    <span className={`text-[10px] shrink-0 self-end ml-auto select-none ${isAssistant ? 'text-zinc-500' : 'text-zinc-900/70'}`}>{msg.timestamp || '08:22 PM'}</span>
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="whitespace-pre-wrap leading-snug break-words">{msg.content}</span>
+                    <span className={`text-[10px] shrink-0 self-end select-none tabular-nums ${isAssistant ? 'text-zinc-500' : 'text-zinc-900/70'}`}>{msg.timestamp || '08:22 PM'}</span>
                   </div>
                 )}
               </div>

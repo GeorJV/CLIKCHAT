@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 00:27 GMT-6
-- **Versión Actual:** 1.20.7 (Burbuja de Usuario en Amarillo Pastel Suave Mate #F2E394)
+- **Última Actualización:** 2026-09-15 00:29 GMT-6
+- **Versión Actual:** 1.20.8 (Burbuja Ceñida y Angosta al Texto 'w-fit')
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Burbuja de mensajes del usuario suavizada a tono amarillo pastel mate (#F2E394), eliminando saturación estridente y garantizando descanso visual.
+  - Burbuja de mensajes del usuario optimizada con 'w-fit' y flujo natural: abraza exactamente el texto sin estiramientos vacíos innecesarios.
+  - Color amarillo pastel mate suave (#F2E394) con texto oscuro.
   - Botones "Beneficios" y "Detalle del Producto" en carbón con hover a amarillo huevo (#FFB800).
-  - Etiqueta "38% OFF" en amarillo huevo a juego.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar el nuevo tono en https://clikchat.pages.dev.
+- **Siguiente Paso Inmediato:** Validar la burbuja ceñida en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
