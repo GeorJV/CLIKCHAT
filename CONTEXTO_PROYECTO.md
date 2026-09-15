@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-14 19:47 GMT-6
-- **Versión Actual:** 1.15.6 (Avatar del Bot Removido de Burbujas y Esquinas Redondeadas Simétricas en Escaparate)
+- **Última Actualización:** 2026-09-14 19:49 GMT-6
+- **Versión Actual:** 1.15.7 (Espaciado Vertical del Input de Chat Minimizado y Ajustado con Precisión)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 7b5139a)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit: 2773bf3)
 - **Estado Actual del Sistema:**
-  - El avatar del bot fue removido de cada burbuja de mensaje; permanece únicamente en el header superior.
-  - La caja de imagen cuenta con esquinas redondeadas idénticas arriba y abajo (rounded-2xl con isolate).
-  - Cobertura de sombra y botón comprar ahora en verde difuminado totalmente operativos.
-  - Preguntas frecuentes en acordeón con edición y guardado inline.
+  - Espacio vertical superior e inferior de la barra de entrada de texto optimizado al mínimo funcional.
+  - Textarea ajustado con py-0.5, form con py-1 y footer con py-1.5 eliminando huecos innecesarios.
+  - Avatar del bot centralizado en el header y eliminado de las burbujas individuales.
+  - Caja de imagen del producto y servicio con esquinas simétricas redondeadas arriba y abajo.
   - Proyecto supervisado en ARQ AI Studio (ID: `proj-1789360940430`, status: `ready_for_review`).
 - **Siguiente Paso Inmediato:** Validar experiencia visual en vivo del cliente.
 - **Decisiones Técnicas Inmutables:**
