@@ -30,8 +30,8 @@ export const ServiceShowcase: React.FC<Props> = ({
             className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500 rounded-2xl"
           />
 
-          {/* Photo Top Overlay (Cobertura Superior) */}
-          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent h-24 pointer-events-none rounded-t-2xl" />
+          {/* Photo Top Overlay (Sombra Superior Sutil y Reducida) */}
+          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/50 via-black/20 to-transparent h-12 pointer-events-none rounded-t-2xl" />
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap z-10">
@@ -64,8 +64,8 @@ export const ServiceShowcase: React.FC<Props> = ({
             </>
           )}
 
-          {/* Bottom Overlay on Image */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 sm:p-4 rounded-b-2xl">
+          {/* Bottom Overlay on Image (Sombra Inferior Reducida) */}
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pt-6 pb-2.5 px-3 sm:pb-3 sm:px-3.5 rounded-b-2xl">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-base font-extrabold text-white leading-tight truncate drop-shadow-sm">{service.title}</h1>

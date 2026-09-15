@@ -78,7 +78,7 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           className="w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-105"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/10 pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none" />
 
         {/* Carousel arrows */}
         {images.length > 1 && (
