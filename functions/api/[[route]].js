@@ -102,6 +102,19 @@ export async function onRequest(context) {
         [targetId, targetTenant]
       );
 
+      // Si es evento 'view', evitar doble conteo si se ejecutó hace menos de 2 segundos
+      if (event === 'view') {
+        const recentRows = await executeD1(
+          "SELECT (strftime('%s', 'now') - strftime('%s', updated_at)) as diff_sec FROM product_metrics WHERE product_id = ?1",
+          [targetId]
+        );
+        const diffSec = recentRows[0]?.diff_sec;
+        if (diffSec !== null && diffSec !== undefined && Number(diffSec) < 2) {
+          const current = await executeD1('SELECT * FROM product_metrics WHERE product_id = ?1', [targetId]);
+          return jsonResponse({ success: true, event: 'view_debounced', productId: targetId, metrics: current[0] });
+        }
+      }
+
       // 3. Update counter for targetId
       let updateSql = "UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = ?1";
       if (event === 'buy_click') {

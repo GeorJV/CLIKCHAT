@@ -223,6 +223,19 @@ router.post('/:id/track', async (req, res) => {
       [targetId, targetTenant]
     );
 
+    // Evitar doble conteo si el view llegó hace menos de 2 segundos
+    if (event === 'view') {
+      const recent = await query(
+        `SELECT (strftime('%s', 'now') - strftime('%s', updated_at)) as diff_sec FROM product_metrics WHERE product_id = $1`,
+        [targetId]
+      );
+      const diff = recent.rows?.[0]?.diff_sec;
+      if (diff !== null && diff !== undefined && Number(diff) < 2) {
+        const current = await query('SELECT * FROM product_metrics WHERE product_id = $1', [targetId]);
+        return res.json({ success: true, event: 'view_debounced', productId: targetId, metrics: current.rows?.[0] });
+      }
+    }
+
     let updateSql = `UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = $1`;
     if (event === 'buy_click') {
       updateSql = `UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;

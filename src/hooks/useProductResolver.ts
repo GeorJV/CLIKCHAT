@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ProductItem } from '../types/productChat';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT } from '../components/chat/product/productChatMock';
@@ -34,6 +34,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
   const [agentName, setAgentName] = useState<string>('Sofía');
   const [agentAvatar, setAgentAvatar] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const hasTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -102,12 +103,23 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
           }
         }
 
-        // Track real view in D1
-        fetch('/api/products/' + encodeURIComponent(productId) + '/track', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event: 'view' })
-        }).catch(() => {});
+        // Deduplicar: Contar estrictamente 1 sola apertura por sesión de visita
+        const now = Date.now();
+        const sessionKey = `clik_view_${productId}`;
+        const lastTracked = typeof window !== 'undefined' ? sessionStorage.getItem(sessionKey) : null;
+        const cooldownMs = 15000;
+
+        if (hasTrackedRef.current !== productId && (!lastTracked || now - Number(lastTracked) > cooldownMs)) {
+          hasTrackedRef.current = productId;
+          if (typeof window !== 'undefined') {
+            try { sessionStorage.setItem(sessionKey, String(now)); } catch (e) {}
+          }
+          fetch('/api/products/' + encodeURIComponent(productId) + '/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'view' })
+          }).catch(() => {});
+        }
       } catch (err) {
         console.warn('Error resolviendo producto para QLink:', err);
       } finally {
