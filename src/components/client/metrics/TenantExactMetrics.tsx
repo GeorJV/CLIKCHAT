@@ -60,7 +60,9 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
                 ● En Vivo (D1 Edge)
               </span>
             </h2>
-            <p className="text-[11px] text-zinc-400">Auditoría en tiempo real de interacciones, efectividad comercial y citas del bot</p>
+            <p className="text-[11px] text-zinc-400">
+              Suma total consolidada de todos los chats de todos los productos del negocio
+            </p>
           </div>
         </div>
 
@@ -75,15 +77,15 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* 1. Veces abierto el chat & Link del Chat */}
+        {/* 1. Suma total de aperturas */}
         <div className="onyx-card rounded-2xl p-3.5 space-y-2 flex flex-col justify-between border-emerald-500/20 bg-gradient-to-b from-[#181717] to-[#121111]">
           <div>
             <div className="flex items-center justify-between text-zinc-400">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Aperturas del Chat</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Aperturas del Chat (Total)</span>
               <Eye className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="text-2xl font-black text-white mt-1">{chatOpens} <span className="text-xs font-normal text-zinc-400">visitas</span></div>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Aperturas del enlace directo</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">Suma de aperturas en todos los productos</p>
           </div>
           <div className="pt-2 border-t border-[#262424] space-y-1.5">
             <div className="text-[10px] font-mono text-emerald-400 truncate bg-[#0f0e0e] px-2 py-1 rounded-lg border border-[#232121]">{publicChatUrl}</div>
@@ -101,7 +103,7 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
           </div>
         </div>
 
-        {/* 2. Preguntas Respondidas */}
+        {/* 2. Total Preguntas Respondidas */}
         <div className="onyx-card rounded-2xl p-3.5 space-y-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-zinc-400">
@@ -109,15 +111,15 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
               <MessageSquare className="w-4 h-4 text-sky-400" />
             </div>
             <div className="text-2xl font-black text-white mt-1">{questionsAnswered} <span className="text-xs font-normal text-zinc-400">respuestas</span></div>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Consultas de clientes resueltas por el bot en D1</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">Total de dudas resueltas en todos los chats</p>
           </div>
           <div className="pt-2 border-t border-[#262424] flex items-center justify-between text-[10px]">
-            <span className="text-zinc-400">Tasa de respuesta:</span>
-            <span className="font-bold text-sky-400">100% RAG Activo</span>
+            <span className="text-zinc-400">Efectividad RAG:</span>
+            <span className="font-bold text-sky-400">100% Cobertura</span>
           </div>
         </div>
 
-        {/* 3. Objeciones Respondidas */}
+        {/* 3. Total Objeciones Resueltas */}
         <div className="onyx-card rounded-2xl p-3.5 space-y-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-zinc-400">
@@ -125,27 +127,27 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
               <ShieldAlert className="w-4 h-4 text-amber-400" />
             </div>
             <div className="text-2xl font-black text-white mt-1">{objectionsResolved} <span className="text-xs font-normal text-zinc-400">superadas</span></div>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Dudas de precio, confianza y garantías superadas</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">Precio, garantía y dudas en todos los productos</p>
           </div>
           <div className="pt-2 border-t border-[#262424] flex items-center justify-between text-[10px]">
-            <span className="text-zinc-400">Eficacia persuasiva:</span>
-            <span className="font-bold text-amber-400">Alta Conversión</span>
+            <span className="text-zinc-400">Conversión Global:</span>
+            <span className="font-bold text-amber-400">Alta Efectividad</span>
           </div>
         </div>
 
-        {/* 4. Agendamientos Realizados */}
+        {/* 4. Total Agendamientos Realizados */}
         <div className="onyx-card rounded-2xl p-3.5 space-y-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-zinc-400">
               <span className="text-[10px] font-bold uppercase tracking-wider">Agendamientos Realizados</span>
               <Calendar className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="text-2xl font-black text-white mt-1">{appointmentsCount} <span className="text-xs font-normal text-zinc-400">citas</span></div>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Demostraciones y citas programadas por la IA</p>
+            <div className="text-2xl font-black text-white mt-1">{appointmentsCount} <span className="text-xs font-normal text-zinc-400">citas/ventas</span></div>
+            <p className="text-[10px] text-zinc-400 mt-0.5">Suma total de citas y cierres por la IA</p>
           </div>
           <div className="pt-2 border-t border-[#262424] flex items-center justify-between text-[10px]">
             <span className="text-zinc-400">Sincronización:</span>
-            <span className="font-bold text-purple-400">Agenda Activa</span>
+            <span className="font-bold text-purple-400">Agenda & D1</span>
           </div>
         </div>
       </div>

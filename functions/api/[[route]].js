@@ -373,13 +373,20 @@ export async function onRequest(context) {
     if (segments[0] === 'chat' && segments[1] === 'tenant-metrics' && segments.length === 3 && request.method === 'GET') {
       const tenantId = segments[2];
       const sessions = await executeD1('SELECT COUNT(*) as count FROM chat_sessions WHERE tenant_id = ?1', [tenantId]);
+      const pMetrics = await executeD1('SELECT COALESCE(SUM(views), 0) as views, COALESCE(SUM(buy_clicks), 0) as buy_clicks, COALESCE(SUM(warm_leads), 0) as warm_leads FROM product_metrics WHERE tenant_id = ?1', [tenantId]);
       const answers = await executeD1("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = ?1 AND sender = 'assistant'", [tenantId]);
       const objections = await executeD1("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = ?1 AND sender = 'assistant' AND (message LIKE '%precio%' OR message LIKE '%garant%' OR message LIKE '%duda%' OR message LIKE '%cost%' OR message LIKE '%beneficio%' OR message LIKE '%tranquil%')", [tenantId]);
 
-      const chatOpens = Number(sessions[0]?.count) || 0;
+      const baseSessions = Number(sessions[0]?.count) || 0;
+      const totalProdViews = Number(pMetrics[0]?.views) || 0;
+      const totalProdBuyClicks = Number(pMetrics[0]?.buy_clicks) || 0;
+      const totalProdWarm = Number(pMetrics[0]?.warm_leads) || 0;
+
+      // Suma total consolidada de todos los chats y productos
+      const chatOpens = baseSessions + totalProdViews;
       const questionsAnswered = Number(answers[0]?.count) || 0;
-      const objectionsResolved = Math.max(Number(objections[0]?.count) || 0, Math.min(questionsAnswered, 8));
-      const appointmentsCount = 0;
+      const objectionsResolved = Math.max(Number(objections[0]?.count) || 0, Math.min(questionsAnswered, 8)) + totalProdWarm;
+      const appointmentsCount = totalProdBuyClicks;
 
       return jsonResponse({
         metrics: {

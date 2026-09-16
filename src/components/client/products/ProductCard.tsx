@@ -115,7 +115,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Expanded Metrics Details */}
-        {showMetrics && <ProductMetricsDetail product={product} />}
+        {showMetrics && <ProductMetricsDetail product={product} tenantSlug={tenantSlug} />}
       </div>
 
       {/* Card Footer */}

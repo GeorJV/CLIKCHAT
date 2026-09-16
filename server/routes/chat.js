@@ -174,18 +174,24 @@ router.get('/tenant-clients/:tenantId', async (req, res) => {
   }
 });
 
-// Get exact reporting metrics for tenant (Dashboard Principal)
+// Get exact reporting metrics for tenant (Dashboard Principal - Suma total consolidada)
 router.get('/tenant-metrics/:tenantId', async (req, res) => {
   try {
     const { tenantId } = req.params;
     const sessionsRes = await query('SELECT COUNT(*) as count FROM chat_sessions WHERE tenant_id = $1', [tenantId]);
+    const pMetricsRes = await query('SELECT COALESCE(SUM(views), 0) as views, COALESCE(SUM(buy_clicks), 0) as buy_clicks, COALESCE(SUM(warm_leads), 0) as warm_leads FROM product_metrics WHERE tenant_id = $1', [tenantId]);
     const answersRes = await query("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = $1 AND sender = 'assistant'", [tenantId]);
     const objectionsRes = await query("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = $1 AND sender = 'assistant' AND (message LIKE '%precio%' OR message LIKE '%garant%' OR message LIKE '%duda%' OR message LIKE '%cost%' OR message LIKE '%beneficio%' OR message LIKE '%tranquil%')", [tenantId]);
 
-    const chatOpens = parseInt(sessionsRes.rows[0]?.count || '0', 10);
+    const baseSessions = parseInt(sessionsRes.rows[0]?.count || '0', 10);
+    const totalProdViews = parseInt(pMetricsRes.rows[0]?.views || '0', 10);
+    const totalProdBuyClicks = parseInt(pMetricsRes.rows[0]?.buy_clicks || '0', 10);
+    const totalProdWarm = parseInt(pMetricsRes.rows[0]?.warm_leads || '0', 10);
+
+    const chatOpens = baseSessions + totalProdViews;
     const questionsAnswered = parseInt(answersRes.rows[0]?.count || '0', 10);
-    const objectionsResolved = Math.max(parseInt(objectionsRes.rows[0]?.count || '0', 10), Math.min(questionsAnswered, 8));
-    const appointmentsCount = 0;
+    const objectionsResolved = Math.max(parseInt(objectionsRes.rows[0]?.count || '0', 10), Math.min(questionsAnswered, 8)) + totalProdWarm;
+    const appointmentsCount = totalProdBuyClicks;
 
     return res.json({
       metrics: {
