@@ -1,8 +1,8 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 21:35 GMT-6
-- **Versión Actual:** 1.20.36 (RAG Semántico del Historial & Eliminación Total de Mocks Simulados)
+- **Última Actualización:** 2026-09-15 21:38 GMT-6
+- **Versión Actual:** 1.20.37 (Catálogo Blindado Exclusivamente con Producto Real del Usuario en D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
