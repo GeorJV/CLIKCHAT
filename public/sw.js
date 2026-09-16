@@ -1,12 +1,18 @@
 // Clikchat Progressive Web App Service Worker
-const CACHE_NAME = 'clikchat-cache-v1';
+const CACHE_NAME = 'clikchat-cache-v1.20.52';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 // Push Notification Event Listener (Triggered when Business Owner answers Fallback query)
