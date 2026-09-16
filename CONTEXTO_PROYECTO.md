@@ -1,13 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 21:55 GMT-6
-- **Versión Actual:** 1.20.38 (Escucha de Voz con Cloudflare Workers AI Whisper & Filtro Anti-Repetición)
+- **Última Actualización:** 2026-09-15 22:05 GMT-6
+- **Versión Actual:** 1.20.39 (Botón de Micrófono Amarillo Atómico con Alternancia de Envío Tipo WhatsApp)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Soporte de notas de voz con Cloudflare Workers AI (@cf/openai/whisper) y filtro anti-repeticiones/bucles en audioCleaner.
-  - VAD (detección de silencio en cliente) y botón de micro con contador en ProductChatColumn, ServiceChatColumn y ChatInputBar.
+  - Micrófono amarillo dorado visible en la posición del botón de envío cuando el input está vacío; al escribir se oculta y aparece el envío.
+  - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones/bucles en audioCleaner.
   - RAG Semántico del Historial activo (100 msgs) con memoria episódica (`rankBySimilarity`) y extracción de preferencias.
   - Catálogo de productos y datos de clientes conectados a Cloudflare D1 real (sin datos simulados).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
