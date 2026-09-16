@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 17:38 GMT-6
-- **Versión Actual:** 1.20.35 (Botón de Precio en Beige Luxury Satinado con Alto Contraste y Hover Tornasol)
+- **Última Actualización:** 2026-09-15 21:35 GMT-6
+- **Versión Actual:** 1.20.36 (RAG Semántico del Historial & Eliminación Total de Mocks Simulados)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Botón de precio en reposo configurado en color beige luxury satinado (#EDE4D3 / #E8DFC8) con borde dorado suave y precio en carbón (#16120C) para máxima legibilidad.
-  - Al pasar el cursor (hover) se activa el resplandor tornasol oro/cobre mientras rueda hacia arriba revelando 'Comprar Ahora' en Cinzel.
-  - Enrutamiento SPA activo con URLs dedicadas y reglas `public/_redirects` en Cloudflare Pages.
+  - RAG Semántico del Historial activo: escaneo de sesiones completas (100 msgs) con memoria episódica (`rankBySimilarity`) y extracción de preferencias.
+  - Eliminación del 100% de datos simulados en clientes, citas, conversaciones de muestra y perfil; operando con datos reales de Cloudflare D1.
+  - Endpoints Edge en `functions/api/[[route]].js` y backend para consultas de clientes y sesiones D1 en tiempo real.
+  - Botón beige luxury satinado (#EDE4D3) con hover tornasol oro/cobre operativo.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
-- **Siguiente Paso Inmediato:** Validar la apariencia del botón beige en https://clikchat.pages.dev.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.

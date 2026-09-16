@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
-import { DEFAULT_FAQS } from '../components/client/faqs/faqsDemo';
 
 export function useClientPortal(initialSlug: string = 'acme-store') {
   const [tenantSlug, setTenantSlug] = useState<string>(initialSlug);
@@ -22,7 +21,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
         if (saved) return JSON.parse(saved);
       } catch (e) {}
     }
-    return DEFAULT_FAQS;
+    return [];
   });
   const [unresolved, setUnresolved] = useState<UnresolvedQuery[]>([]);
   const [availableTenants, setAvailableTenants] = useState<TenantListItem[]>([]);

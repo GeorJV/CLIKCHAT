@@ -93,7 +93,7 @@ async function generateCompletion({
 }) {
   const messages = [
     { role: 'system', content: `${systemPrompt}\n\n[CONTEXTO VERIFICADO DE LA TIENDA]:\n${context}` },
-    ...history.slice(-6).map(h => ({
+    ...history.map(h => ({
       role: h.sender === 'user' ? 'user' : 'assistant',
       content: h.message
     })),
@@ -112,8 +112,9 @@ async function generateCompletion({
   } catch (err) {
     console.warn('⚠️ Fallo en OpenRouter, intentando Google AI Studio fallback:', err.message);
     try {
-      // 2. Fallback to Google AI Studio
-      const promptText = `${systemPrompt}\n\nContexto:\n${context}\n\nPregunta: ${userMessage}`;
+      // 2. Fallback to Google AI Studio con contexto e historial episódico completo
+      const recentHistoryText = history.map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
+      const promptText = `${systemPrompt}\n\n[CONTEXTO VERIFICADO]:\n${context}${recentHistoryText ? `\n\n[HISTORIAL RECIENTE]:\n${recentHistoryText}` : ''}\n\nPregunta: ${userMessage}`;
       const response = await callGoogleAIStudio(promptText);
       return { success: true, text: response, provider: 'google_ai_studio' };
     } catch (gErr) {

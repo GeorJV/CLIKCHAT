@@ -63,19 +63,65 @@ async function processRAGQuery({
   const actualTenantId = tenant?.id || tenantId;
 
   // -------------------------------------------------------------
-  // NIVEL 1 & 4: Memoria Episódica y Memoria Histórica del Cliente
+  // NIVEL 1: RAG Semántico del Historial y Memoria Episódica D1
   // -------------------------------------------------------------
-  let episodicHistory = [];
+  let fullSessionHistory = [];
   try {
     const historyRes = await queryWithTenant(
       actualTenantId,
-      'SELECT sender, message, rag_level_used, created_at FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 10',
+      'SELECT sender, message, rag_level_used, created_at FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 100',
       [sessionId]
     );
-    episodicHistory = historyRes.rows;
+    fullSessionHistory = historyRes.rows;
   } catch (err) {
-    episodicHistory = localStore.messages.get(sessionId) || [];
+    fullSessionHistory = localStore.messages.get(sessionId) || [];
   }
+
+  // 1.A. Ventana de Trabajo Caliente (últimos 6 mensajes inmediatos)
+  const recentHistory = fullSessionHistory.slice(-6);
+
+  // 1.B. RAG Semántico sobre turnos anteriores del historial completo
+  const olderMessages = fullSessionHistory.slice(0, -6);
+  let sessionSemanticMemoryText = '';
+  let episodicRagUsed = false;
+
+  if (olderMessages.length > 0) {
+    const isReferential = /\b(antes|mencionaste|dije|anterior|primero|segundo|opci[oó]n|presupuesto|garant[ií]a|precio|recomendaste|hablamos|te dije|recuerdas|cu[aá]l era|dijimos)\b/i.test(userMessage);
+    const threshold = isReferential ? 0.20 : 0.38;
+
+    const historyMatches = rankBySimilarity(
+      userMessage,
+      olderMessages,
+      (m) => m.message,
+      threshold
+    );
+
+    if (historyMatches.length > 0) {
+      episodicRagUsed = true;
+      sessionSemanticMemoryText = historyMatches.slice(0, 3).map(match => {
+        const role = match.item.sender === 'user' ? 'El cliente dijo previamente' : 'El asistente explicó previamente';
+        return `- [Turno previo (${Math.round(match.score * 100)}% relevancia)] ${role}: "${match.item.message}"`;
+      }).join('\n');
+    }
+  }
+
+  // 1.C. Extracción Proactiva de Preferencias y Datos Clave en la Sesión
+  const userMessages = fullSessionHistory.filter(m => m.sender === 'user');
+  const detectedPreferences = [];
+  for (const m of userMessages) {
+    const text = m.message;
+    const budgetMatch = text.match(/(?:presupuesto|tengo|dispongo de|hasta|m[aá]ximo)\s*(?:de\s*)?([$€₡]?\s*\d+[\d.,]*\s*(?:d[oó]lares|pesos|usd|colones|mil)?)/i);
+    if (budgetMatch && !detectedPreferences.some(p => p.includes('Presupuesto'))) {
+      detectedPreferences.push(`Presupuesto del cliente: ${budgetMatch[1]}`);
+    }
+    const cityMatch = text.match(/(?:vivo en|env[ií]o a|estoy en|ubicado en|para)\s+([A-ZÁÉÍÓÚa-záéíóúñ\s]{3,20})/i);
+    if (cityMatch && !detectedPreferences.some(p => p.includes('Ubicación'))) {
+      detectedPreferences.push(`Ubicación de entrega: ${cityMatch[1].trim()}`);
+    }
+  }
+  let sessionCustomerProfileText = detectedPreferences.length > 0
+    ? detectedPreferences.map(p => `- ${p}`).join('\n')
+    : '';
 
   // 4. Memoria Histórica Multi-Sesión (Si el cliente tiene teléfono/email previo)
   let crossSessionMemoryText = '';
@@ -199,16 +245,24 @@ ENLACE COMPRA: ${p.cta_url || ''}
         docChunks.map(c => `DOCUMENTO: "${c.docTitle}"\nCONTENIDO OFICIAL: ${c.content}`).join('\n---\n');
     }
 
+    if (sessionSemanticMemoryText) {
+      combinedContext += `\n--- 1. MEMORIA SEMÁNTICA DEL HISTORIAL DE ESTA SESIÓN (RAG EPISÓDICO) ---\n${sessionSemanticMemoryText}\n`;
+    }
+
+    if (sessionCustomerProfileText) {
+      combinedContext += `\n--- PREFERENCIAS & PERFIL DETECTADAS EN LA CONVERSACIÓN ---\n${sessionCustomerProfileText}\n`;
+    }
+
     if (crossSessionMemoryText) {
       combinedContext += `\n--- 4. MEMORIA HISTÓRICA DE SESIONES PREVIAS DEL CLIENTE ---\n${crossSessionMemoryText}\n`;
     }
 
-    const systemPrompt = tenant?.system_prompt || 'Eres el asesor comercial de la tienda. Tu objetivo es asesorar persuasivamente guiando al usuario a comprar sin inventar información no verificada. Si el usuario pregunta por conversaciones pasadas, usa la memoria histórica proporcionada.';
+    const systemPrompt = tenant?.system_prompt || 'Eres el asesor comercial de la tienda. Tu objetivo es asesorar persuasivamente guiando al usuario a comprar sin inventar información no verificada. Si el usuario hace referencia a temas hablados previamente en la conversación, consulta prioritariamente la memoria semántica del historial de la sesión.';
 
     const completion = await generateCompletion({
       systemPrompt,
       userMessage,
-      history: episodicHistory,
+      history: recentHistory,
       context: combinedContext,
       tenantCustomKey: tenant?.custom_llm_key || tenantCustomKey
     });
@@ -216,7 +270,10 @@ ENLACE COMPRA: ${p.cta_url || ''}
     let finalLevel = 'level_3_catalog';
     let finalLabel = '3. RAG Estructurado Determinista (Catálogo y Precios Oficiales D1)';
 
-    if (crossSessionMemoryText && matchedProducts.length === 0 && docChunks.length === 0) {
+    if (episodicRagUsed && matchedProducts.length === 0 && docChunks.length === 0) {
+      finalLevel = 'session_episodic_rag';
+      finalLabel = '1. RAG Semántico del Historial de Conversación (Memoria Episódica D1)';
+    } else if (crossSessionMemoryText && matchedProducts.length === 0 && docChunks.length === 0) {
       finalLevel = 'customer_memory';
       finalLabel = '4. RAG de Memoria Histórica Continua (Multi-Sesión)';
     } else if (docChunks.length > 0 && matchedProducts.length === 0) {
@@ -227,16 +284,18 @@ ENLACE COMPRA: ${p.cta_url || ''}
     await saveChatMessage(actualTenantId, sessionId, userMessage, completion.text, finalLevel, {
       productsCount: matchedProducts.length,
       chunksCount: docChunks.length,
-      hasCrossMemory: !!crossSessionMemoryText
+      hasCrossMemory: !!crossSessionMemoryText,
+      episodicRagUsed
     });
 
     return {
       level: finalLevel,
       levelLabel: finalLabel,
-      confidence: matchedProducts[0]?.score || docChunks[0]?.score || 0.85,
+      confidence: matchedProducts[0]?.score || docChunks[0]?.score || (episodicRagUsed ? 0.92 : 0.85),
       answer: completion.text,
       products: matchedProducts.slice(0, 2),
       docChunks,
+      episodicRagUsed,
       hasCrossSessionMemory: !!crossSessionMemoryText,
       stoppedEarly: false
     };

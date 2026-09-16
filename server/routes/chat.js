@@ -140,10 +140,35 @@ router.get('/tenant-conversations/:tenantId', async (req, res) => {
        FROM chat_sessions s
        WHERE s.tenant_id = $1
        ORDER BY s.created_at DESC
-       LIMIT 20`,
+       LIMIT 30`,
       [tenantId]
     );
     return res.json({ conversations: sessions.rows });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get real customer leads captured by the bot (Clients Tab)
+router.get('/tenant-clients/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const clients = await query(
+      `SELECT s.id,
+              COALESCE(s.user_name, 'Visitante Web') as name,
+              COALESCE(s.user_phone, '') as phone,
+              COALESCE(s.user_email, '') as email,
+              'Web ClikChat' as channel,
+              'cliente' as status,
+              s.updated_at as lastSeen,
+              (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as ordersCount
+       FROM chat_sessions s
+       WHERE s.tenant_id = $1 AND (s.user_name IS NOT NULL OR s.user_phone IS NOT NULL OR s.user_email IS NOT NULL)
+       ORDER BY s.updated_at DESC
+       LIMIT 50`,
+      [tenantId]
+    );
+    return res.json({ clients: clients.rows });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

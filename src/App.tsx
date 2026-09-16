@@ -97,8 +97,9 @@ export function App() {
         {currentView === 'service' && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
             <ServiceChatView
-              storeName="Centro Estético Aura"
-              agentName="Dra. Elena"
+              storeName={storeName}
+              agentName={agentName}
+              agentAvatar={agentAvatar}
               onExit={() => navigate('/dashboard')}
             />
           </div>

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Radio } from 'lucide-react';
-import { FALLBACK_SESSIONS, ConversationSession } from './conversations/conversationsDemo';
+import { ConversationSession } from './conversations/conversationsDemo';
 import { ConversationList } from './conversations/ConversationList';
 import { ConversationDetail } from './conversations/ConversationDetail';
 
 export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
-  const [sessions, setSessions] = useState<ConversationSession[]>(FALLBACK_SESSIONS);
+  const [sessions, setSessions] = useState<ConversationSession[]>([]);
   const [activeFilter, setActiveFilter] = useState<'online' | 'closed'>('online');
-  const [selectedId, setSelectedId] = useState<string | null>('sess-84920492-preview');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const loadConversations = useCallback(async () => {
     if (!tenantId) return;
@@ -20,10 +20,15 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
             ...c,
             status: c.status || (i < 2 ? 'online' : 'closed')
           })));
+          setSelectedId(prev => prev || data.conversations[0]?.id || null);
+        } else {
+          setSessions([]);
+          setSelectedId(null);
         }
       }
     } catch {
-      // Conserva las sesiones de fallback
+      setSessions([]);
+      setSelectedId(null);
     }
   }, [tenantId]);
 

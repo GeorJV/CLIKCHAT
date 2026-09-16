@@ -331,11 +331,42 @@ export async function onRequest(context) {
       return jsonResponse({ success: true });
     }
 
-    // FAQS: DELETE /api/faqs/:id
-    if (segments[0] === 'faqs' && segments.length === 2 && request.method === 'DELETE') {
-      const id = segments[1];
-      await executeD1('DELETE FROM faqs WHERE id = ?1', [id]);
-      return jsonResponse({ success: true, message: 'FAQ eliminada' });
+    // CHAT: GET /api/chat/tenant-conversations/:tenantId
+    if (segments[0] === 'chat' && segments[1] === 'tenant-conversations' && segments.length === 3 && request.method === 'GET') {
+      const tenantId = segments[2];
+      const rows = await executeD1(
+        `SELECT s.id, s.user_name, s.user_phone, s.created_at,
+                (SELECT message FROM chat_messages WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1) as last_message,
+                (SELECT rag_level_used FROM chat_messages WHERE session_id = s.id AND sender = 'assistant' ORDER BY created_at DESC LIMIT 1) as last_rag_level,
+                (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as total_messages
+         FROM chat_sessions s
+         WHERE s.tenant_id = ?1
+         ORDER BY s.created_at DESC
+         LIMIT 30`,
+        [tenantId]
+      );
+      return jsonResponse({ conversations: rows });
+    }
+
+    // CHAT: GET /api/chat/tenant-clients/:tenantId
+    if (segments[0] === 'chat' && segments[1] === 'tenant-clients' && segments.length === 3 && request.method === 'GET') {
+      const tenantId = segments[2];
+      const rows = await executeD1(
+        `SELECT s.id,
+                COALESCE(s.user_name, 'Visitante Web') as name,
+                COALESCE(s.user_phone, '') as phone,
+                COALESCE(s.user_email, '') as email,
+                'Web ClikChat' as channel,
+                'cliente' as status,
+                s.updated_at as lastSeen,
+                (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as ordersCount
+         FROM chat_sessions s
+         WHERE s.tenant_id = ?1 AND (s.user_name IS NOT NULL OR s.user_phone IS NOT NULL OR s.user_email IS NOT NULL)
+         ORDER BY s.updated_at DESC
+         LIMIT 50`,
+        [tenantId]
+      );
+      return jsonResponse({ clients: rows });
     }
 
     return jsonResponse({ message: 'Ruta no encontrada' }, 404);
