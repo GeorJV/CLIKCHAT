@@ -1,11 +1,18 @@
 import { useState, useRef, useCallback } from 'react';
 
+export interface RecordedAudioData {
+  audioBlob: Blob;
+  audioUrl: string;
+  duration: number;
+}
+
 interface UseVoiceRecorderOptions {
-  onTranscription: (text: string) => void;
+  onTranscription: (text: string, audioData?: RecordedAudioData) => void;
+  onAudioRecorded?: (audioData: RecordedAudioData) => void;
   onError?: (error: string) => void;
 }
 
-export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderOptions) {
+export function useVoiceRecorder({ onTranscription, onAudioRecorded, onError }: UseVoiceRecorderOptions) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -15,11 +22,15 @@ export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderO
   const timerIntervalRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const maxVolumeRef = useRef<number>(0);
+  const recordingSecondsRef = useRef<number>(0);
 
   const startTimer = () => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    recordingSecondsRef.current = 0;
     timerIntervalRef.current = setInterval(() => {
-      setRecordingSeconds(prev => (prev >= 60 ? (stopRecording(), 60) : prev + 1));
+      recordingSecondsRef.current += 1;
+      setRecordingSeconds(recordingSecondsRef.current);
+      if (recordingSecondsRef.current >= 60) stopRecording();
     }, 1000);
   };
 
@@ -38,14 +49,11 @@ export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderO
           const analyser = ctx.createAnalyser();
           analyser.fftSize = 256;
           source.connect(analyser);
-
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           const checkVolume = () => {
             if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return;
             analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-            const avg = sum / dataArray.length;
+            const avg = dataArray.reduce((acc, v) => acc + v, 0) / dataArray.length;
             if (avg > maxVolumeRef.current) maxVolumeRef.current = avg;
             requestAnimationFrame(checkVolume);
           };
@@ -79,6 +87,14 @@ export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderO
           return;
         }
 
+        const duration = Math.max(recordingSecondsRef.current, 1);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audioData: RecordedAudioData = { audioBlob, audioUrl, duration };
+
+        // APENAS EL USUARIO SUELTA: Se muestra de inmediato en el chat
+        if (onAudioRecorded) onAudioRecorded(audioData);
+
+        // MIENTRAS POR DETRÁS SE PROCESA la transcripción en Cloudflare Workers AI
         setIsTranscribing(true);
         try {
           const res = await fetch('/api/chat/audio', {
@@ -86,16 +102,11 @@ export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderO
             headers: { 'Content-Type': recorder.mimeType || 'audio/webm' },
             body: audioBlob
           });
-
           if (res.ok) {
             const data = await res.json();
             if (data.text && data.text.trim()) {
-              onTranscription(data.text.trim());
-            } else if (onError) {
-              onError('No se pudo transcribir la voz con claridad.');
+              onTranscription(data.text.trim(), audioData);
             }
-          } else {
-            throw new Error('Error de servidor en Cloudflare Workers AI');
           }
         } catch (err: any) {
           if (onError) onError(err.message || 'Error transcribiendo audio');
@@ -112,7 +123,7 @@ export function useVoiceRecorder({ onTranscription, onError }: UseVoiceRecorderO
     } catch (err: any) {
       if (onError) onError('Permiso de micrófono denegado o no disponible.');
     }
-  }, [onTranscription, onError]);
+  }, [onTranscription, onAudioRecorded, onError]);
 
   const stopRecording = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);

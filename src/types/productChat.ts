@@ -1,4 +1,4 @@
-﻿export interface ProductItem {
+export interface ProductItem {
   id: string;
   tenantId?: string;
   title: string;
@@ -34,6 +34,9 @@ export interface ProductChatMessage {
   content: string;
   timestamp?: string;
   ragTrace?: ProductRAGTrace;
+  isAudio?: boolean;
+  audioDuration?: number;
+  audioUrl?: string;
 }
 
 export interface ProductCheckoutData {

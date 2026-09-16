@@ -65,6 +65,9 @@ export interface ChatMessage {
   products?: Product[];
   isFallback?: boolean;
   created_at: string;
+  isAudio?: boolean;
+  audioDuration?: number;
+  audioUrl?: string;
 }
 
 export interface UnresolvedQuery {

@@ -4,6 +4,7 @@ import { ChatMicButton } from './audio/ChatMicButton';
 
 interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
+  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void;
   onInputFocus?: () => void;
   isLoading: boolean;
   placeholder?: string;
@@ -11,6 +12,7 @@ interface ChatInputBarProps {
 
 export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   onSendMessage,
+  onAudioRecorded,
   onInputFocus,
   isLoading,
   placeholder = 'Escribe tu mensaje o consulta comercial...'
@@ -69,7 +71,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       {inputValue.trim() ? (
         <button
           onClick={handleSend} disabled={isLoading} aria-label="Enviar mensaje"
-          className="p-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5"
+          className="p-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5 cursor-pointer"
         >
           <Send className="w-3.5 h-3.5" />
         </button>
@@ -77,6 +79,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         <ChatMicButton
           disabled={isLoading}
           onRecordingChange={setIsAudioRecording}
+          onAudioRecorded={onAudioRecorded}
           onTranscription={(text) => onSendMessage(text)}
         />
       )}

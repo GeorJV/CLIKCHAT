@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Loader2, Lock, ChevronUp } from 'lucide-react';
-import { useVoiceRecorder } from '../../../hooks/useVoiceRecorder';
+import { Mic, Lock, ChevronUp } from 'lucide-react';
+import { useVoiceRecorder, RecordedAudioData } from '../../../hooks/useVoiceRecorder';
 import { ChatMicLockedBar } from './ChatMicLockedBar';
 
 interface ChatMicButtonProps {
-  onTranscription: (cleanText: string) => void;
+  onTranscription: (cleanText: string, audioData?: RecordedAudioData) => void;
+  onAudioRecorded?: (audioData: RecordedAudioData) => void;
   onRecordingChange?: (isRecording: boolean) => void;
   disabled?: boolean;
 }
 
 export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
   onTranscription,
+  onAudioRecorded,
   onRecordingChange,
   disabled
 }) => {
@@ -20,14 +22,17 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
   const startPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const {
-    isRecording, isPaused, recordingSeconds, isTranscribing,
+    isRecording, isPaused, recordingSeconds,
     startRecording, stopRecording, cancelRecording, pauseRecording, resumeRecording
   } = useVoiceRecorder({
-    onTranscription: (text) => {
+    onAudioRecorded: (audioData) => {
       setFeedback(null);
       setIsLocked(false);
       onRecordingChange?.(false);
-      onTranscription(text);
+      onAudioRecorded?.(audioData);
+    },
+    onTranscription: (text, audioData) => {
+      onTranscription(text, audioData);
     },
     onError: (err) => {
       setFeedback(err);
@@ -38,7 +43,7 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
   });
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (disabled || isTranscribing || isRecording) return;
+    if (disabled || isRecording) return;
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
     startPos.current = { x: e.clientX, y: e.clientY };
     setIsPressing(true);
@@ -69,18 +74,9 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
     if (isPressing && !isLocked) {
       setIsPressing(false);
       onRecordingChange?.(false);
-      stopRecording(); // Envío inmediato al soltar el botón
+      stopRecording();
     }
   };
-
-  if (isTranscribing) {
-    return (
-      <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 animate-pulse shrink-0 self-end mb-0.5">
-        <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
-        <span className="font-semibold">Procesando audio...</span>
-      </div>
-    );
-  }
 
   if (isLocked) {
     return (

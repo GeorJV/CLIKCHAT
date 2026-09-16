@@ -51,42 +51,48 @@ export const ProductChatView: React.FC<Props> = ({
     }).catch(() => {});
   };
 
-  const { sendMessage: sendBatchedMessage } = useMessageBatcher({
+  const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: 9000,
     deliveryDelayMs: 350,
-    onDeliverUserMessage: (userMsg) => {
-      setMessages((prev) => [...prev, userMsg]);
-    },
+    onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onSetLoading: setIsLoading,
     onTriggerBotReply: (batch) => {
       const isMulti = batch.length > 1;
       const combined = batch.join(' ').toLowerCase();
-      let reasoning = isMulti
-        ? `RAG L2: Análisis de ráfaga unificada (${batch.length} preguntas acumuladas).`
-        : 'Respuesta validada contra catálogo D1.';
+      const reasoning = isMulti ? `RAG L2: Ráfaga (${batch.length} preguntas).` : 'Respuesta catálogo D1.';
       let replyContent = `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`;
-
-      if (combined.includes('envio') || combined.includes('envío') || combined.includes('despacho') || combined.includes('medellin') || combined.includes('bogota') || combined.includes('ciudad')) {
-        replyContent = `¡Con gusto! Para **${selectedProduct.title}** contamos con despacho express en 24/48h a nivel nacional con seguimiento en tiempo real. Pulsa **"Comprar Ahora"** para apartar tu pedido.`;
-      } else if (combined.includes('precio') || combined.includes('cuanto') || combined.includes('costo') || combined.includes('vale')) {
+      if (combined.includes('envio') || combined.includes('envío') || combined.includes('despacho')) {
+        replyContent = `¡Con gusto! Para **${selectedProduct.title}** contamos con despacho express en 24/48h a nivel nacional con seguimiento en tiempo real.`;
+      } else if (combined.includes('precio') || combined.includes('cuanto') || combined.includes('costo')) {
         replyContent = `El precio actual de **${selectedProduct.title}** es de **$${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}** con garantía oficial de 30 días.`;
       }
-
       setMessages((prev) => [...prev, {
         id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-        content: replyContent,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        content: replyContent, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 16, modelUsed: 'Catálogo D1', reasoning },
       }]);
     },
   });
 
-  const handleSendMessage = (customText?: string) => {
+  const handleAudioRecorded = (audioData: { audioUrl: string; duration: number }) => {
+    trackEvent('chat_message');
+    setMessages((prev) => [...prev, {
+      id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '',
+      isAudio: true, audioDuration: audioData.duration, audioUrl: audioData.audioUrl,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }]);
+  };
+
+  const handleSendMessage = (customText?: string, fromVoice?: boolean) => {
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
-    trackEvent('chat_message');
-    sendBatchedMessage(text);
+    if (!fromVoice) {
+      trackEvent('chat_message');
+      sendBatchedMessage(text);
+    } else {
+      sendVoiceQuery(text);
+    }
   };
 
   const handleConfirmCheckout = (data: ProductCheckoutData) => {
@@ -106,7 +112,7 @@ export const ProductChatView: React.FC<Props> = ({
           storeName={storeName} agentName={agentName} agentAvatar={agentAvatar}
           productTitle={selectedProduct.title} messages={messages} inputValue={inputValue}
           isLoading={isLoading} theme={theme} themeStyles={themeStyles} onThemeChange={setTheme}
-          onInputChange={setInputValue} onSendMessage={handleSendMessage} onExit={onExit}
+          onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit}
         />
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles}

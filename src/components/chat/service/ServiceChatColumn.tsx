@@ -4,17 +4,18 @@ import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from '../product/ProductRAGBadge';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
+import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 
 interface Props {
-  storeName: string; agentName: string; agentAvatar?: string;
-  serviceTitle: string; messages: ProductChatMessage[];
-  inputValue: string; isLoading: boolean;
-  onInputChange: (val: string) => void; onSendMessage: (text?: string) => void; onExit?: () => void;
+  storeName: string; agentName: string; agentAvatar?: string; serviceTitle: string;
+  messages: ProductChatMessage[]; inputValue: string; isLoading: boolean;
+  onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
+  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
 }
 
 export const ServiceChatColumn: React.FC<Props> = ({
-  storeName, agentName, agentAvatar, serviceTitle,
-  messages, inputValue, isLoading, onInputChange, onSendMessage, onExit
+  storeName, agentName, agentAvatar, serviceTitle, messages, inputValue,
+  isLoading, onInputChange, onSendMessage, onAudioRecorded, onExit
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -46,12 +47,12 @@ export const ServiceChatColumn: React.FC<Props> = ({
   const defaultAvatar = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120';
 
   return (
-    <section className="flex flex-col h-full bg-[#131212] border-b lg:border-b-0 lg:border-r border-[#262424] overflow-hidden relative min-h-0">
-      <header className="h-11 px-3.5 bg-[#171616] border-b border-[#282626] flex items-center justify-between z-10 shrink-0 select-none">
+    <section className="flex flex-col h-full bg-[#131212] border-b lg:border-b-0 lg:border-r border-[#262424] overflow-hidden relative min-h-0 font-sans">
+      <header className="h-11 px-3.5 bg-[#171616] border-b border-[#262424] flex items-center justify-between z-10 shrink-0 select-none">
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
             <img src={agentAvatar || defaultAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
-            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#1c1a1a]" />
+            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#171616]" />
           </div>
           <div className="flex items-center gap-1.5 min-w-0">
             <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">{storeName}</h2>
@@ -73,7 +74,9 @@ export const ServiceChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm animate-bubble-in ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
-                {isAssistant && msg.ragTrace ? (
+                {msg.isAudio ? (
+                  <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
+                ) : isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
                     <div className="flex items-center justify-between gap-2 pt-0.5">
@@ -108,10 +111,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-end gap-1.5 bg-[#171616] border border-[#282626] focus-within:border-emerald-500 rounded-xl px-2.5 py-1 transition shadow-inner">
           {isAudioRecording ? (
             <div className="flex-1 flex items-center justify-between gap-2 py-0.5 px-1 select-none animate-fade-in">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                <span className="text-[11px] font-mono font-bold text-red-400">Grabando...</span>
-              </div>
+              <div className="flex items-center gap-1.5 shrink-0"><span className="w-2 h-2 rounded-full bg-red-500 animate-ping" /><span className="text-[11px] font-mono font-bold text-red-400">Grabando...</span></div>
               <div className="flex-1 flex items-center justify-center gap-0.5 px-1 max-w-[120px]">
                 <span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse" />
                 <span className="w-0.5 h-4 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" />
@@ -136,7 +136,8 @@ export const ServiceChatColumn: React.FC<Props> = ({
             <ChatMicButton
               disabled={isLoading}
               onRecordingChange={setIsAudioRecording}
-              onTranscription={(cleanText) => onSendMessage(cleanText)}
+              onAudioRecorded={onAudioRecorded}
+              onTranscription={(cleanText) => onSendMessage(cleanText, true)}
             />
           )}
         </form>

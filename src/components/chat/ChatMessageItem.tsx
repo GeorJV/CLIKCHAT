@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChatMessage, Product } from '../../types';
 import { Sparkles, HelpCircle } from 'lucide-react';
+import { ChatAudioPlayerBubble } from './audio/ChatAudioPlayerBubble';
 
 interface ChatMessageItemProps {
   msg: ChatMessage;
@@ -20,7 +21,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       <div
         className={`max-w-[86%] sm:max-w-[78%] rounded-2xl p-3 text-xs leading-relaxed transition-all shadow-sm ${
           isUser
-            ? 'bg-indigo-600 text-white rounded-2xl'
+            ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl border border-[#D79F4C]/30'
             : 'bg-slate-800 text-slate-100 rounded-2xl border border-slate-700/70 shadow-lg shadow-black/60'
         }`}
       >
@@ -39,8 +40,17 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           </div>
         )}
 
-        {/* Text Message */}
-        <p className="whitespace-pre-line select-text font-normal">{msg.message}</p>
+        {/* Audio Message or Text Message */}
+        {msg.isAudio ? (
+          <ChatAudioPlayerBubble
+            audioUrl={msg.audioUrl}
+            duration={msg.audioDuration}
+            timestamp={new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            isUser={isUser}
+          />
+        ) : (
+          <p className="whitespace-pre-line select-text font-normal">{msg.message}</p>
+        )}
 
         {/* Product Recommendations from RAG L3 */}
         {!isUser && msg.products && msg.products.length > 0 && (
@@ -81,9 +91,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       </div>
 
       {/* Timestamp */}
-      <span className="text-[10px] text-slate-500 mt-1 px-1">
-        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </span>
+      {!msg.isAudio && (
+        <span className="text-[10px] text-slate-500 mt-1 px-1">
+          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      )}
     </div>
   );
 };

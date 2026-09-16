@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 23:50 GMT-6
-- **Versión Actual:** 1.20.46 (Métricas duales en Ficha de Producto: Analítica original restaurada + 4 KPIs exactos)
+- **Última Actualización:** 2026-09-15 23:56 GMT-6
+- **Versión Actual:** 1.20.47 (Notas de voz WhatsApp: Cajita de audio interactiva con duración, sin texto visible, envío instantáneo sin 'procesando')
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Mis Productos: 'Ver métricas' integra tanto analítica original (clics compra, vistas ficha, beneficios, temperatura de leads) como los 4 KPIs exactos.
+  - Audio WhatsApp: Al soltar el micrófono se inserta de inmediato la cajita del audio con su duración (play/pause, ondas dinámicas).
+  - Silencioso & Fluido: Removido el aviso 'procesando audio'; la transcripción corre en background en Cloudflare Workers AI.
+  - La ventana de chat no muestra el texto transcrito; el mensaje del usuario permanece como nota de voz y el bot responde debajo.
+  - Mis Productos: 'Ver métricas' integra analítica original (clics, vistas, beneficios, temperatura) + 4 KPIs exactos.
   - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
-  - Audio WhatsApp: Ondas de voz al presionar y envío inmediato al soltar sin poblar textarea; swipe-up manos libres.
-  - Micrófono amarillo dorado alternante con botón de envío; transcripción Whisper edge Cloudflare.
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**

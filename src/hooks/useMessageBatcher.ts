@@ -30,7 +30,6 @@ export function useMessageBatcher({
       botDebounceTimerRef.current = null;
     }
 
-    // Deliver user message to UI synchronized with paper plane landing
     setTimeout(() => {
       const userMsg: ProductChatMessage = {
         id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -43,7 +42,6 @@ export function useMessageBatcher({
       onDeliverUserMessage(userMsg);
     }, deliveryDelayMs);
 
-    // Courtesy debounce window allowing user to send follow-up messages
     botDebounceTimerRef.current = setTimeout(() => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
@@ -58,6 +56,18 @@ export function useMessageBatcher({
     }, debounceMs);
   }, [debounceMs, deliveryDelayMs, onDeliverUserMessage, onTriggerBotReply, onSetLoading]);
 
+  // Procesa consulta de voz en el bot sin agregar mensaje de texto duplicado del usuario
+  const sendVoiceQuery = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    onSetLoading(true);
+    setTimeout(() => {
+      onTriggerBotReply([trimmed]);
+      onSetLoading(false);
+    }, 600);
+  }, [onTriggerBotReply, onSetLoading]);
+
   const clearBatch = useCallback(() => {
     if (botDebounceTimerRef.current) {
       clearTimeout(botDebounceTimerRef.current);
@@ -66,5 +76,5 @@ export function useMessageBatcher({
     pendingBatchRef.current = [];
   }, []);
 
-  return { sendMessage, clearBatch };
+  return { sendMessage, sendVoiceQuery, clearBatch };
 }

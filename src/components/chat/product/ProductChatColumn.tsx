@@ -5,18 +5,20 @@ import { ProductRAGBadge } from './ProductRAGBadge';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
+import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
   productTitle: string; messages: ProductChatMessage[];
   inputValue: string; isLoading: boolean;
   theme: ProductChatTheme; themeStyles: ThemeStyles; onThemeChange?: (t: ProductChatTheme) => void;
-  onInputChange: (val: string) => void; onSendMessage: (text?: string) => void; onExit?: () => void;
+  onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
+  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
 }
 
 export const ProductChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, messages, inputValue,
-  isLoading, themeStyles, onInputChange, onSendMessage, onExit
+  isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -75,7 +77,9 @@ export const ProductChatColumn: React.FC<Props> = ({
           return (
             <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
               <div className={`w-fit max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm animate-bubble-in ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
-                {isAssistant && msg.ragTrace ? (
+                {msg.isAudio ? (
+                  <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
+                ) : isAssistant && msg.ragTrace ? (
                   <div className="space-y-1">
                     <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
                     <div className="flex items-center justify-between gap-2 pt-0.5">
@@ -108,15 +112,10 @@ export const ProductChatColumn: React.FC<Props> = ({
 
       <footer className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0`}>
         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
-          <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1 self-end mb-0.5 transition cursor-pointer" title="Adjuntar">
-            <Paperclip className="w-3.5 h-3.5" />
-          </button>
+          <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1 self-end mb-0.5 transition cursor-pointer" title="Adjuntar"><Paperclip className="w-3.5 h-3.5" /></button>
           {isAudioRecording ? (
             <div className="flex-1 flex items-center justify-between gap-2 py-0.5 px-1 select-none animate-fade-in">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                <span className="text-[11px] font-mono font-bold text-red-400">Grabando...</span>
-              </div>
+              <div className="flex items-center gap-1.5 shrink-0"><span className="w-2 h-2 rounded-full bg-red-500 animate-ping" /><span className="text-[11px] font-mono font-bold text-red-400">Grabando...</span></div>
               <div className="flex-1 flex items-center justify-center gap-0.5 px-1 max-w-[120px]">
                 <span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse" />
                 <span className="w-0.5 h-4 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" />
@@ -141,7 +140,8 @@ export const ProductChatColumn: React.FC<Props> = ({
             <ChatMicButton
               disabled={isLoading}
               onRecordingChange={setIsAudioRecording}
-              onTranscription={(cleanText) => onSendMessage(cleanText)}
+              onAudioRecorded={onAudioRecorded}
+              onTranscription={(cleanText) => onSendMessage(cleanText, true)}
             />
           )}
         </form>
