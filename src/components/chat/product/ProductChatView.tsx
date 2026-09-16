@@ -59,8 +59,11 @@ export const ProductChatView: React.FC<Props> = ({
     onTriggerBotReply: (batch) => {
       const isMulti = batch.length > 1;
       const combined = batch.join(' ').toLowerCase();
-      const reasoning = isMulti ? `RAG L2: Ráfaga (${batch.length} preguntas).` : 'Respuesta catálogo D1.';
-      let replyContent = `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`;
+      const ragK = (selectedProduct as any).embedding_text || selectedProduct.specifications?.rag_knowledge || '';
+      const reasoning = ragK ? 'RAG Producto Especializado D1.' : (isMulti ? `RAG L2: Ráfaga (${batch.length} preguntas).` : 'Respuesta catálogo D1.');
+      let replyContent = ragK && !combined.includes('precio') && !combined.includes('envio')
+        ? `Sobre **${selectedProduct.title}**: ${ragK.slice(0, 180)}...\n\nPulsa **"Comprar Ahora"** para completar tu pedido.`
+        : `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`;
       if (combined.includes('envio') || combined.includes('envío') || combined.includes('despacho')) {
         replyContent = `¡Con gusto! Para **${selectedProduct.title}** contamos con despacho express en 24/48h a nivel nacional con seguimiento en tiempo real.`;
       } else if (combined.includes('precio') || combined.includes('cuanto') || combined.includes('costo')) {
@@ -87,12 +90,8 @@ export const ProductChatView: React.FC<Props> = ({
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
-    if (!fromVoice) {
-      trackEvent('chat_message');
-      sendBatchedMessage(text);
-    } else {
-      sendVoiceQuery(text);
-    }
+    if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); }
+    else { sendVoiceQuery(text); }
   };
 
   const handleConfirmCheckout = (data: ProductCheckoutData) => {

@@ -13,6 +13,7 @@ export interface Product {
   cta_label: string;
   cta_url: string;
   is_active: boolean;
+  embedding_text?: string;
   metrics?: {
     views: number;
     buyClicks: number;

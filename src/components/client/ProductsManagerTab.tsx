@@ -4,6 +4,7 @@ import { ProductsHeader } from './products/ProductsHeader';
 import { ShoppingBag } from 'lucide-react';
 import { ProductCard } from './products/ProductCard';
 import { ProductModal } from './products/ProductModal';
+import { ProductRAGModal } from './products/ProductRAGModal';
 
 interface ProductsManagerTabProps {
   products: Product[];
@@ -25,6 +26,7 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [ragProduct, setRagProduct] = useState<Product | null>(null);
 
   const displayProducts = products || [];
 
@@ -53,6 +55,15 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
     }
   };
 
+  const handleSaveRag = async (productId: string, embeddingText: string) => {
+    if (onUpdateProduct) {
+      const ok = await onUpdateProduct(productId, { embedding_text: embeddingText });
+      if (ok && onRefresh) onRefresh();
+      return ok;
+    }
+    return false;
+  };
+
   return (
     <div className="space-y-2.5">
       {/* 1. Encabezado con Botón Verde '+ Nuevo producto' al lado */}
@@ -68,6 +79,7 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
               tenantSlug={tenantSlug}
               onEdit={handleOpenEdit}
               onDelete={handleDelete}
+              onOpenRag={(p) => setRagProduct(p)}
             />
           ))}
         </div>
@@ -88,12 +100,20 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
         </div>
       )}
 
-      {/* 4. Modal para Crear / Editar Producto */}
+      {/* 3. Modal para Crear / Editar Producto */}
       <ProductModal
         isOpen={modalOpen}
         productToEdit={editingProduct}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
+      />
+
+      {/* 4. Modal de RAG de Producto */}
+      <ProductRAGModal
+        isOpen={!!ragProduct}
+        product={ragProduct}
+        onClose={() => setRagProduct(null)}
+        onSave={handleSaveRag}
       />
     </div>
   );

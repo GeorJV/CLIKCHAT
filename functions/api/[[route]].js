@@ -169,14 +169,15 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url, is_active } = body;
+      const { name, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url, is_active, embedding_text } = body;
       await executeD1(
-        'UPDATE products SET name = COALESCE(?1, name), price = COALESCE(?2, price), currency = COALESCE(?3, currency), short_description = COALESCE(?4, short_description), full_description = COALESCE(?5, full_description), images = COALESCE(?6, images), benefits = COALESCE(?7, benefits), details = COALESCE(?8, details), cta_label = COALESCE(?9, cta_label), cta_url = COALESCE(?10, cta_url), is_active = COALESCE(?11, is_active), updated_at = datetime(\'now\') WHERE id = ?12',
+        'UPDATE products SET name = COALESCE(?1, name), price = COALESCE(?2, price), currency = COALESCE(?3, currency), short_description = COALESCE(?4, short_description), full_description = COALESCE(?5, full_description), images = COALESCE(?6, images), benefits = COALESCE(?7, benefits), details = COALESCE(?8, details), cta_label = COALESCE(?9, cta_label), cta_url = COALESCE(?10, cta_url), is_active = COALESCE(?11, is_active), embedding_text = COALESCE(?12, embedding_text), updated_at = datetime(\'now\') WHERE id = ?13',
         [
           name ?? null, price ?? null, currency ?? null, short_description ?? null, full_description ?? null,
           images ? JSON.stringify(images) : null, benefits ? JSON.stringify(benefits) : null,
           details ? JSON.stringify(details) : null, cta_label ?? null, cta_url ?? null,
-          is_active === undefined ? null : (is_active ? 1 : 0), id
+          is_active === undefined ? null : (is_active ? 1 : 0),
+          embedding_text !== undefined ? embedding_text : null, id
         ]
       );
       return jsonResponse({ success: true });

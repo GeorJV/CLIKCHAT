@@ -236,6 +236,7 @@ PRECIO: $${p.price} ${p.currency || 'USD'}
 DESCRIPCIÓN: ${p.full_description || p.short_description}
 BENEFICIOS: ${(p.benefits || []).join('; ')}
 DETALLES TÉCNICOS: ${JSON.stringify(p.details || {})}
+${p.embedding_text ? `CONOCIMIENTO ESPECIALIZADO Y MANUAL RAG EXCLUSIVO:\n${p.embedding_text}` : ''}
 ENLACE COMPRA: ${p.cta_url || ''}
         `.trim()).join('\n---\n');
     }

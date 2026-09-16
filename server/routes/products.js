@@ -109,7 +109,7 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const {
       name, price, currency, short_description,
-      full_description, images, benefits, details, cta_label, cta_url, is_active
+      full_description, images, benefits, details, cta_label, cta_url, is_active, embedding_text
     } = req.body;
 
     const result = await query(
@@ -125,14 +125,15 @@ router.put('/:id', async (req, res) => {
         cta_label = COALESCE($9, cta_label),
         cta_url = COALESCE($10, cta_url),
         is_active = COALESCE($11, is_active),
+        embedding_text = COALESCE($12, embedding_text),
         updated_at = NOW()
-       WHERE id = $12 RETURNING *`,
+       WHERE id = $13 RETURNING *`,
       [
         name, price, currency, short_description, full_description,
         images ? JSON.stringify(images) : null,
         benefits ? JSON.stringify(benefits) : null,
         details ? JSON.stringify(details) : null,
-        cta_label, cta_url, is_active, id
+        cta_label, cta_url, is_active, embedding_text !== undefined ? embedding_text : null, id
       ]
     );
 

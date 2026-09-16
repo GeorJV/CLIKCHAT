@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 00:25 GMT-6
-- **Versión Actual:** 1.20.52 (Métricas & Analítica Global trasladada al Dashboard Principal)
+- **Última Actualización:** 2026-09-16 11:22 GMT-6
+- **Versión Actual:** 1.20.60 (RAG Especializado por Producto con ingesta .txt, .docx, .pdf a $0 tokens)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs: Clics, Vistas, Beneficios, Tienda, Total) + Reportería Exacta y Diagnóstico RAG.
-  - Mis Productos: Catálogo despejado y enfocado en gestión de productos, con sus métricas exactas en 'Ver métricas'.
-  - Objeciones Desacopladas: Las preguntas generales ya no inflan objeciones resueltas.
-  - Aperturas de Chat: Conteo 1 a 1 verificado con deduplicación y cooldown D1.
-  - Audio WhatsApp Ultra Esbelto: Burbuja compacta (28px botón, 14px ondas, 185px ancho).
+  - RAG de Producto: Botón en tarjeta, modal de carga (.txt, .docx, .pdf o texto) con extracción en navegador ($0 tokens) y persistencia D1.
+  - Inyección Conversacional: El bot consulta el conocimiento especializado del producto prioritariamente antes del catálogo general.
+  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs: Clics, Vistas, Beneficios, Tienda, Total) + Reportería Exacta.
+  - Mis Productos: Catálogo enfocado en gestión, con botón 'RAG' distintivo y 'Ver métricas'.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.

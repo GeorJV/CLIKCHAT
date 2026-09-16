@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import { ExternalLink, Copy, Check, ChevronRight, ChevronDown, X, ShoppingBag } from 'lucide-react';
+import { ExternalLink, Copy, Check, ChevronRight, ChevronDown, X, ShoppingBag, Brain } from 'lucide-react';
 import { Product } from '../../../types';
 import { ProductMetricsDetail } from './ProductMetricsDetail';
 
 interface ProductCardProps {
-  product: Product;
-  tenantSlug: string;
-  onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
+  product: Product; tenantSlug: string; onEdit: (product: Product) => void;
+  onDelete: (id: string) => void; onOpenRag?: (product: Product) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  tenantSlug,
-  onEdit,
-  onDelete
+  product, tenantSlug, onEdit, onDelete, onOpenRag
 }) => {
   const [copied, setCopied] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
@@ -97,17 +92,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Metrics Accordion Header */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-3 text-xs">
-          <button
-            onClick={() => setShowMetrics(!showMetrics)}
-            className="flex items-center gap-1.5 font-bold tracking-wider text-slate-300 hover:text-white uppercase transition text-left"
-          >
+          <button onClick={() => setShowMetrics(!showMetrics)} className="flex items-center gap-1.5 font-bold tracking-wider text-slate-300 hover:text-white uppercase transition text-left cursor-pointer">
             {showMetrics ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
             <span>MÉTRICAS & REPORTERÍA EXACTA</span>
           </button>
-          <button
-            onClick={() => setShowMetrics(!showMetrics)}
-            className="flex items-center gap-1.5 text-emerald-400 hover:underline font-medium"
-          >
+          <button onClick={() => setShowMetrics(!showMetrics)} className="flex items-center gap-1.5 text-emerald-400 hover:underline font-medium cursor-pointer">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>En Vivo</span>
             <span className="text-slate-400 hover:text-emerald-300 ml-1">Ver métricas</span>
@@ -130,11 +119,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <ExternalLink className="w-3 h-3" />
         </a>
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => onEdit(product)} className="px-3 py-1 bg-[#1c1b1b] hover:bg-[#252424] border border-[#2e2b2b] text-xs font-semibold text-zinc-200 rounded-lg transition">
+        <div className="flex items-center gap-1.5">
+          {onOpenRag && (
+            <button
+              onClick={() => onOpenRag(product)}
+              className={`px-2 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1 cursor-pointer ${
+                product.embedding_text
+                  ? 'bg-purple-950/50 border-purple-500/40 text-purple-300 hover:bg-purple-900/60'
+                  : 'bg-[#181717] border-[#2e2b2b] text-zinc-400 hover:text-purple-300 hover:border-purple-500/30'
+              }`}
+              title={product.embedding_text ? 'RAG de producto activo (Click para editar)' : 'Cargar manual o RAG para este producto'}
+            >
+              <Brain className={`w-3 h-3 ${product.embedding_text ? 'text-purple-400' : 'text-zinc-500'}`} />
+              <span>{product.embedding_text ? 'RAG Activo' : 'RAG'}</span>
+            </button>
+          )}
+          <button onClick={() => onEdit(product)} className="px-2.5 py-1 bg-[#1c1b1b] hover:bg-[#252424] border border-[#2e2b2b] text-xs font-semibold text-zinc-200 rounded-lg transition cursor-pointer">
             Editar
           </button>
-          <button onClick={() => onDelete(product.id)} className="text-zinc-500 hover:text-red-400 p-1 transition" title="Eliminar producto">
+          <button onClick={() => onDelete(product.id)} className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer" title="Eliminar producto">
             <X className="w-4 h-4" />
           </button>
         </div>
