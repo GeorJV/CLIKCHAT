@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 00:05 GMT-6
-- **Versión Actual:** 1.20.49 (Blindaje anti-doble conteo en aperturas de chat: deduplicación client-side y cooldown Edge)
+- **Última Actualización:** 2026-09-16 00:10 GMT-6
+- **Versión Actual:** 1.20.50 (Preguntas Respondidas 100% reales: estrictamente 0 al abrir chat; solo cuenta preguntas enviadas)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Preguntas Respondidas: Eliminado cálculo artificial sobre vistas; arranca en 0 y solo suma cuando el usuario envía un mensaje/audio.
   - Aperturas de Chat: Corregido conteo de 2 en 2 mediante deduplicación `hasTrackedRef`, `sessionStorage` y cooldown D1.
   - Audio WhatsApp Ultra Esbelto: Burbuja de audio reducida en altura (`py-0.5`, botón 28px, ondas 14px, ancho 185px).
   - Distribución Simétrica: Play a la izquierda, ondas con `justify-between`, duración y hora ceñidos, mic centrado.
