@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 23:56 GMT-6
-- **Versión Actual:** 1.20.47 (Notas de voz WhatsApp: Cajita de audio interactiva con duración, sin texto visible, envío instantáneo sin 'procesando')
+- **Última Actualización:** 2026-09-16 00:02 GMT-6
+- **Versión Actual:** 1.20.48 (Burbuja de audio ultra compacta y esbelta: reducción vertical ~40%, ancho ceñido y simetría total)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Audio WhatsApp: Al soltar el micrófono se inserta de inmediato la cajita del audio con su duración (play/pause, ondas dinámicas).
-  - Silencioso & Fluido: Removido el aviso 'procesando audio'; la transcripción corre en background en Cloudflare Workers AI.
-  - La ventana de chat no muestra el texto transcrito; el mensaje del usuario permanece como nota de voz y el bot responde debajo.
+  - Audio WhatsApp Ultra Esbelto: Burbuja de audio reducida en altura (`py-0.5`, botón 28px, ondas 14px, ancho 185px).
+  - Distribución Simétrica: Play a la izquierda, ondas con `justify-between`, duración y hora ceñidos, mic centrado.
+  - Enfoque silencioso: sin texto transcrito en pantalla ni avisos de 'procesando'; transcripción fluida en segundo plano.
   - Mis Productos: 'Ver métricas' integra analítica original (clics, vistas, beneficios, temperatura) + 4 KPIs exactos.
   - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
