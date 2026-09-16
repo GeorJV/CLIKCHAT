@@ -1,15 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 23:45 GMT-6
-- **Versión Actual:** 1.20.44 (Métricas exactas: Suma global en Dashboard y réplica por producto en 'Ver métricas')
+- **Última Actualización:** 2026-09-15 23:48 GMT-6
+- **Versión Actual:** 1.20.45 (Audio: Ondas de voz dinámicas en área de texto y envío directo al soltar sin poblar textarea)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Audio: Al grabar se muestran ondas de voz en la caja de texto; al soltar se envía de inmediato sin mostrar texto en ventana.
   - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
   - Mis Productos: Cada ficha de producto despliega las mismas 4 métricas exactas al pulsar 'Ver métricas'.
-  - Audio WhatsApp: Push-to-talk (soltar para enviar), deslizar arriba para fijar manos libres (con pausa, borrar y enviar).
-  - Menú lateral actualizado: botón 'Mis Productos', nuevo botón 'Entrenamiento AI' y nuevo botón 'Soporte'.
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Micrófono amarillo dorado en posición de envío; alternancia dinámica tipo WhatsApp (oculto al tipear).
   - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones.
