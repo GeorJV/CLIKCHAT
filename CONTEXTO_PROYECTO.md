@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 11:22 GMT-6
-- **Versión Actual:** 1.20.60 (RAG Especializado por Producto con ingesta .txt, .docx, .pdf a $0 tokens)
+- **Última Actualización:** 2026-09-16 13:20 GMT-6
+- **Versión Actual:** 1.20.61 (Selector de Tipo de Negocio compacto, ceñido y balanceado)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - RAG de Producto: Botón en tarjeta, modal de carga (.txt, .docx, .pdf o texto) con extracción en navegador ($0 tokens) y persistencia D1.
-  - Inyección Conversacional: El bot consulta el conocimiento especializado del producto prioritariamente antes del catálogo general.
-  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs: Clics, Vistas, Beneficios, Tienda, Total) + Reportería Exacta.
+  - Selector de Tipo de Negocio: Rediseño compacto horizontal con badges de color, tamaño ceñido (~42px) y distribución balanceada.
+  - RAG de Producto: Ingesta .txt, .docx, .pdf a $0 tokens y persistencia en D1.
+  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs) + Reportería Exacta.
   - Mis Productos: Catálogo enfocado en gestión, con botón 'RAG' distintivo y 'Ver métricas'.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
