@@ -154,6 +154,37 @@
 - **Deploy en Vivo:** `https://clikchat.pages.dev`
 - **Commits Clave:** `59672aa`, `123762d`, `9a7feac`, `60255a4`, `b9263bc`
 
+---
 
+## [Registro #007] — Fix: Objeciones Desacopladas + Feat: Métricas Globales al Dashboard Principal
 
+- **Fecha:** 2026-09-16
+- **Estado:** `ready_for_review`
+- **Versión:** v1.20.52
+- **Commits:** `007757e`, `3d61d33`
 
+### Cambios Realizados
+
+#### Fix 1: Desacoplamiento de Objeciones Resueltas
+- **Problema:** `objectionsResolved` se calculaba artificialmente sumando `Math.min(questionsAnswered, 8) + totalProdWarm`, lo que inflaba la métrica con preguntas genéricas y calor de leads.
+- **Solución:** Ahora se lee directamente desde la tabla `chat_messages` con filtro por palabras clave reales de objeciones.
+- **Archivos modificados:**
+  - `functions/api/[[route]].js` (~línea 401): Eliminada fórmula artificial. Ahora: `const objectionsResolved = Number(objections[0]?.count) || 0;`
+  - `server/routes/chat.js` (~línea 193): Mismo fix para servidor Node.js de desarrollo.
+  - `src/components/client/products/ProductExactKpis.tsx` (~línea 25): Reemplazado `Math.ceil(warmLeads * 0.6)` con `product.metrics?.objectionsResolved ?? 0`.
+- **Resultado verificado:** API retorna `"objectionsResolved": 8` (antes: 226).
+
+#### Feat 2: Traslado de Métricas & Analítica Global al Dashboard Principal
+- **Problema:** El módulo `ProductsGlobalMetrics` (5 KPIs + temperatura de leads) solo era visible en la pestaña *Mis Productos*, no en el Dashboard Principal.
+- **Solución:** Se movió el cálculo de `globalMetrics` y el render del componente a `ChatbotQLinkTab` (Dashboard Principal).
+- **Archivos modificados:**
+  - `src/components/client/ChatbotQLinkTab.tsx`: Agregados props `products` y `onRefresh`; cálculo via `useMemo`; render de `<ProductsGlobalMetrics>` entre `TenantExactMetrics` y sección RAG. (100 líneas)
+  - `src/components/client/ClientDashboard.tsx`: Pasa `products` y `onRefresh` a `ChatbotQLinkTab`.
+  - `src/components/client/ProductsManagerTab.tsx`: Eliminados import, useMemo y render de `ProductsGlobalMetrics`. (101 líneas)
+- **KPIs visibles en Dashboard:** Clics "Comprar", Vistas Descripción, Vistas Beneficios, Vistas Tienda, Total Eventos, Temperatura de Leads (Frío/Tibio/Caliente).
+
+### Verificación
+- Compilación limpia (`npm run build`, 0 errores).
+- Deploy exitoso en Cloudflare Pages CDN.
+- Bundle en producción: `index-CHcMzEKo.js`.
+- **Deploy en Vivo:** `https://clikchat.pages.dev`
