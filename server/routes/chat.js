@@ -174,4 +174,52 @@ router.get('/tenant-clients/:tenantId', async (req, res) => {
   }
 });
 
+// Transcribe voice audio with Cloudflare Workers AI Whisper & Anti-Looping filter
+router.post('/audio', express.raw({ type: ['audio/*', 'application/octet-stream'], limit: '25mb' }), async (req, res) => {
+  try {
+    const { cleanWhisperLooping } = require('../utils/audioCleaner');
+    let audioBuffer;
+    if (req.body && Buffer.isBuffer(req.body) && req.body.length > 0) {
+      audioBuffer = req.body;
+    } else if (req.body && req.body.audioBase64) {
+      audioBuffer = Buffer.from(req.body.audioBase64, 'base64');
+    }
+
+    if (!audioBuffer || audioBuffer.length === 0) {
+      return res.status(400).json({ error: 'No se recibió audio válido' });
+    }
+
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || '01514e27c0cdd221efd91900be83fb16';
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+
+    let transcribedText = '';
+    try {
+      const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/openai/whisper`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/octet-stream'
+        },
+        body: audioBuffer
+      });
+      if (cfRes.ok) {
+        const cfData = await cfRes.json();
+        transcribedText = cfData.result?.text || '';
+      }
+    } catch (e) {
+      console.warn('Error en Cloudflare AI Whisper REST:', e.message);
+    }
+
+    const cleanText = cleanWhisperLooping(transcribedText);
+    return res.json({
+      success: true,
+      text: cleanText,
+      rawText: transcribedText,
+      provider: 'cloudflare_workers_ai'
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

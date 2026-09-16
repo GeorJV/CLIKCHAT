@@ -369,6 +369,96 @@ export async function onRequest(context) {
       return jsonResponse({ clients: rows });
     }
 
+    // CHAT: POST /api/chat/audio (Cloudflare Workers AI Whisper STT with Anti-Looping Filter)
+    if (segments[0] === 'chat' && segments[1] === 'audio' && request.method === 'POST') {
+      try {
+        let audioBytes;
+        const contentType = request.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const body = await request.json();
+          if (body.audioBase64) {
+            const binaryString = atob(body.audioBase64);
+            const len = binaryString.length;
+            audioBytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              audioBytes[i] = binaryString.charCodeAt(i);
+            }
+          }
+        } else {
+          const buffer = await request.arrayBuffer();
+          audioBytes = new Uint8Array(buffer);
+        }
+
+        if (!audioBytes || audioBytes.length === 0) {
+          return jsonResponse({ error: 'No se recibió archivo de audio' }, 400);
+        }
+
+        let transcribedText = '';
+
+        // 1. Cloudflare Workers AI Native Edge Binding
+        if (env?.AI) {
+          try {
+            const aiResponse = await env.AI.run('@cf/openai/whisper', {
+              audio: [...audioBytes],
+              language: 'es'
+            });
+            transcribedText = aiResponse?.text || '';
+          } catch (aiErr) {
+            console.warn('Fallo en env.AI binding:', aiErr.message);
+          }
+        }
+
+        // 2. Cloudflare Workers AI REST API Fallback
+        if (!transcribedText) {
+          try {
+            const token = getD1Token(env);
+            const cfAiUrl = 'https://api.cloudflare.com/client/v4/accounts/' + CLOUDFLARE_ACCOUNT_ID + '/ai/run/@cf/openai/whisper';
+            const cfAiRes = await fetch(cfAiUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/octet-stream'
+              },
+              body: audioBytes
+            });
+            if (cfAiRes.ok) {
+              const cfAiData = await cfAiRes.json();
+              transcribedText = cfAiData.result?.text || '';
+            }
+          } catch (restErr) {
+            console.warn('Fallo en REST AI Cloudflare:', restErr.message);
+          }
+        }
+
+        // 3. Filtro Anti-Repetición y Anti-Alucinaciones de Whisper
+        let cleanText = (transcribedText || '').trim();
+        const hallucinationPatterns = [
+          /\[.*?\]/g, /\(.*?\)/g,
+          /subt[ií]tulos\s+realizados\s+por\s+.*?(?:\.|$)/gi,
+          /subt[ií]tulos\s+por\s+.*?(?:\.|$)/gi,
+          /gracias\s+por\s+(?:ver|escuchar|sintonizar).*?(?:\.|$)/gi,
+          /thanks\s+for\s+watching.*?(?:\.|$)/gi,
+          /suscr[ií]bete.*?(?:\.|$)/gi,
+          /like\s+y\s+suscr[ií]bete.*?(?:\.|$)/gi
+        ];
+        for (const p of hallucinationPatterns) {
+          cleanText = cleanText.replace(p, ' ');
+        }
+        cleanText = cleanText.replace(/\b(\w+)(?:\s+\1\b)+/gi, '$1');
+        cleanText = cleanText.replace(/\b((?:\w+\s+){1,4}\w+)(?:\s+\1\b)+/gi, '$1');
+        cleanText = cleanText.replace(/\s+/g, ' ').replace(/[.]{2,}/g, '.').trim();
+
+        return jsonResponse({
+          success: true,
+          text: cleanText,
+          rawText: transcribedText,
+          provider: 'cloudflare_workers_ai'
+        });
+      } catch (audioErr) {
+        return jsonResponse({ error: audioErr.message }, 500);
+      }
+    }
+
     return jsonResponse({ message: 'Ruta no encontrada' }, 404);
   } catch (err) {
     return jsonResponse({ error: err.message }, 500);

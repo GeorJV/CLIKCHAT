@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import { ChatMicButton } from './audio/ChatMicButton';
 
 interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
@@ -56,6 +57,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         placeholder={placeholder}
         disabled={isLoading}
         className="flex-1 text-xs px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition disabled:opacity-60 resize-none leading-snug min-h-[24px] max-h-[100px] overflow-y-auto"
+      />
+
+      <ChatMicButton
+        disabled={isLoading}
+        onTranscription={(text) => onSendMessage(text)}
       />
 
       <button

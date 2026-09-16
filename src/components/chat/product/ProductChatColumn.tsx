@@ -4,13 +4,13 @@ import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
+import { ChatMicButton } from '../audio/ChatMicButton';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
   productTitle: string; messages: ProductChatMessage[];
   inputValue: string; isLoading: boolean;
-  theme: ProductChatTheme; themeStyles: ThemeStyles;
-  onThemeChange?: (t: ProductChatTheme) => void;
+  theme: ProductChatTheme; themeStyles: ThemeStyles; onThemeChange?: (t: ProductChatTheme) => void;
   onInputChange: (val: string) => void; onSendMessage: () => void; onExit?: () => void;
 }
 
@@ -129,6 +129,13 @@ export const ProductChatColumn: React.FC<Props> = ({
             ref={textareaRef} rows={1} value={inputValue} onChange={handleTextChange} onKeyDown={handleKeyDown}
             placeholder="Pregúntale..."
             className={`flex-1 bg-transparent text-xs sm:text-sm ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block`}
+          />
+          <ChatMicButton
+            disabled={isLoading}
+            onTranscription={(text) => {
+              onInputChange(text);
+              setTimeout(() => onSendMessage(), 50);
+            }}
           />
           <button type="submit" disabled={!inputValue.trim() || isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar">
             <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />

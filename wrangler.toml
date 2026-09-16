@@ -6,6 +6,9 @@ pages_build_output_dir = "dist"
 NODE_ENV = "production"
 CF_PAGES_DOMAIN = "Clikchat.pages.dev"
 
+[ai]
+binding = "AI"
+
 # Database & AI Secrets configured via Cloudflare Dashboard / Wrangler
 # DATABASE_URL = "postgresql://..."
 # OPENROUTER_API_KEY = "sk-or-v1-..."

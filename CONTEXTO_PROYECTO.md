@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 21:38 GMT-6
-- **Versión Actual:** 1.20.37 (Catálogo Blindado Exclusivamente con Producto Real del Usuario en D1)
+- **Última Actualización:** 2026-09-15 21:55 GMT-6
+- **Versión Actual:** 1.20.38 (Escucha de Voz con Cloudflare Workers AI Whisper & Filtro Anti-Repetición)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - RAG Semántico del Historial activo: escaneo de sesiones completas (100 msgs) con memoria episódica (`rankBySimilarity`) y extracción de preferencias.
-  - Eliminación del 100% de datos simulados en clientes, citas, conversaciones de muestra y perfil; operando con datos reales de Cloudflare D1.
-  - Endpoints Edge en `functions/api/[[route]].js` y backend para consultas de clientes y sesiones D1 en tiempo real.
-  - Botón beige luxury satinado (#EDE4D3) con hover tornasol oro/cobre operativo.
+  - Soporte de notas de voz con Cloudflare Workers AI (@cf/openai/whisper) y filtro anti-repeticiones/bucles en audioCleaner.
+  - VAD (detección de silencio en cliente) y botón de micro con contador en ProductChatColumn, ServiceChatColumn y ChatInputBar.
+  - RAG Semántico del Historial activo (100 msgs) con memoria episódica (`rankBySimilarity`) y extracción de preferencias.
+  - Catálogo de productos y datos de clientes conectados a Cloudflare D1 real (sin datos simulados).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
