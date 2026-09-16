@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   ChevronDown, ChevronRight, LayoutDashboard, Users,
-  Store, MessageSquare, Brain, FileText, ShoppingBag, BookOpen, Settings, Calendar
+  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy
 } from 'lucide-react';
 
 interface SidebarProNavProps {
@@ -32,7 +32,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
     const isActive = activeTab === id;
     return (
       <button
-        key={label}
+        key={id}
         onClick={() => setActiveTab(id)}
         title={label}
         className={`${
@@ -61,7 +61,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 font-sans">
       {/* 1. AGENCIA */}
       <div>
         <button
@@ -75,6 +75,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
           <nav className="space-y-0.5">
             {renderItem('chatbot', 'Dashboard Principal', LayoutDashboard)}
             {renderItem('clientes', 'Gestión de Clientes', Users)}
+            {renderItem('soporte', 'Soporte', LifeBuoy)}
           </nav>
         )}
       </div>
@@ -93,6 +94,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
             {renderItem('business', 'Mi Negocio', Store)}
             {renderItem('conversations', 'Conversaciones', MessageSquare)}
             {renderItem('agenda', 'Agenda de Citas', Calendar)}
+            {renderItem('training', 'Entrenamiento AI', Brain, unresolvedCount)}
           </nav>
         )}
       </div>
@@ -108,7 +110,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         </button>
         {openCats.ventas && (
           <nav className="space-y-0.5">
-            {renderItem('products', 'Catálogo Productos', ShoppingBag)}
+            {renderItem('products', 'Mis Productos', ShoppingBag)}
           </nav>
         )}
       </div>

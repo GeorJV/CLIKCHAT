@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Tenant } from '../../types';
-import { Bot, Copy, Check, ExternalLink, QrCode, Sparkles, ShieldCheck, Zap } from 'lucide-react';
+import { TenantExactMetrics } from './metrics/TenantExactMetrics';
+import { Sparkles, ShieldCheck, Zap } from 'lucide-react';
 
 interface ChatbotQLinkTabProps {
   tenant: Tenant | null;
@@ -13,66 +14,18 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
   tenantSlug,
   onOpenLiveChat
 }) => {
-  const [copied, setCopied] = useState(false);
-  const publicUrl = `https://clikchat.pages.dev?t=${tenantSlug || 'acme-store'}`;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(publicUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Link and QR Card */}
-      <div className="onyx-card rounded-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#1d1c1c] border border-[#2e2b2b] flex items-center justify-center text-emerald-400 shadow-sm">
-                <Bot className="w-4 h-4" />
-              </div>
-              <h3 className="text-base font-bold text-white tracking-tight">
-                {tenant?.bot_name || 'Sofía'} — Enlace Directo QLink
-              </h3>
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              Comparte este enlace con tus clientes por WhatsApp, Instagram o ponlo en tu sitio web.
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* 1. Módulo de Métricas y Reportería Exacta */}
+      <TenantExactMetrics
+        tenantId={tenant?.id}
+        tenantSlug={tenantSlug}
+        onOpenLiveChat={onOpenLiveChat}
+      />
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleCopy}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl keycap hover:bg-[#252424] text-zinc-200 hover:text-white text-xs font-bold transition border-[#2e2b2b] cursor-pointer"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? '¡Copiado!' : 'Copiar QLink'}</span>
-            </button>
-            {onOpenLiveChat && (
-              <button
-                onClick={onOpenLiveChat}
-                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm border border-emerald-500/30 cursor-pointer"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Probar Chat en Pantalla Completa</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* URL Pill */}
-        <div className="mt-4 flex items-center justify-between bg-[#111010] px-4 py-2.5 rounded-xl border border-[#262424] text-xs font-mono text-emerald-400 overflow-x-auto">
-          <span>{publicUrl}</span>
-          <span className="text-[10px] font-sans font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 ml-2 whitespace-nowrap">
-            ⚡ Activo 24/7
-          </span>
-        </div>
-      </div>
-
-      {/* RAG Diagnostics Architecture Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="onyx-card rounded-2xl p-4 space-y-2.5">
+      {/* 2. RAG Diagnostics Architecture Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+        <div className="onyx-card rounded-2xl p-4 space-y-2">
           <div className="flex items-center space-x-2 text-emerald-400">
             <Zap className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">1. RAG Caché Semántico</span>
@@ -85,7 +38,7 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
           </div>
         </div>
 
-        <div className="onyx-card rounded-2xl p-4 space-y-2.5">
+        <div className="onyx-card rounded-2xl p-4 space-y-2">
           <div className="flex items-center space-x-2 text-zinc-200">
             <ShieldCheck className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">2 & 3. Fichas D1 + Manuales</span>
@@ -98,7 +51,7 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
           </div>
         </div>
 
-        <div className="onyx-card rounded-2xl p-4 space-y-2.5">
+        <div className="onyx-card rounded-2xl p-4 space-y-2">
           <div className="flex items-center space-x-2 text-amber-400">
             <Sparkles className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">4. Memoria Continua</span>

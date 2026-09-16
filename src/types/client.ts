@@ -11,6 +11,8 @@ export type ClientTab =
   | 'settings'
   | 'clientes'
   | 'agenda'
+  | 'training'
+  | 'soporte'
   | 'user';
 
 export interface KnowledgeDocument {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClientTab } from '../../../types/client';
-import { Bot, Store, ShoppingBag, BookOpen, Brain, MessageSquare, Settings, Users, Calendar } from 'lucide-react';
+import { Bot, Store, ShoppingBag, Brain, MessageSquare, Users, Calendar, LifeBuoy } from 'lucide-react';
 
 interface SidebarSimpleNavProps {
   activeTab: ClientTab;
@@ -18,22 +18,22 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
   const navItems = [
     { id: 'chatbot' as ClientTab, label: 'Dashboard Principal', icon: Bot },
     { id: 'business' as ClientTab, label: 'Mi Negocio', icon: Store },
-    { id: 'products' as ClientTab, label: 'Catálogo de Productos', icon: ShoppingBag },
+    { id: 'products' as ClientTab, label: 'Mis Productos', icon: ShoppingBag },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
     { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar },
+    { id: 'training' as ClientTab, label: 'Entrenamiento AI', icon: Brain, badge: unresolvedCount },
+    { id: 'soporte' as ClientTab, label: 'Soporte', icon: LifeBuoy },
   ];
 
   return (
-    <div className="space-y-1">
-      {/* Category Title */}
+    <div className="space-y-1 font-sans">
       <div className={`py-1 ${isExpanded ? 'px-2' : 'text-center'}`}>
         <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-wider">
           {isExpanded ? '⭐ Panel Principal' : '⭐'}
         </span>
       </div>
 
-      {/* Nav Buttons */}
       <nav className="space-y-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -60,7 +60,6 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
                 {isExpanded && <span className="truncate text-left">{item.label}</span>}
               </div>
 
-              {/* Badge for unresolved items */}
               {item.badge !== undefined && item.badge > 0 && (
                 isExpanded ? (
                   <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white min-w-[16px] text-center animate-pulse shadow-sm shadow-rose-500/30">
