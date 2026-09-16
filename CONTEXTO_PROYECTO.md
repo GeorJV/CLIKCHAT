@@ -1,18 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 23:48 GMT-6
-- **Versión Actual:** 1.20.45 (Audio: Ondas de voz dinámicas en área de texto y envío directo al soltar sin poblar textarea)
+- **Última Actualización:** 2026-09-15 23:50 GMT-6
+- **Versión Actual:** 1.20.46 (Métricas duales en Ficha de Producto: Analítica original restaurada + 4 KPIs exactos)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Audio: Al grabar se muestran ondas de voz en la caja de texto; al soltar se envía de inmediato sin mostrar texto en ventana.
+  - Mis Productos: 'Ver métricas' integra tanto analítica original (clics compra, vistas ficha, beneficios, temperatura de leads) como los 4 KPIs exactos.
   - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
-  - Mis Productos: Cada ficha de producto despliega las mismas 4 métricas exactas al pulsar 'Ver métricas'.
+  - Audio WhatsApp: Ondas de voz al presionar y envío inmediato al soltar sin poblar textarea; swipe-up manos libres.
+  - Micrófono amarillo dorado alternante con botón de envío; transcripción Whisper edge Cloudflare.
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
-  - Micrófono amarillo dorado en posición de envío; alternancia dinámica tipo WhatsApp (oculto al tipear).
-  - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones.
-  - RAG Semántico del Historial activo (100 msgs) con memoria episódica (`rankBySimilarity`).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
