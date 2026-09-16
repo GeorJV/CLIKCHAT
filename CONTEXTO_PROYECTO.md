@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 22:25 GMT-6
-- **Versión Actual:** 1.20.39 (Registro #006 Aprobado: RAG Semántico, Sin Datos Simulados, Escucha de Voz Whisper y Botón Amarillo)
+- **Última Actualización:** 2026-09-15 22:50 GMT-6
+- **Versión Actual:** 1.20.40 (Menú Optimizado: Mi Negocio Unificado con Industria, Identidad y FAQs)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Mi Negocio unificado en 2 sub-secciones: [Identidad & Tipo de Negocio] y [Preguntas Frecuentes FAQs].
+  - Menú lateral limpio y enfocado (eliminados "Agente IA" y "Base de Conocimiento" como botones sueltos).
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Micrófono amarillo dorado en posición de envío; alternancia dinámica tipo WhatsApp (oculto al tipear).
-  - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones/bucles en audioCleaner.
-  - RAG Semántico del Historial activo (100 msgs) con memoria episódica (`rankBySimilarity`) y extracción de preferencias.
-  - Catálogo de productos y datos de clientes conectados a Cloudflare D1 real (sin datos simulados).
+  - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones.
+  - RAG Semántico del Historial activo (100 msgs) con memoria episódica (`rankBySimilarity`).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
