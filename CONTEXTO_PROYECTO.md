@@ -1,12 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 22:50 GMT-6
-- **Versión Actual:** 1.20.40 (Menú Optimizado: Mi Negocio Unificado con Industria, Identidad y FAQs)
+- **Última Actualización:** 2026-09-15 23:15 GMT-6
+- **Versión Actual:** 1.20.41 (Mi Negocio: Identidad completa con Tono, RAG L1 y Logos, sin Color Primario)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Mi Negocio unificado en 2 sub-secciones: [Identidad & Tipo de Negocio] y [Preguntas Frecuentes FAQs].
+  - Mi Negocio unificado: [Identidad & Tipo de Negocio] y [Preguntas Frecuentes FAQs].
+  - Sub-sección Identidad integra Tipo Negocio, Nombre, Slug, Tono IA, RAG L1, Logo y Avatar (sin color primario).
   - Menú lateral limpio y enfocado (eliminados "Agente IA" y "Base de Conocimiento" como botones sueltos).
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Micrófono amarillo dorado en posición de envío; alternancia dinámica tipo WhatsApp (oculto al tipear).
