@@ -130,16 +130,13 @@ export const ServiceChatColumn: React.FC<Props> = ({
             placeholder={`Consulta a ${agentName} sobre ${serviceTitle}... (Shift+Enter para nueva línea)`}
             className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block"
           />
-          <ChatMicButton
-            disabled={isLoading}
-            onTranscription={(text) => {
-              onInputChange(text);
-              setTimeout(() => onSendMessage(), 50);
-            }}
-          />
-          <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer self-end mb-0.5" title="Enviar mensaje">
-            <Send className="w-3.5 h-3.5" />
-          </button>
+          {inputValue.trim() ? (
+            <button type="submit" disabled={isLoading} className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition active:scale-95 shrink-0 shadow-sm cursor-pointer self-end mb-0.5" title="Enviar mensaje">
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <ChatMicButton disabled={isLoading} onTranscription={(text) => { onInputChange(text); setTimeout(() => onSendMessage(), 50); }} />
+          )}
         </form>
       </footer>
       <FlyingPaperPlane triggerKey={flightKey} />

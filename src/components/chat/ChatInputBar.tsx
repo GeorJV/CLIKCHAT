@@ -59,19 +59,21 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         className="flex-1 text-xs px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition disabled:opacity-60 resize-none leading-snug min-h-[24px] max-h-[100px] overflow-y-auto"
       />
 
-      <ChatMicButton
-        disabled={isLoading}
-        onTranscription={(text) => onSendMessage(text)}
-      />
-
-      <button
-        onClick={handleSend}
-        disabled={!inputValue.trim() || isLoading}
-        className="p-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5"
-        aria-label="Enviar mensaje"
-      >
-        <Send className="w-3.5 h-3.5" />
-      </button>
+      {inputValue.trim() ? (
+        <button
+          onClick={handleSend}
+          disabled={isLoading}
+          className="p-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition active:scale-95 shadow-md shadow-indigo-600/30 shrink-0 mb-0.5"
+          aria-label="Enviar mensaje"
+        >
+          <Send className="w-3.5 h-3.5" />
+        </button>
+      ) : (
+        <ChatMicButton
+          disabled={isLoading}
+          onTranscription={(text) => onSendMessage(text)}
+        />
+      )}
     </div>
   );
 };

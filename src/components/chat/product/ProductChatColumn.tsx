@@ -130,16 +130,13 @@ export const ProductChatColumn: React.FC<Props> = ({
             placeholder="Pregúntale..."
             className={`flex-1 bg-transparent text-xs sm:text-sm ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block`}
           />
-          <ChatMicButton
-            disabled={isLoading}
-            onTranscription={(text) => {
-              onInputChange(text);
-              setTimeout(() => onSendMessage(), 50);
-            }}
-          />
-          <button type="submit" disabled={!inputValue.trim() || isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar">
-            <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />
-          </button>
+          {inputValue.trim() ? (
+            <button type="submit" disabled={isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar">
+              <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />
+            </button>
+          ) : (
+            <ChatMicButton disabled={isLoading} onTranscription={(text) => { onInputChange(text); setTimeout(() => onSendMessage(), 50); }} />
+          )}
         </form>
       </footer>
       <FlyingPaperPlane triggerKey={flightKey} />

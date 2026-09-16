@@ -75,9 +75,9 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
         onClick={startRecording}
         disabled={disabled}
         title="Grabar nota de voz"
-        className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition active:scale-95 disabled:opacity-40 cursor-pointer"
+        className="p-1.5 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition active:scale-95 disabled:opacity-40 cursor-pointer flex items-center justify-center shrink-0"
       >
-        <Mic className="w-3.5 h-3.5" />
+        <Mic className="w-3.5 h-3.5 text-zinc-950 stroke-[2.4]" />
       </button>
 
       {feedback && (
