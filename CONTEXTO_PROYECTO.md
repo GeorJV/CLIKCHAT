@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-15 23:40 GMT-6
-- **Versión Actual:** 1.20.43 (Audio WhatsApp: Soltar para enviar, deslizar arriba para fijar y barra manos libres)
+- **Última Actualización:** 2026-09-15 23:45 GMT-6
+- **Versión Actual:** 1.20.44 (Métricas exactas: Suma global en Dashboard y réplica por producto en 'Ver métricas')
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
+  - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
+  - Mis Productos: Cada ficha de producto despliega las mismas 4 métricas exactas al pulsar 'Ver métricas'.
   - Audio WhatsApp: Push-to-talk (soltar para enviar), deslizar arriba para fijar manos libres (con pausa, borrar y enviar).
-  - Panel "Métricas y Reportería Exacta" en vivo en Dashboard Principal (Aperturas link, preguntas, objeciones, citas).
   - Menú lateral actualizado: botón 'Mis Productos', nuevo botón 'Entrenamiento AI' y nuevo botón 'Soporte'.
-  - Mi Negocio unificado: [Identidad & Tipo de Negocio] (sin color primario) y [Preguntas Frecuentes FAQs].
   - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
   - Micrófono amarillo dorado en posición de envío; alternancia dinámica tipo WhatsApp (oculto al tipear).
   - Transcripción Edge en Cloudflare Workers AI (@cf/openai/whisper) con filtro anti-repeticiones.
