@@ -115,5 +115,45 @@
 - **Deploy en Vivo:** `https://clikchat.pages.dev`
 - **Commits Clave:** `927e87b`, `c2f6d02`, `56a5bbb`, `eea2e85`, `2401295`
 
+---
+
+## [Registro #006] - 2026-09-15: RAG Semántico del Historial, Limpieza Total de Mocks, Notas de Voz en Cloudflare Workers AI Whisper y Botón de Micrófono Amarillo con Alternancia Dinámica
+- **Estado:** ✅ APROBADO & PROTEGIDO (Memoria Protegida Inmutable)
+- **Detalle Exhaustivo de Cambios Realizados y Verificados:**
+  1. **RAG Semántico del Historial de Conversación (Memoria Episódica Continua):**
+     - Ventana de contexto ampliada a 100 mensajes por sesión en Cloudflare D1 (`ragEngine.js`).
+     - Separación de ventana caliente (últimos 6 mensajes inmediatos) y memoria episódica profunda mediante escaneo semántico (`rankBySimilarity`).
+     - Inyección contextual de `[MEMORIA SEMÁNTICA DEL HISTORIAL DE ESTA SESIÓN (RAG EPISÓDICO)]` ante consultas referenciales del usuario.
+     - Extracción automática de perfil y preferencias (presupuesto, ubicación, intereses) para eliminar la amnesia conversacional.
+  2. **Eliminación Total de Datos Simulados (100% Reales en Cloudflare D1):**
+     - Clientes (`ClientsTab.tsx`): Removido `MOCK_CLIENTS`, enlazado al endpoint `/api/chat/tenant-clients/:tenantId` en Cloudflare D1.
+     - Citas (`AgendaTab.tsx`): Removido `MOCK_APPOINTMENTS`, mostrando exclusivamente citas reales generadas por el bot.
+     - Conversaciones (`ConversationsTab.tsx`): Removido `FALLBACK_SESSIONS`, operando con sesiones vivas de D1.
+     - Perfil (`UserProfileTab.tsx`): Eliminados IDs ficticios, conectado a la identidad real del dueño.
+     - Catálogo de productos: Blindado exclusivamente con el producto real creado por el usuario (*"Vendedor Online"*, $49 USD).
+  3. **Escucha y Transcripción de Notas de Voz en el Ecosistema Cloudflare:**
+     - Integración con el modelo `@cf/openai/whisper` de Cloudflare Workers AI (`wrangler.toml` con binding `[ai] binding = "AI"`).
+     - Ejecución nativa en Edge Functions (`functions/api/[[route]].js`) con soporte de binding `env.AI.run` y fallback REST.
+     - Endpoint compatible en Node.js (`server/routes/chat.js`) para desarrollo y tests locales.
+  4. **Filtro Anti-Alucinaciones y Anti-Bucles (`audioCleaner.js`):**
+     - Algoritmo `cleanWhisperLooping()` que elimina bucles de palabras únicas (`\b(\w+)(?:\s+\1\b)+`) y frases reiteradas en eco (`\b((?:\w+\s+){1,4}\w+)(?:\s+\1\b)+`).
+     - Eliminación de etiquetas de subtítulos y artefactos de ruido (`[Música]`, `subtítulos por...`, etc.).
+  5. **Detección de Actividad de Voz (VAD en Cliente en `useVoiceRecorder.ts`):**
+     - Análisis volumétrico en tiempo real mediante `AudioContext` y `AnalyserNode`.
+     - Descarte automático de silencios o ruidos de fondo sin voz audible (`maxVolume < 4` o tamaño < 500 bytes) con alerta amigable.
+  6. **Botón de Micrófono Amarillo Dorado y Alternancia Dinámica Tipo WhatsApp:**
+     - Componente `ChatMicButton.tsx`: Botón en gradiente amarillo oro vibrante (`from-yellow-300 via-yellow-400 to-amber-500`) con anillo perimetral satinado, resplandor cálido e icono negro carbón de alto contraste.
+     - Ubicación estratégica: Situado exactamente en la misma posición que el botón de enviar (palomita / avioncito).
+     - Comportamiento WhatsApp: mientras el texto esté vacío se muestra el micrófono amarillo; en cuanto el usuario escribe una sola letra, el micrófono se oculta y aparece el botón de enviar; al enviar o borrar el texto, el micrófono amarillo reaparece de inmediato.
+     - Integrado armónicamente en `ProductChatColumn.tsx`, `ServiceChatColumn.tsx` y `ChatInputBar.tsx`.
+  7. **Garantía ARQMODULAR y Blindaje Inmutable:**
+     - 100% de los componentes frontend bajo el límite estricto de 150 líneas.
+     - Cero alteraciones en archivos en `lockedFiles`.
+     - Compilación limpia con `npm run build` (0 errores).
+     - Despliegue en vivo en Cloudflare Pages CDN (`wrangler pages deploy dist`).
+- **Deploy en Vivo:** `https://clikchat.pages.dev`
+- **Commits Clave:** `59672aa`, `123762d`, `9a7feac`, `60255a4`, `b9263bc`
+
+
 
 
