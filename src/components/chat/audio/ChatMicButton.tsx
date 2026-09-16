@@ -1,6 +1,7 @@
-import React from 'react';
-import { Mic, Square, X, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Mic, Loader2, Lock, ChevronUp } from 'lucide-react';
 import { useVoiceRecorder } from '../../../hooks/useVoiceRecorder';
+import { ChatMicLockedBar } from './ChatMicLockedBar';
 
 interface ChatMicButtonProps {
   onTranscription: (cleanText: string) => void;
@@ -8,30 +9,60 @@ interface ChatMicButtonProps {
 }
 
 export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, disabled }) => {
-  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [isPressing, setIsPressing] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const startPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const {
-    isRecording,
-    recordingSeconds,
-    isTranscribing,
-    startRecording,
-    stopRecording,
-    cancelRecording
+    isRecording, isPaused, recordingSeconds, isTranscribing,
+    startRecording, stopRecording, cancelRecording, pauseRecording, resumeRecording
   } = useVoiceRecorder({
     onTranscription: (text) => {
       setFeedback(null);
+      setIsLocked(false);
       onTranscription(text);
     },
     onError: (err) => {
       setFeedback(err);
+      setIsLocked(false);
       setTimeout(() => setFeedback(null), 4000);
     }
   });
 
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remaining = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`;
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (disabled || isTranscribing || isRecording) return;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+    startPos.current = { x: e.clientX, y: e.clientY };
+    setIsPressing(true);
+    setIsLocked(false);
+    startRecording();
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isPressing || isLocked) return;
+    const deltaY = e.clientY - startPos.current.y;
+    const deltaX = e.clientX - startPos.current.x;
+
+    // Deslizar arriba: Bloquea grabación manos libres tipo WhatsApp
+    if (deltaY < -35) {
+      setIsLocked(true);
+      setIsPressing(false);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
+    }
+    // Deslizar izquierda: Cancela y descarta
+    else if (deltaX < -50) {
+      cancelRecording();
+      setIsPressing(false);
+      setIsLocked(false);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (isPressing && !isLocked) {
+      setIsPressing(false);
+      stopRecording(); // Se envía inmediatamente al soltar el botón
+    }
   };
 
   if (isTranscribing) {
@@ -43,39 +74,48 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
     );
   }
 
-  if (isRecording) {
+  if (isLocked) {
     return (
-      <div className="flex items-center gap-2 bg-red-950/70 border border-red-500/40 rounded-xl px-2.5 py-1 text-xs shrink-0 self-end mb-0.5 shadow-lg shadow-red-900/20 animate-fade-in">
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-        <span className="font-mono font-bold text-red-300 tabular-nums text-[11px]">{formatTime(recordingSeconds)}</span>
-        <button
-          type="button"
-          onClick={cancelRecording}
-          title="Cancelar grabación"
-          className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition cursor-pointer"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={stopRecording}
-          title="Enviar audio"
-          className="p-1 bg-red-600 hover:bg-red-500 text-white rounded-lg shadow-sm transition active:scale-95 cursor-pointer"
-        >
-          <Square className="w-3 h-3 fill-current" />
-        </button>
-      </div>
+      <ChatMicLockedBar
+        recordingSeconds={recordingSeconds}
+        isPaused={isPaused}
+        onCancel={() => { cancelRecording(); setIsLocked(false); }}
+        onTogglePause={() => (isPaused ? resumeRecording() : pauseRecording())}
+        onSend={() => { stopRecording(); setIsLocked(false); }}
+      />
     );
   }
 
   return (
-    <div className="relative shrink-0 self-end mb-0.5">
+    <div className="relative shrink-0 self-end mb-0.5 touch-none select-none">
+      {/* Tooltip flotante al presionar: Deslizar arriba para fijar y deslizar izquierda para cancelar */}
+      {isPressing && (
+        <>
+          <div className="absolute bottom-full right-0 mb-3 flex flex-col items-center gap-1 bg-[#161515] border border-amber-400/40 px-2.5 py-1.5 rounded-xl shadow-2xl text-[10px] text-zinc-200 z-50 animate-bounce pointer-events-none whitespace-nowrap">
+            <Lock className="w-3 h-3 text-amber-400" />
+            <span className="font-bold flex items-center gap-0.5">
+              <ChevronUp className="w-2.5 h-2.5 text-amber-400" /> Desliza arriba para fijar
+            </span>
+          </div>
+          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 flex items-center gap-1.5 bg-[#161515] border border-zinc-700/60 px-2.5 py-1 rounded-xl shadow-xl text-[10px] text-zinc-400 z-50 pointer-events-none whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+            <span>◀ Desliza para cancelar</span>
+          </div>
+        </>
+      )}
+
+      {/* Botón amarillo dorado */}
       <button
         type="button"
-        onClick={startRecording}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => { if (!isLocked) { cancelRecording(); setIsPressing(false); } }}
         disabled={disabled}
-        title="Grabar nota de voz"
-        className="p-1.5 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition active:scale-95 disabled:opacity-40 cursor-pointer flex items-center justify-center shrink-0"
+        title="Mantén presionado para hablar (suelta para enviar, desliza arriba para fijar)"
+        className={`p-1.5 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition cursor-pointer flex items-center justify-center shrink-0 ${
+          isPressing ? 'scale-110 ring-4 ring-yellow-400/50' : 'active:scale-95'
+        }`}
       >
         <Mic className="w-3.5 h-3.5 text-zinc-950 stroke-[2.4]" />
       </button>
