@@ -104,7 +104,7 @@ export const ServiceChatView: React.FC<Props> = ({
           inputValue={inputValue}
           isLoading={isLoading}
           onInputChange={setInputValue}
-          onSendMessage={() => handleSendMessage()}
+          onSendMessage={handleSendMessage}
           onExit={onExit}
         />
         <ServiceShowcase

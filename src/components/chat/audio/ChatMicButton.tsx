@@ -5,10 +5,15 @@ import { ChatMicLockedBar } from './ChatMicLockedBar';
 
 interface ChatMicButtonProps {
   onTranscription: (cleanText: string) => void;
+  onRecordingChange?: (isRecording: boolean) => void;
   disabled?: boolean;
 }
 
-export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, disabled }) => {
+export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
+  onTranscription,
+  onRecordingChange,
+  disabled
+}) => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -21,11 +26,13 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
     onTranscription: (text) => {
       setFeedback(null);
       setIsLocked(false);
+      onRecordingChange?.(false);
       onTranscription(text);
     },
     onError: (err) => {
       setFeedback(err);
       setIsLocked(false);
+      onRecordingChange?.(false);
       setTimeout(() => setFeedback(null), 4000);
     }
   });
@@ -36,6 +43,7 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
     startPos.current = { x: e.clientX, y: e.clientY };
     setIsPressing(true);
     setIsLocked(false);
+    onRecordingChange?.(true);
     startRecording();
   };
 
@@ -44,24 +52,24 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
     const deltaY = e.clientY - startPos.current.y;
     const deltaX = e.clientX - startPos.current.x;
 
-    // Deslizar arriba: Bloquea grabación manos libres tipo WhatsApp
     if (deltaY < -35) {
       setIsLocked(true);
       setIsPressing(false);
+      onRecordingChange?.(true);
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
-    }
-    // Deslizar izquierda: Cancela y descarta
-    else if (deltaX < -50) {
+    } else if (deltaX < -50) {
       cancelRecording();
       setIsPressing(false);
       setIsLocked(false);
+      onRecordingChange?.(false);
     }
   };
 
   const handlePointerUp = () => {
     if (isPressing && !isLocked) {
       setIsPressing(false);
-      stopRecording(); // Se envía inmediatamente al soltar el botón
+      onRecordingChange?.(false);
+      stopRecording(); // Envío inmediato al soltar el botón
     }
   };
 
@@ -79,16 +87,15 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
       <ChatMicLockedBar
         recordingSeconds={recordingSeconds}
         isPaused={isPaused}
-        onCancel={() => { cancelRecording(); setIsLocked(false); }}
+        onCancel={() => { cancelRecording(); setIsLocked(false); onRecordingChange?.(false); }}
         onTogglePause={() => (isPaused ? resumeRecording() : pauseRecording())}
-        onSend={() => { stopRecording(); setIsLocked(false); }}
+        onSend={() => { stopRecording(); setIsLocked(false); onRecordingChange?.(false); }}
       />
     );
   }
 
   return (
     <div className="relative shrink-0 self-end mb-0.5 touch-none select-none">
-      {/* Tooltip flotante al presionar: Deslizar arriba para fijar y deslizar izquierda para cancelar */}
       {isPressing && (
         <>
           <div className="absolute bottom-full right-0 mb-3 flex flex-col items-center gap-1 bg-[#161515] border border-amber-400/40 px-2.5 py-1.5 rounded-xl shadow-2xl text-[10px] text-zinc-200 z-50 animate-bounce pointer-events-none whitespace-nowrap">
@@ -104,13 +111,12 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({ onTranscription, d
         </>
       )}
 
-      {/* Botón amarillo dorado */}
       <button
         type="button"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => { if (!isLocked) { cancelRecording(); setIsPressing(false); } }}
+        onPointerCancel={() => { if (!isLocked) { cancelRecording(); setIsPressing(false); onRecordingChange?.(false); } }}
         disabled={disabled}
         title="Mantén presionado para hablar (suelta para enviar, desliza arriba para fijar)"
         className={`p-1.5 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition cursor-pointer flex items-center justify-center shrink-0 ${

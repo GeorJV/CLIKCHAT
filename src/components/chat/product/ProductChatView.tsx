@@ -106,7 +106,7 @@ export const ProductChatView: React.FC<Props> = ({
           storeName={storeName} agentName={agentName} agentAvatar={agentAvatar}
           productTitle={selectedProduct.title} messages={messages} inputValue={inputValue}
           isLoading={isLoading} theme={theme} themeStyles={themeStyles} onThemeChange={setTheme}
-          onInputChange={setInputValue} onSendMessage={() => handleSendMessage()} onExit={onExit}
+          onInputChange={setInputValue} onSendMessage={handleSendMessage} onExit={onExit}
         />
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles}
