@@ -97,7 +97,21 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           )}
 
           {activeTab === 'chatbot' && <ChatbotQLinkTab tenant={tenant} tenantSlug={currentSlug} onOpenLiveChat={onOpenLiveChat} />}
-          {activeTab === 'business' && <BusinessSettingsTab tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} />}
+          {(activeTab === 'business' || activeTab === 'faqs' || activeTab === 'settings') && (
+            <BusinessSettingsTab
+              tenant={tenant}
+              tenantSlug={currentSlug}
+              onUpdateSettings={updateSettings}
+              saveSuccess={saveSuccess}
+              onOpenLiveChat={onOpenLiveChat}
+              faqs={faqs}
+              onCreateFaq={createFaq}
+              onUpdateFaq={updateFaq}
+              onDeleteFaq={deleteFaq}
+              onCreateBulkFaqs={createBulkFaqs}
+              initialSubTab={activeTab === 'faqs' ? 'faqs' : 'identity'}
+            />
+          )}
           {activeTab === 'products' && (
             <ProductsManagerTab
               products={products}
@@ -109,11 +123,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               onDeleteProduct={deleteProduct}
             />
           )}
-          {activeTab === 'faqs' && <FaqsManagerTab faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} />}
           {activeTab === 'documents' && <DocumentsManagerTab tenantId={tenant?.id} />}
           {activeTab === 'audit' && <UnresolvedQueriesTab unresolved={unresolved} onResolve={resolveQuery} />}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
-          {activeTab === 'settings' && <BotSettingsTab tenant={tenant} onUpdateSettings={updateSettings} saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat} />}
           {activeTab === 'clientes' && <ClientsTab tenantId={tenant?.id} />}
           {activeTab === 'agenda' && <AgendaTab tenantId={tenant?.id} />}
           {activeTab === 'user' && (

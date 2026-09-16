@@ -22,8 +22,6 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
     { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar },
-    { id: 'settings' as ClientTab, label: 'Agente IA & Prompts', icon: Brain, badge: unresolvedCount },
-    { id: 'faqs' as ClientTab, label: 'Base de Conocimiento', icon: BookOpen },
   ];
 
   return (

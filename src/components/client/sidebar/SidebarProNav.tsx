@@ -75,7 +75,6 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
           <nav className="space-y-0.5">
             {renderItem('chatbot', 'Dashboard Principal', LayoutDashboard)}
             {renderItem('clientes', 'Gestión de Clientes', Users)}
-            {renderItem('settings', 'Agente IA & Prompts', Settings)}
           </nav>
         )}
       </div>
@@ -94,7 +93,6 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
             {renderItem('business', 'Mi Negocio', Store)}
             {renderItem('conversations', 'Conversaciones', MessageSquare)}
             {renderItem('agenda', 'Agenda de Citas', Calendar)}
-            {renderItem('faqs', 'Base de Conocimiento', BookOpen)}
           </nav>
         )}
       </div>
@@ -111,7 +109,6 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         {openCats.ventas && (
           <nav className="space-y-0.5">
             {renderItem('products', 'Catálogo Productos', ShoppingBag)}
-            {renderItem('faqs', 'Preguntas FAQ', BookOpen)}
           </nav>
         )}
       </div>
