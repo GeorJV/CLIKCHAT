@@ -398,7 +398,8 @@ export async function onRequest(context) {
       // Suma total consolidada de todos los chats y productos
       const chatOpens = baseSessions + totalProdViews;
       const questionsAnswered = Number(answers[0]?.count) || 0;
-      const objectionsResolved = Math.max(Number(objections[0]?.count) || 0, Math.min(questionsAnswered, 8)) + totalProdWarm;
+      // Solo objeciones reales resueltas por el bot (sin sumar artificialmente preguntas generales)
+      const objectionsResolved = Number(objections[0]?.count) || 0;
       const appointmentsCount = totalProdBuyClicks;
 
       return jsonResponse({

@@ -1,19 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 00:10 GMT-6
-- **Versión Actual:** 1.20.50 (Preguntas Respondidas 100% reales: estrictamente 0 al abrir chat; solo cuenta preguntas enviadas)
+- **Última Actualización:** 2026-09-16 00:20 GMT-6
+- **Versión Actual:** 1.20.51 (Objeciones desacopladas 100% de preguntas generales; métricas reales sin sesgo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Preguntas Respondidas: Eliminado cálculo artificial sobre vistas; arranca en 0 y solo suma cuando el usuario envía un mensaje/audio.
-  - Aperturas de Chat: Corregido conteo de 2 en 2 mediante deduplicación `hasTrackedRef`, `sessionStorage` y cooldown D1.
-  - Audio WhatsApp Ultra Esbelto: Burbuja de audio reducida en altura (`py-0.5`, botón 28px, ondas 14px, ancho 185px).
-  - Distribución Simétrica: Play a la izquierda, ondas con `justify-between`, duración y hora ceñidos, mic centrado.
-  - Enfoque silencioso: sin texto transcrito en pantalla ni avisos de 'procesando'; transcripción fluida en segundo plano.
-  - Mis Productos: 'Ver métricas' integra analítica original (clics, vistas, beneficios, temperatura) + 4 KPIs exactos.
-  - Dashboard Principal: Reportería Exacta con suma total consolidada de todos los productos y chats.
-  - [Registro #006] blindado en HISTORIAL_DE_CAMBIOS_APROBADOS.md con Memoria Protegida Inmutable.
+  - Objeciones Desacopladas: Eliminada la fórmula 60% (`warmLeads * 0.6`) y la suma `+ totalProdWarm`. Las preguntas generales ya no suman objeciones.
+  - Preguntas Respondidas: Contabiliza estrictamente mensajes/audios reales enviados por el usuario.
+  - Aperturas de Chat: Deduplicación 1 a 1 verificada con `hasTrackedRef` y cooldown en D1.
+  - Audio WhatsApp Ultra Esbelto: Burbuja compacta (28px botón, 14px ondas, 185px ancho).
+  - Mis Productos: 'Ver métricas' integra analítica original + 4 KPIs exactos sin distorsión.
+  - Dashboard Principal: Reportería Exacta con consolidación limpia de chats y productos.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.

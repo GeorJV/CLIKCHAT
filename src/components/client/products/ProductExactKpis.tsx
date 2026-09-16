@@ -22,7 +22,8 @@ export const ProductExactKpis: React.FC<ProductExactKpisProps> = ({
   const chatOpens = views;
   // Solo se contabilizan preguntas cuando el usuario REALMENTE escribe o habla
   const questionsAnswered = warmLeads;
-  const objectionsResolved = Math.min(warmLeads, Math.ceil(warmLeads * 0.6));
+  // Objeciones superadas reales: nunca derivar de preguntas generales
+  const objectionsResolved = (product.metrics as Record<string, unknown>)?.objectionsResolved as number ?? 0;
   const appointmentsCount = buyClicks;
 
   const productChatUrl = `https://clikchat.pages.dev/?t=${tenantSlug}&p=${product.id}`;

@@ -190,7 +190,8 @@ router.get('/tenant-metrics/:tenantId', async (req, res) => {
 
     const chatOpens = baseSessions + totalProdViews;
     const questionsAnswered = parseInt(answersRes.rows[0]?.count || '0', 10);
-    const objectionsResolved = Math.max(parseInt(objectionsRes.rows[0]?.count || '0', 10), Math.min(questionsAnswered, 8)) + totalProdWarm;
+    // Solo objeciones reales resueltas por el bot
+    const objectionsResolved = parseInt(objectionsRes.rows[0]?.count || '0', 10);
     const appointmentsCount = totalProdBuyClicks;
 
     return res.json({
