@@ -58,7 +58,15 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
           )}
-          {activeTab === 'chatbot' && <ChatbotQLinkTab tenant={tenant} tenantSlug={currentSlug} onOpenLiveChat={onOpenLiveChat} />}
+          {activeTab === 'chatbot' && (
+            <ChatbotQLinkTab
+              tenant={tenant}
+              tenantSlug={currentSlug}
+              products={products}
+              onRefresh={() => loadTenantData(currentSlug)}
+              onOpenLiveChat={onOpenLiveChat}
+            />
+          )}
           {(activeTab === 'business' || activeTab === 'faqs' || activeTab === 'settings') && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}

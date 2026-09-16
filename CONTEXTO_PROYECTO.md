@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 00:20 GMT-6
-- **Versión Actual:** 1.20.51 (Objeciones desacopladas 100% de preguntas generales; métricas reales sin sesgo)
+- **Última Actualización:** 2026-09-16 00:25 GMT-6
+- **Versión Actual:** 1.20.52 (Métricas & Analítica Global trasladada al Dashboard Principal)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Objeciones Desacopladas: Eliminada la fórmula 60% (`warmLeads * 0.6`) y la suma `+ totalProdWarm`. Las preguntas generales ya no suman objeciones.
-  - Preguntas Respondidas: Contabiliza estrictamente mensajes/audios reales enviados por el usuario.
-  - Aperturas de Chat: Deduplicación 1 a 1 verificada con `hasTrackedRef` y cooldown en D1.
+  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs: Clics, Vistas, Beneficios, Tienda, Total) + Reportería Exacta y Diagnóstico RAG.
+  - Mis Productos: Catálogo despejado y enfocado en gestión de productos, con sus métricas exactas en 'Ver métricas'.
+  - Objeciones Desacopladas: Las preguntas generales ya no inflan objeciones resueltas.
+  - Aperturas de Chat: Conteo 1 a 1 verificado con deduplicación y cooldown D1.
   - Audio WhatsApp Ultra Esbelto: Burbuja compacta (28px botón, 14px ondas, 185px ancho).
-  - Mis Productos: 'Ver métricas' integra analítica original + 4 KPIs exactos sin distorsión.
-  - Dashboard Principal: Reportería Exacta con consolidación limpia de chats y productos.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.

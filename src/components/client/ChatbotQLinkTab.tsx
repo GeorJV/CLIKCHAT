@@ -1,19 +1,46 @@
-import React from 'react';
-import { Tenant } from '../../types';
+import React, { useMemo } from 'react';
+import { Tenant, Product } from '../../types';
 import { TenantExactMetrics } from './metrics/TenantExactMetrics';
+import { ProductsGlobalMetrics } from './products/ProductsGlobalMetrics';
 import { Sparkles, ShieldCheck, Zap } from 'lucide-react';
 
 interface ChatbotQLinkTabProps {
   tenant: Tenant | null;
   tenantSlug: string;
+  products?: Product[];
+  onRefresh?: () => void;
   onOpenLiveChat?: () => void;
 }
 
 export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
   tenant,
   tenantSlug,
+  products = [],
+  onRefresh,
   onOpenLiveChat
 }) => {
+  const globalMetrics = useMemo(() => {
+    let buyClicks = 0;
+    let descriptionViews = 0;
+    let benefitViews = 0;
+    let totalEvents = 0;
+    for (const p of products) {
+      if (p.metrics) {
+        buyClicks += p.metrics.buyClicks || 0;
+        descriptionViews += p.metrics.views || 0;
+        benefitViews += p.metrics.benefitViews || 0;
+        totalEvents += (p.metrics.views || 0) + (p.metrics.buyClicks || 0) + (p.metrics.benefitViews || 0);
+      }
+    }
+    return {
+      buyClicks,
+      descriptionViews,
+      benefitViews,
+      storeViews: descriptionViews > 0 ? Math.ceil(descriptionViews / 2) : 0,
+      totalEvents
+    };
+  }, [products]);
+
   return (
     <div className="space-y-4">
       {/* 1. Módulo de Métricas y Reportería Exacta */}
@@ -22,6 +49,9 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
         tenantSlug={tenantSlug}
         onOpenLiveChat={onOpenLiveChat}
       />
+
+      {/* 2. Banner de Analítica Global con Métricas Reales */}
+      <ProductsGlobalMetrics metrics={globalMetrics} onRefresh={onRefresh} />
 
       {/* 2. RAG Diagnostics Architecture Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Product, Tenant } from '../../types';
 import { ProductsHeader } from './products/ProductsHeader';
-import { ProductsGlobalMetrics } from './products/ProductsGlobalMetrics';
 import { ShoppingBag } from 'lucide-react';
 import { ProductCard } from './products/ProductCard';
 import { ProductModal } from './products/ProductModal';
@@ -54,37 +53,12 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
     }
   };
 
-  const globalMetrics = React.useMemo(() => {
-    let buyClicks = 0;
-    let descriptionViews = 0;
-    let benefitViews = 0;
-    let totalEvents = 0;
-    for (const p of (products || [])) {
-      if (p.metrics) {
-        buyClicks += p.metrics.buyClicks || 0;
-        descriptionViews += p.metrics.views || 0;
-        benefitViews += p.metrics.benefitViews || 0;
-        totalEvents += (p.metrics.views || 0) + (p.metrics.buyClicks || 0) + (p.metrics.benefitViews || 0);
-      }
-    }
-    return {
-      buyClicks,
-      descriptionViews,
-      benefitViews,
-      storeViews: descriptionViews > 0 ? Math.ceil(descriptionViews / 2) : 0,
-      totalEvents
-    };
-  }, [products]);
-
   return (
     <div className="space-y-2.5">
       {/* 1. Encabezado con Botón Verde '+ Nuevo producto' al lado */}
       <ProductsHeader onOpenCreate={handleOpenCreate} tenantSlug={tenantSlug} />
 
-      {/* 2. Banner de Analítica Global Compacto con Métricas Reales */}
-      <ProductsGlobalMetrics metrics={globalMetrics} onRefresh={onRefresh} />
-
-      {/* 3. Grid de Tarjetas de Productos & QLinks */}
+      {/* 2. Grid de Tarjetas de Productos & QLinks */}
       {displayProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayProducts.map((prod) => (
