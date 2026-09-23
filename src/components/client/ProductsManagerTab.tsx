@@ -5,6 +5,7 @@ import { ShoppingBag } from 'lucide-react';
 import { ProductCard } from './products/ProductCard';
 import { ProductModal } from './products/ProductModal';
 import { ProductRAGModal } from './products/ProductRAGModal';
+import { InventoryExcelUploadModal } from './products/InventoryExcelUploadModal';
 
 interface ProductsManagerTabProps {
   products: Product[];
@@ -19,12 +20,14 @@ interface ProductsManagerTabProps {
 export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
   products,
   tenantSlug = 'acme-store',
+  tenant,
   onRefresh,
   onCreateProduct,
   onUpdateProduct,
   onDeleteProduct
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [ragProduct, setRagProduct] = useState<Product | null>(null);
 
@@ -66,8 +69,12 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
 
   return (
     <div className="space-y-2.5">
-      {/* 1. Encabezado con Botón Verde '+ Nuevo producto' al lado */}
-      <ProductsHeader onOpenCreate={handleOpenCreate} tenantSlug={tenantSlug} />
+      {/* 1. Encabezado con Botón Verde '+ Nuevo producto' y Botón 'Importar Excel' */}
+      <ProductsHeader
+        onOpenCreate={handleOpenCreate}
+        onOpenExcelImport={() => setExcelModalOpen(true)}
+        tenantSlug={tenantSlug}
+      />
 
       {/* 2. Grid de Tarjetas de Productos & QLinks */}
       {displayProducts.length > 0 ? (
@@ -88,15 +95,24 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
           <ShoppingBag className="w-12 h-12 text-zinc-600 mb-3" />
           <h3 className="text-base font-bold text-white mb-1">No hay productos en este catálogo</h3>
           <p className="text-xs text-zinc-400 mb-4 max-w-sm">
-            Tu catálogo no tiene productos activos en este momento. Puedes crear uno nuevo para empezar a vender con IA.
+            Tu catálogo no tiene productos activos en este momento. Puedes crear uno nuevo o importar tu Excel.
           </p>
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md"
-          >
-            + Crear Primer Producto
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md"
+            >
+              + Crear Primer Producto
+            </button>
+            <button
+              type="button"
+              onClick={() => setExcelModalOpen(true)}
+              className="px-4 py-2 bg-[#252222] hover:bg-[#302c2c] text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-xl transition cursor-pointer"
+            >
+              Importar Excel / CSV
+            </button>
+          </div>
         </div>
       )}
 
@@ -114,6 +130,14 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
         product={ragProduct}
         onClose={() => setRagProduct(null)}
         onSave={handleSaveRag}
+      />
+
+      {/* 5. Modal de Importación de Inventario desde Excel / CSV */}
+      <InventoryExcelUploadModal
+        isOpen={excelModalOpen}
+        tenantId={tenant?.id}
+        onClose={() => setExcelModalOpen(false)}
+        onSuccess={() => onRefresh && onRefresh()}
       />
     </div>
   );

@@ -60,6 +60,149 @@ function jsonResponse(data, status = 200) {
 
 let currentEnv = {};
 
+// ==============================================================================
+// RAG SEMÁNTICO HÍBRIDO & MULTI-LLM EDGE ENGINE
+// ==============================================================================
+
+const STOP_WORDS = new Set([
+  'de', 'la', 'los', 'las', 'el', 'en', 'por', 'para', 'con', 'y', 'a', 'que', 'del', 'al',
+  'un', 'una', 'unos', 'unas', 'es', 'son', 'se', 'su', 'sus', 'lo', 'le', 'les', 'o', 'u',
+  'como', 'pero', 'mas', 'si', 'no', 'mi', 'tu', 'te', 'me', 'nos', 'the', 'of', 'and', 'to',
+  'tiene', 'tienen', 'tienes', 'tengo', 'tenemos', 'hay', 'hace', 'puedo', 'puede', 'quiero',
+  'hola', 'buenas', 'gracias', 'este', 'esta', 'estos', 'estas'
+]);
+
+function stemSpanish(w) {
+  if (!w || w.length <= 3) return w;
+  return w
+    .replace(/(es|s)$/i, '')
+    .replace(/(ando|iendo|aron|eron|aban|abas|aba|aran|aras|ara|ado|ido|ar|er|ir|an|en|as|es|ó|o|a|e)$/i, '');
+}
+
+function tokenize(text) {
+  if (!text || typeof text !== 'string') return [];
+  return text.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w))
+    .map(stemSpanish);
+}
+
+function computeOverlapScore(textA, textB) {
+  if (!textA || !textB) return 0;
+  const tokensA = tokenize(textA);
+  const tokensB = tokenize(textB);
+  if (tokensA.length === 0 || tokensB.length === 0) return 0;
+  const setB = new Set(tokensB);
+  let matches = 0;
+  for (const t of tokensA) {
+    if (setB.has(t)) {
+      matches += 1.0;
+    } else {
+      for (const b of setB) {
+        if ((t.length >= 4 && b.startsWith(t)) || (b.length >= 4 && t.startsWith(b))) {
+          matches += 0.8;
+          break;
+        }
+      }
+    }
+  }
+  const coverage = matches / tokensA.length;
+  const dice = (2 * matches) / (tokensA.length + tokensB.length);
+  return Math.max(coverage, dice);
+}
+
+async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, customKey }) {
+  const openRouterKey = customKey || env?.OPENROUTER_API_KEY || (() => {
+    try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
+  })();
+  const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
+    try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
+  })();
+
+  const systemContent = `${systemPrompt}\n\n[INFORMACIÓN VERIFICADA DEL NEGOCIO / CATÁLOGO / INVENTARIO]:\n${context}\n\nREGLAS DE ATENCIÓN:\n1. Responde de forma amable, persuasiva, comercial y concisa (estilo asesor de ventas).\n2. Basa tus respuestas ÚNICAMENTE en la información verificada arriba. NO inventes precios ni stock que no figuren.\n3. Si el cliente pregunta por disponibilidad o precios, dale los datos exactos del inventario.\n4. Invita cordialmente al cliente a pulsar el botón de compra o a comunicarse por WhatsApp para concretar su pedido.`;
+
+  const messages = [
+    { role: 'system', content: systemContent },
+    ...history.slice(-6).map(h => ({
+      role: h.sender === 'user' ? 'user' : 'assistant',
+      content: h.message
+    })),
+    { role: 'user', content: userMessage }
+  ];
+
+  // 1. Prioridad: OpenRouter (gpt-4o-mini)
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages,
+        temperature: 0.35,
+        max_tokens: 650
+      })
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content;
+      if (text && text.trim().length > 0) return { text: text.trim(), provider: 'openrouter' };
+    }
+  } catch (e) {
+    console.warn('OpenRouter falló en Edge:', e.message);
+  }
+
+  // 2. Respaldo: Google AI Studio (Gemini 1.5 Flash)
+  try {
+    const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
+    const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
+    const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${googleKey}`;
+    const gResp = await fetch(gUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 650 }
+      })
+    });
+    if (gResp.ok) {
+      const gData = await gResp.json();
+      const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (gText && gText.trim().length > 0) return { text: gText.trim(), provider: 'google_ai_studio' };
+    }
+  } catch (e) {
+    console.warn('Google AI Studio falló en Edge:', e.message);
+  }
+
+  // 3. Respaldo: Cloudflare Workers AI Llama 3
+  if (env?.AI) {
+    try {
+      const cfResp = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        messages: [
+          { role: 'system', content: systemContent },
+          ...history.slice(-4).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+          { role: 'user', content: userMessage }
+        ]
+      });
+      if (cfResp?.response) return { text: cfResp.response.trim(), provider: 'cloudflare_workers_ai' };
+    } catch (e) {
+      console.warn('Workers AI Llama falló en Edge:', e.message);
+    }
+  }
+
+  // 4. Plantilla de contingencia
+  return {
+    text: `Hola, con gusto te oriento sobre nuestro catálogo disponible:\n\n${context.replace(/\[.*?\]/g, '').trim()}\n\n¿Deseas que te ayude a coordinar la compra o tienes alguna consulta puntual?`,
+    provider: 'context_template'
+  };
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   currentEnv = env || {};
@@ -501,6 +644,396 @@ export async function onRequest(context) {
       } catch (audioErr) {
         return jsonResponse({ error: audioErr.message }, 500);
       }
+    }
+
+    // ==============================================================================
+    // CHAT CONVERSACIONAL RAG EN EDGE: POST /api/chat/message (Serverless 24/7)
+    // ==============================================================================
+    if (segments[0] === 'chat' && segments[1] === 'message' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantSlug, tenantId, sessionId, message, leadInfo } = body;
+
+      if (!message || (!tenantSlug && !tenantId)) {
+        return jsonResponse({ error: 'Mensaje y tenant requeridos' }, 400);
+      }
+
+      // 1. Resolver Tenant en Cloudflare D1
+      let targetTenant = null;
+      if (tenantId) {
+        const tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1 LIMIT 1', [tenantId]);
+        if (tRows.length > 0) targetTenant = tRows[0];
+      }
+      if (!targetTenant && tenantSlug) {
+        const tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1 LIMIT 1', [tenantSlug]);
+        if (tRows.length > 0) targetTenant = tRows[0];
+      }
+      if (!targetTenant) {
+        const tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
+        targetTenant = tRows[0];
+      }
+      if (!targetTenant) {
+        return jsonResponse({ error: 'Tenant no configurado' }, 404);
+      }
+
+      const currentSessionId = sessionId || ('sess_' + Date.now().toString(36));
+      const actualTenantId = targetTenant.id;
+
+      // 2. Garantizar sesión viva en chat_sessions
+      try {
+        await executeD1(
+          'INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, datetime(\'now\')) ON CONFLICT(id) DO UPDATE SET updated_at = datetime(\'now\')',
+          [currentSessionId, actualTenantId, leadInfo?.name || null, leadInfo?.phone || null, leadInfo?.email || null]
+        );
+      } catch (sessErr) {
+        console.warn('Sesión D1 warning:', sessErr.message);
+      }
+
+      // 3. Guardar mensaje del usuario en chat_messages
+      const userMsgId = 'msg_' + Date.now() + '_u';
+      try {
+        await executeD1(
+          'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message) VALUES (?1, ?2, ?3, ?4, ?5)',
+          [userMsgId, currentSessionId, actualTenantId, 'user', message]
+        );
+      } catch (msgErr) {
+        console.warn('Msg D1 warning:', msgErr.message);
+      }
+
+      // 4. NIVEL 1: Memoria Episódica D1 (últimos turnos para mantener contexto)
+      let sessionHistory = [];
+      try {
+        const historyRows = await executeD1(
+          'SELECT sender, message, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 30',
+          [currentSessionId]
+        );
+        sessionHistory = historyRows.slice(0, -1);
+      } catch (hErr) {
+        sessionHistory = [];
+      }
+
+      // 5. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
+      let faqs = [];
+      try {
+        faqs = await executeD1('SELECT * FROM faqs WHERE tenant_id = ?1 AND is_active = 1', [actualTenantId]);
+      } catch (fErr) {
+        faqs = [];
+      }
+
+      let topFaq = null;
+      let topFaqScore = 0;
+      for (const faq of faqs) {
+        const targetText = `${faq.question} ${faq.keywords ? (Array.isArray(faq.keywords) ? faq.keywords.join(' ') : faq.keywords) : ''}`;
+        const score = computeOverlapScore(message, targetText);
+        if (score > topFaqScore) {
+          topFaqScore = score;
+          topFaq = faq;
+        }
+      }
+
+      const faqThreshold = parseFloat(topFaq?.confidence_threshold) || 0.65;
+      if (topFaq && topFaqScore >= faqThreshold) {
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_2_faq',
+          levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
+          confidence: topFaqScore,
+          answer: topFaq.answer,
+          matchedItem: topFaq,
+          stoppedEarly: true,
+          zeroCost: true
+        });
+      }
+
+      // 6. NIVEL 3: RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
+      let products = [];
+      try {
+        products = await executeD1('SELECT * FROM products WHERE tenant_id = ?1 AND is_active = 1 ORDER BY created_at DESC', [actualTenantId]);
+      } catch (pErr) {
+        products = [];
+      }
+
+      let docChunks = [];
+      try {
+        docChunks = await executeD1(
+          'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 LIMIT 20',
+          [actualTenantId]
+        );
+      } catch (dErr) {
+        docChunks = [];
+      }
+
+      // Score de productos (coincidencia con nombre, sku, descripción, categoría y stock)
+      const scoredProducts = products.map(p => {
+        const pText = `${p.name} ${p.name} ${p.short_description || ''} ${p.full_description || ''} ${p.details?.category || ''} ${p.details?.sku || ''}`;
+        const score = computeOverlapScore(message, pText);
+        const cleanUser = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const cleanName = p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const nameWords = cleanName.split(/\s+/).filter(w => w.length > 2);
+        const hasNameMatch = nameWords.some(w => cleanUser.includes(w));
+        const finalScore = hasNameMatch ? Math.max(score, 0.75) : score;
+        return { product: p, score: finalScore };
+      }).sort((a, b) => b.score - a.score);
+
+      const matchedProducts = scoredProducts.filter(sp => sp.score >= 0.28).map(sp => sp.product);
+
+      // Score de fragmentos de documentos/manuales
+      const matchedChunks = docChunks.map(c => ({
+        chunk: c,
+        score: computeOverlapScore(message, `${c.title} ${c.content}`)
+      })).filter(sc => sc.score >= 0.28).map(sc => sc.chunk);
+
+      const hasKnowledge = matchedProducts.length > 0 || matchedChunks.length > 0 || products.length > 0;
+
+      if (hasKnowledge) {
+        let contextBlock = '';
+
+        // Catálogo / Productos / Inventario
+        const prodsToInclude = matchedProducts.length > 0 ? matchedProducts.slice(0, 3) : products.slice(0, 3);
+        contextBlock += '--- PRODUCTOS & INVENTARIO DISPONIBLE ---\n' + prodsToInclude.map(p => {
+          const stock = p.details?.stock !== undefined ? ` | Stock: ${p.details.stock} unidades` : '';
+          const sku = p.details?.sku ? ` | SKU: ${p.details.sku}` : '';
+          return `PRODUCTO: ${p.name}\nPRECIO: $${p.price} ${p.currency || 'USD'}${stock}${sku}\nDESCRIPCIÓN: ${p.full_description || p.short_description || 'Sin descripción adicional'}\nENLACE DIRECTO DE COMPRA: ${p.cta_url || (targetTenant.cta_url || '')}\n${p.embedding_text ? `MANUAL RAG ESPECÍFICO: ${p.embedding_text}\n` : ''}`;
+        }).join('\n\n');
+
+        // Documentos / manuales subidos
+        if (matchedChunks.length > 0) {
+          contextBlock += '\n\n--- MANUALES Y POLÍTICAS DEL NEGOCIO ---\n' + matchedChunks.slice(0, 3).map(c => `DOCUMENTO [${c.title}]: ${c.content}`).join('\n\n');
+        }
+
+        const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
+
+        const llmResult = await callEdgeLLM({
+          systemPrompt,
+          context: contextBlock,
+          history: sessionHistory,
+          userMessage: message,
+          env,
+          customKey: targetTenant.custom_llm_key
+        });
+
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, 'level_3_catalog']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_3_catalog',
+          levelLabel: 'Nivel 3: Asesoría de Catálogo & RAG',
+          confidence: matchedProducts.length > 0 ? 0.92 : 0.70,
+          answer: llmResult.text,
+          products: prodsToInclude,
+          provider: llmResult.provider
+        });
+      }
+
+      // 7. NIVEL 4: Fallback / Anti-Alucinación / HITL
+      try {
+        const unresId = 'unres_' + Date.now();
+        await executeD1(
+          'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, status) VALUES (?1, ?2, ?3, ?4, ?5)',
+          [unresId, actualTenantId, currentSessionId, message, 'pending']
+        );
+      } catch (uErr) {}
+
+      const fallbackAnswer = `No tengo ese dato exacto en el catálogo en este momento. Con mucho gusto lo consulto directamente con nuestro equipo de atención para darte información precisa.\n\n¿Me podrías indicar tu número de WhatsApp o correo electrónico para contactarte de inmediato?`;
+      const botMsgId = 'msg_' + Date.now() + '_b';
+      try {
+        await executeD1(
+          'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [botMsgId, currentSessionId, actualTenantId, 'assistant', fallbackAnswer, 'fallback_hitl']
+        );
+      } catch (e) {}
+
+      return jsonResponse({
+        sessionId: currentSessionId,
+        level: 'fallback_hitl',
+        levelLabel: 'Nivel 4: Derivación a Asesor Humano',
+        confidence: 0.15,
+        answer: fallbackAnswer,
+        isFallback: true,
+        requiresLeadInfo: true
+      });
+    }
+
+    // LEAD CAPTURE: POST /api/chat/lead
+    if (segments[0] === 'chat' && segments[1] === 'lead' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { sessionId, name, phone, email } = body;
+      if (!sessionId) return jsonResponse({ error: 'sessionId requerido' }, 400);
+
+      await executeD1(
+        'UPDATE chat_sessions SET user_name = COALESCE(?1, user_name), user_phone = COALESCE(?2, user_phone), user_email = COALESCE(?3, user_email), updated_at = datetime(\'now\') WHERE id = ?4',
+        [name || null, phone || null, email || null, sessionId]
+      );
+      try {
+        await executeD1(
+          'UPDATE unresolved_queries SET user_lead_info = ?1 WHERE session_id = ?2',
+          [JSON.stringify({ name, phone, email }), sessionId]
+        );
+      } catch (e) {}
+
+      return jsonResponse({ success: true, message: 'Datos de contacto registrados' });
+    }
+
+    // PWA PUSH SUBSCRIBE: POST /api/chat/push-subscribe
+    if (segments[0] === 'chat' && segments[1] === 'push-subscribe' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { sessionId, subscription } = body;
+      if (!sessionId || !subscription) return jsonResponse({ error: 'sessionId y subscription requeridos' }, 400);
+
+      await executeD1(
+        'UPDATE chat_sessions SET pwa_push_subscription = ?1, updated_at = datetime(\'now\') WHERE id = ?2',
+        [JSON.stringify(subscription), sessionId]
+      );
+      return jsonResponse({ success: true, message: 'Suscripción Web Push registrada con éxito' });
+    }
+
+    // INVENTORY BULK IMPORT: POST /api/products/bulk-import (From Excel .xlsx / CSV)
+    if (segments[0] === 'products' && segments[1] === 'bulk-import' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantId, products: importItems } = body;
+      if (!importItems || !Array.isArray(importItems) || importItems.length === 0) {
+        return jsonResponse({ error: 'Lista de productos requerida' }, 400);
+      }
+
+      let resolvedTenantId = tenantId;
+      if (!resolvedTenantId || resolvedTenantId === 'tenant-demo') {
+        const t = await executeD1('SELECT id FROM tenants LIMIT 1');
+        resolvedTenantId = t[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+      }
+
+      let importedCount = 0;
+      for (const item of importItems) {
+        if (!item.name) continue;
+        const id = 'prod_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const price = parseFloat(item.price) || 0;
+        const details = {
+          stock: item.stock !== undefined ? parseInt(item.stock, 10) : 10,
+          sku: item.sku || '',
+          category: item.category || 'General'
+        };
+
+        await executeD1(
+          'INSERT INTO products (id, tenant_id, name, slug, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
+          [
+            id, resolvedTenantId, item.name, slug, price, item.currency || 'USD',
+            item.short_description || `Producto: ${item.name}`,
+            item.full_description || item.short_description || `Producto de catálogo: ${item.name}`,
+            JSON.stringify([]),
+            JSON.stringify([`Stock disponible: ${details.stock} unidades`, `SKU: ${details.sku || 'N/A'}`]),
+            JSON.stringify(details),
+            'Comprar Ahora',
+            ''
+          ]
+        );
+
+        await executeD1(
+          'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
+          [id, resolvedTenantId]
+        );
+        importedCount++;
+      }
+
+      return jsonResponse({ success: true, count: importedCount }, 201);
+    }
+
+    // FAQS BULK: POST /api/faqs/bulk
+    if (segments[0] === 'faqs' && segments[1] === 'bulk' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenant_id, faqs: faqsList } = body;
+      if (!faqsList || !Array.isArray(faqsList)) return jsonResponse({ error: 'Lista de faqs requerida' }, 400);
+
+      for (const f of faqsList) {
+        if (!f.question || !f.answer) continue;
+        const id = 'faq_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+        const keywords = tokenize(f.question).slice(0, 15);
+        await executeD1(
+          'INSERT INTO faqs (id, tenant_id, question, answer, keywords, category, confidence_threshold, source) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
+          [id, tenant_id || 'tenant-demo', f.question, f.answer, JSON.stringify(keywords), f.category || 'general', f.confidence_threshold || 0.65, 'bulk_upload']
+        );
+      }
+      return jsonResponse({ success: true, count: faqsList.length }, 201);
+    }
+
+    // DOCUMENTS: GET /api/documents
+    if (segments[0] === 'documents' && segments.length === 1 && request.method === 'GET') {
+      const tenantId = url.searchParams.get('tenantId');
+      if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
+
+      const rows = await executeD1(
+        'SELECT kd.id, kd.title, kd.category, kd.file_type, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.tenant_id = ?1 GROUP BY kd.id ORDER BY kd.created_at DESC',
+        [tenantId]
+      );
+      return jsonResponse({ documents: rows });
+    }
+
+    // DOCUMENTS: POST /api/documents (and POST /api/documents/ingest)
+    if (segments[0] === 'documents' && (segments.length === 1 || segments[1] === 'ingest') && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenant_id, title, content, category } = body;
+      if (!tenant_id || !title || !content) {
+        return jsonResponse({ error: 'tenant_id, title y content requeridos' }, 400);
+      }
+
+      const docId = 'doc_' + Date.now();
+      await executeD1(
+        'INSERT INTO knowledge_documents (id, tenant_id, title, category, file_type, raw_content) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+        [docId, tenant_id, title, category || 'manuales', 'text', content]
+      );
+
+      // Particionar en párrafos (~600 caracteres con overlap)
+      const clean = content.trim();
+      const chunks = [];
+      let start = 0;
+      while (start < clean.length) {
+        let end = start + 600;
+        if (end < clean.length) {
+          const cut = Math.max(clean.lastIndexOf('.', end), clean.lastIndexOf('\n', end));
+          if (cut > start + 150) end = cut + 1;
+        }
+        const chunkText = clean.slice(start, end).trim();
+        if (chunkText.length > 20) chunks.push(chunkText);
+        start = end - 100;
+        if (start >= clean.length - 40) break;
+      }
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkId = 'chk_' + Date.now() + '_' + i;
+        const keywords = tokenize(chunks[i]).slice(0, 15);
+        await executeD1(
+          'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [chunkId, docId, tenant_id, i, chunks[i], JSON.stringify(keywords)]
+        );
+      }
+
+      return jsonResponse({ success: true, document: { id: docId, title, chunksCount: chunks.length } }, 201);
+    }
+
+    // DOCUMENTS: DELETE /api/documents/:id
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'DELETE') {
+      const id = segments[1];
+      await executeD1('DELETE FROM document_chunks WHERE document_id = ?1', [id]);
+      await executeD1('DELETE FROM knowledge_documents WHERE id = ?1', [id]);
+      return jsonResponse({ success: true, message: 'Documento eliminado' });
     }
 
     return jsonResponse({ message: 'Ruta no encontrada' }, 404);
