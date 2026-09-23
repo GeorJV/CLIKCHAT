@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-16 13:20 GMT-6
-- **Versión Actual:** 1.20.61 (Selector de Tipo de Negocio compacto, ceñido y balanceado)
+- **Última Actualización:** 2026-09-23 17:30 GMT-6
+- **Versión Actual:** 1.21.0 (Motor Conversacional RAG 100% Edge en Cloudflare + Carga Masiva de Inventario Excel/CSV)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Selector de Tipo de Negocio: Rediseño compacto horizontal con badges de color, tamaño ceñido (~42px) y distribución balanceada.
-  - RAG de Producto: Ingesta .txt, .docx, .pdf a $0 tokens y persistencia en D1.
-  - Dashboard Principal: Consolida Métricas & Analítica Global (5 KPIs) + Reportería Exacta.
-  - Mis Productos: Catálogo enfocado en gestión, con botón 'RAG' distintivo y 'Ver métricas'.
+  - Chat Edge 24/7 Serverless: Ruta `POST /api/chat/message` activa en Cloudflare Functions. Cero servidores Node requeridos.
+  - RAG 4 Niveles Real: N1 Memoria Episódica D1, N2 FAQs a $0 tokens, N3 Catálogo/Documentos con OpenRouter GPT-4o-mini y Gemini, N4 Fallback HITL.
+  - Inventario Excel (.xlsx / .csv): Mapeo automático de columnas (Nombre, Precio, Stock, SKU) e importación directa a D1 (`/api/products/bulk-import`).
+  - Catálogo de Productos: Botón 'Importar Excel' integrado en `ProductsHeader` con previsualización en vivo.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_APROBADOS.md.
