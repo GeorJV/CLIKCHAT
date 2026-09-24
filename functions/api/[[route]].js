@@ -69,7 +69,9 @@ const STOP_WORDS = new Set([
   'un', 'una', 'unos', 'unas', 'es', 'son', 'se', 'su', 'sus', 'lo', 'le', 'les', 'o', 'u',
   'como', 'pero', 'mas', 'si', 'no', 'mi', 'tu', 'te', 'me', 'nos', 'the', 'of', 'and', 'to',
   'tiene', 'tienen', 'tienes', 'tengo', 'tenemos', 'hay', 'hace', 'puedo', 'puede', 'quiero',
-  'hola', 'buenas', 'gracias', 'este', 'esta', 'estos', 'estas'
+  'hola', 'buenas', 'gracias', 'este', 'esta', 'estos', 'estas',
+  'dan', 'dar', 'dame', 'danos', 'quisiera', 'averiguar', 'pregunto', 'pregunta', 'preguntar',
+  'saber', 'consulta', 'consultar', 'informacion'
 ]);
 
 function stemSpanish(w) {
@@ -89,22 +91,32 @@ function tokenize(text) {
     .map(stemSpanish);
 }
 
+function isFuzzyTokenMatch(a, b) {
+  if (a === b) return true;
+  if ((a.length >= 4 && b.startsWith(a)) || (b.length >= 4 && a.startsWith(b))) return true;
+  if (a.length >= 5 && b.length >= 5 && Math.abs(a.length - b.length) <= 2) {
+    let diff = 0;
+    const minL = Math.min(a.length, b.length);
+    for (let i = 0; i < minL; i++) {
+      if (a[i] !== b[i]) diff++;
+      if (diff > 2) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 function computeOverlapScore(textA, textB) {
   if (!textA || !textB) return 0;
   const tokensA = tokenize(textA);
   const tokensB = tokenize(textB);
   if (tokensA.length === 0 || tokensB.length === 0) return 0;
-  const setB = new Set(tokensB);
   let matches = 0;
   for (const t of tokensA) {
-    if (setB.has(t)) {
-      matches += 1.0;
-    } else {
-      for (const b of setB) {
-        if ((t.length >= 4 && b.startsWith(t)) || (b.length >= 4 && t.startsWith(b))) {
-          matches += 0.8;
-          break;
-        }
+    for (const b of tokensB) {
+      if (isFuzzyTokenMatch(t, b)) {
+        matches += 1.0;
+        break;
       }
     }
   }
@@ -121,7 +133,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
   })();
 
-  const systemContent = `${systemPrompt}\n\n[INFORMACIÓN VERIFICADA DEL NEGOCIO / CATÁLOGO / INVENTARIO]:\n${context}\n\nREGLAS DE ATENCIÓN:\n1. Responde de forma amable, persuasiva, comercial y concisa (estilo asesor de ventas).\n2. Basa tus respuestas ÚNICAMENTE en la información verificada arriba. NO inventes precios ni stock que no figuren.\n3. Si el cliente pregunta por disponibilidad o precios, dale los datos exactos del inventario.\n4. Invita cordialmente al cliente a pulsar el botón de compra o a comunicarse por WhatsApp para concretar su pedido.`;
+  const systemContent = `${systemPrompt}\n\n[INFORMACIÓN VERIFICADA DEL NEGOCIO / POLÍTICAS / CATÁLOGO / INVENTARIO]:\n${context}\n\nREGLAS DE ATENCIÓN COMERCIAL:\n1. Responde siempre de forma amable, persuasiva, orientada a ventas y con total certeza.\n2. NUNCA respondas diciendo de forma cortante "no tengo información específica". Tienes a tu disposición toda la información oficial del negocio arriba (horarios de atención, políticas de garantía y devolución, envíos, métodos de pago, catálogo e inventario).\n3. Si el cliente pregunta por promociones o descuentos especiales: explícale los precios altamente competitivos vigentes e invítalo amablemente a contactar por WhatsApp para cotizaciones por volumen o promociones personalizadas.\n4. Basa estrictamente tus datos de precios, especificaciones y stock en la información verificada. NO inventes cifras que no figuren.\n5. Invita cordialmente al cliente a pulsar el botón de compra o a comunicarse por WhatsApp para concretar su pedido.`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -722,16 +734,37 @@ export async function onRequest(context) {
 
       let topFaq = null;
       let topFaqScore = 0;
+      const cleanUserMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
       for (const faq of faqs) {
-        const targetText = `${faq.question} ${faq.keywords ? (Array.isArray(faq.keywords) ? faq.keywords.join(' ') : faq.keywords) : ''}`;
+        let rawKeywords = [];
+        if (faq.keywords) {
+          if (Array.isArray(faq.keywords)) rawKeywords = faq.keywords;
+          else if (typeof faq.keywords === 'string') {
+            try { rawKeywords = JSON.parse(faq.keywords); } catch (e) { rawKeywords = [faq.keywords]; }
+          }
+        }
+        const targetText = `${faq.question} ${rawKeywords.join(' ')}`;
         const score = computeOverlapScore(message, targetText);
-        if (score > topFaqScore) {
-          topFaqScore = score;
+
+        // Keyword boost: si el mensaje del usuario incluye una palabra clave de la FAQ
+        let keywordHit = false;
+        for (const kw of rawKeywords) {
+          const cleanKw = String(kw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+          if (cleanKw.length >= 4 && cleanUserMsg.includes(cleanKw)) {
+            keywordHit = true;
+            break;
+          }
+        }
+
+        const effectiveScore = keywordHit ? Math.max(score, 0.85) : score;
+        if (effectiveScore > topFaqScore) {
+          topFaqScore = effectiveScore;
           topFaq = faq;
         }
       }
 
-      const faqThreshold = parseFloat(topFaq?.confidence_threshold) || 0.65;
+      const faqThreshold = parseFloat(topFaq?.confidence_threshold) || 0.60;
       if (topFaq && topFaqScore >= faqThreshold) {
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
@@ -791,12 +824,29 @@ export async function onRequest(context) {
         score: computeOverlapScore(message, `${c.title} ${c.content}`)
       })).filter(sc => sc.score >= 0.28).map(sc => sc.chunk);
 
-      const hasKnowledge = matchedProducts.length > 0 || matchedChunks.length > 0 || products.length > 0;
+      const hasKnowledge = matchedProducts.length > 0 || matchedChunks.length > 0 || products.length > 0 || faqs.length > 0;
 
       if (hasKnowledge) {
         let contextBlock = '';
 
-        // Catálogo / Productos / Inventario
+        // 1. Información General del Negocio
+        contextBlock += `--- INFORMACIÓN GENERAL DEL NEGOCIO ---\n`;
+        contextBlock += `NOMBRE DE LA EMPRESA: ${targetTenant.name || 'ClikChat Store'}\n`;
+        contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
+        contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;
+        if (targetTenant.cta_url) {
+          contextBlock += `CANAL OFICIAL DE CONTACTO / WHATSAPP: ${targetTenant.cta_url}\n`;
+        }
+        contextBlock += '\n';
+
+        // 2. Políticas y Preguntas Frecuentes Oficiales (FAQs)
+        if (faqs.length > 0) {
+          contextBlock += `--- PREGUNTAS FRECUENTES Y POLÍTICAS DEL NEGOCIO (FAQS) ---\n` + faqs.map(f => {
+            return `• CONSULTA: ${f.question}\n  RESPUESTA OFICIAL: ${f.answer}`;
+          }).join('\n\n') + '\n\n';
+        }
+
+        // 3. Catálogo / Productos / Inventario
         const prodsToInclude = matchedProducts.length > 0 ? matchedProducts.slice(0, 3) : products.slice(0, 3);
         contextBlock += '--- PRODUCTOS & INVENTARIO DISPONIBLE ---\n' + prodsToInclude.map(p => {
           const stock = p.details?.stock !== undefined ? ` | Stock: ${p.details.stock} unidades` : '';
@@ -804,7 +854,7 @@ export async function onRequest(context) {
           return `PRODUCTO: ${p.name}\nPRECIO: $${p.price} ${p.currency || 'USD'}${stock}${sku}\nDESCRIPCIÓN: ${p.full_description || p.short_description || 'Sin descripción adicional'}\nENLACE DIRECTO DE COMPRA: ${p.cta_url || (targetTenant.cta_url || '')}\n${p.embedding_text ? `MANUAL RAG ESPECÍFICO: ${p.embedding_text}\n` : ''}`;
         }).join('\n\n');
 
-        // Documentos / manuales subidos
+        // 4. Documentos / manuales subidos
         if (matchedChunks.length > 0) {
           contextBlock += '\n\n--- MANUALES Y POLÍTICAS DEL NEGOCIO ---\n' + matchedChunks.slice(0, 3).map(c => `DOCUMENTO [${c.title}]: ${c.content}`).join('\n\n');
         }
