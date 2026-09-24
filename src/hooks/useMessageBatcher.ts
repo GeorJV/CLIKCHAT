@@ -5,13 +5,13 @@ interface UseMessageBatcherOptions {
   debounceMs?: number;
   deliveryDelayMs?: number;
   onDeliverUserMessage: (msg: ProductChatMessage) => void;
-  onTriggerBotReply: (batchedTexts: string[]) => void;
+  onTriggerBotReply: (batchedTexts: string[]) => void | Promise<void>;
   onSetLoading: (loading: boolean) => void;
 }
 
 export function useMessageBatcher({
-  debounceMs = 9000,
-  deliveryDelayMs = 350,
+  debounceMs = 1200,
+  deliveryDelayMs = 250,
   onDeliverUserMessage,
   onTriggerBotReply,
   onSetLoading,
@@ -42,30 +42,32 @@ export function useMessageBatcher({
       onDeliverUserMessage(userMsg);
     }, deliveryDelayMs);
 
-    botDebounceTimerRef.current = setTimeout(() => {
+    botDebounceTimerRef.current = setTimeout(async () => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
 
       if (batchToProcess.length > 0) {
         onSetLoading(true);
-        setTimeout(() => {
-          onTriggerBotReply(batchToProcess);
+        try {
+          await onTriggerBotReply(batchToProcess);
+        } finally {
           onSetLoading(false);
-        }, 700);
+        }
       }
     }, debounceMs);
   }, [debounceMs, deliveryDelayMs, onDeliverUserMessage, onTriggerBotReply, onSetLoading]);
 
   // Procesa consulta de voz en el bot sin agregar mensaje de texto duplicado del usuario
-  const sendVoiceQuery = useCallback((text: string) => {
+  const sendVoiceQuery = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
     onSetLoading(true);
-    setTimeout(() => {
-      onTriggerBotReply([trimmed]);
+    try {
+      await onTriggerBotReply([trimmed]);
+    } finally {
       onSetLoading(false);
-    }, 600);
+    }
   }, [onTriggerBotReply, onSetLoading]);
 
   const clearBatch = useCallback(() => {

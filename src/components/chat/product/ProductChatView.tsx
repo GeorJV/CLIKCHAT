@@ -45,8 +45,8 @@ export const ProductChatView: React.FC<Props> = ({
   };
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: 9000,
-    deliveryDelayMs: 350,
+    debounceMs: 1000,
+    deliveryDelayMs: 200,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onTriggerBotReply: async (batch) => {
       const userText = batch.join('\n').trim();
