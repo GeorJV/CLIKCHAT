@@ -13,7 +13,7 @@ export const PlatformAIModelManager: React.FC = () => {
     primaryModel: 'deepseek/deepseek-chat',
     reasoningModel: 'openai/gpt-4o-mini',
     splitRatio: '90/10',
-    fallbackProvider: 'google_ai_studio'
+    fallbackProvider: 'cross_fallback'
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -80,11 +80,11 @@ export const PlatformAIModelManager: React.FC = () => {
 
         <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-400 uppercase">Respaldo Global</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">Contingencia</span>
+            <span className="text-[10px] font-bold text-emerald-400 uppercase">Respaldo Cruzado</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">Alta Disponibilidad</span>
           </div>
-          <p className="text-xs font-bold text-white">Google AI Studio (Gemini 2.0)</p>
-          <p className="text-[10px] text-slate-400">Consultas de la web propia y respaldo en caso de latencia de red.</p>
+          <p className="text-xs font-bold text-white">DeepSeek ⟷ GPT-4o Mini</p>
+          <p className="text-[10px] text-slate-400">Conmutación mutua inmediata ante latencia o fallos sin interrupción.</p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export const PlatformAIModelManager: React.FC = () => {
             onChange={(e) => setConfig({ ...config, splitRatio: e.target.value })}
             className="w-full text-xs p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-semibold"
           >
-            <option value="90/10">90% DeepSeek / 10% GPT-4o Mini (Recomendado)</option>
+            <option value="90/10">90% DeepSeek / 10% GPT-4o Mini (Oficial Activo)</option>
             <option value="100/0">100% DeepSeek (Máximo Ahorro & Velocidad)</option>
             <option value="0/100">100% GPT-4o Mini (Máximo Razonamiento)</option>
             <option value="80/20">80% DeepSeek / 20% GPT-4o Mini</option>
@@ -104,14 +104,14 @@ export const PlatformAIModelManager: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Respaldo Activo</label>
+          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Estrategia de Failover</label>
           <select
             value={config.fallbackProvider}
             onChange={(e) => setConfig({ ...config, fallbackProvider: e.target.value })}
             className="w-full text-xs p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-semibold"
           >
-            <option value="google_ai_studio">Google AI Studio (Gemini 2.0 Flash)</option>
-            <option value="workers_ai">Cloudflare Workers AI (Llama 3)</option>
+            <option value="cross_fallback">Respaldo Cruzado DeepSeek ⟷ GPT-4o Mini</option>
+            <option value="workers_ai">Cloudflare Workers AI (Llama 3 Contingencia)</option>
           </select>
         </div>
 

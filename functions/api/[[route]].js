@@ -296,29 +296,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     console.warn(`Fallo en respaldo cruzado (${fallbackModel}):`, e.message);
   }
 
-  // 3. Respaldo Final de Contingencia: Google AI Studio (Gemini 2.0 Flash)
-  try {
-    const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
-    const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-    const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleKey}`;
-    const gResp = await fetch(gUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 650 }
-      })
-    });
-    if (gResp.ok) {
-      const gData = await gResp.json();
-      const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (gText && gText.trim().length > 0) return { text: gText.trim(), provider: 'google_ai_studio' };
-    }
-  } catch (e) {
-    console.warn('Google AI Studio falló en Edge:', e.message);
-  }
-
-  // 4. Respaldo: Cloudflare Workers AI Llama 3
+  // 3. Respaldo: Cloudflare Workers AI Llama 3
   if (env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3-8b-instruct', {

@@ -169,7 +169,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <Terminal className="w-5 h-5 text-indigo-400" />
             <div>
               <h2 className="text-sm font-bold text-white">Consola de Pruebas Multi-Modelo</h2>
-              <p className="text-xs text-slate-400">Verifica respuestas en tiempo real con DeepSeek, GPT-4o Mini o Gemini</p>
+              <p className="text-xs text-slate-400">Verifica respuestas en tiempo real con DeepSeek V3 (90%) y GPT-4o Mini (10%)</p>
             </div>
           </div>
 
@@ -180,8 +180,6 @@ export const SuperAdminDashboard: React.FC = () => {
           >
             <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat - Principal 90%)</option>
             <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Razonamiento 10%)</option>
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google AI Studio)</option>
-            <option value="gemini-2.0-pro">Gemini 2.0 Pro</option>
           </select>
         </div>
 

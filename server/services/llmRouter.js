@@ -101,24 +101,27 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Try OpenRouter (tenant key or default)
+    // 1. Modelo Principal: DeepSeek V3 (90% tráfico comercial)
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
     const response = await callOpenRouter(messages, {
       apiKey,
-      model: model || 'openai/gpt-4o-mini',
-      temperature: 0.3
+      model: model || 'deepseek/deepseek-chat',
+      temperature: 0.35
     });
-    return { success: true, text: response, provider: 'openrouter' };
+    return { success: true, text: response, provider: model || 'deepseek/deepseek-chat' };
   } catch (err) {
-    console.warn('⚠️ Fallo en OpenRouter, intentando Google AI Studio fallback:', err.message);
+    console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo cruzado con GPT-4o Mini:', err.message);
     try {
-      // 2. Fallback to Google AI Studio con contexto e historial episódico completo
-      const recentHistoryText = history.map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
-      const promptText = `${systemPrompt}\n\n[CONTEXTO VERIFICADO]:\n${context}${recentHistoryText ? `\n\n[HISTORIAL RECIENTE]:\n${recentHistoryText}` : ''}\n\nPregunta: ${userMessage}`;
-      const response = await callGoogleAIStudio(promptText);
-      return { success: true, text: response, provider: 'google_ai_studio' };
+      // 2. Modelo Auxiliar / Respaldo: OpenAI GPT-4o Mini (10% razonamiento y failover)
+      const apiKey = DEFAULT_OPENROUTER_KEY;
+      const response = await callOpenRouter(messages, {
+        apiKey,
+        model: 'openai/gpt-4o-mini',
+        temperature: 0.25
+      });
+      return { success: true, text: response, provider: 'openai/gpt-4o-mini' };
     } catch (gErr) {
-      console.error('❌ Fallaron ambos proveedores LLM:', gErr.message);
+      console.error('❌ Fallaron ambos modelos de la plataforma:', gErr.message);
       // 3. Fallback to context-based template response so the user never gets an empty error
       if (context && context.trim().length > 0) {
         return {
