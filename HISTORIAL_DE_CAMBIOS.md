@@ -157,6 +157,16 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   3. *Purga en D1:* Se eliminaron de `chat_messages` y `chat_sessions` las 70 entradas de las sesiones compartidas globales antiguas (`sess_prod_prod_1789447247688` y `sess_prod_1789447247688`).
   4. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages (`clikchat.pages.dev`).
 
+### [2026-09-24] Restauración de Burbujas de Usuario Compactas (Hora Inline Float-Right y Padding Angosto)
+- **Problema Detectado por el Usuario:** En los mensajes del usuario existía un espacio excesivo arriba y abajo dentro de la burbuja, y la hora aparecía en una línea separada con espacio vertical innecesario, rompiendo el diseño compacto previamente establecido en el commit `61dc924` ("hora inline en ultimo renglon de burbuja").
+- **Causa Raíz:** Al integrar `ChatMessageContent` para el control de overflow, se había envuelto el mensaje del usuario en un contenedor de bloque con `space-y-1` y padding `py-2`, lo que forzaba a la hora a colocarse en un nuevo bloque inferior y aumentaba el alto total de la burbuja.
+- **Solución Implementada:**
+  1. *Diseño Compacto con `flow-root`:* Se restauró la estructura `flow-root` con `float-right ml-2.5 mt-0.5` para los mensajes de usuario en `ProductChatColumn.tsx`, `ServiceChatColumn.tsx`, `ChatMessageItem.tsx` y `ConversationDetail.tsx`. En textos cortos (ej: *"tienen descuentos"*), la hora se alinea en el mismo renglón a la derecha sin salto de línea ni espacio desperdiciado.
+  2. *Padding Proporcional y Angosto:* Se redujo el padding vertical de las burbujas de usuario a `px-3 py-1.5` con `leading-snug`, eliminando el espacio sobrante arriba y abajo.
+  3. *Aislamiento de Parser Markdown:* `ChatMessageContent` se reserva para respuestas del bot (que contienen negritas, listas o enlaces), mientras los mensajes de usuario utilizan renderizado directo y compacto.
+  4. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
+
+
 
 
 

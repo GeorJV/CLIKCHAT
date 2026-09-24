@@ -74,7 +74,13 @@ export const ServiceChatColumn: React.FC<Props> = ({
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
           return (
             <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
-              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm'} ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
+              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${
+                msg.isAudio
+                  ? 'px-2 py-0.5'
+                  : isAssistant
+                    ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm'
+                    : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'
+              } ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
                 {msg.isAudio ? (
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
                 ) : isAssistant && msg.ragTrace ? (
@@ -85,12 +91,19 @@ export const ServiceChatColumn: React.FC<Props> = ({
                       <span className="text-[10px] text-zinc-400 shrink-0 self-end select-none">{msg.timestamp || '20:03'}</span>
                     </div>
                   </div>
-                ) : (
+                ) : isAssistant ? (
                   <div className="space-y-1 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={!isAssistant} />
+                    <ChatMessageContent content={msg.content} isUser={false} />
                     <div className="flex justify-end">
                       <span className={`text-[10px] select-none tabular-nums ${isAssistant ? 'text-zinc-400' : 'opacity-70'}`}>{msg.timestamp || '20:03'}</span>
                     </div>
+                  </div>
+                ) : (
+                  <div className="flow-root leading-snug">
+                    <span className="whitespace-pre-wrap break-words select-text">{msg.content}</span>
+                    <span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">
+                      {msg.timestamp || '20:03'}
+                    </span>
                   </div>
                 )}
               </div>

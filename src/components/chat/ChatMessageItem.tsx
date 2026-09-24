@@ -20,8 +20,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   return (
     <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
       <div
-        className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl leading-relaxed transition-all shadow-sm break-words overflow-hidden ${
-          msg.isAudio ? 'px-2 py-0.5' : 'p-3 text-xs'
+        className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl transition-all shadow-sm break-words overflow-hidden ${
+          msg.isAudio ? 'px-2 py-0.5' : isUser ? 'px-3 py-1.5 text-xs sm:text-sm' : 'p-3 text-xs leading-relaxed'
         } ${
           isUser
             ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl border border-[#D79F4C]/30'
@@ -51,8 +51,15 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             timestamp={new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             isUser={isUser}
           />
+        ) : isUser ? (
+          <div className="flow-root leading-snug">
+            <span className="whitespace-pre-wrap break-words select-text">{msg.message}</span>
+            <span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">
+              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
         ) : (
-          <ChatMessageContent content={msg.message} isUser={isUser} />
+          <ChatMessageContent content={msg.message} isUser={false} />
         )}
 
         {/* Product Recommendations from RAG L3 */}
@@ -93,8 +100,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         )}
       </div>
 
-      {/* Timestamp */}
-      {!msg.isAudio && (
+      {/* Timestamp exterior solo para asistente */}
+      {!msg.isAudio && !isUser && (
         <span className="text-[10px] text-slate-500 mt-1 px-1">
           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>

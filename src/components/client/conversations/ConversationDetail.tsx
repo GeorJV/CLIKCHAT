@@ -160,24 +160,33 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
             return (
               <div key={m.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3 text-xs shadow-sm break-words overflow-hidden ${
+                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl text-xs shadow-sm break-words overflow-hidden ${
                     isUser
-                      ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-tr-none border border-[#D79F4C]/30 shadow-md'
-                      : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60'
+                      ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-tr-none border border-[#D79F4C]/30 shadow-md px-3 py-1.5'
+                      : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60 p-3'
                   }`}
                 >
-                  <ChatMessageContent content={text} isUser={isUser} />
-                  <div className={`mt-1.5 pt-1 flex items-center justify-between text-[9px] ${
-                    isUser ? 'text-amber-200/80 border-t border-white/10' : 'text-zinc-500 border-t border-white/[0.06]'
-                  }`}>
-                    {rag ? (
-                      <span className="font-mono text-emerald-400">Traza RAG: {rag}</span>
-                    ) : <span />}
-                    <span className="flex items-center gap-1 font-mono">
-                      {time}
-                      {isUser && <CheckCheck className="w-3 h-3 text-amber-300 inline" />}
-                    </span>
-                  </div>
+                  {isUser ? (
+                    <div className="flow-root leading-snug">
+                      <span className="whitespace-pre-wrap break-words select-text">{text}</span>
+                      <span className="float-right ml-2.5 mt-0.5 text-[10px] text-amber-200/90 flex items-center gap-0.5 font-mono select-none">
+                        {time}
+                        <CheckCheck className="w-3 h-3 text-amber-300 inline ml-0.5" />
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <ChatMessageContent content={text} isUser={false} />
+                      <div className="mt-1.5 pt-1 flex items-center justify-between text-[9px] text-zinc-500 border-t border-white/[0.06]">
+                        {rag ? (
+                          <span className="font-mono text-emerald-400">Traza RAG: {rag}</span>
+                        ) : <span />}
+                        <span className="flex items-center gap-1 font-mono">
+                          {time}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
