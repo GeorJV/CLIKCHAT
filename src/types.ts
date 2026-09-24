@@ -53,6 +53,7 @@ export interface Tenant {
   business_hours?: string;
   logo_url?: string;
   tone_of_voice?: string;
+  response_delay_sec?: number;
 }
 
 export interface ChatMessage {

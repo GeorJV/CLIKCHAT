@@ -11,12 +11,12 @@ import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
-  services?: ServiceItem[]; initialService?: ServiceItem; onExit?: () => void;
+  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Estético Aura', agentName = 'Dra. Elena', agentAvatar,
-  services = [DEFAULT_SERVICE], initialService, onExit,
+  services = [DEFAULT_SERVICE], initialService, responseDelaySec, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || DEFAULT_SERVICE);
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
@@ -37,7 +37,7 @@ export const ServiceChatView: React.FC<Props> = ({
   }, [selectedService.id]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: 1000,
+    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800),
     deliveryDelayMs: 200,
     onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),

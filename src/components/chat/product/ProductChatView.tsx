@@ -10,12 +10,12 @@ import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
-  products?: ProductItem[]; initialProduct?: ProductItem; onExit?: () => void;
+  products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Clikchat Store', agentName = 'Sofía', agentAvatar,
-  products = [DEFAULT_PRODUCT], initialProduct, onExit,
+  products = [DEFAULT_PRODUCT], initialProduct, responseDelaySec, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || DEFAULT_PRODUCT);
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
@@ -45,7 +45,7 @@ export const ProductChatView: React.FC<Props> = ({
   };
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: 1000,
+    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800),
     deliveryDelayMs: 200,
     onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),

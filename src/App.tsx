@@ -21,7 +21,7 @@ export function App() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
   const selectedTenantSlug = params?.get('t') || 'geosoft';
-  const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
+  const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct, responseDelaySec } = useProductResolver(productId, selectedTenantSlug);
 
   useEffect(() => {
     if (pathname === '/' && !params?.has('p') && !params?.has('s') && !params?.has('view') && !params?.has('t')) {
@@ -88,6 +88,7 @@ export function App() {
                 agentAvatar={agentAvatar}
                 initialProduct={productItem || undefined}
                 products={productItem ? [productItem] : []}
+                responseDelaySec={responseDelaySec}
                 onExit={() => navigate('/dashboard')}
               />
             )}
@@ -100,6 +101,7 @@ export function App() {
               storeName={storeName}
               agentName={agentName}
               agentAvatar={agentAvatar}
+              responseDelaySec={responseDelaySec}
               onExit={() => navigate('/dashboard')}
             />
           </div>
