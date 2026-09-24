@@ -825,17 +825,33 @@ export async function onRequest(context) {
     if (segments[0] === 'chat' && segments[1] === 'tenant-conversations' && segments.length === 3 && request.method === 'GET') {
       const tenantId = segments[2];
       const rows = await executeD1(
-        `SELECT s.id, s.user_name, s.user_phone, s.created_at,
+        `SELECT s.id, s.user_name, s.user_phone, s.user_email, s.status, s.created_at, s.updated_at,
+                (SELECT message FROM chat_messages WHERE session_id = s.id AND sender = 'user' ORDER BY created_at ASC LIMIT 1) as first_user_message,
                 (SELECT message FROM chat_messages WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1) as last_message,
                 (SELECT rag_level_used FROM chat_messages WHERE session_id = s.id AND sender = 'assistant' ORDER BY created_at DESC LIMIT 1) as last_rag_level,
                 (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as total_messages
          FROM chat_sessions s
-         WHERE s.tenant_id = ?1
-         ORDER BY s.created_at DESC
-         LIMIT 30`,
+         WHERE s.tenant_id = ?1 AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
+         ORDER BY s.updated_at DESC
+         LIMIT 50`,
         [tenantId]
       );
       return jsonResponse({ conversations: rows });
+    }
+
+    // CHAT: POST /api/chat/status
+    if (segments[0] === 'chat' && segments[1] === 'status' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { sessionId, status } = body;
+      if (!sessionId || !status) return jsonResponse({ error: 'sessionId y status requeridos' }, 400);
+
+      const dbStatus = (status === 'closed') ? 'closed' : 'active';
+      await executeD1(
+        'UPDATE chat_sessions SET status = ?1, updated_at = datetime(\'now\') WHERE id = ?2',
+        [dbStatus, sessionId]
+      );
+      return jsonResponse({ success: true, status });
     }
 
     // CHAT: GET /api/chat/tenant-clients/:tenantId
@@ -1015,7 +1031,7 @@ export async function onRequest(context) {
       // 2. Garantizar sesión viva en chat_sessions
       try {
         await executeD1(
-          'INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, datetime(\'now\')) ON CONFLICT(id) DO UPDATE SET updated_at = datetime(\'now\')',
+          'INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, status, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, \'active\', datetime(\'now\')) ON CONFLICT(id) DO UPDATE SET updated_at = datetime(\'now\'), status = \'active\'',
           [currentSessionId, actualTenantId, leadInfo?.name || null, leadInfo?.phone || null, leadInfo?.email || null]
         );
       } catch (sessErr) {

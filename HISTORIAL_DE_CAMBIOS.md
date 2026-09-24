@@ -122,5 +122,17 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   2. *Envoltorio Natural con `break-words`:* Las palabras completas saltan limpiamente de línea de forma natural sin cortarse. Únicamente si una URL sin espacios excede el ancho de la burbuja, se permite el quiebre de esa cadena específica.
   3. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
 
+### [2026-09-24] Datos de Historial 100% Reales y Eliminación de Sesiones Sintéticas
+- **Problema Detectado por el Usuario:**
+  1. *Acumulación de Sesiones de Prueba Automatizadas:* En la base de datos de producción (`clikchat-db`), las pruebas automáticas anteriores (curl/scripts de agentes) habían creado 51 sesiones sintéticas con prefijos (`sess_mug0...`, `live_verification_...`, `test_...`) de 1 solo mensaje repetitivo sin datos de contacto, mostrándose como una lista masiva de *"Cliente Anónimo"*.
+  2. *Estado Simulado en Código:* En `ConversationsTab.tsx` existía la lógica ficticia `i < 2 ? 'online' : 'closed'`, que forzaba arbitrariamente las 2 primeras sesiones como "online" y las 28 restantes como "cerradas", independientemente de la fecha real de actividad.
+  3. *Desincronización Visual:* Al cambiar de conversación o al ejecutarse el sondeo automático cada 6 segundos, el estado de mensajes retenía los mensajes de la sesión anterior o reseteaba la selección al primer elemento, provocando que se mostrara la transcripción de otra sesión.
+- **Solución y Blindaje Implementado:**
+  1. *Purga Completa de D1:* Se eliminaron las 51 sesiones sintéticas de prueba de `chat_sessions` y sus 102 mensajes huérfanos de `chat_messages`, dejando exclusivamente las sesiones auténticas de clientes con sus preguntas y respuestas reales.
+  2. *Esquema y Estado Real en Base de Datos:* Se agregó la columna `status TEXT DEFAULT 'active'` a `chat_sessions` en Cloudflare D1. El endpoint `POST /api/chat/status` ahora persiste cambios reales de estado ("Finalizar Chat" / "Reabrir Chat").
+  3. *Cálculo Honesto de Online vs Historial:* Se eliminó cualquier condicional simulado. Una sesión se clasifica como `online` únicamente si tiene estado activo e interacción dentro de los últimos 30 minutos; de lo contrario, se agrupa honestamente en `Historial`.
+  4. *Aislamiento Quirúrgico de Mensajes (`ConversationDetail.tsx`):* Al seleccionar una sesión, el estado de mensajes se resetea de forma inmediata y se valida la referencia de sesión en la respuesta asíncrona, eliminando al 100% cualquier contaminación o desincronización entre chats.
+  5. *Identidades Claras de Visitantes:* Los clientes se identifican por su nombre o datos de contacto si fueron capturados, o mediante su identificador único real (`Visitante #<id>`), acompañado de su pregunta real y conteo verificado de mensajes.
+
 
 

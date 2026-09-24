@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, CheckCheck, MessageSquare, RefreshCw } from 'lucide-react';
-import { ConversationSession } from './conversationsDemo';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Phone, Mail, CheckCheck, MessageSquare, RefreshCw, Hash } from 'lucide-react';
+import { ConversationSession, ChatMessageRecord } from './types';
+import { getVisitorDisplayName } from './conversationUtils';
 import { ChatMessageContent } from '../../chat/ChatMessageContent';
 
 interface ConversationDetailProps {
@@ -9,13 +10,20 @@ interface ConversationDetailProps {
 }
 
 export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session, onToggleStatus }) => {
-  const [messages, setMessages] = useState<any[]>(session?.messages || []);
+  const [messages, setMessages] = useState<ChatMessageRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const currentSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!session?.id) {
       setMessages([]);
+      currentSessionIdRef.current = null;
       return;
+    }
+
+    if (currentSessionIdRef.current !== session.id) {
+      setMessages([]);
+      currentSessionIdRef.current = session.id;
     }
 
     let isMounted = true;
@@ -23,10 +31,10 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
     const fetchSessionMessages = async (showSpinner = false) => {
       if (showSpinner) setLoading(true);
       try {
-        const res = await fetch(`/api/chat/messages/${session.id}`);
+        const res = await fetch(`/api/chat/messages/${encodeURIComponent(session.id)}`);
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && data?.messages) {
+          if (isMounted && currentSessionIdRef.current === session.id && data?.messages) {
             setMessages(data.messages);
             return;
           }
@@ -36,15 +44,10 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
       } finally {
         if (isMounted && showSpinner) setLoading(false);
       }
-
-      if (isMounted && session.messages && session.messages.length > 0) {
-        setMessages(session.messages);
-      }
     };
 
     fetchSessionMessages(true);
 
-    // Polling en vivo cada 4 segundos si el chat está activo
     const interval = setInterval(() => {
       fetchSessionMessages(false);
     }, 4000);
@@ -63,49 +66,64 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
         </div>
         <p className="text-sm font-bold text-zinc-200">Ningún chat seleccionado</p>
         <p className="text-xs text-zinc-500 max-w-xs">
-          Selecciona una conversación online o del historial a la izquierda para inspeccionar su transcripción completa.
+          Selecciona una conversación del listado real para auditar la transcripción completa y las trazas del RAG.
         </p>
       </div>
     );
   }
 
+  const displayName = getVisitorDisplayName(session);
+
   return (
     <div className="onyx-card rounded-2xl p-4 sm:p-5 flex flex-col space-y-4 min-h-[500px]">
       {/* Encabezado del Chat Seleccionado */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#262424]">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262424]">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-[#141313] border border-[#282626] flex items-center justify-center text-emerald-400 shrink-0">
             <User className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-white">{session.user_name || 'Cliente Anónimo'}</h4>
+              <h4 className="text-sm font-bold text-white">{displayName}</h4>
               {session.status === 'online' ? (
-                <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Online
                 </span>
               ) : (
                 <span className="text-[10px] font-medium text-zinc-500">
-                  Cerrado
+                  Historial (Cerrado)
                 </span>
               )}
             </div>
-            {session.user_phone && (
-              <p className="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                <Phone className="w-3 h-3 text-zinc-500" />
-                <span>{session.user_phone}</span>
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
+              <span className="text-[10px] font-mono text-zinc-500 flex items-center gap-0.5">
+                <Hash className="w-3 h-3 text-zinc-600" />
+                {session.id}
+              </span>
+              {session.user_phone && (
+                <span className="flex items-center gap-1 text-emerald-400">
+                  <Phone className="w-3 h-3 text-zinc-500" />
+                  {session.user_phone}
+                </span>
+              )}
+              {session.user_email && (
+                <span className="flex items-center gap-1 text-zinc-300">
+                  <Mail className="w-3 h-3 text-zinc-500" />
+                  {session.user_email}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-400 bg-[#111010] px-2.5 py-1 rounded-lg border border-[#282626]">
+          <span className="text-xs text-zinc-400 bg-[#111010] px-2.5 py-1 rounded-lg border border-[#282626] font-mono">
             {messages.length || session.total_messages} msgs
           </span>
           {onToggleStatus && (
             <button
+              type="button"
               onClick={() => onToggleStatus(session.id)}
               className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition cursor-pointer ${
                 session.status === 'online'
@@ -121,8 +139,8 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
 
       {/* Título de Transcripción */}
       <div className="flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-        <span>Transcripción de la Conversación</span>
-        <span className="text-zinc-500 font-normal">Bot con RAG Activo</span>
+        <span>Transcripción Real de la Conversación</span>
+        <span className="text-zinc-500 font-normal">Memoria D1 & RAG</span>
       </div>
 
       {/* Burbujas de Mensajes WhatsApp Style */}
@@ -130,13 +148,13 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
         {loading && messages.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
             <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" />
-            <span className="text-xs">Cargando transcripción en vivo...</span>
+            <span className="text-xs">Cargando mensajes reales de D1...</span>
           </div>
         ) : messages && messages.length > 0 ? (
           messages.map((m, idx) => {
             const isUser = m.sender === 'user';
             const text = m.message || m.content || m.text || '';
-            const time = m.timestamp || m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+            const time = m.timestamp || (m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
             const rag = m.rag_level_used || m.rag_level;
 
             return (
@@ -165,11 +183,9 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
             );
           })
         ) : (
-          <p className="text-center text-xs text-zinc-500 py-8">Sin mensajes en esta sesión.</p>
+          <p className="text-center text-xs text-zinc-500 py-8">Esta conversación no tiene mensajes registrados en D1.</p>
         )}
       </div>
     </div>
   );
 };
-
-

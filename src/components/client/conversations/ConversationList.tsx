@@ -1,6 +1,7 @@
 import React from 'react';
-import { Clock, User, Radio, Archive } from 'lucide-react';
-import { ConversationSession } from './conversationsDemo';
+import { Clock, User, Radio, Archive, MessageSquare } from 'lucide-react';
+import { ConversationSession } from './types';
+import { getVisitorDisplayName, formatConversationTime } from './conversationUtils';
 
 interface ConversationListProps {
   sessions: ConversationSession[];
@@ -34,7 +35,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               : 'text-zinc-400 hover:text-white'
           }`}
         >
-          <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+          <Radio className={`w-3.5 h-3.5 ${onlineCount > 0 ? 'text-emerald-400 animate-pulse' : 'text-zinc-500'}`} />
           <span>Chats Online ({onlineCount})</span>
         </button>
 
@@ -52,15 +53,32 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         </button>
       </div>
 
-      {/* Lista de Conversaciones */}
+      {/* Lista de Conversaciones Reales */}
       <div className="space-y-2 max-h-[620px] overflow-y-auto pr-1">
         {filtered.length === 0 ? (
-          <div className="p-6 text-center text-xs text-zinc-500 bg-[#121111] rounded-xl border border-[#262424]">
-            No hay conversaciones en esta pestaña.
+          <div className="p-6 text-center text-xs text-zinc-500 bg-[#121111] rounded-xl border border-[#262424] space-y-2">
+            <MessageSquare className="w-6 h-6 text-zinc-600 mx-auto" />
+            <p>
+              {activeFilter === 'online'
+                ? 'No hay chats en vivo en este momento.'
+                : 'No hay conversaciones en el historial.'}
+            </p>
+            {activeFilter === 'online' && closedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => onChangeFilter('closed')}
+                className="mt-2 text-emerald-400 hover:text-emerald-300 font-semibold underline text-[11px] block mx-auto cursor-pointer"
+              >
+                Ver Historial ({closedCount})
+              </button>
+            )}
           </div>
         ) : (
           filtered.map(c => {
             const isSelected = selectedId === c.id;
+            const displayName = getVisitorDisplayName(c);
+            const timeLabel = formatConversationTime(c.updated_at || c.created_at);
+
             return (
               <div
                 key={c.id}
@@ -75,12 +93,14 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   <div className="flex items-center gap-2 truncate">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
                       <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="truncate">{c.user_name || 'Cliente Anónimo'}</span>
+                      <span className="truncate">{displayName}</span>
                     </span>
-                    <span className="text-[10px] text-zinc-500 font-normal shrink-0 flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5 text-zinc-600" />
-                      {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    {timeLabel && (
+                      <span className="text-[10px] text-zinc-500 font-normal shrink-0 flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5 text-zinc-600" />
+                        {timeLabel}
+                      </span>
+                    )}
                   </div>
 
                   {c.status === 'online' ? (
@@ -97,9 +117,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
                 <div className="flex items-center justify-between gap-2 text-[11px]">
                   <p className="text-zinc-400 truncate leading-snug flex-1">
-                    {c.last_message ? `"${c.last_message}"` : 'Sin mensajes'}
+                    {c.last_message ? `"${c.last_message}"` : (c.first_user_message ? `"${c.first_user_message}"` : 'Sin mensajes')}
                   </p>
-                  <span className="text-[10px] text-zinc-400 bg-[#111010] px-1.5 py-0.5 rounded border border-[#282626] shrink-0">
+                  <span className="text-[10px] text-zinc-400 bg-[#111010] px-1.5 py-0.5 rounded border border-[#282626] shrink-0 font-mono">
                     {c.total_messages} msgs
                   </span>
                 </div>

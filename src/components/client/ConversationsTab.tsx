@@ -1,50 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { MessageSquare, Radio } from 'lucide-react';
-import { ConversationSession } from './conversations/conversationsDemo';
+import { useConversations } from './conversations/useConversations';
 import { ConversationList } from './conversations/ConversationList';
 import { ConversationDetail } from './conversations/ConversationDetail';
 
 export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
-  const [sessions, setSessions] = useState<ConversationSession[]>([]);
-  const [activeFilter, setActiveFilter] = useState<'online' | 'closed'>('online');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const loadConversations = useCallback(async () => {
-    if (!tenantId) return;
-    try {
-      const res = await fetch(`/api/chat/tenant-conversations/${tenantId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.conversations && data.conversations.length > 0) {
-          setSessions(data.conversations.map((c: ConversationSession, i: number) => ({
-            ...c,
-            status: c.status || (i < 2 ? 'online' : 'closed')
-          })));
-          setSelectedId(prev => prev || data.conversations[0]?.id || null);
-        } else {
-          setSessions([]);
-          setSelectedId(null);
-        }
-      }
-    } catch {
-      setSessions([]);
-      setSelectedId(null);
-    }
-  }, [tenantId]);
-
-  useEffect(() => {
-    loadConversations();
-    const timer = setInterval(loadConversations, 6000);
-    return () => clearInterval(timer);
-  }, [loadConversations]);
-
-  const handleToggleStatus = (id: string) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id !== id) return s;
-      const nextStatus = s.status === 'online' ? 'closed' : 'online';
-      return { ...s, status: nextStatus };
-    }));
-  };
+  const {
+    sessions,
+    activeFilter,
+    selectedId,
+    setSelectedId,
+    handleToggleStatus,
+    handleChangeFilter
+  } = useConversations(tenantId);
 
   const selectedSession = sessions.find(s => s.id === selectedId) || null;
   const onlineCount = sessions.filter(s => s.status === 'online').length;
@@ -62,17 +30,17 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
               <span>Auditoría de Conversaciones (RAG Nivel 1 & D1)</span>
             </h3>
             <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
-              Monitorea en tiempo real los chats atendidos por el bot y consulta el historial completo.
+              Monitorea en tiempo real los chats atendidos por el bot y consulta el historial completo de clientes reales.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
-            <Radio className="w-3 h-3 animate-pulse" />
+            <Radio className={`w-3 h-3 ${onlineCount > 0 ? 'animate-pulse' : ''}`} />
             <span>{onlineCount} Online</span>
           </span>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1a1919] text-zinc-400 border border-[#282626]">
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1a1919] text-zinc-400 border border-[#282626] font-mono">
             {sessions.length} Total
           </span>
         </div>
@@ -86,11 +54,7 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
             selectedId={selectedId}
             onSelectSession={setSelectedId}
             activeFilter={activeFilter}
-            onChangeFilter={(filter) => {
-              setActiveFilter(filter);
-              const firstInFilter = sessions.find(s => s.status === filter);
-              if (firstInFilter) setSelectedId(firstInFilter.id);
-            }}
+            onChangeFilter={handleChangeFilter}
           />
         </div>
 
