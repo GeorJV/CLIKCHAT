@@ -14,8 +14,10 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const effectiveTenantId = tenantId || 'a0000000-0000-0000-0000-000000000001';
+
   const handleFiles = async (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0 || !tenantId) return;
+    if (!fileList || fileList.length === 0) return;
     setIsProcessing(true);
     setStatus(null);
 
@@ -33,7 +35,7 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenant_id: tenantId,
+            tenant_id: effectiveTenantId,
             title,
             content,
             category: fileType === 'xlsx' || fileType === 'xls' ? 'inventario_tablas' : 'manuales'

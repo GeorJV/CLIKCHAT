@@ -1411,8 +1411,15 @@ export async function onRequest(context) {
       let actualTenantId = tenant_id;
       try {
         const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenant_id]);
-        if (tRows.length > 0) actualTenantId = tRows[0].id;
-      } catch (e) {}
+        if (tRows.length > 0) {
+          actualTenantId = tRows[0].id;
+        } else {
+          const defT = await executeD1('SELECT id FROM tenants LIMIT 1');
+          actualTenantId = defT[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+        }
+      } catch (e) {
+        actualTenantId = 'a0000000-0000-0000-0000-000000000001';
+      }
 
       const docId = 'doc_' + Date.now();
       await executeD1(

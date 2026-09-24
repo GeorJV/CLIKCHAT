@@ -17,10 +17,11 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
   const [category, setCategory] = useState('manuales');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const effectiveTenantId = tenantId || 'a0000000-0000-0000-0000-000000000001';
+
   const loadDocs = useCallback(async () => {
-    if (!tenantId) return;
     try {
-      const res = await fetch(`/api/documents?tenantId=${tenantId}`);
+      const res = await fetch(`/api/documents?tenantId=${effectiveTenantId}`);
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents || []);
@@ -28,19 +29,19 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
     } catch (e) {
       console.error(e);
     }
-  }, [tenantId]);
+  }, [effectiveTenantId]);
 
   useEffect(() => { loadDocs(); }, [loadDocs]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenantId || !title.trim() || !content.trim() || isSubmitting) return;
+    if (!title.trim() || !content.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: tenantId, title: title.trim(), content: content.trim(), category })
+        body: JSON.stringify({ tenant_id: effectiveTenantId, title: title.trim(), content: content.trim(), category })
       });
       if (res.ok) {
         setTitle('');
@@ -84,7 +85,7 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
       </div>
 
       {/* ZONA UNIVERSAL DE ARRASTRAR Y SOLTAR / SUBIR DESDE PC */}
-      <DocumentDropzone tenantId={tenantId} onUploadSuccess={loadDocs} />
+      <DocumentDropzone tenantId={effectiveTenantId} onUploadSuccess={loadDocs} />
 
       {showForm && (
         <form onSubmit={handleUpload} className="onyx-card rounded-2xl p-5 space-y-3.5 shadow-xl">
