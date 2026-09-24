@@ -74,7 +74,19 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   - *Audiencia Objetiva:* Tarjetas editoriales numeradas con cajas de fricción sepia y beneficios en verde bosque.
   - *Bento Grid & Demo:* Simulador de concierge en vivo con visualizador de producto de alta fidelidad, botón de checkout WhatsApp de lujo y tarjetas de arquitectura técnica.
   - *Vault CTA:* Módulo final estilo caja fuerte obsidiana con resplandor dorado sutil.
-- **Cumplimiento de Estándares:** Arquitectura 100% modular (<150 líneas por archivo en `src/components/landing/`) y verificación de despliegue en Cloudflare Pages.
+### [2026-09-24] Blindaje contra Desbordamiento de Burbujas, Formateo Markdown y Calibración Humana del Bot
+- **Problema Detectado:**
+  1. *Desbordamiento Horizontal:* Enlaces largos o texto sin espacios (ej. enlaces de WhatsApp `wa.me/...`) se salían de las cajas de chat debido a la ausencia de envoltorio de palabra (`break-words`, `overflow-wrap: anywhere`) y falta de parser markdown.
+  2. *Texto Excesivo y Tono Tieso/Seco:* Respuestas kilométricas (más de 400 palabras, 7 canales enumerados y etiquetas de código crudo `###`) con tono robótico generado por temperaturas muy bajas (0.25-0.35) y un `system_prompt` sin pautas de personalidad en la base de datos D1.
+- **Solución Implementada:**
+  1. *Componente Atómico `ChatMessageContent.tsx` (<120 líneas):* Renderizador inteligente que formatea negritas (`**`), transforma enlaces markdown (`[Texto](url)`) en botones/pills estilizados (con distintivo especial de WhatsApp) y limpia encabezados `###`, garantizando contención estricta con `break-words [overflow-wrap:anywhere] break-all`.
+  2. *Blindaje de Contenedores:* Aplicado en `ChatMessageItem.tsx`, `ProductChatColumn.tsx` y `ServiceChatColumn.tsx` con `min-w-0 max-w-[88%] overflow-hidden`.
+  3. *Ingeniería de Prompts y Voz Humana en Edge (`functions/api/[[route]].js`):*
+     - Regla estricta Anti-Biblias: Máximo 2 a 3 párrafos breves o 3 viñetas concisas.
+     - Prohibición de listas interminables y eliminación de etiquetas markdown crudas (`###`).
+     - Tono de voz cálido, inteligente, persuasivo y conversacional (estilo WhatsApp) con pregunta de cierre natural.
+     - Ajuste de temperatura a `0.55` para naturalidad emocional y `max_tokens` a 380 para respuestas rápidas y compactas.
+  4. *Actualización de D1:* `system_prompt` del inquilino `geosoft` actualizado con la personalidad oficial de Sofía (Asesora VIP).
 
 
 

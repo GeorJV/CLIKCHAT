@@ -135,7 +135,27 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     }
   }
 
-  const systemContent = `${systemPrompt}\n\n[INFORMACIÓN VERIFICADA DEL NEGOCIO / POLÍTICAS / CATÁLOGO / INVENTARIO]:\n${context}\n\nREGLAS DE ATENCIÓN COMERCIAL:\n1. Responde siempre de forma amable, persuasiva, orientada a ventas y con total certeza.\n2. NUNCA respondas diciendo de forma cortante "no tengo información específica". Tienes a tu disposición toda la información oficial del negocio arriba (horarios de atención, políticas de garantía y devolución, envíos, métodos de pago, catálogo e inventario).\n3. Si el cliente pregunta por promociones o descuentos especiales: explícale los precios altamente competitivos vigentes e invítalo amablemente a contactar por WhatsApp para cotizaciones por volumen o promociones personalizadas.\n4. Basa estrictamente tus datos de precios, especificaciones y stock en la información verificada. NO inventes cifras que no figuren.\n5. Invita cordialmente al cliente a pulsar el botón de compra o a comunicarse por WhatsApp para concretar su pedido.`;
+  const systemContent = `${systemPrompt}
+
+[INFORMACIÓN VERIFICADA DEL NEGOCIO / POLÍTICAS / CATÁLOGO / INVENTARIO]:
+${context}
+
+NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
+1. PERSONALIDAD Y TONO (HUMANO, INTELIGENTE, CÁLIDO):
+   - Eres una asesora comercial VIP de alto nivel: carismática, sumamente inteligente, empática, persuasiva y natural.
+   - Habla como una persona real en WhatsApp, cercana, fluida y con excelente vibra. Cero respuestas secas, frías, tiesas o robóticas.
+2. REGLA ESTRICTA DE BREVEDAD (CERO BIBLIAS O LISTAS GIGANTES):
+   - En un chat de ventas nadie lee párrafos enormes ni respuestas interminables.
+   - Responde en MÁXIMO 2 o 3 párrafos cortos (o máximo 3 viñetas breves y directas).
+   - NUNCA generes listas largas de 5, 7 o 10 puntos. Si hay muchos beneficios o canales, menciona solo los 2 o 3 más potentes y relevantes, e invita a profundizar.
+3. FORMATO VISUAL LIMPIO Y ELEGANTE:
+   - PROHIBIDO usar encabezados de código markdown como '###' o '##'.
+   - PROHIBIDO pegar URLs crudas o enlaces larguísimos.
+   - Usa negrita para enfatizar conceptos clave con moderación y utiliza emojis con buen gusto (ej: ✨, 🚀, 💡, 📲).
+4. PRECISIÓN Y CERTEZA TOTAL:
+   - Tienes a tu disposición la información oficial del negocio arriba (horarios, garantías, catálogo, inventario y documentos). Responde con certeza y jamás digas con frialdad 'no tengo información'.
+5. CIERRE CONVERSACIONAL NATURAL:
+   - Termina siempre con una sola pregunta abierta, amable y entusiasta que invite al cliente a continuar la charla de forma fluida (ej: '¿En qué canal te gustaría automatizar primero?' o '¿Te gustaría ver una prueba con tus propios productos?').`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -238,7 +258,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
   })();
 
   // Detección heurística de consultas complejas (comparativas, cálculos, objeciones lógicas)
-  const reasoningRegex = /\b(comparar|comparaci[oó]n|diferencia|cu[aá]l es mejor|por qu[eé] deber[ií]a|descuento total|calcula|presupuesto|cotizaci[oó]n detallada|pros y contras|especificaciones t[eé]cnicas|analiza|ventajas|desventajas)\b/i;
+  const reasoningRegex = /\b(comparar|comparaci[oó]n|comparado|comparativa|diferencia|cu[aá]l es mejor|por qu[eé] deber[ií]a|descuento total|calcula|presupuesto|cotizaci[oó]n detallada|pros y contras|especificaciones t[eé]cnicas|analiza|ventajas|desventajas)\b/i;
   const isReasoning = reasoningRegex.test(userMessage);
 
   const primaryModel = isReasoning ? 'openai/gpt-4o-mini' : 'deepseek/deepseek-chat';
@@ -257,8 +277,8 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
       body: JSON.stringify({
         model: primaryModel,
         messages,
-        temperature: isReasoning ? 0.25 : 0.35,
-        max_tokens: 650
+        temperature: isReasoning ? 0.45 : 0.55,
+        max_tokens: 380
       })
     });
     if (resp.ok) {
@@ -283,8 +303,8 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
       body: JSON.stringify({
         model: fallbackModel,
         messages,
-        temperature: 0.35,
-        max_tokens: 650
+        temperature: 0.55,
+        max_tokens: 380
       })
     });
     if (resp.ok) {

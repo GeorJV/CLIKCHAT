@@ -6,6 +6,7 @@ import { ProductChatTheme, ThemeStyles } from './productThemes';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
+import { ChatMessageContent } from '../ChatMessageContent';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
@@ -75,22 +76,24 @@ export const ProductChatColumn: React.FC<Props> = ({
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
           return (
-            <div key={msg.id} className={`flex items-start ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
-              <div className={`w-fit animate-bubble-in ${msg.isAudio ? 'px-2 py-0.5' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
+            <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
+              <div className={`w-fit animate-bubble-in break-words [overflow-wrap:anywhere] overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm'} ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
                 {msg.isAudio ? (
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
                 ) : isAssistant && msg.ragTrace ? (
-                  <div className="space-y-1">
-                    <div className="whitespace-pre-wrap leading-snug">{msg.content}</div>
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                  <div className="space-y-1.5 min-w-0">
+                    <ChatMessageContent content={msg.content} isUser={false} />
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
                       <ProductRAGBadge trace={msg.ragTrace} />
                       <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="flow-root">
-                    <span className="whitespace-pre-wrap leading-snug break-words">{msg.content}</span>
-                    <span className={`float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums ${isAssistant ? themeStyles.textSecondary : 'opacity-70'}`}>{msg.timestamp || '20:03'}</span>
+                  <div className="space-y-1 min-w-0">
+                    <ChatMessageContent content={msg.content} isUser={!isAssistant} />
+                    <div className="flex justify-end">
+                      <span className={`text-[10px] select-none tabular-nums ${isAssistant ? themeStyles.textSecondary : 'opacity-70'}`}>{msg.timestamp || '20:03'}</span>
+                    </div>
                   </div>
                 )}
               </div>

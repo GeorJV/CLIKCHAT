@@ -2,6 +2,7 @@ import React from 'react';
 import { ChatMessage, Product } from '../../types';
 import { Sparkles, HelpCircle } from 'lucide-react';
 import { ChatAudioPlayerBubble } from './audio/ChatAudioPlayerBubble';
+import { ChatMessageContent } from './ChatMessageContent';
 
 interface ChatMessageItemProps {
   msg: ChatMessage;
@@ -17,9 +18,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const isUser = msg.sender === 'user';
 
   return (
-    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+    <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
       <div
-        className={`w-fit rounded-2xl leading-relaxed transition-all shadow-sm ${msg.isAudio ? 'px-2 py-0.5' : 'max-w-[86%] sm:max-w-[78%] p-3 text-xs'} ${
+        className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl leading-relaxed transition-all shadow-sm break-words [overflow-wrap:anywhere] overflow-hidden ${
+          msg.isAudio ? 'px-2 py-0.5' : 'p-3 text-xs'
+        } ${
           isUser
             ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl border border-[#D79F4C]/30'
             : 'bg-slate-800 text-slate-100 rounded-2xl border border-slate-700/70 shadow-lg shadow-black/60'
@@ -49,7 +52,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             isUser={isUser}
           />
         ) : (
-          <p className="whitespace-pre-line select-text font-normal">{msg.message}</p>
+          <ChatMessageContent content={msg.message} isUser={isUser} />
         )}
 
         {/* Product Recommendations from RAG L3 */}
