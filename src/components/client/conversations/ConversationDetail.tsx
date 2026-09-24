@@ -1,6 +1,7 @@
-import React from 'react';
-import { User, Phone, CheckCheck, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Phone, CheckCheck, MessageSquare, RefreshCw } from 'lucide-react';
 import { ConversationSession } from './conversationsDemo';
+import { ChatMessageContent } from '../../chat/ChatMessageContent';
 
 interface ConversationDetailProps {
   session: ConversationSession | null;
@@ -8,6 +9,52 @@ interface ConversationDetailProps {
 }
 
 export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session, onToggleStatus }) => {
+  const [messages, setMessages] = useState<any[]>(session?.messages || []);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!session?.id) {
+      setMessages([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchSessionMessages = async (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
+      try {
+        const res = await fetch(`/api/chat/messages/${session.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data?.messages) {
+            setMessages(data.messages);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Error al cargar mensajes de sesión:', err);
+      } finally {
+        if (isMounted && showSpinner) setLoading(false);
+      }
+
+      if (isMounted && session.messages && session.messages.length > 0) {
+        setMessages(session.messages);
+      }
+    };
+
+    fetchSessionMessages(true);
+
+    // Polling en vivo cada 4 segundos si el chat está activo
+    const interval = setInterval(() => {
+      fetchSessionMessages(false);
+    }, 4000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [session?.id]);
+
   if (!session) {
     return (
       <div className="onyx-card rounded-2xl p-12 flex flex-col items-center justify-center text-center space-y-3 min-h-[460px]">
@@ -55,7 +102,7 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-400 bg-[#111010] px-2.5 py-1 rounded-lg border border-[#282626]">
-            {session.total_messages} msgs
+            {messages.length || session.total_messages} msgs
           </span>
           {onToggleStatus && (
             <button
@@ -80,31 +127,43 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
 
       {/* Burbujas de Mensajes WhatsApp Style */}
       <div className="flex-1 space-y-3 bg-[#111010] p-4 rounded-xl border border-[#262424] max-h-[460px] overflow-y-auto">
-        {session.messages && session.messages.length > 0 ? (
-          session.messages.map(m => (
-            <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-xs shadow-sm ${
-                  m.sender === 'user'
-                    ? 'bg-emerald-600 text-white rounded-tr-none'
-                    : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60'
-                }`}
-              >
-                <p className="leading-relaxed">{m.text}</p>
-                <div className={`mt-1.5 pt-1 flex items-center justify-between text-[9px] ${
-                  m.sender === 'user' ? 'text-emerald-200 border-t border-white/10' : 'text-zinc-500 border-t border-white/[0.06]'
-                }`}>
-                  {m.rag_level ? (
-                    <span className="font-mono text-emerald-400">Traza RAG: {m.rag_level}</span>
-                  ) : <span />}
-                  <span className="flex items-center gap-1 font-mono">
-                    {m.time}
-                    {m.sender === 'user' && <CheckCheck className="w-3 h-3 text-emerald-300 inline" />}
-                  </span>
+        {loading && messages.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
+            <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" />
+            <span className="text-xs">Cargando transcripción en vivo...</span>
+          </div>
+        ) : messages && messages.length > 0 ? (
+          messages.map((m, idx) => {
+            const isUser = m.sender === 'user';
+            const text = m.message || m.content || m.text || '';
+            const time = m.timestamp || m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+            const rag = m.rag_level_used || m.rag_level;
+
+            return (
+              <div key={m.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3 text-xs shadow-sm break-words [overflow-wrap:anywhere] overflow-hidden ${
+                    isUser
+                      ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-tr-none border border-[#D79F4C]/30 shadow-md'
+                      : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60'
+                  }`}
+                >
+                  <ChatMessageContent content={text} isUser={isUser} />
+                  <div className={`mt-1.5 pt-1 flex items-center justify-between text-[9px] ${
+                    isUser ? 'text-amber-200/80 border-t border-white/10' : 'text-zinc-500 border-t border-white/[0.06]'
+                  }`}>
+                    {rag ? (
+                      <span className="font-mono text-emerald-400">Traza RAG: {rag}</span>
+                    ) : <span />}
+                    <span className="flex items-center gap-1 font-mono">
+                      {time}
+                      {isUser && <CheckCheck className="w-3 h-3 text-amber-300 inline" />}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p className="text-center text-xs text-zinc-500 py-8">Sin mensajes en esta sesión.</p>
         )}

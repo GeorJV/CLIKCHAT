@@ -97,7 +97,12 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   3. *Tarjetas Clicables en `DocumentsManagerTab.tsx`:*
      - Las tarjetas completas son clicables (`cursor-pointer hover:border-emerald-500/50`).
      - Botón explícito "Ver contenido" con ícono de ojo (`Eye`) y flecha interactiva.
-- **Cumplimiento de Estándares:** Arquitectura atómica modular (<155 líneas por componente) y verificación de compilación y despliegue.
+### [2026-09-24] Visualización y Transcripción en Tiempo Real de Conversaciones en Vivo
+- **Causa Raíz:** El endpoint de listado `/api/chat/tenant-conversations/:tenantId` devolvía metadatos de las sesiones (id, último mensaje, total de mensajes), pero el panel de detalle (`ConversationDetail.tsx`) no ejecutaba la consulta a `/api/chat/messages/:sessionId`. En consecuencia, al seleccionar una sesión real de Cloudflare D1 se mostraba el estado vacío *"Sin mensajes en esta sesión"*.
+- **Solución Implementada:**
+  1. *Carga Reactiva y Polling en Vivo:* `ConversationDetail.tsx` ahora consulta `/api/chat/messages/:sessionId` tan pronto se selecciona la conversación y activa un polling ligero cada 4 segundos para actualizar nuevos mensajes entrantes.
+  2. *Formateo Enriquecido:* Los mensajes del auditor ahora se renderizan mediante `ChatMessageContent` con soporte de trazas RAG (`m.rag_level_used`), marcas de tiempo y quiebre de palabras seguro.
+  3. *Auto-refresco de Sesiones:* `ConversationsTab.tsx` refresca automáticamente la lista de chats cada 6 segundos para detectar visitantes nuevos en tiempo real.
 
 
 

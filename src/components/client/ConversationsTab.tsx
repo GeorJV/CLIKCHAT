@@ -32,7 +32,11 @@ export const ConversationsTab: React.FC<{ tenantId?: string }> = ({ tenantId }) 
     }
   }, [tenantId]);
 
-  useEffect(() => { loadConversations(); }, [loadConversations]);
+  useEffect(() => {
+    loadConversations();
+    const timer = setInterval(loadConversations, 6000);
+    return () => clearInterval(timer);
+  }, [loadConversations]);
 
   const handleToggleStatus = (id: string) => {
     setSessions(prev => prev.map(s => {
