@@ -157,6 +157,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 4. PRECISIÓN, CERTEZA Y PRIORIDAD DE DOCUMENTOS RAG:
    - Tienes a tu disposición la información oficial del negocio arriba (horarios, garantías, catálogo, inventario y documentos RAG). Responde con certeza y jamás digas con frialdad 'no tengo información'.
    - Si existen documentos, manuales o políticas con promociones, descuentos VIP/PRO, cupones o condiciones puntuales, esta información prevalece siempre sobre respuestas genéricas. Utiliza los datos exactos del documento (porcentajes, días de prueba, códigos de descuento) para responder al cliente.
+   - Si NO existen documentos o FAQs que especifiquen promociones, códigos o cupones, queda ESTRICTAMENTE PROHIBIDO inventar porcentajes o códigos de descuento ficticios. En tal caso, remite amablemente a la política de precios oficial del catálogo o a consultar por WhatsApp.
 5. CIERRE CONVERSACIONAL NATURAL:
    - Termina siempre con una sola pregunta abierta, amable y entusiasta que invite al cliente a continuar la charla de forma fluida (ej: '¿En qué canal te gustaría automatizar primero?' o '¿Te gustaría ver una prueba con tus propios productos?').`;
 
@@ -1121,8 +1122,10 @@ export async function onRequest(context) {
       });
 
       // 7. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
-      // Solo se activa si la pregunta NO pide datos específicos de RAG y NO hay documentos ni productos coincidentes
-      if (!requiresDeepRAG && !hasDocumentMatch && !hasDirectProductMatch) {
+      // Si hay documentos cargados en RAG con coincidencia o producto específico, ceder paso a Nivel 3.
+      // Si NO hay documentos cargados en RAG, permitir que las FAQs oficiales respondan directamente.
+      const shouldBypassFaqForRAG = (hasDocumentMatch || hasDirectProductMatch) || (requiresDeepRAG && (docChunks.length > 0 || rawDocs.length > 0));
+      if (!shouldBypassFaqForRAG) {
         let topFaq = null;
         let topFaqScore = 0;
         for (const faq of faqs) {
