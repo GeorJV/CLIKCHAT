@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 export const LandingFAQ: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
@@ -30,13 +30,13 @@ export const LandingFAQ: React.FC = () => {
   return (
     <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
       <div className="text-center space-y-3 mb-10">
-        <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-400 font-bold bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+        <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-700 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
           Dudas Resueltas
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Preguntas Frecuentes
         </h2>
-        <p className="text-xs sm:text-sm text-zinc-400">
+        <p className="text-xs sm:text-sm text-slate-600">
           Todo lo que necesitas saber antes de activar tu asesor comercial con IA.
         </p>
       </div>
@@ -47,17 +47,17 @@ export const LandingFAQ: React.FC = () => {
           return (
             <div
               key={idx}
-              className={`rounded-2xl border transition-all duration-200 overflow-hidden ${isOpen ? 'bg-zinc-900 border-indigo-500/40 shadow-lg' : 'bg-zinc-950/60 border-zinc-800 hover:border-zinc-700'}`}
+              className={`rounded-2xl border transition-all duration-200 overflow-hidden ${isOpen ? 'bg-white border-indigo-300 shadow-md ring-1 ring-indigo-50' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'}`}
             >
               <button
                 onClick={() => setOpenIdx(isOpen ? null : idx)}
                 className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 cursor-pointer"
               >
-                <span className="font-bold text-xs sm:text-sm text-white">{f.q}</span>
-                <ChevronDown className={`w-4 h-4 text-indigo-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <span className="font-bold text-xs sm:text-sm text-slate-900">{f.q}</span>
+                <ChevronDown className={`w-4 h-4 text-indigo-600 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
               </button>
               {isOpen && (
-                <div className="px-4 sm:px-5 pb-5 pt-1 text-xs text-zinc-300 leading-relaxed border-t border-zinc-800/60 animate-fadeIn">
+                <div className="px-4 sm:px-5 pb-5 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100 animate-fadeIn">
                   {f.a}
                 </div>
               )}

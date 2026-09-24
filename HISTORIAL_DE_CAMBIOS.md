@@ -63,4 +63,8 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   5. *Simulador Demo en Vivo:* Widget interactivo en pantalla donde el visitante prueba las respuestas y carruseles de productos en tiempo real.
   6. *FAQ y CTA Final:* Resolución de objeciones sobre WhatsApp, documentos y precios.
 
+### [2026-09-24] Rediseño Corporativo de Alta Gama: Estética Clara, Sofisticada y Profesional
+- **Paleta y Dirección de Arte (`frontend-design`):** Transición completa de la portada a una estética diáfana, clara y premium (`#f8fafc` / `#ffffff`), con tipografía oscura de alto contraste (`text-slate-900`, `text-slate-600`), bordes sutiles ultra-nítidos (`border-slate-200`) y acentos corporativos en azul zafiro/índigo institucional.
+- **Armonización de Componentes:** Navbar traslúcido frosted glass, tarjetas con fondos blancos limpios y sombras ligeras, simulador interactivo de alta fidelidad, Bento Grid de capacidades con micro-badges de color pastel y footer institucional nítido.
+
 

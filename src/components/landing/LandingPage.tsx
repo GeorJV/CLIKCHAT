@@ -24,7 +24,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0a0a0c] text-slate-100 font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 font-sans selection:bg-indigo-600 selection:text-white overflow-x-hidden">
       <LandingNavbar
         onOpenDemo={handleOpenDemo}
         onGoToDashboard={onGoToDashboard}
