@@ -142,7 +142,7 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
             return (
               <div key={m.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3 text-xs shadow-sm break-words [overflow-wrap:anywhere] overflow-hidden ${
+                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3 text-xs shadow-sm break-words overflow-hidden ${
                     isUser
                       ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-tr-none border border-[#D79F4C]/30 shadow-md'
                       : 'bg-[#181717] border border-[#282626] text-zinc-200 rounded-tl-none shadow-lg shadow-black/60'

@@ -20,7 +20,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   return (
     <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
       <div
-        className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl leading-relaxed transition-all shadow-sm break-words [overflow-wrap:anywhere] overflow-hidden ${
+        className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl leading-relaxed transition-all shadow-sm break-words overflow-hidden ${
           msg.isAudio ? 'px-2 py-0.5' : 'p-3 text-xs'
         } ${
           isUser

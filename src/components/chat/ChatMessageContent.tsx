@@ -79,7 +79,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
 
   return (
     <div
-      className={`text-xs sm:text-sm leading-relaxed select-text space-y-1.5 break-words [overflow-wrap:anywhere] break-all max-w-full overflow-hidden ${
+      className={`text-xs sm:text-sm leading-relaxed select-text space-y-1.5 break-words max-w-full ${
         isUser ? 'text-white' : 'text-slate-100'
       } ${className}`}
     >
@@ -97,7 +97,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           return (
             <div
               key={`line-${idx}`}
-              className="font-bold text-xs sm:text-[13px] text-amber-300 pt-1 pb-0.5 tracking-wide flex items-center gap-1.5 break-words [overflow-wrap:anywhere]"
+              className="font-bold text-xs sm:text-[13px] text-amber-300 pt-1 pb-0.5 tracking-wide flex items-center gap-1.5 break-words"
             >
               {renderInlineFormatted(cleanLine, isUser)}
             </div>
@@ -105,7 +105,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
         }
 
         return (
-          <div key={`line-${idx}`} className="break-words [overflow-wrap:anywhere] leading-snug">
+          <div key={`line-${idx}`} className="break-words leading-snug">
             {renderInlineFormatted(trimmed, isUser)}
           </div>
         );
