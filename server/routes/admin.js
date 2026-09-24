@@ -71,7 +71,7 @@ router.post('/tenants', async (req, res) => {
 // Super Admin Google AI Studio Playground
 router.post('/playground', async (req, res) => {
   try {
-    const { prompt, systemPrompt, model = 'gemini-1.5-flash', apiKey } = req.body;
+    const { prompt, systemPrompt, model = 'gemini-2.0-flash', apiKey } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt es requerido' });

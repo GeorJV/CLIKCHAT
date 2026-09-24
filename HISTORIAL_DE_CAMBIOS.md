@@ -38,7 +38,7 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - Función de reinicio limpio de conversación (`resetChat`) con nuevo token de sesión.
 
 ### [2026-09-24] Motor Dual 90/10 (DeepSeek + GPT-4o Mini) y Conectividad Abierta de IA
-- **Gobernanza Super Admin (Confidencial):** Control centralizado en Cloudflare D1 del balance 90% DeepSeek V3 (`deepseek/deepseek-chat`) para atención comercial de alta velocidad y 10% OpenAI GPT-4o Mini (`openai/gpt-4o-mini`) para razonamiento complejo y comparativas técnicas, con fallback automático a Google AI Studio (`gemini-1.5-flash`).
+- **Gobernanza Super Admin (Confidencial):** Control centralizado en Cloudflare D1 del balance 90% DeepSeek V3 (`deepseek/deepseek-chat`) para atención comercial de alta velocidad y 10% OpenAI GPT-4o Mini (`openai/gpt-4o-mini`) para razonamiento complejo y comparativas técnicas, con fallback automático a Google AI Studio (`gemini-2.0-flash`).
 - **Panel de Usuario Protegido:** El cliente únicamente visualiza "Modelo del Sistema (Predefinido)" con opción de "Conectar mi propia IA (Personalizada)" para cualquier proveedor (Google AI Studio, OpenAI, OpenRouter, etc.) mediante `custom_llm_key`.
 - Cumplimiento estricto de límites modulares ARQMODULAR (<150 líneas por componente).
 

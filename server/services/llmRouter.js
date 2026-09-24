@@ -1,7 +1,7 @@
 /**
  * Multi-LLM Router Service
  * Handles routing between OpenRouter (default), Tenant-specific custom keys,
- * and Google AI Studio (Gemini 1.5/2.0 for Playground and direct calls).
+ * and Google AI Studio (Gemini 2.0 for Playground and direct calls).
  */
 
 require('dotenv').config();
@@ -46,7 +46,7 @@ async function callOpenRouter(messages, options = {}) {
 // Generate completion via Google AI Studio (Gemini)
 async function callGoogleAIStudio(prompt, options = {}) {
   const apiKey = options.apiKey || DEFAULT_GOOGLE_AI_KEY;
-  const model = options.model || 'gemini-1.5-flash';
+  const model = options.model || 'gemini-2.0-flash';
 
   if (!apiKey) {
     throw new Error('Google AI Studio Key not configured');

@@ -157,7 +157,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-1.5-flash'}:generateContent?key=${cKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-2.0-flash'}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -296,11 +296,11 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     console.warn(`Fallo en respaldo cruzado (${fallbackModel}):`, e.message);
   }
 
-  // 3. Respaldo Final de Contingencia: Google AI Studio (Gemini 1.5 Flash)
+  // 3. Respaldo Final de Contingencia: Google AI Studio (Gemini 2.0 Flash)
   try {
     const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
     const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-    const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${googleKey}`;
+    const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleKey}`;
     const gResp = await fetch(gUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

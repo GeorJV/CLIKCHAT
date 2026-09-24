@@ -100,7 +100,7 @@ export const CustomAISettingsCard: React.FC<Props> = ({ tenant, onUpdateSettings
               <div>
                 <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Proveedor de IA</label>
                 <select value={provider} onChange={(e) => setProvider(e.target.value)} className="w-full bg-[#111010] border border-[#333] rounded-lg px-2.5 py-1.5 text-xs text-white">
-                  <option value="google">Google AI Studio (Gemini 1.5/2.0)</option>
+                  <option value="google">Google AI Studio (Gemini 2.0)</option>
                   <option value="openai">OpenAI (Directo GPT-4o / Mini)</option>
                   <option value="openrouter">OpenRouter (Multi-Proveedor / DeepSeek / Claude)</option>
                   <option value="other">Otro Proveedor Compatible</option>
@@ -108,7 +108,7 @@ export const CustomAISettingsCard: React.FC<Props> = ({ tenant, onUpdateSettings
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Modelo Opcional</label>
-                <input type="text" value={customModel} onChange={(e) => setCustomModel(e.target.value)} placeholder="Ej: gemini-1.5-flash, gpt-4o-mini" className="w-full bg-[#111010] border border-[#333] rounded-lg px-2.5 py-1.5 text-xs text-white font-mono" />
+                <input type="text" value={customModel} onChange={(e) => setCustomModel(e.target.value)} placeholder="Ej: gemini-2.0-flash, gpt-4o-mini" className="w-full bg-[#111010] border border-[#333] rounded-lg px-2.5 py-1.5 text-xs text-white font-mono" />
               </div>
             </div>
             <div>

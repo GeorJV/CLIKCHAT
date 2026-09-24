@@ -180,8 +180,8 @@ export const SuperAdminDashboard: React.FC = () => {
           >
             <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat - Principal 90%)</option>
             <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Razonamiento 10%)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Google AI Studio)</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google AI Studio)</option>
+            <option value="gemini-2.0-pro">Gemini 2.0 Pro</option>
           </select>
         </div>
 

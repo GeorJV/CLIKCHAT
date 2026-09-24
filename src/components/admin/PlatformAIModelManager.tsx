@@ -83,7 +83,7 @@ export const PlatformAIModelManager: React.FC = () => {
             <span className="text-[10px] font-bold text-amber-400 uppercase">Respaldo Global</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">Contingencia</span>
           </div>
-          <p className="text-xs font-bold text-white">Google AI Studio (Gemini 1.5)</p>
+          <p className="text-xs font-bold text-white">Google AI Studio (Gemini 2.0)</p>
           <p className="text-[10px] text-slate-400">Consultas de la web propia y respaldo en caso de latencia de red.</p>
         </div>
       </div>
@@ -110,7 +110,7 @@ export const PlatformAIModelManager: React.FC = () => {
             onChange={(e) => setConfig({ ...config, fallbackProvider: e.target.value })}
             className="w-full text-xs p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-semibold"
           >
-            <option value="google_ai_studio">Google AI Studio (Gemini 1.5 Flash)</option>
+            <option value="google_ai_studio">Google AI Studio (Gemini 2.0 Flash)</option>
             <option value="workers_ai">Cloudflare Workers AI (Llama 3)</option>
           </select>
         </div>
