@@ -122,7 +122,9 @@ function computeOverlapScore(textA, textB) {
   }
   const coverage = matches / tokensA.length;
   const dice = (2 * matches) / (tokensA.length + tokensB.length);
-  return Math.max(coverage, dice);
+  // Para consultas cortas (< 3 tokens), el Dice simétrico previene que una sola palabra genere 100% de coincidencia
+  if (tokensA.length < 3) return dice;
+  return Math.max(coverage * 0.4 + dice * 0.6, dice);
 }
 
 async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, customKey }) {
@@ -1043,33 +1045,80 @@ export async function onRequest(context) {
         sessionHistory = [];
       }
 
-      // 5. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
+      // 5. Carga Paralela de Fuentes de Conocimiento (FAQs, Catálogo y Documentos RAG)
       let faqs = [];
+      let products = [];
+      let docChunks = [];
+      let rawDocs = [];
+
       try {
-        faqs = await executeD1('SELECT * FROM faqs WHERE tenant_id = ?1 AND is_active = 1', [actualTenantId]);
-      } catch (fErr) {
-        faqs = [];
+        const [fRows, pRows, cRows, rRows] = await Promise.all([
+          executeD1('SELECT * FROM faqs WHERE tenant_id = ?1 AND is_active = 1', [actualTenantId]).catch(() => []),
+          executeD1('SELECT * FROM products WHERE tenant_id = ?1 AND is_active = 1 ORDER BY created_at DESC', [actualTenantId]).catch(() => []),
+          executeD1(
+            'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 OR kd.tenant_id = ?1 OR dc.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 60',
+            [actualTenantId]
+          ).catch(() => []),
+          executeD1(
+            'SELECT id, title, category, raw_content FROM knowledge_documents WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 20',
+            [actualTenantId]
+          ).catch(() => [])
+        ]);
+        faqs = fRows;
+        products = pRows;
+        docChunks = cRows;
+        rawDocs = rRows;
+      } catch (dataErr) {
+        console.warn('Error cargando conocimiento D1:', dataErr.message);
       }
 
-      let topFaq = null;
-      let topFaqScore = 0;
-      const cleanUserMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      // Si hay documentos crudos no particionados en chunks, agregarlos a la base de chunks
+      for (const d of rawDocs) {
+        if (d.raw_content && !docChunks.some(c => c.title === d.title)) {
+          docChunks.push({ title: d.title, content: d.raw_content });
+        }
+      }
+
+      // 6. Normalización y Extracción de Palabras Clave
+      const cleanUserQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const queryWords = cleanUserQuery.split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
 
       // Consultas que NUNCA deben detenerse en seco en Nivel 2 (deben ir a Nivel 3 RAG para buscar en documentos y LLM)
-      const requiresDeepRAG = /\b(descuento|descuentos|cupon|cupones|promo|promocion|rebaja|oferta|vip|pro|codigo|porcentaje|cuanto cuesta|precio exacto|especial)\b/i.test(message);
+      const requiresDeepRAG = /\b(descuento|descuentos|cupon|cupones|promo|promocion|rebaja|oferta|vip|pro|codigo|porcentaje|cuanto cuesta|precio exacto|especial|manual|manuales|documento|documentos|politica|politicas|terminos|condicion|condiciones|requisito|requisitos|pasos|como funciona|garantia especifica)\b/i.test(message);
 
-      if (!requiresDeepRAG) {
+      // Si algún documento subido por el negocio contiene palabras clave de la consulta, NO interceptar en Nivel 2
+      const hasDocumentMatch = queryWords.length > 0 && (
+        docChunks.some(c => {
+          const text = `${c.title} ${c.content}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return queryWords.some(qw => text.includes(qw));
+        }) ||
+        rawDocs.some(d => {
+          const text = `${d.title} ${d.raw_content || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return queryWords.some(qw => text.includes(qw));
+        })
+      );
+
+      // Si algún producto coincide por nombre directo, tampoco interceptar con FAQ genérica
+      const hasDirectProductMatch = queryWords.length > 0 && products.some(p => {
+        const pName = p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return queryWords.some(qw => qw.length >= 4 && pName.includes(qw));
+      });
+
+      // 7. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
+      // Solo se activa si la pregunta NO pide datos específicos de RAG y NO hay documentos ni productos coincidentes
+      if (!requiresDeepRAG && !hasDocumentMatch && !hasDirectProductMatch) {
+        let topFaq = null;
+        let topFaqScore = 0;
         for (const faq of faqs) {
           const targetText = `${faq.question}`;
           const score = computeOverlapScore(message, targetText);
-
           if (score > topFaqScore) {
             topFaqScore = score;
             topFaq = faq;
           }
         }
 
-        // Solo detener en Nivel 2 si la pregunta del usuario es idéntica o casi idéntica a la FAQ oficial (>= 75% certeza)
+        // Solo detener si la pregunta del usuario es idéntica o casi idéntica a la FAQ oficial (>= 75% certeza simétrica)
         if (topFaq && topFaqScore >= 0.75) {
           const botMsgId = 'msg_' + Date.now() + '_b';
           try {
@@ -1092,49 +1141,14 @@ export async function onRequest(context) {
         }
       }
 
-      // 6. NIVEL 3: RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
-      let products = [];
-      try {
-        products = await executeD1('SELECT * FROM products WHERE tenant_id = ?1 AND is_active = 1 ORDER BY created_at DESC', [actualTenantId]);
-      } catch (pErr) {
-        products = [];
-      }
-
-      let docChunks = [];
-      try {
-        docChunks = await executeD1(
-          'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 OR kd.tenant_id = ?1 OR dc.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 60',
-          [actualTenantId]
-        );
-      } catch (dErr) {
-        docChunks = [];
-      }
-
-      let rawDocs = [];
-      try {
-        rawDocs = await executeD1(
-          'SELECT id, title, category, raw_content FROM knowledge_documents WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 20',
-          [actualTenantId]
-        );
-      } catch (dErr) {
-        rawDocs = [];
-      }
-
-      // Si hay documentos crudos no particionados en chunks, agregarlos al conocimiento
-      for (const d of rawDocs) {
-        if (d.raw_content && !docChunks.some(c => c.title === d.title)) {
-          docChunks.push({ title: d.title, content: d.raw_content });
-        }
-      }
-
+      // 8. NIVEL 3: RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
       // Score de productos (coincidencia con nombre, sku, descripción, categoría y stock)
       const scoredProducts = products.map(p => {
         const pText = `${p.name} ${p.name} ${p.short_description || ''} ${p.full_description || ''} ${p.details?.category || ''} ${p.details?.sku || ''}`;
         const score = computeOverlapScore(message, pText);
-        const cleanUser = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const cleanName = p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const nameWords = cleanName.split(/\s+/).filter(w => w.length > 2);
-        const hasNameMatch = nameWords.some(w => cleanUser.includes(w));
+        const hasNameMatch = nameWords.some(w => cleanUserQuery.includes(w));
         const finalScore = hasNameMatch ? Math.max(score, 0.75) : score;
         return { product: p, score: finalScore };
       }).sort((a, b) => b.score - a.score);
@@ -1142,9 +1156,6 @@ export async function onRequest(context) {
       const matchedProducts = scoredProducts.filter(sp => sp.score >= 0.28).map(sp => sp.product);
 
       // Score inteligente de fragmentos de documentos/manuales RAG
-      const cleanUserQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const queryWords = cleanUserQuery.split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
-
       const scoredChunks = docChunks.map(c => {
         const chunkText = `${c.title} ${c.content}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const baseScore = computeOverlapScore(message, `${c.title} ${c.content}`);
@@ -1162,6 +1173,20 @@ export async function onRequest(context) {
 
       const relevantChunks = scoredChunks.filter(sc => sc.score >= 0.12).map(sc => sc.chunk);
       const chunksToInclude = relevantChunks.length > 0 ? relevantChunks.slice(0, 6) : docChunks.slice(0, 4);
+
+      // Garantizar que documentos crudos con alta coincidencia también se incluyan en el contexto
+      for (const d of rawDocs) {
+        if (!d.raw_content) continue;
+        const dText = `${d.title} ${d.raw_content}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        let dHits = 0;
+        for (const qw of queryWords) {
+          if (dText.includes(qw)) dHits++;
+        }
+        const dBoost = queryWords.length > 0 ? (dHits / queryWords.length) * 0.8 : 0;
+        if (dBoost >= 0.35 && !chunksToInclude.some(c => c.title === d.title)) {
+          chunksToInclude.push({ title: d.title, content: d.raw_content.slice(0, 1200) });
+        }
+      }
 
       const hasKnowledge = matchedProducts.length > 0 || chunksToInclude.length > 0 || products.length > 0 || faqs.length > 0;
 
