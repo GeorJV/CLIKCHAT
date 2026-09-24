@@ -6,58 +6,58 @@ export const LandingFAQ: React.FC = () => {
 
   const faqs = [
     {
-      q: '¿Tengo que pagarle a Meta o configurar la costosa WhatsApp Business API?',
-      a: 'No. Con ClikChat no pagas ni un solo centavo por mensaje a Meta ni necesitas pasar por engorrosos procesos de verificación de empresa. El cliente interactúa en tu web o enlace social y, cuando decide comprar, se le genera el mensaje completo directo a tu número de WhatsApp.'
+      q: '¿Es obligatorio pagar a Meta o tramitar la WhatsApp Business API oficial?',
+      a: 'De ninguna manera. ClikChat no grava comisiones por conversación ni exige procesos burocráticos de homologación ante Meta. El cliente interactúa en su entorno web o red social y, al momento de cerrar, se le genera el mensaje íntegro directamente a su línea de WhatsApp corporativa o personal.'
     },
     {
-      q: '¿Cómo aprende el bot sobre mis productos, horarios y precios?',
-      a: 'Solo debes arrastrar tus archivos en Excel, Word, PDF o texto plano a la sección de entrenamiento, o escribir tus preguntas frecuentes directamente. En menos de 60 segundos, la IA procesa todo y queda lista para responder de forma precisa.'
+      q: '¿Cómo se instruye al bot sobre inventarios, políticas y tablas de tarifas?',
+      a: 'Basta con arrastrar sus documentos en Excel, Word, PDF o texto plano al panel de conocimiento. En menos de 60 segundos, el motor semántico estructura y vectoriza cada dato, garantizando un dominio absoluto de su oferta.'
     },
     {
-      q: '¿Qué pasa si un cliente hace una pregunta que el bot no sabe?',
-      a: 'El bot nunca inventará datos falsos ni dejará al cliente en ridículo. La consulta se clasifica como pendiente y te aparece en tu panel. Tú escribes la respuesta una sola vez y, en segundos, el bot la memoriza para responderla en automático a todos los próximos clientes.'
+      q: '¿Qué protocolo sigue el sistema ante una consulta no documentada?',
+      a: 'ClikChat rechaza cualquier alucinación o dato inventado. Si se plantea una duda inédita, el sistema la deriva a su bandeja de consultas pendientes. Usted asienta la respuesta una sola vez y, en segundos, el bot la incorpora a su conocimiento permanente para futuros clientes.'
     },
     {
-      q: '¿Puedo supervisar las conversaciones e intervenir cuando yo quiera?',
-      a: 'Absolutamente. Cuentas con un panel de conversaciones en tiempo real para leer cada charla del bot. Si detectas una negociación importante o un cliente VIP, puedes tomar el control e intervenir tú mismo.'
+      q: '¿Es factible supervisar las conversaciones e intervenir en vivo?',
+      a: 'Completamente. Usted dispone de una consola de auditoría en tiempo real para examinar cada intercambio. Ante una negociación estratégica o una cuenta corporativa, puede tomar el mando del chat en cualquier momento.'
     },
     {
-      q: '¿Puedo instalar ClikChat en mi tienda web o usarlo solo con un enlace?',
-      a: 'Puedes usar ambas opciones. Puedes incrustar el widget flotante en cualquier sitio web (Shopify, WordPress, HTML) o compartir tu enlace exclusivo en la biografía de Instagram, TikTok o campañas publicitarias.'
+      q: '¿Puedo integrar ClikChat en mi tienda web o utilizarlo de forma autónoma?',
+      a: 'Ambas modalidades están plenamente habilitadas. Puede incrustar el widget flotante en cualquier sitio web (Shopify, WordPress, Webflow o código a medida) o emplear el enlace exclusivo para la biografía de sus canales sociales.'
     }
   ];
 
   return (
-    <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
-      <div className="text-center space-y-3 mb-10">
-        <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-700 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-          Dudas Resueltas
+    <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 py-18">
+      <div className="text-center space-y-3 mb-12">
+        <span className="text-[10px] font-cinzel uppercase tracking-[0.2em] text-[#8c6b38] font-bold bg-[#f4efe4] px-4 py-1.5 rounded-full border border-[#ded4be]">
+          Certidumbre & Políticas
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+        <h2 className="font-cinzel text-2xl sm:text-4xl font-bold text-[#181716] tracking-tight">
           Preguntas Frecuentes
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600">
-          Todo lo que necesitas saber antes de activar tu asesor comercial con IA.
+        <p className="text-xs sm:text-sm text-[#615a4f] font-light">
+          Aspectos clave sobre la implementación, costos e infraestructura de su asesor virtual.
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {faqs.map((f, idx) => {
           const isOpen = openIdx === idx;
           return (
             <div
               key={idx}
-              className={`rounded-2xl border transition-all duration-200 overflow-hidden ${isOpen ? 'bg-white border-indigo-300 shadow-md ring-1 ring-indigo-50' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'}`}
+              className={`rounded-2xl border transition-all duration-300 overflow-hidden ${isOpen ? 'bg-white border-[#caa461] shadow-[0_4px_24px_rgba(20,18,15,0.04)] ring-1 ring-[#dfc18b]/30' : 'bg-white border-[#e5dfd5] shadow-sm hover:border-[#c9c1b3]'}`}
             >
               <button
                 onClick={() => setOpenIdx(isOpen ? null : idx)}
-                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 cursor-pointer"
+                className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer"
               >
-                <span className="font-bold text-xs sm:text-sm text-slate-900">{f.q}</span>
-                <ChevronDown className={`w-4 h-4 text-indigo-600 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <span className="font-cinzel font-bold text-xs sm:text-sm text-[#181716]">{f.q}</span>
+                <ChevronDown className={`w-4 h-4 text-[#9c783c] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
               </button>
               {isOpen && (
-                <div className="px-4 sm:px-5 pb-5 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100 animate-fadeIn">
+                <div className="px-5 pb-5 pt-1 text-xs text-[#524c42] leading-relaxed border-t border-[#f0ece5] animate-fadeIn font-light">
                   {f.a}
                 </div>
               )}

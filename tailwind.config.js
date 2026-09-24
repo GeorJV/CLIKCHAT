@@ -6,6 +6,11 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        cinzel: ['Cinzel', 'serif'],
+        serif: ['Cinzel', 'Georgia', 'serif'],
+      },
       colors: {
         brand: {
           50: '#f0f9ff',
