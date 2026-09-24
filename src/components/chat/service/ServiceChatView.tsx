@@ -40,16 +40,44 @@ export const ServiceChatView: React.FC<Props> = ({
     debounceMs: 9000,
     deliveryDelayMs: 350,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
-    onSetLoading: setIsLoading,
-    onTriggerBotReply: (batch) => {
-      const isMulti = batch.length > 1;
-      const reasoning = isMulti ? `RAG L2: Ráfaga (${batch.length} preguntas).` : 'Validado con agenda.';
-      setMessages((prev) => [...prev, {
-        id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-        content: `¡Con gusto! **${selectedService.title}** es una sesión 1 a 1 (${selectedService.serviceModality === 'presencial' ? 'en cabina' : 'online por videollamada'}). Puedes pulsar **"Agendar Cita"** en el panel derecho para seleccionar el día y turno que mejor te acomode.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 2, confidence: 0.97, executionTimeMs: 15, modelUsed: 'FAQ RAG Hybrid L2', reasoning },
-      }]);
+    onTriggerBotReply: async (batch) => {
+      const userText = batch.join('\n').trim();
+      if (!userText) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch('/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantSlug: 'geosoft',
+            tenantId: (selectedService as any).tenant_id,
+            sessionId: `sess_${selectedService.id || 'service'}`,
+            message: userText
+          })
+        });
+        const data = res.ok ? await res.json() : null;
+        const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
+        setMessages((prev) => [...prev, {
+          id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+          content: data?.answer || `¡Con gusto! **${selectedService.title}** es una sesión 1 a 1. Puedes pulsar **"Agendar Cita"** para coordinar.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ragTrace: {
+            levelUsed: (lvlMap[data?.level] || 3) as any,
+            confidence: data?.confidence || 0.95,
+            executionTimeMs: 80,
+            modelUsed: data?.provider || 'RAG Edge',
+            reasoning: data?.levelLabel || 'RAG Servicios D1'
+          }
+        }]);
+      } catch {
+        setMessages((prev) => [...prev, {
+          id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+          content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
     },
   });
 

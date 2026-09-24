@@ -3,8 +3,7 @@ import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../t
 import { ProductChatColumn } from './ProductChatColumn';
 import { ProductShowcase } from './ProductShowcase';
 import { ProductDetailModal } from './ProductDetailModal';
-import { ProductFullscreenModal } from './ProductFullscreenModal';
-import { ProductCheckoutModal } from './ProductCheckoutModal';
+import { ProductFullscreenModal } from './ProductFullscreenModal'; import { ProductCheckoutModal } from './ProductCheckoutModal';
 import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
 import { DEFAULT_PRODUCT } from './productChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
@@ -28,52 +27,65 @@ export const ProductChatView: React.FC<Props> = ({
   const [theme, setTheme] = useState<ProductChatTheme>('linear_dark');
   const themeStyles = PRODUCT_THEMES[theme];
 
-  useEffect(() => {
-    if (initialProduct) setSelectedProduct(initialProduct);
-  }, [initialProduct]);
+  useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
   useEffect(() => {
     if (!selectedProduct.title) return;
-    const welcomeMsg: ProductChatMessage = {
+    setMessages([{
       id: `msg-${Date.now()}`, sessionId: `sess-${Date.now()}`, tenantId: 'tenant-demo', sender: 'assistant',
       content: `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`,
-      timestamp: '20:03',
-      ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 14, modelUsed: 'Catálogo D1', reasoning: 'Bienvenida contextualizada.' },
-    };
-    setMessages([welcomeMsg]);
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
+    }]);
   }, [selectedProduct.id, selectedProduct.title]);
 
   const trackEvent = (event: string, temperature?: string) => {
     if (!selectedProduct.id) return;
-    fetch(`/api/products/${selectedProduct.id}/track`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, temperature })
-    }).catch(() => {});
+    fetch(`/api/products/${selectedProduct.id}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event, temperature }) }).catch(() => {});
   };
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: 9000,
     deliveryDelayMs: 350,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
-    onSetLoading: setIsLoading,
-    onTriggerBotReply: (batch) => {
-      const isMulti = batch.length > 1;
-      const combined = batch.join(' ').toLowerCase();
-      const ragK = (selectedProduct as any).embedding_text || selectedProduct.specifications?.rag_knowledge || '';
-      const reasoning = ragK ? 'RAG Producto Especializado D1.' : (isMulti ? `RAG L2: Ráfaga (${batch.length} preguntas).` : 'Respuesta catálogo D1.');
-      let replyContent = ragK && !combined.includes('precio') && !combined.includes('envio')
-        ? `Sobre **${selectedProduct.title}**: ${ragK.slice(0, 180)}...\n\nPulsa **"Comprar Ahora"** para completar tu pedido.`
-        : `¡Excelente consulta! **${selectedProduct.title}** cuenta con despacho express en 24/48h, garantía de 30 días y stock activo. Pulsa **"Comprar Ahora"** para completar tu pedido.`;
-      if (combined.includes('envio') || combined.includes('envío') || combined.includes('despacho')) {
-        replyContent = `¡Con gusto! Para **${selectedProduct.title}** contamos con despacho express en 24/48h a nivel nacional con seguimiento en tiempo real.`;
-      } else if (combined.includes('precio') || combined.includes('cuanto') || combined.includes('costo')) {
-        replyContent = `El precio actual de **${selectedProduct.title}** es de **$${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}** con garantía oficial de 30 días.`;
+    onTriggerBotReply: async (batch) => {
+      const userText = batch.join('\n').trim();
+      if (!userText) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch('/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantSlug: 'geosoft',
+            tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
+            sessionId: `sess_${selectedProduct.id || 'default'}`,
+            message: userText
+          })
+        });
+        const data = res.ok ? await res.json() : null;
+        const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
+        setMessages((prev) => [...prev, {
+          id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+          content: data?.answer || `Sobre **${selectedProduct.title}**: $${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}. ¿Deseas adquirirlo?`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ragTrace: {
+            levelUsed: (lvlMap[data?.level] || 3) as any,
+            confidence: data?.confidence || 0.95,
+            executionTimeMs: 85,
+            modelUsed: data?.provider || 'RAG Cloudflare Edge',
+            reasoning: data?.levelLabel || 'RAG Catálogo D1'
+          }
+        }]);
+      } catch {
+        setMessages((prev) => [...prev, {
+          id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+          content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+      } finally {
+        setIsLoading(false);
       }
-      setMessages((prev) => [...prev, {
-        id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-        content: replyContent, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 2, confidence: 0.99, executionTimeMs: 16, modelUsed: 'Catálogo D1', reasoning },
-      }]);
     },
   });
 
@@ -122,23 +134,13 @@ export const ProductChatView: React.FC<Props> = ({
         />
       </div>
       {detailModal && (
-        <ProductDetailModal
-          product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)}
-          onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
-        />
+        <ProductDetailModal product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)} onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }} />
       )}
       {fullscreenOpen && (
-        <ProductFullscreenModal
-          product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)}
-          onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
-          onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }}
-        />
+        <ProductFullscreenModal product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }} onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} />
       )}
       {checkoutOpen && (
-        <ProductCheckoutModal
-          product={selectedProduct} storeName={storeName} onClose={() => setCheckoutOpen(false)}
-          onConfirmCheckout={handleConfirmCheckout}
-        />
+        <ProductCheckoutModal product={selectedProduct} storeName={storeName} onClose={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} />
       )}
     </div>
   );
