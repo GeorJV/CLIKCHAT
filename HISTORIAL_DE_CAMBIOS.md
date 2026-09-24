@@ -15,16 +15,20 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-24] Módulo Configurable de Cadencia y Velocidad de Respuesta IA (Modo Humano vs Modo Inmediato)
+- **Base de Datos Cloudflare D1:** Agregada columna `response_delay_sec INTEGER DEFAULT 9` a la tabla `tenants`.
+- **API Edge Gateway (`functions/api/[[route]].js`):** Soporte en `PUT /api/tenants/:id` y `GET /api/tenants/:slug` para actualizar y leer la cadencia de respuesta.
+- **Panel de Negocio (`ChatCadenceSettingCard.tsx` - 118 líneas):**
+  - **Modo Inmediato (1 segundo):** Máxima velocidad de respuesta transaccional para clientes que exigen inmediatez mensaje a mensaje.
+  - **Modo Humano Recomendado (9 segundos):** Pausa inteligente con explicación visual en la UI. Permite al cliente enviar múltiples mensajes seguidos (estilo WhatsApp) y la IA responde a todo el contexto acumulado de forma natural.
+  - **Modo Manual Personalizado (1 a 20 segundos):** Slider y selector numérico con badges de nivel de cadencia en tiempo real.
+- **Hooks y Vistas Conectadas:**
+  - `useChatRAG.ts`: Agrupamiento de mensajes con temporizador debounce basado en `tenant.response_delay_sec`.
+  - `ProductChatView.tsx` y `ServiceChatView.tsx`: Vinculados a la cadencia del negocio.
+  - `useProductResolver.ts`: Resolución de cadencia desde el Edge.
+- **Estándar ARQMODULAR:** Todos los archivos de `src/` estrictamente bajo 150 líneas.
+
 ### [2026-09-24] Habilitación Completa de Motor RAG Edge Serverless y Conexión en Producción
 - **Arquitectura:** Migración completa sin Docker a Cloudflare Pages Functions + Cloudflare D1 + OpenRouter API (GPT-4o-mini).
-- **RAG 4 Niveles:**
-  1. *Nivel 1 (Memoria Episódica):* Historial de turnos guardado en SQLite D1 (`chat_messages`).
-  2. *Nivel 2 (Reglas / FAQs $0 Costo):* Coincidencia instantánea por overlap y palabras clave sin invocar LLMs.
-  3. *Nivel 3 (Catálogo & Documentos RAG):* Consulta en tiempo real de productos e inventario D1 y fragmentos de conocimiento con GPT-4o-mini en OpenRouter.
-  4. *Nivel 4 (HITL Fallback):* Captura de prospecto y derivación a WhatsApp / operador humano ante consultas sin contexto.
-- **Frontend & UX:**
-  - Vistas `ProductChatView` y `ServiceChatView` conectadas nativamente a `POST /api/chat/message`.
-  - Batcher debounced corregido a 1.0s - 1.2s para respuesta reactiva sin cortes ni cuelgues.
-  - Gestión segura del callback `onSetLoading` y estados asíncronos.
-  - Importación masiva de inventario por Excel/CSV integrada en Panel de Cliente.
-  - Cumplimiento estricto con el estándar modular ARQMODULAR (<150 líneas por archivo en `src/`).
+- **RAG 4 Niveles:** Memoria Episódica (D1), FAQs a $0 costo, Catálogo e Inventario RAG (OpenRouter), y HITL Fallback a WhatsApp.
+- **Frontend & UX:** Eliminación de mocks estáticos, reparación de callbacks asíncronos y carga masiva de Excel/CSV en inventario.
