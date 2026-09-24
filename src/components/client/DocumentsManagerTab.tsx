@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { KnowledgeDocument } from '../../types/client';
-import { FileText, Plus, Trash2, Sparkles, Layers } from 'lucide-react';
+import { FileText, Plus, Trash2, Sparkles, Layers, Edit3 } from 'lucide-react';
+import { DocumentDropzone } from './training/DocumentDropzone';
 
 interface DocumentsManagerTabProps {
   tenantId?: string;
@@ -60,25 +61,28 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="onyx-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <FileText className="w-4 h-4 text-emerald-400" />
-            <span>Documentos y Manuales No Estructurados (RAG Bloque 2)</span>
+            <span>Documentos, Manuales & Tablas (RAG Nivel 3)</span>
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
-            Manuales de garantía, guías de uso o políticas largas que el bot particiona en chunks para responder preguntas complejas.
+            Sube manuales (.docx, .txt) u hojas de cálculo (.xlsx) que la IA procesará y particionará en chunks para responder con certeza.
           </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition cursor-pointer"
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#1c1a1a] hover:bg-[#252222] border border-[#333] text-zinc-200 font-bold text-xs transition cursor-pointer shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          <span>{showForm ? 'Cerrar' : 'Subir Documento'}</span>
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>{showForm ? 'Ocultar Editor' : 'Pegar Texto Manual'}</span>
         </button>
       </div>
+
+      {/* ZONA UNIVERSAL DE ARRASTRAR Y SOLTAR / SUBIR DESDE PC */}
+      <DocumentDropzone tenantId={tenantId} onUploadSuccess={loadDocs} />
 
       {showForm && (
         <form onSubmit={handleUpload} className="onyx-card rounded-2xl p-5 space-y-3.5 shadow-xl">

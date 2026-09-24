@@ -41,3 +41,9 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - **Gobernanza Super Admin (Confidencial):** Control centralizado en Cloudflare D1 del balance 90% DeepSeek V3 (`deepseek/deepseek-chat`) para atención comercial de alta velocidad y 10% OpenAI GPT-4o Mini (`openai/gpt-4o-mini`) para razonamiento complejo y comparativas técnicas, con fallback automático a Google AI Studio (`gemini-1.5-flash`).
 - **Panel de Usuario Protegido:** El cliente únicamente visualiza "Modelo del Sistema (Predefinido)" con opción de "Conectar mi propia IA (Personalizada)" para cualquier proveedor (Google AI Studio, OpenAI, OpenRouter, etc.) mediante `custom_llm_key`.
 - Cumplimiento estricto de límites modulares ARQMODULAR (<150 líneas por componente).
+
+### [2026-09-24] Carga Universal de Documentos (Texto, Word y Excel) con Drag & Drop
+- **Formatos Soportados:** Texto plano (`.txt`, `.md`, `.csv`), Documentos Word (`.docx`, `.doc`) y Hojas de Cálculo Excel (`.xlsx`, `.xls`).
+- **Métodos de Carga:** Zona interactiva de arrastrar y soltar (Drag and Drop) y selector nativo de archivos desde la PC.
+- **Procesamiento de Conocimiento:** Lector modular en cliente (`documentParser.ts`) que convierte documentos y tablas en conocimiento estructurado, particionado automáticamente en chunks en Cloudflare D1 para el RAG Nivel 3.
+- Componentes atómicos `DocumentDropzone.tsx` y `DocumentsManagerTab.tsx` respetando ARQMODULAR (<150 líneas).
