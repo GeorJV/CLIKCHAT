@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ClientTab } from '../types/client';
 
-export type AppView = 'chat' | 'product' | 'service' | 'client' | 'admin';
+export type AppView = 'landing' | 'chat' | 'product' | 'service' | 'client' | 'admin';
 
 export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
   '/dashboard': 'chatbot',
@@ -71,9 +71,11 @@ export function useAppRouter() {
   const isChatUrl = pathname === '/chat' || searchParams.get('view') === 'chat';
   const isAdminUrl = pathname === '/super-admin' || searchParams.get('view') === 'admin';
   const isLoginUrl = pathname === '/login';
+  const isLandingUrl = (pathname === '/' || pathname === '/inicio' || pathname === '/landing') && !searchParams.has('p') && !searchParams.has('s') && !searchParams.has('t') && !searchParams.has('view');
 
   let currentView: AppView = 'client';
-  if (isAdminUrl) currentView = 'admin';
+  if (isLandingUrl) currentView = 'landing';
+  else if (isAdminUrl) currentView = 'admin';
   else if (isProductUrl) currentView = 'product';
   else if (isServiceUrl) currentView = 'service';
   else if (isChatUrl) currentView = 'chat';

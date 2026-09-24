@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
+import { LandingPage } from './components/landing/LandingPage';
 import { MobileChatView } from './components/chat/MobileChatView';
 import { ProductChatView } from './components/chat/product/ProductChatView';
 import { ServiceChatView } from './components/chat/service/ServiceChatView';
 import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
-import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar } from 'lucide-react';
+import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
 import { useAppRouter, AppView } from './hooks/useAppRouter';
 
 const NAV_VIEWS = [
+  { id: 'landing' as AppView, label: 'Web Oficial', icon: Globe, path: '/' },
   { id: 'chat' as AppView, label: 'Chat Móvil', icon: Smartphone, path: '/chat' },
   { id: 'product' as AppView, label: 'Chat Producto', icon: ShoppingBag, path: '/producto' },
   { id: 'service' as AppView, label: 'Chat Servicio', icon: Calendar, path: '/servicio' },
@@ -23,13 +25,7 @@ export function App() {
   const selectedTenantSlug = params?.get('t') || 'geosoft';
   const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct, responseDelaySec } = useProductResolver(productId, selectedTenantSlug);
 
-  useEffect(() => {
-    if (pathname === '/' && !params?.has('p') && !params?.has('s') && !params?.has('view') && !params?.has('t')) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [pathname, params, navigate]);
-
-  const hideTopBar = currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
+  const hideTopBar = currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
@@ -65,6 +61,15 @@ export function App() {
 
       {/* Main Container */}
       <main className="flex-1 overflow-hidden relative bg-[#151414]">
+        {currentView === 'landing' && (
+          <div className="h-full w-full overflow-y-auto bg-[#0a0a0c]">
+            <LandingPage
+              onGoToDashboard={() => navigate('/dashboard')}
+              onGoToAdmin={() => navigate('/super-admin')}
+            />
+          </div>
+        )}
+
         {currentView === 'chat' && (
           <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
             <MobileChatView

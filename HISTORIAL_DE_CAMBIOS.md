@@ -53,3 +53,14 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - **Creación en Vivo:** Formulario conectado a la API Edge Cloudflare D1 (`POST /api/admin/tenants`) que crea la cuenta del negocio con UUID v4, slug autogenerado, correo del dueño, plan SaaS y bot comercial predeterminado.
 - **Acciones Directas:** Tabla interactiva de inquilinos con accesos rápidos al Chat en Vivo (`/chat?t=slug`), al Panel del Cliente (`/dashboard?t=slug`) y eliminación segura (`DELETE /api/admin/tenants/:id`).
 
+### [2026-09-24] Lanzamiento de Página Web Oficial (Landing Page) de Alta Conversión
+- **Dirección de Arte y Arquitectura B2B (`frontend-design` & `arqmodular`):** Portada oficial en la ruta raíz `/` con estética corporativa de alto impacto, modo oscuro refinado y componentes atómicos (<150 líneas cada uno en `src/components/landing/`).
+- **Narrativa Comercial Persuasiva:**
+  1. *Hero Section:* "Tu mejor vendedor ahora trabaja 24/7 y cierra ventas mientras duermes."
+  2. *Badge Anti-Meta:* Cero comisiones a Meta y sin complicaciones con WhatsApp Business API.
+  3. *¿Para quién es?:* Segmentación por dolores reales (dueños que quieren vender a las 2 AM, tiendas con catálogo visual, negocios de servicios y equipos de venta).
+  4. *Bento Grid de Capacidades:* Auto-aprendizaje continuo en 1 clic (HITL: si no sabe te pregunta a ti, respondes una vez y lo aprende para siempre), reportes reales por clic (vistas, compras, temperatura de leads), supervisión en tiempo real con intervención humana y cierre directo a WhatsApp.
+  5. *Simulador Demo en Vivo:* Widget interactivo en pantalla donde el visitante prueba las respuestas y carruseles de productos en tiempo real.
+  6. *FAQ y CTA Final:* Resolución de objeciones sobre WhatsApp, documentos y precios.
+
+
