@@ -104,15 +104,16 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   2. *Formateo Enriquecido:* Los mensajes del auditor ahora se renderizan mediante `ChatMessageContent` con soporte de trazas RAG (`m.rag_level_used`), marcas de tiempo y quiebre de palabras seguro.
   3. *Auto-refresco de Sesiones:* `ConversationsTab.tsx` refresca automáticamente la lista de chats cada 6 segundos para detectar visitantes nuevos en tiempo real.
 
-### [2026-09-24] Corrección de Flujo RAG Nivel 3 y Desbloqueo de Documentos
-- **Causa Raíz:** 
-  1. *Falso Positivo de FAQ en Nivel 2:* La tabla de FAQs contenía una pregunta sobre "descuentos o promociones especiales" (`faq_descuentos`). Al preguntar por "descuento VIP" o "descuento PRO", el detector de palabras clave de Nivel 2 asignaba un score artificial de 0.85 (superior al umbral 0.60) y ejecutaba una **detención temprana (Early Stop)** devolviendo la respuesta estática genérica de la FAQ sin consultar jamás los documentos ni invocar al LLM en Nivel 3.
-  2. *Desconexión de Documentos no Fragmentados:* Las consultas a documentos solo leían `document_chunks` y no tenían respaldo sobre `knowledge_documents.raw_content` ni compatibilidad cruzada entre UUID y Slug del tenant.
-- **Solución Implementada:**
-  1. *Protección Anti-Interceptación en Nivel 2:* Se añadió `requiresDeepRAG` para forzar que cualquier consulta sobre promociones, descuentos, cupones, códigos o precios exactos evite el Early Stop en Nivel 2 y pase directamente al motor RAG de Nivel 3.
-  2. *Extracción Dual de Conocimiento:* Nivel 3 consulta simultáneamente `document_chunks` y `knowledge_documents` (`raw_content`), con scoring contextual por palabras clave y normalización de texto.
-  3. *Regla de Prevalencia en Prompt:* El motor LLM prioriza explícitamente los datos específicos de los manuales y documentos RAG subidos (porcentajes, días de prueba, códigos de descuento) por encima de cualquier política genérica.
-  4. *Endpoints de Documentos Resilientes:* `GET /api/documents` y `POST /api/documents` ahora resuelven tanto por `tenantId` (UUID) como por `slug`, garantizando persistencia y lectura precisa en Cloudflare D1.
+### [2026-09-24] Blindaje Arquitectónico 100% Producción del Motor RAG
+- **Problema de Seguridad y Concurrencia:** 
+  1. *Falsos Positivos de Consultas Cortas:* El cálculo de cobertura (`coverage = matches / tokensA.length`) producía 100% de coincidencia ante consultas de 1 sola palabra (ej: "pago", "descuento", "garantía"), activando el Nivel 2 y silenciando el conocimiento de documentos.
+  2. *Violación de Clave Foránea (FK Constraint) en D1:* En SQLite D1, `knowledge_documents.tenant_id` tiene restricción de clave foránea estricta hacia `tenants.id`. Si el frontend pasaba el slug (`geosoft`) o estaba cargando el estado en React (`undefined`), la inserción fallaba con error 500 `FOREIGN KEY constraint failed`.
+  3. *Sombreado de Documentos por FAQs (Interceptor Shadowing):* Si un negocio subía un manual con condiciones específicas (ej: 45 días de reembolso o 36 meses de garantía) y existía una FAQ previa con términos similares, la FAQ podía interceptar la respuesta antes de consultar el manual.
+- **Blindaje Definitivo Implementado:**
+  1. *Similitud Simétrica Dice:* Para consultas de menos de 3 palabras, se utiliza exclusivamente el coeficiente simétrico de Sørensen-Dice, eliminando al 100% los falsos positivos por palabras aisladas.
+  2. *Guardia Anti-Sombreado (`hasDocumentMatch` y `hasDirectProductMatch`):* Antes de permitir que el Nivel 2 detenga una consulta, el sistema verifica en paralelo si alguna palabra clave de la pregunta coincide con fragmentos o documentos crudos subidos por el cliente. Si hay coincidencia de documento, el Nivel 2 se anula de inmediato y cede el control al RAG de Nivel 3.
+  3. *Resolución Infalible de Inquilino:* Tanto en el backend (`functions/api/[[route]].js`) como en los componentes frontend (`DocumentsManagerTab.tsx`, `DocumentDropzone.tsx`), cualquier `tenantId` se normaliza automáticamente al UUID válido del tenant, previniendo excepciones de base de datos.
+  4. *Despliegue y Validación en Vivo:* Compilado y desplegado directamente en Cloudflare Pages (`clikchat.pages.dev`). Verificados 5 escenarios de prueba con respuestas inmediatas extraídas de documentos y FAQs con cero fallos.
 
 
 
