@@ -115,5 +115,12 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   3. *Resolución Infalible de Inquilino:* Tanto en el backend (`functions/api/[[route]].js`) como en los componentes frontend (`DocumentsManagerTab.tsx`, `DocumentDropzone.tsx`), cualquier `tenantId` se normaliza automáticamente al UUID válido del tenant, previniendo excepciones de base de datos.
   4. *Despliegue y Validación en Vivo:* Compilado y desplegado directamente en Cloudflare Pages (`clikchat.pages.dev`). Verificados 5 escenarios de prueba con respuestas inmediatas extraídas de documentos y FAQs con cero fallos.
 
+### [2026-09-24] Corrección Tipográfica de Burbujas de Chat (Eliminación de Partición de Palabras)
+- **Causa Raíz:** En `ChatMessageContent.tsx` y los contenedores de mensajes se había configurado la clase CSS `break-all` y `[overflow-wrap:anywhere]`. La propiedad `word-break: break-all` fuerza al navegador a romper las palabras en cualquier letra arbitraria para llenar la línea (ej: *"nuest-ro"*, *"respue-stas"*, *"produ-ctos"*, *"person-alizada"*), partiendo palabras normales por la mitad.
+- **Solución Implementada:**
+  1. *Alineación a Estándar de Mensajería:* Se removió `break-all` y `[overflow-wrap:anywhere]` de los textos, encabezados y párrafos en `ChatMessageContent.tsx`, `ChatMessageItem.tsx`, `ProductChatColumn.tsx`, `ServiceChatColumn.tsx` y `ConversationDetail.tsx`.
+  2. *Envoltorio Natural con `break-words`:* Las palabras completas saltan limpiamente de línea de forma natural sin cortarse. Únicamente si una URL sin espacios excede el ancho de la burbuja, se permite el quiebre de esa cadena específica.
+  3. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
+
 
 
