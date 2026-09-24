@@ -20,7 +20,7 @@ export function App() {
   const { pathname, search, currentView, navigate } = useAppRouter();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
-  const selectedTenantSlug = params?.get('t') || 'acme-store';
+  const selectedTenantSlug = params?.get('t') || 'geosoft';
   const { productItem, storeName, agentName, agentAvatar, isLoading: isResolvingProduct } = useProductResolver(productId, selectedTenantSlug);
 
   useEffect(() => {

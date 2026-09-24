@@ -11,7 +11,7 @@ interface UseTenantDataResult {
   tenantError: string | null;
 }
 
-export function useTenantData(tenantSlug: string = 'demo-store'): UseTenantDataResult {
+export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResult {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);

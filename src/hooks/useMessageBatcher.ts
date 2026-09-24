@@ -6,7 +6,7 @@ interface UseMessageBatcherOptions {
   deliveryDelayMs?: number;
   onDeliverUserMessage: (msg: ProductChatMessage) => void;
   onTriggerBotReply: (batchedTexts: string[]) => void | Promise<void>;
-  onSetLoading: (loading: boolean) => void;
+  onSetLoading?: (loading: boolean) => void;
 }
 
 export function useMessageBatcher({
@@ -47,11 +47,11 @@ export function useMessageBatcher({
       pendingBatchRef.current = [];
 
       if (batchToProcess.length > 0) {
-        onSetLoading(true);
+        onSetLoading?.(true);
         try {
           await onTriggerBotReply(batchToProcess);
         } finally {
-          onSetLoading(false);
+          onSetLoading?.(false);
         }
       }
     }, debounceMs);
@@ -62,11 +62,11 @@ export function useMessageBatcher({
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    onSetLoading(true);
+    onSetLoading?.(true);
     try {
       await onTriggerBotReply([trimmed]);
     } finally {
-      onSetLoading(false);
+      onSetLoading?.(false);
     }
   }, [onTriggerBotReply, onSetLoading]);
 

@@ -654,8 +654,8 @@ export async function onRequest(context) {
       try { body = await request.json(); } catch (e) {}
       const { tenantSlug, tenantId, sessionId, message, leadInfo } = body;
 
-      if (!message || (!tenantSlug && !tenantId)) {
-        return jsonResponse({ error: 'Mensaje y tenant requeridos' }, 400);
+      if (!message) {
+        return jsonResponse({ error: 'Mensaje requerido' }, 400);
       }
 
       // 1. Resolver Tenant en Cloudflare D1
