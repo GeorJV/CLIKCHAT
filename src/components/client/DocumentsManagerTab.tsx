@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { KnowledgeDocument } from '../../types/client';
-import { FileText, Plus, Trash2, Sparkles, Layers, Edit3 } from 'lucide-react';
+import { FileText, Plus, Trash2, Sparkles, Layers, Edit3, Eye, ChevronRight } from 'lucide-react';
 import { DocumentDropzone } from './training/DocumentDropzone';
+import { DocumentViewerModal } from './training/DocumentViewerModal';
 
 interface DocumentsManagerTabProps {
   tenantId?: string;
@@ -9,6 +10,7 @@ interface DocumentsManagerTabProps {
 
 export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenantId }) => {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -113,23 +115,51 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
 
       <div className="space-y-3">
         {documents.map((doc) => (
-          <div key={doc.id} className="onyx-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-white">{doc.title}</span>
+          <div
+            key={doc.id}
+            onClick={() => setSelectedDocId(doc.id)}
+            className="onyx-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-emerald-500/50 hover:bg-[#191717] transition group shadow-sm"
+            title="Haz clic para ver el contenido completo y los chunks particionados"
+          >
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-sm text-white group-hover:text-emerald-300 transition truncate">{doc.title}</span>
                 <span className="px-2 py-0.5 rounded text-[10px] bg-[#151414] text-zinc-300 border border-[#282626]">{doc.category}</span>
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
                   <Layers className="w-3 h-3" /> {doc.chunks_count || 1} Chunks D1
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400">Subido: {new Date(doc.created_at).toLocaleDateString()}</p>
+              <p className="text-[11px] text-zinc-400">Subido: {new Date(doc.created_at).toLocaleDateString()} • <span className="text-emerald-400/80 group-hover:text-emerald-300 underline font-medium">Clic para explorar contenido</span></p>
             </div>
-            <button onClick={() => handleDelete(doc.id)} className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            
+            <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setSelectedDocId(doc.id)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#201d1d] hover:bg-emerald-500/20 border border-[#333] hover:border-emerald-500/40 text-zinc-300 hover:text-emerald-300 text-xs font-bold transition cursor-pointer"
+                title="Ver contenido"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Ver contenido</span>
+                <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-emerald-400 transition" />
+              </button>
+              <button
+                onClick={() => handleDelete(doc.id)}
+                className="p-2 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                title="Eliminar documento"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {selectedDocId && (
+        <DocumentViewerModal
+          documentId={selectedDocId}
+          onClose={() => setSelectedDocId(null)}
+        />
+      )}
     </div>
   );
 };

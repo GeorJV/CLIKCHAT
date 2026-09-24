@@ -41,6 +41,24 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get single document with chunks
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const docRes = await query('SELECT * FROM knowledge_documents WHERE id = $1', [id]);
+    if (!docRes.rows.length) return res.status(404).json({ error: 'Documento no encontrado' });
+    const chunksRes = await query('SELECT id, chunk_index, content FROM document_chunks WHERE document_id = $1 ORDER BY chunk_index ASC', [id]);
+    return res.json({
+      document: {
+        ...docRes.rows[0],
+        chunks: chunksRes.rows
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete document
 router.delete('/:id', async (req, res) => {
   try {

@@ -86,7 +86,18 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - Prohibición de listas interminables y eliminación de etiquetas markdown crudas (`###`).
      - Tono de voz cálido, inteligente, persuasivo y conversacional (estilo WhatsApp) con pregunta de cierre natural.
      - Ajuste de temperatura a `0.55` para naturalidad emocional y `max_tokens` a 380 para respuestas rápidas y compactas.
-  4. *Actualización de D1:* `system_prompt` del inquilino `geosoft` actualizado con la personalidad oficial de Sofía (Asesora VIP).
+### [2026-09-24] Visor Interactivo de Contenido y Chunks RAG en Entrenamiento AI
+- **Funcionalidad Solicitada:** Al hacer clic en cualquier tarjeta de documento cargado en el panel (ej. "RAG CLIKCHAT PRUEBA", "RAG PRUEBA DESCUENTO"), el usuario debe poder inspeccionar y leer todo su contenido interno.
+- **Implementación y Arquitectura:**
+  1. *API Edge Endpoint (`GET /api/documents/:id`):* Recupera en Cloudflare Pages Edge el registro completo de `knowledge_documents` (`raw_content`) y todos sus fragmentos particionados en `document_chunks` ordenados por `chunk_index`.
+  2. *Componente Atómico `DocumentViewerModal.tsx` (<155 líneas):*
+     - Modo Dual: Vista de **Chunks RAG Particionados** (mostrando cada fragmento con su número de chunk `#1, #2...`, caracteres y texto exacto que consulta el bot) y Vista de **Texto Completo Original** (con botón de copiado rápido al portapapeles).
+     - Buscador en tiempo real de palabras clave dentro de los chunks.
+     - Metadatos visuales: categoría, fecha de carga y conteo de fragmentos D1.
+  3. *Tarjetas Clicables en `DocumentsManagerTab.tsx`:*
+     - Las tarjetas completas son clicables (`cursor-pointer hover:border-emerald-500/50`).
+     - Botón explícito "Ver contenido" con ícono de ojo (`Eye`) y flecha interactiva.
+- **Cumplimiento de Estándares:** Arquitectura atómica modular (<155 líneas por componente) y verificación de compilación y despliegue.
 
 
 

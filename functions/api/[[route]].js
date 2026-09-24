@@ -1396,6 +1396,27 @@ export async function onRequest(context) {
       return jsonResponse({ success: true, document: { id: docId, title, chunksCount: chunks.length } }, 201);
     }
 
+    // DOCUMENTS: GET /api/documents/:id (Ver contenido y chunks)
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'GET') {
+      const id = segments[1];
+      const docRows = await executeD1(
+        'SELECT kd.id, kd.tenant_id, kd.title, kd.category, kd.file_type, kd.raw_content, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.id = ?1 GROUP BY kd.id LIMIT 1',
+        [id]
+      );
+      if (!docRows.length) return jsonResponse({ error: 'Documento no encontrado' }, 404);
+      const doc = docRows[0];
+      const chunks = await executeD1(
+        'SELECT id, chunk_index, content FROM document_chunks WHERE document_id = ?1 ORDER BY chunk_index ASC',
+        [id]
+      );
+      return jsonResponse({
+        document: {
+          ...doc,
+          chunks
+        }
+      });
+    }
+
     // DOCUMENTS: DELETE /api/documents/:id
     if (segments[0] === 'documents' && segments.length === 2 && request.method === 'DELETE') {
       const id = segments[1];

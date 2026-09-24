@@ -15,6 +15,12 @@ export type ClientTab =
   | 'soporte'
   | 'user';
 
+export interface DocumentChunk {
+  id: string;
+  chunk_index: number;
+  content: string;
+}
+
 export interface KnowledgeDocument {
   id: string;
   tenant_id: string;
@@ -23,6 +29,11 @@ export interface KnowledgeDocument {
   file_type: string;
   chunks_count?: number;
   created_at: string;
+}
+
+export interface DocumentDetail extends KnowledgeDocument {
+  raw_content?: string;
+  chunks?: DocumentChunk[];
 }
 
 export interface ClientSession {
