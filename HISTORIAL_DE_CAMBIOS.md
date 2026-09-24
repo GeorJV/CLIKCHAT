@@ -134,5 +134,20 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   4. *Aislamiento Quirúrgico de Mensajes (`ConversationDetail.tsx`):* Al seleccionar una sesión, el estado de mensajes se resetea de forma inmediata y se valida la referencia de sesión en la respuesta asíncrona, eliminando al 100% cualquier contaminación o desincronización entre chats.
   5. *Identidades Claras de Visitantes:* Los clientes se identifican por su nombre o datos de contacto si fueron capturados, o mediante su identificador único real (`Visitante #<id>`), acompañado de su pregunta real y conteo verificado de mensajes.
 
+### [2026-09-24] Módulo de Cuotas y Consumo Real en Vivo (Esta Hora, Hoy 24h, Este Mes)
+- **Requerimiento del Usuario:** Integrar en el Dashboard de ClikChat los tres campos de monitoreo de cuotas y consumo observados en QChatt:
+  1. *ESTA HORA:* Mensajes usados en los últimos 60 minutos vs límite horario (ej. 1,000 msgs), porcentaje y barra de progreso animada.
+  2. *HOY (24H):* Mensajes consumidos hoy vs límite diario (ej. 10,000 msgs), porcentaje y barra de progreso.
+  3. *ESTE MES:* Mensajes consumidos en el mes corriente vs límite mensual (ej. 100,000 msgs), porcentaje y barra de progreso.
+  4. *Cabecera de Sesión:* Avatar inicial del negocio, nombre de tienda, badge de Tenant ID/slug, badge de plan tier, subtítulo de sincronización con Cloudflare D1, indicador interactivo pulsante *● Consumo Real en Vivo* y botón *Cambiar Cuenta* con modal de selección.
+- **Datos 100% Reales desde Cloudflare D1:**
+  - En `functions/api/[[route]].js` y `server/routes/chat.js` se implementó el cálculo directo sobre la tabla `chat_messages` de Cloudflare D1 mediante ventanas temporales SQLite (`datetime('now', '-1 hour')`, `date('now')`, `strftime('%Y-%m', 'now')`).
+  - Endpoint dedicado `GET /api/quotas/:tenantId` y enriquecimiento automático de `GET /api/chat/tenant-metrics/:tenantId`.
+- **Arquitectura ARQMODULAR (<150 líneas por archivo):**
+  - `src/types/quotas.ts`: Contratos tipados estrictos sin `any`.
+  - `src/hooks/useTenantQuotas.ts`: Hook reactivo con auto-refresco periódico (10s), botón de refresco manual y fallback.
+  - `src/components/client/metrics/TenantConsumptionSection.tsx`: Componente visual atómico con gradientes y tarjetas de progreso responsivas.
+  - `src/components/client/modals/SwitchTenantModal.tsx`: Modal atómico para cambiar de inquilino o cuenta con 1 clic.
+
 
 

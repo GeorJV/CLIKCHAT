@@ -13,6 +13,7 @@ import { AgendaTab } from './AgendaTab';
 import { AITrainingTab } from './training/AITrainingTab';
 import { SupportTab } from './support/SupportTab';
 import { UserProfileTab } from './UserProfileTab';
+import { SwitchTenantModal } from './modals/SwitchTenantModal';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
@@ -27,6 +28,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 }) => {
   const { navigate, currentTab, isLoginUrl, userId } = useAppRouter();
   const [authOverride, setAuthOverride] = useState<boolean | null>(null);
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const isAuthenticated = authOverride !== null ? authOverride : !isLoginUrl;
   const activeTab: ClientTab = currentTab;
 
@@ -65,6 +67,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               products={products}
               onRefresh={() => loadTenantData(currentSlug)}
               onOpenLiveChat={onOpenLiveChat}
+              onSwitchAccount={() => setIsSwitchModalOpen(true)}
             />
           )}
           {(activeTab === 'business' || activeTab === 'faqs' || activeTab === 'settings') && (
@@ -95,6 +98,21 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           )}
         </div>
       </main>
+
+      <SwitchTenantModal
+        isOpen={isSwitchModalOpen}
+        onClose={() => setIsSwitchModalOpen(false)}
+        availableTenants={availableTenants}
+        currentSlug={currentSlug}
+        onSelectTenant={(slug) => {
+          setTenantSlug(slug);
+          if (onSelectTenant) onSelectTenant(slug);
+        }}
+        onLogout={() => {
+          setAuthOverride(false);
+          navigate('/login');
+        }}
+      />
     </div>
   );
 };

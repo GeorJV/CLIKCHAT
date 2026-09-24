@@ -194,13 +194,126 @@ router.get('/tenant-metrics/:tenantId', async (req, res) => {
     const objectionsResolved = parseInt(objectionsRes.rows[0]?.count || '0', 10);
     const appointmentsCount = totalProdBuyClicks;
 
+    let hourlyUsed = 0;
+    let dailyUsed = 0;
+    let monthlyUsed = 0;
+    try {
+      const quotaRes = await query(`
+        SELECT 
+          COUNT(CASE WHEN created_at >= NOW() - INTERVAL '1 hour' THEN 1 END) as hourly_used,
+          COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END) as daily_used,
+          COUNT(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 END) as monthly_used
+        FROM chat_messages 
+        WHERE tenant_id = $1
+      `, [tenantId]);
+      hourlyUsed = parseInt(quotaRes.rows[0]?.hourly_used || '0', 10);
+      dailyUsed = parseInt(quotaRes.rows[0]?.daily_used || '0', 10);
+      monthlyUsed = parseInt(quotaRes.rows[0]?.monthly_used || '0', 10);
+    } catch {
+      // Fallback silencioso en entorno local
+    }
+
+    const hourlyLimit = 1000;
+    const dailyLimit = 10000;
+    const monthlyLimit = 100000;
+
     return res.json({
       metrics: {
         chatOpens,
         questionsAnswered,
         objectionsResolved,
         appointmentsCount
+      },
+      quotas: {
+        hourly: {
+          limit: hourlyLimit,
+          used: Math.min(hourlyUsed, hourlyLimit),
+          remaining: Math.max(0, hourlyLimit - hourlyUsed),
+          percentage: hourlyLimit > 0 ? Math.min(100, Math.round((hourlyUsed / hourlyLimit) * 100)) : 0
+        },
+        daily: {
+          limit: dailyLimit,
+          used: Math.min(dailyUsed, dailyLimit),
+          remaining: Math.max(0, dailyLimit - dailyUsed),
+          percentage: dailyLimit > 0 ? Math.min(100, Math.round((dailyUsed / dailyLimit) * 100)) : 0
+        },
+        monthly: {
+          limit: monthlyLimit,
+          used: Math.min(monthlyUsed, monthlyLimit),
+          remaining: Math.max(0, monthlyLimit - monthlyUsed),
+          percentage: monthlyLimit > 0 ? Math.min(100, Math.round((monthlyUsed / monthlyLimit) * 100)) : 0
+        }
       }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /quotas/:tenantId (Compatible con /api/quotas/:tenantId)
+router.get('/quotas/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    let tenantName = tenantId;
+    let planTier = 'pro';
+    let monthlyLimit = 100000;
+
+    try {
+      const tRes = await query('SELECT name, plan, token_limit FROM tenants WHERE id = $1 OR slug = $1', [tenantId]);
+      if (tRes.rows[0]) {
+        tenantName = tRes.rows[0].name || tenantId;
+        planTier = tRes.rows[0].plan || 'pro';
+        monthlyLimit = parseInt(tRes.rows[0].token_limit || '100000', 10);
+      }
+    } catch {}
+
+    let hourlyUsed = 0;
+    let dailyUsed = 0;
+    let monthlyUsed = 0;
+
+    try {
+      const quotaRes = await query(`
+        SELECT 
+          COUNT(CASE WHEN created_at >= NOW() - INTERVAL '1 hour' THEN 1 END) as hourly_used,
+          COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END) as daily_used,
+          COUNT(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 END) as monthly_used
+        FROM chat_messages 
+        WHERE tenant_id = $1
+      `, [tenantId]);
+      hourlyUsed = parseInt(quotaRes.rows[0]?.hourly_used || '0', 10);
+      dailyUsed = parseInt(quotaRes.rows[0]?.daily_used || '0', 10);
+      monthlyUsed = parseInt(quotaRes.rows[0]?.monthly_used || '0', 10);
+    } catch {}
+
+    const hourlyLimit = 1000;
+    const dailyLimit = 10000;
+
+    return res.json({
+      success: true,
+      tenantId,
+      tenantName,
+      planTier,
+      quotas: {
+        hourly: {
+          limit: hourlyLimit,
+          used: Math.min(hourlyUsed, hourlyLimit),
+          remaining: Math.max(0, hourlyLimit - hourlyUsed),
+          percentage: hourlyLimit > 0 ? Math.min(100, Math.round((hourlyUsed / hourlyLimit) * 100)) : 0
+        },
+        daily: {
+          limit: dailyLimit,
+          used: Math.min(dailyUsed, dailyLimit),
+          remaining: Math.max(0, dailyLimit - dailyUsed),
+          percentage: dailyLimit > 0 ? Math.min(100, Math.round((dailyUsed / dailyLimit) * 100)) : 0
+        },
+        monthly: {
+          limit: monthlyLimit,
+          used: Math.min(monthlyUsed, monthlyLimit),
+          remaining: Math.max(0, monthlyLimit - monthlyUsed),
+          percentage: monthlyLimit > 0 ? Math.min(100, Math.round((monthlyUsed / monthlyLimit) * 100)) : 0
+        }
+      },
+      updatedAt: new Date().toISOString()
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

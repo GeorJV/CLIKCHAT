@@ -25,6 +25,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/chat', chatRoutes);
+app.use('/api/quotas', chatRoutes);
 app.use('/api/tenants', tenantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/faqs', faqsRoutes);

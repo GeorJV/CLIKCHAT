@@ -884,6 +884,17 @@ export async function onRequest(context) {
       const answers = await executeD1("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = ?1 AND sender = 'assistant'", [tenantId]);
       const objections = await executeD1("SELECT COUNT(*) as count FROM chat_messages WHERE tenant_id = ?1 AND sender = 'assistant' AND (message LIKE '%precio%' OR message LIKE '%garant%' OR message LIKE '%duda%' OR message LIKE '%cost%' OR message LIKE '%beneficio%' OR message LIKE '%tranquil%')", [tenantId]);
 
+      // Métricas de cuotas en tiempo real desde Cloudflare D1
+      const quotaStats = await executeD1(
+        `SELECT 
+           COUNT(CASE WHEN created_at >= datetime('now', '-1 hour') THEN 1 END) as hourly_used,
+           COUNT(CASE WHEN date(created_at) = date('now') THEN 1 END) as daily_used,
+           COUNT(CASE WHEN strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') THEN 1 END) as monthly_used
+         FROM chat_messages 
+         WHERE tenant_id = ?1`,
+        [tenantId]
+      );
+
       const baseSessions = Number(sessions[0]?.count) || 0;
       const totalProdViews = Number(pMetrics[0]?.views) || 0;
       const totalProdBuyClicks = Number(pMetrics[0]?.buy_clicks) || 0;
@@ -896,14 +907,111 @@ export async function onRequest(context) {
       const objectionsResolved = Number(objections[0]?.count) || 0;
       const appointmentsCount = totalProdBuyClicks;
 
+      const hourlyUsed = Number(quotaStats[0]?.hourly_used || 0);
+      const dailyUsed = Number(quotaStats[0]?.daily_used || 0);
+      const monthlyUsed = Number(quotaStats[0]?.monthly_used || 0);
+      const hourlyLimit = 1000;
+      const dailyLimit = 10000;
+      const monthlyLimit = 100000;
+
       return jsonResponse({
         metrics: {
           chatOpens,
           questionsAnswered,
           objectionsResolved,
           appointmentsCount
+        },
+        quotas: {
+          hourly: {
+            limit: hourlyLimit,
+            used: Math.min(hourlyUsed, hourlyLimit),
+            remaining: Math.max(0, hourlyLimit - hourlyUsed),
+            percentage: hourlyLimit > 0 ? Math.min(100, Math.round((hourlyUsed / hourlyLimit) * 100)) : 0
+          },
+          daily: {
+            limit: dailyLimit,
+            used: Math.min(dailyUsed, dailyLimit),
+            remaining: Math.max(0, dailyLimit - dailyUsed),
+            percentage: dailyLimit > 0 ? Math.min(100, Math.round((dailyUsed / dailyLimit) * 100)) : 0
+          },
+          monthly: {
+            limit: monthlyLimit,
+            used: Math.min(monthlyUsed, monthlyLimit),
+            remaining: Math.max(0, monthlyLimit - monthlyUsed),
+            percentage: monthlyLimit > 0 ? Math.min(100, Math.round((monthlyUsed / monthlyLimit) * 100)) : 0
+          }
         }
       });
+    }
+
+    // QUOTAS: GET /api/quotas/:tenantId
+    if (segments[0] === 'quotas' && segments.length === 2 && request.method === 'GET') {
+      const tenantId = segments[1];
+      try {
+        const tenantRow = await executeD1(
+          'SELECT id, name, slug, plan, token_limit FROM tenants WHERE id = ?1 OR slug = ?1',
+          [tenantId]
+        );
+        const actualTenant = tenantRow[0] || {};
+        const actualId = actualTenant.id || tenantId;
+
+        const quotaStats = await executeD1(
+          `SELECT 
+             COUNT(CASE WHEN created_at >= datetime('now', '-1 hour') THEN 1 END) as hourly_used,
+             COUNT(CASE WHEN date(created_at) = date('now') THEN 1 END) as daily_used,
+             COUNT(CASE WHEN strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') THEN 1 END) as monthly_used
+           FROM chat_messages 
+           WHERE tenant_id = ?1`,
+          [actualId]
+        );
+
+        const hourlyUsed = Number(quotaStats[0]?.hourly_used || 0);
+        const dailyUsed = Number(quotaStats[0]?.daily_used || 0);
+        const monthlyUsed = Number(quotaStats[0]?.monthly_used || 0);
+
+        const hourlyLimit = 1000;
+        const dailyLimit = 10000;
+        const monthlyLimit = Number(actualTenant.token_limit) || 100000;
+
+        return jsonResponse({
+          success: true,
+          tenantId: actualId,
+          tenantName: actualTenant.name || actualId,
+          planTier: actualTenant.plan || 'pro',
+          quotas: {
+            hourly: {
+              limit: hourlyLimit,
+              used: Math.min(hourlyUsed, hourlyLimit),
+              remaining: Math.max(0, hourlyLimit - hourlyUsed),
+              percentage: hourlyLimit > 0 ? Math.min(100, Math.round((hourlyUsed / hourlyLimit) * 100)) : 0
+            },
+            daily: {
+              limit: dailyLimit,
+              used: Math.min(dailyUsed, dailyLimit),
+              remaining: Math.max(0, dailyLimit - dailyUsed),
+              percentage: dailyLimit > 0 ? Math.min(100, Math.round((dailyUsed / dailyLimit) * 100)) : 0
+            },
+            monthly: {
+              limit: monthlyLimit,
+              used: Math.min(monthlyUsed, monthlyLimit),
+              remaining: Math.max(0, monthlyLimit - monthlyUsed),
+              percentage: monthlyLimit > 0 ? Math.min(100, Math.round((monthlyUsed / monthlyLimit) * 100)) : 0
+            }
+          },
+          updatedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        return jsonResponse({
+          success: false,
+          error: err.message,
+          tenantId,
+          quotas: {
+            hourly: { limit: 1000, used: 0, remaining: 1000, percentage: 0 },
+            daily: { limit: 10000, used: 0, remaining: 10000, percentage: 0 },
+            monthly: { limit: 100000, used: 0, remaining: 100000, percentage: 0 }
+          }
+        });
+      }
     }
 
     // CHAT: POST /api/chat/audio (Cloudflare Workers AI Whisper STT with Anti-Looping Filter)

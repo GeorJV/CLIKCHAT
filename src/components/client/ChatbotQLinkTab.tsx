@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Tenant, Product } from '../../types';
+import { TenantConsumptionSection } from './metrics/TenantConsumptionSection';
 import { TenantExactMetrics } from './metrics/TenantExactMetrics';
 import { ProductsGlobalMetrics } from './products/ProductsGlobalMetrics';
 import { Sparkles, ShieldCheck, Zap } from 'lucide-react';
@@ -10,6 +11,7 @@ interface ChatbotQLinkTabProps {
   products?: Product[];
   onRefresh?: () => void;
   onOpenLiveChat?: () => void;
+  onSwitchAccount?: () => void;
 }
 
 export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
@@ -17,7 +19,8 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
   tenantSlug,
   products = [],
   onRefresh,
-  onOpenLiveChat
+  onOpenLiveChat,
+  onSwitchAccount
 }) => {
   const globalMetrics = useMemo(() => {
     let buyClicks = 0;
@@ -43,6 +46,13 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* 0. Cuotas y Consumo Real en Vivo (Esta Hora, Hoy 24h, Este Mes) */}
+      <TenantConsumptionSection
+        tenant={tenant}
+        tenantSlug={tenantSlug}
+        onSwitchAccount={onSwitchAccount}
+      />
+
       {/* 1. Módulo de Métricas y Reportería Exacta */}
       <TenantExactMetrics
         tenantId={tenant?.id}
