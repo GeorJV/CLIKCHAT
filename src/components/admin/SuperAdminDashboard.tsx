@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SaasMetrics, Tenant } from '../../types';
-import { ShieldAlert, TrendingUp, Users, DollarSign, Bot, Terminal, Play, Plus, CheckCircle, RefreshCw } from 'lucide-react';
+import { ShieldAlert, TrendingUp, Users, DollarSign, Bot, Terminal, Play, Plus, CheckCircle2, RefreshCw, Trash2, ExternalLink, MessageSquare } from 'lucide-react';
 import { PlatformAIModelManager } from './PlatformAIModelManager';
 
 export const SuperAdminDashboard: React.FC = () => {
@@ -41,10 +41,14 @@ export const SuperAdminDashboard: React.FC = () => {
     fetchAdminData();
   }, []);
 
+  const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [createTenantSuccess, setCreateTenantSuccess] = useState(false);
+
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTenantName || !newTenantEmail) return;
+    if (!newTenantName || !newTenantEmail || isCreatingTenant) return;
 
+    setIsCreatingTenant(true);
     try {
       const res = await fetch('/api/admin/tenants', {
         method: 'POST',
@@ -60,8 +64,22 @@ export const SuperAdminDashboard: React.FC = () => {
       if (res.ok) {
         setNewTenantName('');
         setNewTenantEmail('');
+        setCreateTenantSuccess(true);
+        setTimeout(() => setCreateTenantSuccess(false), 3000);
         fetchAdminData();
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsCreatingTenant(false);
+    }
+  };
+
+  const handleDeleteTenant = async (tenantId: string, tenantName: string) => {
+    if (!window.confirm(`¿Eliminar la cuenta "${tenantName}" y todos sus productos/datos?`)) return;
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantId}`, { method: 'DELETE' });
+      if (res.ok) fetchAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -280,10 +298,11 @@ export const SuperAdminDashboard: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white transition flex items-center justify-center space-x-1"
+            disabled={isCreatingTenant}
+            className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white transition flex items-center justify-center space-x-1.5 disabled:opacity-50"
           >
-            <Plus className="w-4 h-4" />
-            <span>Crear Tenant</span>
+            {isCreatingTenant ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : createTenantSuccess ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Plus className="w-4 h-4" />}
+            <span>{isCreatingTenant ? 'Creando...' : createTenantSuccess ? '¡Tenant Creado!' : 'Crear Tenant'}</span>
           </button>
         </form>
 
@@ -297,6 +316,7 @@ export const SuperAdminDashboard: React.FC = () => {
                 <th className="p-3">Precio Mensual</th>
                 <th className="p-3">Estado</th>
                 <th className="p-3">Fecha Registro</th>
+                <th className="p-3 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -319,6 +339,35 @@ export const SuperAdminDashboard: React.FC = () => {
                   </td>
                   <td className="p-3 text-slate-400">
                     {new Date(t.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="flex items-center justify-end space-x-1.5">
+                      <a
+                        href={`/chat?t=${t.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Abrir Chat Bot"
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 transition"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </a>
+                      <a
+                        href={`/dashboard?t=${t.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Abrir Panel Cliente"
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 transition"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        onClick={() => handleDeleteTenant(t.id, t.name)}
+                        title="Eliminar Inquilino"
+                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

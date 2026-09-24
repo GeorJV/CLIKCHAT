@@ -541,6 +541,45 @@ export async function onRequest(context) {
       });
     }
 
+    // ADMIN: POST /api/admin/tenants (Crear nuevo usuario/inquilino)
+    if (segments[0] === 'admin' && segments[1] === 'tenants' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { name, owner_email, owner_name, plan = 'pro', monthly_price = 79.0 } = body;
+      if (!name || !owner_email) {
+        return jsonResponse({ error: 'Nombre de negocio y email del dueño son obligatorios' }, 400);
+      }
+
+      const id = crypto.randomUUID();
+      const baseSlug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tenant';
+      let slug = baseSlug;
+
+      const existing = await executeD1('SELECT id FROM tenants WHERE slug = ?1', [slug]);
+      if (existing.length > 0) {
+        slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+      }
+
+      await executeD1(
+        `INSERT INTO tenants (
+          id, slug, name, owner_email, owner_name, plan, monthly_price, status, bot_name, welcome_message, system_prompt
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'active', 'Asesor Virtual', '¡Hola! ¿En qué puedo colaborarte hoy?', 'Eres el asesor comercial de la tienda.')`,
+        [id, slug, name, owner_email, owner_name || name, plan, parseFloat(monthly_price) || 79.0]
+      );
+
+      const created = await executeD1('SELECT * FROM tenants WHERE id = ?1', [id]);
+      return jsonResponse({ success: true, tenant: created[0] }, 201);
+    }
+
+    // ADMIN: DELETE /api/admin/tenants/:id (Eliminar inquilino)
+    if (segments[0] === 'admin' && segments[1] === 'tenants' && segments.length >= 3 && request.method === 'DELETE') {
+      const tenantId = segments[2];
+      await executeD1('DELETE FROM products WHERE tenant_id = ?1', [tenantId]);
+      await executeD1('DELETE FROM faqs WHERE tenant_id = ?1', [tenantId]);
+      await executeD1('DELETE FROM chat_messages WHERE tenant_id = ?1', [tenantId]);
+      await executeD1('DELETE FROM tenants WHERE id = ?1 OR slug = ?1', [tenantId]);
+      return jsonResponse({ success: true, message: 'Tenant eliminado' });
+    }
+
     // ADMIN: GET /api/admin/ai-config
     if (segments[0] === 'admin' && segments[1] === 'ai-config' && request.method === 'GET') {
       let config = {

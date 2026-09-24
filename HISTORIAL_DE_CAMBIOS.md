@@ -47,3 +47,9 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - **Métodos de Carga:** Zona interactiva de arrastrar y soltar (Drag and Drop) y selector nativo de archivos desde la PC.
 - **Procesamiento de Conocimiento:** Lector modular en cliente (`documentParser.ts`) que convierte documentos y tablas en conocimiento estructurado, particionado automáticamente en chunks en Cloudflare D1 para el RAG Nivel 3.
 - Componentes atómicos `DocumentDropzone.tsx` y `DocumentsManagerTab.tsx` respetando ARQMODULAR (<150 líneas).
+
+### [2026-09-24] Gestión y Creación Activa de Usuarios e Inquilinos en Super Admin
+- **Ubicación:** Panel `/super-admin` accesible desde la barra superior de navegación (ícono de escudo).
+- **Creación en Vivo:** Formulario conectado a la API Edge Cloudflare D1 (`POST /api/admin/tenants`) que crea la cuenta del negocio con UUID v4, slug autogenerado, correo del dueño, plan SaaS y bot comercial predeterminado.
+- **Acciones Directas:** Tabla interactiva de inquilinos con accesos rápidos al Chat en Vivo (`/chat?t=slug`), al Panel del Cliente (`/dashboard?t=slug`) y eliminación segura (`DELETE /api/admin/tenants/:id`).
+
