@@ -26,7 +26,29 @@ export const ProductChatView: React.FC<Props> = ({
 
   useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
-  const sessId = `sess_prod_${selectedProduct.id || 'default'}`;
+  const [sessId, setSessId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const storageKey = `clik_sess_prod_${initialProduct?.id || products[0]?.id || 'default'}`;
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved) return saved;
+      const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+      sessionStorage.setItem(storageKey, created);
+      return created;
+    }
+    return 'sess_' + Date.now().toString(36);
+  });
+
+  useEffect(() => {
+    if (selectedProduct.id && typeof window !== 'undefined') {
+      const storageKey = `clik_sess_prod_${selectedProduct.id}`;
+      let cur = sessionStorage.getItem(storageKey);
+      if (!cur) {
+        cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+        sessionStorage.setItem(storageKey, cur);
+      }
+      setSessId(cur);
+    }
+  }, [selectedProduct.id]);
 
   useEffect(() => {
     if (!selectedProduct.title) return;

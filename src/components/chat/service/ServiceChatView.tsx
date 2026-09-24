@@ -26,15 +26,39 @@ export const ServiceChatView: React.FC<Props> = ({
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
 
+  const [sessId, setSessId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const storageKey = `clik_sess_serv_${initialService?.id || services[0]?.id || 'default'}`;
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved) return saved;
+      const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+      sessionStorage.setItem(storageKey, created);
+      return created;
+    }
+    return 'sess_' + Date.now().toString(36);
+  });
+
+  useEffect(() => {
+    if (selectedService.id && typeof window !== 'undefined') {
+      const storageKey = `clik_sess_serv_${selectedService.id}`;
+      let cur = sessionStorage.getItem(storageKey);
+      if (!cur) {
+        cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+        sessionStorage.setItem(storageKey, cur);
+      }
+      setSessId(cur);
+    }
+  }, [selectedService.id]);
+
   useEffect(() => {
     const welcomeMsg: ProductChatMessage = {
-      id: `msg-${Date.now()}`, sessionId: `sess-${Date.now()}`, tenantId: 'tenant-services', sender: 'assistant',
+      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
       content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa agendar **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
     };
     setMessages([welcomeMsg]);
-  }, [selectedService.id]);
+  }, [selectedService.id, sessId]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800),
@@ -52,7 +76,7 @@ export const ServiceChatView: React.FC<Props> = ({
           body: JSON.stringify({
             tenantSlug: 'geosoft',
             tenantId: (selectedService as any).tenant_id,
-            sessionId: `sess_${selectedService.id || 'service'}`,
+            sessionId: sessId,
             message: userText
           })
         });

@@ -149,5 +149,14 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   - `src/components/client/metrics/TenantConsumptionSection.tsx`: Componente visual atómico con gradientes y tarjetas de progreso responsivas.
   - `src/components/client/modals/SwitchTenantModal.tsx`: Modal atómico para cambiar de inquilino o cuenta con 1 clic.
 
+### [2026-09-24] Aislamiento de Sesiones por Visitante (Corrección de Fuga de Historial en Incógnito)
+- **Causa Raíz:** En `ProductChatView.tsx` y `ServiceChatView.tsx`, el identificador de sesión estaba codificado de forma estática basada únicamente en el ID del producto/servicio (`const sessId = 'sess_prod_' + selectedProduct.id`). En consecuencia, **todos los visitantes del mundo** que abrían un enlace de producto (incluso en ventanas de incógnito o dispositivos distintos) compartían la misma clave de sesión (`sess_prod_prod_1789447247688`), cargando de Cloudflare D1 las conversaciones y preguntas hechas por personas anteriores.
+- **Solución Implementada:**
+  1. *Generación de Sesión Única y Aislada:* Se implementó la generación de `sessId` único por visitante y dispositivo (`'sess_' + Date.now().toString(36) + '_' + Math.random()`) persistido en `sessionStorage`.
+  2. *Aislamiento en Incógnito:* Al abrir una ventana de incógnito, `sessionStorage` arranca vacío, generando una sesión 100% limpia y virgen con únicamente el mensaje de bienvenida oficial del producto o servicio.
+  3. *Purga en D1:* Se eliminaron de `chat_messages` y `chat_sessions` las 70 entradas de las sesiones compartidas globales antiguas (`sess_prod_prod_1789447247688` y `sess_prod_1789447247688`).
+  4. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages (`clikchat.pages.dev`).
+
+
 
 
