@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../types/productChat';
-import { ProductChatColumn } from './ProductChatColumn';
-import { ProductShowcase } from './ProductShowcase';
-import { ProductDetailModal } from './ProductDetailModal';
-import { ProductFullscreenModal } from './ProductFullscreenModal'; import { ProductCheckoutModal } from './ProductCheckoutModal';
-import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
-import { DEFAULT_PRODUCT } from './productChatMock';
-import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { ProductChatColumn } from './ProductChatColumn'; import { ProductShowcase } from './ProductShowcase';
+import { ProductDetailModal } from './ProductDetailModal'; import { ProductFullscreenModal } from './ProductFullscreenModal';
+import { ProductCheckoutModal } from './ProductCheckoutModal'; import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
+import { DEFAULT_PRODUCT } from './productChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -29,15 +26,27 @@ export const ProductChatView: React.FC<Props> = ({
 
   useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
+  const sessId = `sess_prod_${selectedProduct.id || 'default'}`;
+
   useEffect(() => {
     if (!selectedProduct.title) return;
-    setMessages([{
-      id: `msg-${Date.now()}`, sessionId: `sess-${Date.now()}`, tenantId: 'tenant-demo', sender: 'assistant',
-      content: `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
-    }]);
-  }, [selectedProduct.id, selectedProduct.title]);
+    let isMounted = true;
+    fetch(`/api/chat/messages/${sessId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.messages && data.messages.length > 0) {
+          setMessages(data.messages);
+        } else if (isMounted) {
+          setMessages([{
+            id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
+            content: `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
+          }]);
+        }
+      }).catch(() => {});
+    return () => { isMounted = false; };
+  }, [selectedProduct.id, selectedProduct.title, agentName, storeName, sessId]);
 
   const trackEvent = (event: string, temperature?: string) => {
     if (!selectedProduct.id) return;
@@ -60,7 +69,7 @@ export const ProductChatView: React.FC<Props> = ({
           body: JSON.stringify({
             tenantSlug: 'geosoft',
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
-            sessionId: `sess_${selectedProduct.id || 'default'}`,
+            sessionId: sessId,
             message: userText
           })
         });
@@ -79,11 +88,7 @@ export const ProductChatView: React.FC<Props> = ({
           }
         }]);
       } catch {
-        setMessages((prev) => [...prev, {
-          id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-          content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
+        setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
       } finally {
         setIsLoading(false);
       }
@@ -92,11 +97,7 @@ export const ProductChatView: React.FC<Props> = ({
 
   const handleAudioRecorded = (audioData: { audioUrl: string; duration: number }) => {
     trackEvent('chat_message');
-    setMessages((prev) => [...prev, {
-      id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '',
-      isAudio: true, audioDuration: audioData.duration, audioUrl: audioData.audioUrl,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
+    setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: audioData.duration, audioUrl: audioData.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
   };
 
   const handleSendMessage = (customText?: string, fromVoice?: boolean) => {
@@ -134,15 +135,9 @@ export const ProductChatView: React.FC<Props> = ({
           onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
         />
       </div>
-      {detailModal && (
-        <ProductDetailModal product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)} onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }} />
-      )}
-      {fullscreenOpen && (
-        <ProductFullscreenModal product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }} onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} />
-      )}
-      {checkoutOpen && (
-        <ProductCheckoutModal product={selectedProduct} storeName={storeName} onClose={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} />
-      )}
+      {detailModal && <ProductDetailModal product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)} onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }} />}
+      {fullscreenOpen && <ProductFullscreenModal product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }} onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} />}
+      {checkoutOpen && <ProductCheckoutModal product={selectedProduct} storeName={storeName} onClose={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} />}
     </div>
   );
 };

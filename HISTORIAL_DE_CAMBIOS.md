@@ -1,4 +1,4 @@
-﻿# 📜 HISTORIAL DE CAMBIOS APROBADOS — CLIKCHAT
+# 📜 HISTORIAL DE CAMBIOS APROBADOS — CLIKCHAT
 
 Este archivo es el Registro Universal de Memoria Protegida.
 Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede eliminarla o revertirla.
@@ -31,3 +31,13 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - Base de datos D1 con `response_delay_sec`.
 - Panel interactivo con Modo Inmediato (1s), Modo Humano (9s) y Rango manual (1-20s).
 - Sincronización en tiempo real en todas las vistas de chat.
+
+### [2026-09-24] Persistencia Universal de Historial de Chat tras Recarga
+- Almacenamiento continuo en Cloudflare D1 (`chat_messages`) con vinculación por `session_id`.
+- Sincronización en `localStorage` por tenant para restaurar automáticamente las conversaciones ante recargas de página en web y móvil.
+- Función de reinicio limpio de conversación (`resetChat`) con nuevo token de sesión.
+
+### [2026-09-24] Motor Dual 90/10 (DeepSeek + GPT-4o Mini) y Conectividad Abierta de IA
+- **Gobernanza Super Admin (Confidencial):** Control centralizado en Cloudflare D1 del balance 90% DeepSeek V3 (`deepseek/deepseek-chat`) para atención comercial de alta velocidad y 10% OpenAI GPT-4o Mini (`openai/gpt-4o-mini`) para razonamiento complejo y comparativas técnicas, con fallback automático a Google AI Studio (`gemini-1.5-flash`).
+- **Panel de Usuario Protegido:** El cliente únicamente visualiza "Modelo del Sistema (Predefinido)" con opción de "Conectar mi propia IA (Personalizada)" para cualquier proveedor (Google AI Studio, OpenAI, OpenRouter, etc.) mediante `custom_llm_key`.
+- Cumplimiento estricto de límites modulares ARQMODULAR (<150 líneas por componente).

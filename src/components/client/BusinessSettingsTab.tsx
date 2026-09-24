@@ -1,9 +1,10 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../types';
 import { BusinessIdentitySubTab } from './business/BusinessIdentitySubTab';
 import { ChatCadenceSettingCard } from './business/ChatCadenceSettingCard';
+import { CustomAISettingsCard } from './business/CustomAISettingsCard';
 import { FaqsManagerTab } from './FaqsManagerTab';
-import { Store, HelpCircle, Clock } from 'lucide-react';
+import { Store, HelpCircle, Clock, Sparkles } from 'lucide-react';
 
 interface BusinessSettingsTabProps {
   tenant: Tenant | null;
@@ -16,7 +17,7 @@ interface BusinessSettingsTabProps {
   onDeleteFaq?: (id: string) => Promise<boolean>;
   onUpdateFaq?: (id: string, newAnswer: string) => Promise<boolean>;
   onCreateBulkFaqs?: (faqs: Array<{ question: string; answer: string; category?: string }>, source?: string) => Promise<boolean>;
-  initialSubTab?: 'identity' | 'faqs' | 'cadence';
+  initialSubTab?: 'identity' | 'ai' | 'cadence' | 'faqs';
 }
 
 export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
@@ -59,6 +60,16 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </button>
 
           <button
+            type="button" onClick={() => setActiveSubTab('ai')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeSubTab === 'ai' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Motor IA</span>
+          </button>
+
+          <button
             type="button" onClick={() => setActiveSubTab('cadence')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeSubTab === 'cadence' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
@@ -92,6 +103,9 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           tenant={tenant} tenantSlug={tenantSlug} onUpdateSettings={onUpdateSettings}
           saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat}
         />
+      )}
+      {activeSubTab === 'ai' && (
+        <CustomAISettingsCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />
       )}
       {activeSubTab === 'cadence' && (
         <ChatCadenceSettingCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />

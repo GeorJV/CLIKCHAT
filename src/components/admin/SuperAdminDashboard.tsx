@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SaasMetrics, Tenant } from '../../types';
 import { ShieldAlert, TrendingUp, Users, DollarSign, Bot, Terminal, Play, Plus, CheckCircle, RefreshCw } from 'lucide-react';
+import { PlatformAIModelManager } from './PlatformAIModelManager';
 
 export const SuperAdminDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SaasMetrics | null>(null);
@@ -13,10 +14,10 @@ export const SuperAdminDashboard: React.FC = () => {
   const [newTenantPlan, setNewTenantPlan] = useState('pro');
   const [newTenantPrice, setNewTenantPrice] = useState('79.00');
 
-  // Google AI Studio Playground state
+  // Multi-Model Playground state
   const [playgroundPrompt, setPlaygroundPrompt] = useState('¿Cuáles son los 3 factores que más convierten a un visitante indeciso en comprador?');
   const [playgroundSystem, setPlaygroundSystem] = useState('Eres el bot asesor principal de la plataforma ClikChat. Responde de forma ejecutiva.');
-  const [playgroundModel, setPlaygroundModel] = useState('gemini-1.5-flash');
+  const [playgroundModel, setPlaygroundModel] = useState('deepseek/deepseek-chat');
   const [playgroundOutput, setPlaygroundOutput] = useState('');
   const [isExecutingPlayground, setIsExecutingPlayground] = useState(false);
 
@@ -157,15 +158,18 @@ export const SuperAdminDashboard: React.FC = () => {
           <span className="text-[10px] text-amber-300 font-medium">{metrics?.pendingUnresolvedQueries || 0} pendientes HITL</span>
         </div>
       </div>
+      
+      {/* SECTION: PLATFORM AI ENGINE STRATEGY (SUPER ADMIN ONLY) */}
+      <PlatformAIModelManager />
 
-      {/* SECTION: GOOGLE AI STUDIO PLAYGROUND */}
+      {/* SECTION: MULTI-MODEL AI PLAYGROUND */}
       <div className="p-5 md:p-6 rounded-3xl bg-slate-900 border border-indigo-500/30 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-2.5">
             <Terminal className="w-5 h-5 text-indigo-400" />
             <div>
-              <h2 className="text-sm font-bold text-white">Google AI Studio Playground (Gemini Direct)</h2>
-              <p className="text-xs text-slate-400">Entorno para probar el bot oficial de la plataforma con Gemini 1.5 / 2.0</p>
+              <h2 className="text-sm font-bold text-white">Consola de Pruebas Multi-Modelo</h2>
+              <p className="text-xs text-slate-400">Verifica respuestas en tiempo real con DeepSeek, GPT-4o Mini o Gemini</p>
             </div>
           </div>
 
@@ -174,9 +178,10 @@ export const SuperAdminDashboard: React.FC = () => {
             onChange={(e) => setPlaygroundModel(e.target.value)}
             className="text-xs bg-slate-800 text-indigo-300 border border-slate-700 rounded-xl px-3 py-1.5 focus:outline-none"
           >
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido)</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Razonamiento)</option>
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Edge)</option>
+            <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat - Principal 90%)</option>
+            <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Razonamiento 10%)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Google AI Studio)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
           </select>
         </div>
 
@@ -208,7 +213,7 @@ export const SuperAdminDashboard: React.FC = () => {
               className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition flex items-center space-x-2"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{isExecutingPlayground ? 'Ejecutando en AI Studio...' : 'Ejecutar en Google AI Studio'}</span>
+              <span>{isExecutingPlayground ? 'Consultando modelo...' : 'Ejecutar Prueba en Vivo'}</span>
             </button>
           </div>
 

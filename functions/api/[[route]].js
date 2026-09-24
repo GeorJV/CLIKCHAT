@@ -126,12 +126,14 @@ function computeOverlapScore(textA, textB) {
 }
 
 async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, customKey }) {
-  const openRouterKey = customKey || env?.OPENROUTER_API_KEY || (() => {
-    try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
-  })();
-  const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
-    try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
-  })();
+  let userCustomConfig = null;
+  if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
+    if (customKey.trim().startsWith('{')) {
+      try { userCustomConfig = JSON.parse(customKey.trim()); } catch(e) {}
+    } else {
+      userCustomConfig = { key: customKey.trim() };
+    }
+  }
 
   const systemContent = `${systemPrompt}\n\n[INFORMACIÓN VERIFICADA DEL NEGOCIO / POLÍTICAS / CATÁLOGO / INVENTARIO]:\n${context}\n\nREGLAS DE ATENCIÓN COMERCIAL:\n1. Responde siempre de forma amable, persuasiva, orientada a ventas y con total certeza.\n2. NUNCA respondas diciendo de forma cortante "no tengo información específica". Tienes a tu disposición toda la información oficial del negocio arriba (horarios de atención, políticas de garantía y devolución, envíos, métodos de pago, catálogo e inventario).\n3. Si el cliente pregunta por promociones o descuentos especiales: explícale los precios altamente competitivos vigentes e invítalo amablemente a contactar por WhatsApp para cotizaciones por volumen o promociones personalizadas.\n4. Basa estrictamente tus datos de precios, especificaciones y stock en la información verificada. NO inventes cifras que no figuren.\n5. Invita cordialmente al cliente a pulsar el botón de compra o a comunicarse por WhatsApp para concretar su pedido.`;
 
@@ -144,7 +146,105 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     { role: 'user', content: userMessage }
   ];
 
-  // 1. Prioridad: OpenRouter (gpt-4o-mini)
+  // CASO A: El usuario configuró su propia IA (customKey)
+  if (userCustomConfig?.key) {
+    const cKey = userCustomConfig.key;
+    const cProvider = userCustomConfig.provider || (cKey.startsWith('AIza') || cKey.startsWith('AQ.') ? 'google' : cKey.startsWith('sk-') ? 'openai' : 'openrouter');
+    const cModel = userCustomConfig.model;
+
+    // 1. Google AI Studio Propia
+    if (cProvider === 'google') {
+      try {
+        const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
+        const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-1.5-flash'}:generateContent?key=${cKey}`;
+        const gResp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 650 }
+          })
+        });
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (gText && gText.trim().length > 0) return { text: gText.trim(), provider: 'custom_google_ai' };
+        }
+      } catch (e) {
+        console.warn('Custom Google AI falló:', e.message);
+      }
+    }
+
+    // 2. OpenAI Propia
+    if (cProvider === 'openai') {
+      try {
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cKey}`
+          },
+          body: JSON.stringify({
+            model: cModel || 'gpt-4o-mini',
+            messages,
+            temperature: 0.35,
+            max_tokens: 650
+          })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text && text.trim().length > 0) return { text: text.trim(), provider: 'custom_openai' };
+        }
+      } catch (e) {
+        console.warn('Custom OpenAI falló:', e.message);
+      }
+    }
+
+    // 3. OpenRouter / Otro Propio
+    try {
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cKey}`,
+          'HTTP-Referer': 'https://clikchat.pages.dev',
+          'X-Title': 'ClikChat Edge AI'
+        },
+        body: JSON.stringify({
+          model: cModel || 'deepseek/deepseek-chat',
+          messages,
+          temperature: 0.35,
+          max_tokens: 650
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text && text.trim().length > 0) return { text: text.trim(), provider: 'custom_openrouter' };
+      }
+    } catch (e) {
+      console.warn('Custom OpenRouter falló:', e.message);
+    }
+  }
+
+  // CASO B: Motor Inteligente del Sistema (Gobernado por Super Admin: 90% DeepSeek / 10% GPT-4o-mini)
+  const openRouterKey = env?.OPENROUTER_API_KEY || (() => {
+    try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
+  })();
+  const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
+    try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
+  })();
+
+  // Detección heurística de consultas complejas (comparativas, cálculos, objeciones lógicas)
+  const reasoningRegex = /\b(comparar|comparaci[oó]n|diferencia|cu[aá]l es mejor|por qu[eé] deber[ií]a|descuento total|calcula|presupuesto|cotizaci[oó]n detallada|pros y contras|especificaciones t[eé]cnicas|analiza|ventajas|desventajas)\b/i;
+  const isReasoning = reasoningRegex.test(userMessage);
+
+  const primaryModel = isReasoning ? 'openai/gpt-4o-mini' : 'deepseek/deepseek-chat';
+  const fallbackModel = isReasoning ? 'deepseek/deepseek-chat' : 'openai/gpt-4o-mini';
+
+  // 1. Intento con Modelo Principal (90% DeepSeek, 10% GPT-4o-mini)
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -155,7 +255,33 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
         'X-Title': 'ClikChat Edge AI'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
+        model: primaryModel,
+        messages,
+        temperature: isReasoning ? 0.25 : 0.35,
+        max_tokens: 650
+      })
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content;
+      if (text && text.trim().length > 0) return { text: text.trim(), provider: primaryModel };
+    }
+  } catch (e) {
+    console.warn(`Fallo en modelo principal (${primaryModel}):`, e.message);
+  }
+
+  // 2. Respaldo Cruzado Automático (Si DeepSeek falla usa GPT, si GPT falla usa DeepSeek)
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify({
+        model: fallbackModel,
         messages,
         temperature: 0.35,
         max_tokens: 650
@@ -164,13 +290,13 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     if (resp.ok) {
       const data = await resp.json();
       const text = data.choices?.[0]?.message?.content;
-      if (text && text.trim().length > 0) return { text: text.trim(), provider: 'openrouter' };
+      if (text && text.trim().length > 0) return { text: text.trim(), provider: fallbackModel };
     }
   } catch (e) {
-    console.warn('OpenRouter falló en Edge:', e.message);
+    console.warn(`Fallo en respaldo cruzado (${fallbackModel}):`, e.message);
   }
 
-  // 2. Respaldo: Google AI Studio (Gemini 1.5 Flash)
+  // 3. Respaldo Final de Contingencia: Google AI Studio (Gemini 1.5 Flash)
   try {
     const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
     const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
@@ -192,7 +318,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     console.warn('Google AI Studio falló en Edge:', e.message);
   }
 
-  // 3. Respaldo: Cloudflare Workers AI Llama 3
+  // 4. Respaldo: Cloudflare Workers AI Llama 3
   if (env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
@@ -208,7 +334,7 @@ async function callEdgeLLM({ systemPrompt, context, history, userMessage, env, c
     }
   }
 
-  // 4. Plantilla de contingencia
+  // 5. Plantilla de contingencia
   return {
     text: `Hola, con gusto te oriento sobre nuestro catálogo disponible:\n\n${context.replace(/\[.*?\]/g, '').trim()}\n\n¿Deseas que te ayude a coordinar la compra o tienes alguna consulta puntual?`,
     provider: 'context_template'
@@ -416,6 +542,120 @@ export async function onRequest(context) {
       });
     }
 
+    // ADMIN: GET /api/admin/metrics
+    if (segments[0] === 'admin' && segments[1] === 'metrics' && request.method === 'GET') {
+      const tenants = await executeD1('SELECT id, name, slug, plan, monthly_price, status, created_at FROM tenants');
+      const activeTenants = tenants.filter(t => t.status === 'active');
+      const mrr = activeTenants.reduce((acc, t) => acc + (parseFloat(t.monthly_price) || 0), 0);
+      const arr = mrr * 12;
+      const msgRes = await executeD1('SELECT COUNT(*) as count FROM chat_messages');
+      const unresRes = await executeD1("SELECT COUNT(*) as count FROM unresolved_queries WHERE status = 'pending'");
+      return jsonResponse({
+        metrics: {
+          totalTenants: tenants.length,
+          activeTenantsCount: activeTenants.length,
+          mrr: mrr.toFixed(2),
+          arr: arr.toFixed(2),
+          totalMessagesProcessed: parseInt(msgRes[0]?.count || 0, 10),
+          pendingUnresolvedQueries: parseInt(unresRes[0]?.count || 0, 10)
+        },
+        tenants
+      });
+    }
+
+    // ADMIN: GET /api/admin/ai-config
+    if (segments[0] === 'admin' && segments[1] === 'ai-config' && request.method === 'GET') {
+      let config = {
+        primaryModel: 'deepseek/deepseek-chat',
+        reasoningModel: 'openai/gpt-4o-mini',
+        splitRatio: '90/10',
+        fallbackProvider: 'google_ai_studio'
+      };
+      try {
+        await executeD1('CREATE TABLE IF NOT EXISTS platform_settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT DEFAULT (datetime(\'now\')))');
+        const rows = await executeD1('SELECT value FROM platform_settings WHERE key = ?1', ['ai_engine_config']);
+        if (rows.length > 0 && rows[0].value) {
+          config = JSON.parse(rows[0].value);
+        }
+      } catch (e) {}
+      return jsonResponse({ config });
+    }
+
+    // ADMIN: PUT /api/admin/ai-config
+    if (segments[0] === 'admin' && segments[1] === 'ai-config' && request.method === 'PUT') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      try {
+        await executeD1('CREATE TABLE IF NOT EXISTS platform_settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT DEFAULT (datetime(\'now\')))');
+        await executeD1(
+          'INSERT INTO platform_settings (key, value, updated_at) VALUES (?1, ?2, datetime(\'now\')) ON CONFLICT(key) DO UPDATE SET value = ?2, updated_at = datetime(\'now\')',
+          ['ai_engine_config', JSON.stringify(body)]
+        );
+      } catch (e) {}
+      return jsonResponse({ success: true, config: body });
+    }
+
+    // ADMIN: POST /api/admin/playground
+    if (segments[0] === 'admin' && segments[1] === 'playground' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { prompt, systemPrompt, model = 'deepseek/deepseek-chat' } = body;
+      if (!prompt) return jsonResponse({ error: 'Prompt requerido' }, 400);
+
+      const openRouterKey = env?.OPENROUTER_API_KEY || (() => {
+        try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
+      })();
+      const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
+        try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
+      })();
+
+      let output = '';
+      if (model.startsWith('gemini')) {
+        const fullPrompt = `${systemPrompt ? `${systemPrompt}\n\n` : ''}${prompt}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleKey}`;
+        const gResp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+          })
+        });
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          output = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } else {
+          return jsonResponse({ error: `Google AI status ${gResp.status}` }, 502);
+        }
+      } else {
+        const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openRouterKey}`,
+            'HTTP-Referer': 'https://clikchat.pages.dev',
+            'X-Title': 'ClikChat Playground'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.35,
+            max_tokens: 800
+          })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          output = data.choices?.[0]?.message?.content || '';
+        } else {
+          return jsonResponse({ error: `OpenRouter status ${resp.status}` }, 502);
+        }
+      }
+      return jsonResponse({ output, model });
+    }
+
     // LIST TENANTS: GET /api/tenants
     if (segments[0] === 'tenants' && segments.length === 1 && request.method === 'GET') {
       const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status FROM tenants ORDER BY created_at DESC');
@@ -463,11 +703,23 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, custom_llm_key } = body;
+
+      const hasCustomKey = custom_llm_key !== undefined;
+      const keyClause = hasCustomKey ? ', custom_llm_key = ?15' : '';
+      const params = [
+        name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
+        business_hours, system_prompt, slug, logo_url, tone_of_voice,
+        response_delay_sec !== undefined ? Number(response_delay_sec) : null,
+        id
+      ];
+      if (hasCustomKey) {
+        params.push(custom_llm_key || null);
+      }
 
       await executeD1(
-        'UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), updated_at = datetime(\'now\') WHERE id = ?14',
-        [name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec !== undefined ? Number(response_delay_sec) : null, id]
+        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec)${keyClause}, updated_at = datetime('now') WHERE id = ?14`,
+        params
       );
 
       const updated = await executeD1('SELECT * FROM tenants WHERE id = ?1', [id]);
@@ -498,6 +750,35 @@ export async function onRequest(context) {
         [answer ?? null, question ?? null, category ?? null, id]
       );
       return jsonResponse({ success: true });
+    }
+
+    // CHAT: GET /api/chat/messages/:sessionId
+    if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'GET') {
+      const sessionId = decodeURIComponent(segments[2]);
+      const rows = await executeD1(
+        'SELECT id, session_id, sender, message, rag_level_used, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 100',
+        [sessionId]
+      );
+      return jsonResponse({
+        sessionId,
+        messages: rows.map(r => ({
+          id: r.id,
+          sessionId: r.session_id,
+          sender: r.sender,
+          message: r.message,
+          content: r.message,
+          rag_level_used: r.rag_level_used,
+          created_at: r.created_at,
+          timestamp: new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
+      });
+    }
+
+    // CHAT: DELETE /api/chat/messages/:sessionId
+    if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'DELETE') {
+      const sessionId = decodeURIComponent(segments[2]);
+      await executeD1('DELETE FROM chat_messages WHERE session_id = ?1', [sessionId]);
+      return jsonResponse({ success: true, message: 'Historial eliminado' });
     }
 
     // CHAT: GET /api/chat/tenant-conversations/:tenantId

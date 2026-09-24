@@ -1,23 +1,52 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChatMessage, Product } from '../types';
+import { ChatMessage } from '../types';
 import { UseChatRAGOptions, RAGResponsePayload } from '../types/chat';
 
 export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallback }: UseChatRAGOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string>(() => 'sess_' + Math.random().toString(36).substring(2, 9));
+  const storageKey = `clik_sess_${tenantSlug || 'geosoft'}`;
+  const [sessionId, setSessionId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return saved;
+      const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+      localStorage.setItem(storageKey, created);
+      return created;
+    }
+    return 'sess_' + Date.now().toString(36);
+  });
+
   const pendingBatchRef = useRef<string[]>([]);
   const botDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Carga el historial previo desde Cloudflare D1 si la sesión ya existía
   useEffect(() => {
-    if (tenant && messages.length === 0) {
-      setMessages([{
-        id: 'welcome-msg', sender: 'assistant',
-        message: tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.',
-        levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
-      }]);
+    let isMounted = true;
+    async function loadSessionHistory() {
+      try {
+        const res = await fetch(`/api/chat/messages/${encodeURIComponent(sessionId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.messages && data.messages.length > 0) {
+            setMessages(data.messages);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      if (isMounted && tenant && messages.length === 0) {
+        setMessages([{
+          id: 'welcome-msg', sender: 'assistant',
+          message: tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.',
+          levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
+        }]);
+      }
     }
-  }, [tenant, messages.length]);
+
+    loadSessionHistory();
+    return () => { isMounted = false; };
+  }, [sessionId, tenant]);
 
   const processBatchReply = useCallback(async (batch: string[]) => {
     const batchedText = batch.join('\n').trim();
@@ -81,7 +110,9 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
   const resetChat = useCallback(() => {
     if (botDebounceTimerRef.current) clearTimeout(botDebounceTimerRef.current);
     pendingBatchRef.current = [];
-    setSessionId('sess_' + Math.random().toString(36).substring(2, 9));
+    const newSessionId = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+    if (typeof window !== 'undefined') localStorage.setItem(storageKey, newSessionId);
+    setSessionId(newSessionId);
     if (tenant) {
       setMessages([{
         id: 'welcome-' + Date.now(), sender: 'assistant',
@@ -89,7 +120,7 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
         levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
       }]);
     }
-  }, [tenant]);
+  }, [storageKey, tenant]);
 
   return { messages, isLoading, sessionId, sendMessage, resetChat };
 }
