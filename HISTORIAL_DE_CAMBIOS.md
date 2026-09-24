@@ -104,5 +104,15 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   2. *Formateo Enriquecido:* Los mensajes del auditor ahora se renderizan mediante `ChatMessageContent` con soporte de trazas RAG (`m.rag_level_used`), marcas de tiempo y quiebre de palabras seguro.
   3. *Auto-refresco de Sesiones:* `ConversationsTab.tsx` refresca automáticamente la lista de chats cada 6 segundos para detectar visitantes nuevos en tiempo real.
 
+### [2026-09-24] Corrección de Flujo RAG Nivel 3 y Desbloqueo de Documentos
+- **Causa Raíz:** 
+  1. *Falso Positivo de FAQ en Nivel 2:* La tabla de FAQs contenía una pregunta sobre "descuentos o promociones especiales" (`faq_descuentos`). Al preguntar por "descuento VIP" o "descuento PRO", el detector de palabras clave de Nivel 2 asignaba un score artificial de 0.85 (superior al umbral 0.60) y ejecutaba una **detención temprana (Early Stop)** devolviendo la respuesta estática genérica de la FAQ sin consultar jamás los documentos ni invocar al LLM en Nivel 3.
+  2. *Desconexión de Documentos no Fragmentados:* Las consultas a documentos solo leían `document_chunks` y no tenían respaldo sobre `knowledge_documents.raw_content` ni compatibilidad cruzada entre UUID y Slug del tenant.
+- **Solución Implementada:**
+  1. *Protección Anti-Interceptación en Nivel 2:* Se añadió `requiresDeepRAG` para forzar que cualquier consulta sobre promociones, descuentos, cupones, códigos o precios exactos evite el Early Stop en Nivel 2 y pase directamente al motor RAG de Nivel 3.
+  2. *Extracción Dual de Conocimiento:* Nivel 3 consulta simultáneamente `document_chunks` y `knowledge_documents` (`raw_content`), con scoring contextual por palabras clave y normalización de texto.
+  3. *Regla de Prevalencia en Prompt:* El motor LLM prioriza explícitamente los datos específicos de los manuales y documentos RAG subidos (porcentajes, días de prueba, códigos de descuento) por encima de cualquier política genérica.
+  4. *Endpoints de Documentos Resilientes:* `GET /api/documents` y `POST /api/documents` ahora resuelven tanto por `tenantId` (UUID) como por `slug`, garantizando persistencia y lectura precisa en Cloudflare D1.
+
 
 

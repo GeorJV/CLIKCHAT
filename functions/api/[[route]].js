@@ -152,8 +152,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - PROHIBIDO usar encabezados de código markdown como '###' o '##'.
    - PROHIBIDO pegar URLs crudas o enlaces larguísimos.
    - Usa negrita para enfatizar conceptos clave con moderación y utiliza emojis con buen gusto (ej: ✨, 🚀, 💡, 📲).
-4. PRECISIÓN Y CERTEZA TOTAL:
-   - Tienes a tu disposición la información oficial del negocio arriba (horarios, garantías, catálogo, inventario y documentos). Responde con certeza y jamás digas con frialdad 'no tengo información'.
+4. PRECISIÓN, CERTEZA Y PRIORIDAD DE DOCUMENTOS RAG:
+   - Tienes a tu disposición la información oficial del negocio arriba (horarios, garantías, catálogo, inventario y documentos RAG). Responde con certeza y jamás digas con frialdad 'no tengo información'.
+   - Si existen documentos, manuales o políticas con promociones, descuentos VIP/PRO, cupones o condiciones puntuales, esta información prevalece siempre sobre respuestas genéricas. Utiliza los datos exactos del documento (porcentajes, días de prueba, códigos de descuento) para responder al cliente.
 5. CIERRE CONVERSACIONAL NATURAL:
    - Termina siempre con una sola pregunta abierta, amable y entusiasta que invite al cliente a continuar la charla de forma fluida (ej: '¿En qué canal te gustaría automatizar primero?' o '¿Te gustaría ver una prueba con tus propios productos?').`;
 
@@ -1054,54 +1055,41 @@ export async function onRequest(context) {
       let topFaqScore = 0;
       const cleanUserMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-      for (const faq of faqs) {
-        let rawKeywords = [];
-        if (faq.keywords) {
-          if (Array.isArray(faq.keywords)) rawKeywords = faq.keywords;
-          else if (typeof faq.keywords === 'string') {
-            try { rawKeywords = JSON.parse(faq.keywords); } catch (e) { rawKeywords = [faq.keywords]; }
-          }
-        }
-        const targetText = `${faq.question} ${rawKeywords.join(' ')}`;
-        const score = computeOverlapScore(message, targetText);
+      // Consultas que NUNCA deben detenerse en seco en Nivel 2 (deben ir a Nivel 3 RAG para buscar en documentos y LLM)
+      const requiresDeepRAG = /\b(descuento|descuentos|cupon|cupones|promo|promocion|rebaja|oferta|vip|pro|codigo|porcentaje|cuanto cuesta|precio exacto|especial)\b/i.test(message);
 
-        // Keyword boost: si el mensaje del usuario incluye una palabra clave de la FAQ
-        let keywordHit = false;
-        for (const kw of rawKeywords) {
-          const cleanKw = String(kw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-          if (cleanKw.length >= 4 && cleanUserMsg.includes(cleanKw)) {
-            keywordHit = true;
-            break;
+      if (!requiresDeepRAG) {
+        for (const faq of faqs) {
+          const targetText = `${faq.question}`;
+          const score = computeOverlapScore(message, targetText);
+
+          if (score > topFaqScore) {
+            topFaqScore = score;
+            topFaq = faq;
           }
         }
 
-        const effectiveScore = keywordHit ? Math.max(score, 0.85) : score;
-        if (effectiveScore > topFaqScore) {
-          topFaqScore = effectiveScore;
-          topFaq = faq;
+        // Solo detener en Nivel 2 si la pregunta del usuario es idéntica o casi idéntica a la FAQ oficial (>= 75% certeza)
+        if (topFaq && topFaqScore >= 0.75) {
+          const botMsgId = 'msg_' + Date.now() + '_b';
+          try {
+            await executeD1(
+              'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+              [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
+            );
+          } catch (e) {}
+
+          return jsonResponse({
+            sessionId: currentSessionId,
+            level: 'level_2_faq',
+            levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
+            confidence: topFaqScore,
+            answer: topFaq.answer,
+            matchedItem: topFaq,
+            stoppedEarly: true,
+            zeroCost: true
+          });
         }
-      }
-
-      const faqThreshold = parseFloat(topFaq?.confidence_threshold) || 0.60;
-      if (topFaq && topFaqScore >= faqThreshold) {
-        const botMsgId = 'msg_' + Date.now() + '_b';
-        try {
-          await executeD1(
-            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
-          );
-        } catch (e) {}
-
-        return jsonResponse({
-          sessionId: currentSessionId,
-          level: 'level_2_faq',
-          levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
-          confidence: topFaqScore,
-          answer: topFaq.answer,
-          matchedItem: topFaq,
-          stoppedEarly: true,
-          zeroCost: true
-        });
       }
 
       // 6. NIVEL 3: RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
@@ -1115,11 +1103,28 @@ export async function onRequest(context) {
       let docChunks = [];
       try {
         docChunks = await executeD1(
-          'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 LIMIT 20',
+          'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 OR kd.tenant_id = ?1 OR dc.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 60',
           [actualTenantId]
         );
       } catch (dErr) {
         docChunks = [];
+      }
+
+      let rawDocs = [];
+      try {
+        rawDocs = await executeD1(
+          'SELECT id, title, category, raw_content FROM knowledge_documents WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 20',
+          [actualTenantId]
+        );
+      } catch (dErr) {
+        rawDocs = [];
+      }
+
+      // Si hay documentos crudos no particionados en chunks, agregarlos al conocimiento
+      for (const d of rawDocs) {
+        if (d.raw_content && !docChunks.some(c => c.title === d.title)) {
+          docChunks.push({ title: d.title, content: d.raw_content });
+        }
       }
 
       // Score de productos (coincidencia con nombre, sku, descripción, categoría y stock)
@@ -1136,13 +1141,29 @@ export async function onRequest(context) {
 
       const matchedProducts = scoredProducts.filter(sp => sp.score >= 0.28).map(sp => sp.product);
 
-      // Score de fragmentos de documentos/manuales
-      const matchedChunks = docChunks.map(c => ({
-        chunk: c,
-        score: computeOverlapScore(message, `${c.title} ${c.content}`)
-      })).filter(sc => sc.score >= 0.28).map(sc => sc.chunk);
+      // Score inteligente de fragmentos de documentos/manuales RAG
+      const cleanUserQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const queryWords = cleanUserQuery.split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
 
-      const hasKnowledge = matchedProducts.length > 0 || matchedChunks.length > 0 || products.length > 0 || faqs.length > 0;
+      const scoredChunks = docChunks.map(c => {
+        const chunkText = `${c.title} ${c.content}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const baseScore = computeOverlapScore(message, `${c.title} ${c.content}`);
+        
+        let keywordHits = 0;
+        for (const qw of queryWords) {
+          if (chunkText.includes(qw)) keywordHits++;
+        }
+        const boost = queryWords.length > 0 ? (keywordHits / queryWords.length) * 0.8 : 0;
+        return {
+          chunk: c,
+          score: Math.max(baseScore, boost)
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      const relevantChunks = scoredChunks.filter(sc => sc.score >= 0.12).map(sc => sc.chunk);
+      const chunksToInclude = relevantChunks.length > 0 ? relevantChunks.slice(0, 6) : docChunks.slice(0, 4);
+
+      const hasKnowledge = matchedProducts.length > 0 || chunksToInclude.length > 0 || products.length > 0 || faqs.length > 0;
 
       if (hasKnowledge) {
         let contextBlock = '';
@@ -1172,9 +1193,9 @@ export async function onRequest(context) {
           return `PRODUCTO: ${p.name}\nPRECIO: $${p.price} ${p.currency || 'USD'}${stock}${sku}\nDESCRIPCIÓN: ${p.full_description || p.short_description || 'Sin descripción adicional'}\nENLACE DIRECTO DE COMPRA: ${p.cta_url || (targetTenant.cta_url || '')}\n${p.embedding_text ? `MANUAL RAG ESPECÍFICO: ${p.embedding_text}\n` : ''}`;
         }).join('\n\n');
 
-        // 4. Documentos / manuales subidos
-        if (matchedChunks.length > 0) {
-          contextBlock += '\n\n--- MANUALES Y POLÍTICAS DEL NEGOCIO ---\n' + matchedChunks.slice(0, 3).map(c => `DOCUMENTO [${c.title}]: ${c.content}`).join('\n\n');
+        // 4. Documentos / Manuales / Reglas RAG Subidos
+        if (chunksToInclude.length > 0) {
+          contextBlock += '\n\n--- DOCUMENTOS, MANUALES Y CONOCIMIENTO RAG ---\n' + chunksToInclude.map(c => `[DOCUMENTO: ${c.title}]\n${c.content}`).join('\n\n');
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -1347,7 +1368,7 @@ export async function onRequest(context) {
       if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
 
       const rows = await executeD1(
-        'SELECT kd.id, kd.title, kd.category, kd.file_type, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.tenant_id = ?1 GROUP BY kd.id ORDER BY kd.created_at DESC',
+        'SELECT kd.id, kd.title, kd.category, kd.file_type, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.tenant_id = ?1 OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) GROUP BY kd.id ORDER BY kd.created_at DESC',
         [tenantId]
       );
       return jsonResponse({ documents: rows });
@@ -1362,10 +1383,16 @@ export async function onRequest(context) {
         return jsonResponse({ error: 'tenant_id, title y content requeridos' }, 400);
       }
 
+      let actualTenantId = tenant_id;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenant_id]);
+        if (tRows.length > 0) actualTenantId = tRows[0].id;
+      } catch (e) {}
+
       const docId = 'doc_' + Date.now();
       await executeD1(
         'INSERT INTO knowledge_documents (id, tenant_id, title, category, file_type, raw_content) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-        [docId, tenant_id, title, category || 'manuales', 'text', content]
+        [docId, actualTenantId, title, category || 'manuales', 'text', content]
       );
 
       // Particionar en párrafos (~600 caracteres con overlap)
@@ -1384,12 +1411,16 @@ export async function onRequest(context) {
         if (start >= clean.length - 40) break;
       }
 
+      if (chunks.length === 0 && clean.length > 0) {
+        chunks.push(clean);
+      }
+
       for (let i = 0; i < chunks.length; i++) {
         const chunkId = 'chk_' + Date.now() + '_' + i;
         const keywords = tokenize(chunks[i]).slice(0, 15);
         await executeD1(
           'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-          [chunkId, docId, tenant_id, i, chunks[i], JSON.stringify(keywords)]
+          [chunkId, docId, actualTenantId, i, chunks[i], JSON.stringify(keywords)]
         );
       }
 
