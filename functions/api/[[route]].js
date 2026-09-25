@@ -306,10 +306,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // Prioridad 1: GLM-5.3-Flash (Z.ai - Ultra económico: $0.045 entrada / $0.14 salida por 1M)
   // Prioridad 2: DeepSeek V3.2 / V3.1
   const modelPool = [
+    'deepseek/deepseek-chat',
     'z-ai/glm-5.3-flash',
-    'deepseek/deepseek-v3.2',
-    'deepseek/deepseek-chat-v3.1',
-    'deepseek/deepseek-chat'
+    'deepseek/deepseek-v3.2'
   ];
 
   for (const dsModel of modelPool) {
@@ -327,6 +326,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           messages,
           temperature: 0.5,
           max_tokens: 450,
+          include_reasoning: false,
           provider: {
             allow_fallbacks: true
           }
@@ -335,10 +335,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       if (resp.ok) {
         const data = await resp.json();
         const choice = data.choices?.[0]?.message;
-        let text = choice?.content || choice?.text;
-        if (!text && choice?.reasoning) {
-          text = choice.reasoning;
-        }
+        let text = choice?.content;
         if (text) {
           text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         }
