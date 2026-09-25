@@ -261,6 +261,22 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - En tiendas y servicios estándar, el botón mantiene el precio unitario del catálogo inalterado.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-25] Botón CTA de Restaurante con Degradado Anaranjado y Amarillo Gastronómico Ultra Profesional
+- **Requerimiento del Usuario:**
+  El botón donde sale el precio en el módulo de restaurantes debe tener un color con degradado entre anaranjado y amarillo, con acabado super profesional. Debe activarse **únicamente** en el módulo de restaurantes (`isRestaurant === true`); en comercios de servicios y productos regulares debe permanecer 100% normal como está.
+- **Implementación Arquitectónica ARQMODULAR (<166 líneas por archivo):**
+  1. *Estilo CSS Gastronómico (`src/index.css`):*
+     - Definición de `.boton-restaurante-degradado` con gradiente multidimensional de alta energía gastronómica: `linear-gradient(135deg, #EA580C 0%, #F97316 26%, #FB923C 52%, #FBBF24 80%, #FDE047 100%)`.
+     - Borde translúcido en amarillo suave (`border: 1px solid rgba(254, 240, 138, 0.85)`).
+     - Sombra difusa y luminosa con resplandor cálido ámbar/naranja.
+     - Acabado glossy moderno mediante pseudo-elemento `::after` con destello superior semitransparente.
+     - Efectos de hover profundo (`#C2410C` a `#FBBF24`) y microinteracción active.
+  2. *Aplicación Condicional y Tipografía de Alto Contraste (`ProductShowcase.tsx`):*
+     - Condicional estricto: `isRestaurant ? 'boton-restaurante-degradado' : themeStyles.buyNowBtn`.
+     - Contraste tipográfico: texto negro obsidiana intenso (`text-zinc-950 font-black`) para garantizar legibilidad óptima sobre el fondo anaranjado/amarillo tanto en reposo (`Total: $0.00`) como en hover (`Cerrar Orden` con icono `CreditCard`).
+     - Aislamiento total: tiendas y negocios de productos/servicios preservan al 100% el estilo beige luxury `cuadro-amarillo-tornasol`.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
 
 
 

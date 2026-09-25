@@ -120,18 +120,22 @@ export const ProductShowcase: React.FC<Props> = ({
           <button
             type="button"
             onClick={onBuyNow}
-            className={`group relative w-full h-11 sm:h-12 px-4 overflow-hidden flex items-center justify-center transition-all duration-300 active:scale-98 cursor-pointer font-extrabold ${themeStyles.buyNowBtn} ${
+            className={`group relative w-full h-11 sm:h-12 px-4 overflow-hidden flex items-center justify-center transition-all duration-300 active:scale-98 cursor-pointer font-extrabold ${
+              isRestaurant ? 'boton-restaurante-degradado' : themeStyles.buyNowBtn
+            } ${
               isRestaurant && isTotalPulsing
                 ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-black shadow-[0_0_35px_rgba(251,191,36,0.95)] animate-pulse scale-[1.02]'
                 : ''
             }`}
           >
-            {/* Estado Normal: Si es restaurante y hay total dinámico muestra Total: $XX.XX; de lo contrario el precio base normal */}
+            {/* Estado Normal: Si es restaurante muestra Total: $XX.XX; de lo contrario el precio base normal */}
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0 relative z-10">
-              <span className="text-[#16120C] text-base sm:text-lg font-black tracking-wide drop-shadow-sm flex items-center gap-1.5">
+              <span className={`text-base sm:text-lg font-black tracking-wide drop-shadow-sm flex items-center gap-1.5 ${
+                isRestaurant ? 'text-zinc-950' : 'text-[#16120C]'
+              }`}>
                 {isRestaurant ? (
                   <>
-                    <span className="text-xs uppercase tracking-wider text-[#16120C]/80 font-bold">Total:</span>
+                    <span className="text-xs uppercase tracking-wider text-zinc-900/90 font-black">Total:</span>
                     <span>${((orderTotal !== null && orderTotal !== undefined) ? orderTotal : 0).toFixed(2)}</span>
                   </>
                 ) : (
@@ -140,10 +144,16 @@ export const ProductShowcase: React.FC<Props> = ({
               </span>
             </div>
 
-            {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto en dorado premium */}
+            {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto */}
             <div className="absolute inset-0 flex items-center justify-center gap-2 transition-all duration-300 ease-out transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 z-10">
-              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] shrink-0" />
-              <span className="font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
+                isRestaurant ? 'text-zinc-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]' : 'text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]'
+              }`} />
+              <span className={`font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase ${
+                isRestaurant
+                  ? 'text-zinc-950 font-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]'
+                  : 'bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
+              }`}>
                 {isRestaurant ? 'Cerrar Orden' : 'Comprar Ahora'}
               </span>
             </div>

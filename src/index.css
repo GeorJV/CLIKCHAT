@@ -203,6 +203,49 @@
     0 0 45px -2px rgba(245, 158, 11, 0.4);
 }
 
+/* Botón Restaurante: Degradado Anaranjado y Amarillo Gastronómico Ultra Profesional */
+.boton-restaurante-degradado {
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #EA580C 0%, #F97316 26%, #FB923C 52%, #FBBF24 80%, #FDE047 100%);
+  border: 1px solid rgba(254, 240, 138, 0.85);
+  box-shadow:
+    0 8px 24px -4px rgba(234, 88, 12, 0.5),
+    0 2px 8px -1px rgba(251, 191, 36, 0.35),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.65);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.boton-restaurante-degradado::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 100%);
+  border-top-left-radius: 23px;
+  border-top-right-radius: 23px;
+  pointer-events: none;
+}
+
+.boton-restaurante-degradado:hover {
+  background: linear-gradient(135deg, #C2410C 0%, #EA580C 24%, #F97316 50%, #F59E0B 76%, #FBBF24 100%);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 12px 32px -4px rgba(234, 88, 12, 0.7),
+    0 4px 16px -1px rgba(251, 191, 36, 0.55),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+}
+
+.boton-restaurante-degradado:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow:
+    0 4px 12px -2px rgba(234, 88, 12, 0.6);
+}
+
 /* Botones Beneficios y Detalle: Cuadro Tornasol (Color solo visible al pasar el ratón) */
 .cuadro-tornasol {
   border-radius: 24px;
