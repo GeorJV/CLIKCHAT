@@ -12,11 +12,16 @@ interface Props {
 }
 
 export const ProductChatView: React.FC<Props> = ({
-  storeName = 'Clikchat Store', agentName = 'Sofía', agentAvatar,
+  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar,
   welcomeMessage,
-  products = [DEFAULT_PRODUCT], initialProduct, responseDelaySec, onExit,
+  products = [], initialProduct, responseDelaySec, onExit,
 }) => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || DEFAULT_PRODUCT);
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || {
+    ...DEFAULT_PRODUCT,
+    title: 'Catálogo Oficial',
+    image: '',
+    images: []
+  });
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +58,7 @@ export const ProductChatView: React.FC<Props> = ({
   }, [selectedProduct.id]);
 
   useEffect(() => {
-    if (!selectedProduct.title) return;
+    if (!selectedProduct?.title || !storeName) return;
     let isMounted = true;
     fetch(`/api/chat/messages/${sessId}`, { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))

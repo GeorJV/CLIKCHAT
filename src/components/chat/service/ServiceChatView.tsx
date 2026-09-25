@@ -15,10 +15,15 @@ interface Props {
 }
 
 export const ServiceChatView: React.FC<Props> = ({
-  storeName = 'Centro Estético Aura', agentName = 'Dra. Elena', agentAvatar,
-  services = [DEFAULT_SERVICE], initialService, responseDelaySec, onExit,
+  storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar,
+  services = [], initialService, responseDelaySec, onExit,
 }) => {
-  const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || DEFAULT_SERVICE);
+  const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || {
+    ...DEFAULT_SERVICE,
+    title: 'Servicio Especializado',
+    image: '',
+    images: []
+  });
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);

@@ -186,4 +186,18 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   6. *Sincronización de Saludo Inicial:* `ProductChatView.tsx` y `useProductResolver.ts` ahora respetan y aplican de inmediato el `welcome_message` personalizado del inquilino.
 - **Despliegue y Protocolo:** Validado con compilación dual local (Frontend + Edge Functions con 0 errores) y desplegado en Cloudflare Pages CDN (`clikchat.pages.dev`).
 
+### [2026-09-25] Erradicación Total del Flash de Contenido por Defecto (FODC) y Fotos Dummy en Incógnito
+- **Problema Reportado:** En ventanas de incógnito o sesiones limpias, al abrir cualquier enlace del chatbot se mostraba durante 300-500 ms el texto "Clikchat Store", con el avatar de "Sofía" (foto genérica de Unsplash) o imagen de robot, para luego parpadear y ser reemplazado abruptamente por la identidad real de la tienda (ej. "GeoSoft").
+- **Causa Raíz Diagnosticada:**
+  1. *Estado Inicial No Nulo en Hooks:* `useProductResolver.ts` inicializaba su estado con `productItem = DEFAULT_PRODUCT`, `storeName = 'Clikchat Store'`, `agentName = 'Sofía'` e `isLoading = false`.
+  2. *Falso Positivo en la Condición de Carga:* En `App.tsx`, la condición `{isResolvingProduct && !productItem ? <Loader/> : <ProductChatView/>}` evaluaba `!productItem` como falso en el frame 0, provocando el montaje prematuro de la vista con los datos mock antes de resolver la API.
+  3. *Avatares de Respaldo Quemados en Código:* `ProductChatColumn.tsx`, `ServiceChatColumn.tsx` y `ChatHeader.tsx` utilizaban URLs directas de Unsplash como imagen por defecto si el negocio no tenía avatar.
+- **Solución Arquitectónica Implementada:**
+  1. *Inicialización Limpia y Derivada del Slug:* `useProductResolver.ts` ahora arranca con `isLoading: true`, `productItem: null`, `agentName: 'Asistente Virtual'` (eliminando 'Sofía') y el nombre de la tienda derivado inmediatamente del parámetro `t` de la URL (`geosoft` -> `GeoSoft`), evitando cualquier mención a "Clikchat Store".
+  2. *Guardia Estricta de Renderizado:* `App.tsx` protege el montaje con `{isResolvingProduct || !productItem ? <Loader/> : <ProductChatView/>}` tanto para productos como para servicios, impidiendo el renderizado de cualquier pantalla hasta que la identidad y los datos reales estén confirmados.
+  3. *Avatares Dinámicos con Monograma Oficial:* Se retiraron todos los enlaces a fotos genéricas externas de Unsplash en favor de un avatar tipográfico estilizado con la inicial del comercio sobre un fondo temático esmeralda o índigo.
+  4. *Protección en Vista Móvil:* `MobileChatView.tsx` incluye guardia de carga con spinner (`if (isLoadingTenant || !tenant) return <Loader/>;`) para bloquear cualquier parpadeo en enlaces móviles o incrustados.
+- **Despliegue y Verificación:** Compilación frontend (`npm run build`), validación de Edge Functions (`esbuild`) y despliegue en Cloudflare Pages CDN.
+
+
 

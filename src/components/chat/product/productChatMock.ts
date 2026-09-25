@@ -9,10 +9,8 @@ export const DEFAULT_PRODUCT: ProductItem = {
   currency: 'USD',
   stock: 25,
   inStock: true,
-  image: 'https://ai.cornell.edu/wp-content/uploads/robot-1280x720_0.jpg',
-  images: [
-    'https://ai.cornell.edu/wp-content/uploads/robot-1280x720_0.jpg'
-  ],
+  image: '',
+  images: [],
   benefits: [
     'Atención al cliente inmediata y disponible 24/7',
     'Reducción de hasta un 80% en los tiempos de respuesta',

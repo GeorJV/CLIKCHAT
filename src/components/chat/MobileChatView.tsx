@@ -26,7 +26,7 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
   const [showLeadModal, setShowLeadModal] = useState(false);
 
   // 1. Capa de Datos: Hook del Inquilino y Catálogo D1
-  const { tenant, products, selectedProduct, setSelectedProduct } = useTenantData(tenantSlug);
+  const { tenant, products, selectedProduct, setSelectedProduct, isLoadingTenant } = useTenantData(tenantSlug);
 
   // 2. Capa de Lógica: Hook del Motor Conversacional y RAG
   const { messages, isLoading, sessionId, sendMessage, resetChat } = useChatRAG({
@@ -35,6 +35,15 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
     onSelectProduct: (p) => setSelectedProduct(p),
     onTriggerFallback: () => setShowLeadModal(true)
   });
+
+  if (isLoadingTenant || !tenant) {
+    return (
+      <div className="flex-1 h-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <span className="text-xs font-semibold text-zinc-300">Conectando con la tienda...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 h-full max-w-7xl mx-auto w-full p-0 sm:p-3 md:p-4 lg:grid lg:grid-cols-12 lg:gap-5 overflow-hidden">

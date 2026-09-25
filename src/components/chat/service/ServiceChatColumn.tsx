@@ -45,14 +45,18 @@ export const ServiceChatColumn: React.FC<Props> = ({
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const defaultAvatar = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120';
-
   return (
     <section className="flex flex-col h-full bg-[#131212] border-b lg:border-b-0 lg:border-r border-[#262424] overflow-hidden relative min-h-0 font-sans">
       <header className="h-11 px-3.5 bg-[#171616] border-b border-[#262424] flex items-center justify-between z-10 shrink-0 select-none">
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
-            <img src={agentAvatar || defaultAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
+            {agentAvatar ? (
+              <img src={agentAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs shadow-sm">
+                {storeName ? storeName.charAt(0).toUpperCase() : 'C'}
+              </div>
+            )}
             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#171616]" />
           </div>
           <div className="flex items-center gap-1.5 min-w-0">

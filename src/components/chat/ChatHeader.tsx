@@ -20,11 +20,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       {/* Bot & Store Identity */}
       <div className="flex items-center space-x-3">
         <div className="relative">
-          <img
-            src={tenant?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'}
-            alt="Bot Avatar"
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-500/50"
-          />
+          {tenant?.avatar_url ? (
+            <img
+              src={tenant.avatar_url}
+              alt="Bot Avatar"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-500/50"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm ring-2 ring-indigo-500/30">
+              {tenant?.name ? tenant.name.charAt(0).toUpperCase() : 'A'}
+            </div>
+          )}
           {/* Pulsing 'En línea' indicator */}
           <span className="absolute bottom-0 right-0 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -35,7 +41,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex flex-col">
           <div className="flex items-center space-x-1.5">
             <h1 className="text-sm font-bold text-white tracking-tight leading-tight">
-              {tenant?.bot_name || 'Asistente ClikChat'}
+              {tenant?.bot_name || 'Asistente Virtual'}
             </h1>
             <Sparkles className="w-3 h-3 text-indigo-400" />
           </div>

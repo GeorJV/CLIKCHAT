@@ -28,13 +28,17 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
   };
 }
 
-export function useProductResolver(productId: string | null, tenantSlug: string) {
-  const [productItem, setProductItem] = useState<ProductItem>(DEFAULT_PRODUCT);
-  const [storeName, setStoreName] = useState<string>('Clikchat Store');
-  const [agentName, setAgentName] = useState<string>('Sofía');
+export function useProductResolver(productId: string | null, tenantSlug: string = 'geosoft') {
+  const initialStoreName = tenantSlug
+    ? (tenantSlug.toLowerCase() === 'geosoft' ? 'GeoSoft' : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1))
+    : 'GeoSoft';
+
+  const [productItem, setProductItem] = useState<ProductItem | null>(null);
+  const [storeName, setStoreName] = useState<string>(initialStoreName);
+  const [agentName, setAgentName] = useState<string>('Asistente Virtual');
   const [agentAvatar, setAgentAvatar] = useState<string>('');
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(9);
   const hasTrackedRef = useRef<string | null>(null);
 
@@ -44,7 +48,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
     async function resolve() {
       setIsLoading(true);
 
-      // If no productId, fetch first product of tenant or keep DEFAULT_PRODUCT
+      // If no productId, fetch first product of tenant
       if (!productId) {
         try {
           const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' });
@@ -61,7 +65,15 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
             }
           }
         } catch (e) {}
-        if (isMounted) setProductItem(DEFAULT_PRODUCT);
+        if (isMounted) {
+          setProductItem({
+            ...DEFAULT_PRODUCT,
+            title: `Catálogo Oficial`,
+            description: `Bienvenido a la tienda de ${initialStoreName}.`,
+            image: '',
+            images: []
+          });
+        }
         setIsLoading(false);
         return;
       }
@@ -105,6 +117,16 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
             const foundInTenant = tData.products.find((p: Product) => p.id === productId || p.slug === productId);
             if (foundInTenant && isMounted) {
               setProductItem(toProductItem(foundInTenant));
+            } else if (tData.products.length > 0 && isMounted) {
+              setProductItem(toProductItem(tData.products[0]));
+            } else if (isMounted) {
+              setProductItem({
+                ...DEFAULT_PRODUCT,
+                title: `Catálogo Oficial`,
+                description: `Bienvenido a la tienda de ${tData.tenant?.name || initialStoreName}.`,
+                image: '',
+                images: []
+              });
             }
           }
         }

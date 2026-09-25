@@ -81,19 +81,19 @@ export function App() {
 
         {currentView === 'product' && (
           <div className="h-full w-full overflow-hidden bg-[#222020]">
-            {isResolvingProduct && !productItem ? (
-              <div className="h-full w-full flex flex-col items-center justify-center bg-[#222020] text-zinc-400">
+            {isResolvingProduct || !productItem ? (
+              <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
                 <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
                 <span className="text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</span>
               </div>
             ) : (
               <ProductChatView
-                storeName={storeName}
-                agentName={agentName}
+                storeName={storeName || 'Tienda Oficial'}
+                agentName={agentName || 'Asistente Virtual'}
                 agentAvatar={agentAvatar}
                 welcomeMessage={welcomeMessage}
-                initialProduct={productItem || undefined}
-                products={productItem ? [productItem] : []}
+                initialProduct={productItem}
+                products={[productItem]}
                 responseDelaySec={responseDelaySec}
                 onExit={() => navigate('/dashboard')}
               />
@@ -103,13 +103,20 @@ export function App() {
 
         {currentView === 'service' && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
-            <ServiceChatView
-              storeName={storeName}
-              agentName={agentName}
-              agentAvatar={agentAvatar}
-              responseDelaySec={responseDelaySec}
-              onExit={() => navigate('/dashboard')}
-            />
+            {isResolvingProduct || !storeName ? (
+              <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
+                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <span className="text-xs font-semibold text-zinc-300">Cargando servicio y asesoría virtual...</span>
+              </div>
+            ) : (
+              <ServiceChatView
+                storeName={storeName || 'Centro Especializado'}
+                agentName={agentName || 'Asesora Profesional'}
+                agentAvatar={agentAvatar}
+                responseDelaySec={responseDelaySec}
+                onExit={() => navigate('/dashboard')}
+              />
+            )}
           </div>
         )}
 
