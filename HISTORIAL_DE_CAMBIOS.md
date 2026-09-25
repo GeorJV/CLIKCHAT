@@ -222,6 +222,28 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   5. *Integración en `ProductChatColumn.tsx` y `ProductChatView.tsx`:* Mapeo de `quickActions` desde la API y renderizado elegante en la última burbuja del asistente sin romper el diseño responsive.
 - **Despliegue y Verificación:** Validación dual local (Frontend + Edge Functions con 0 errores) y despliegue en Cloudflare Pages CDN.
 
+### [2026-09-25] Módulo Restaurantes: Total Dinámico en Vivo y Efecto Pulso de 10s en Botón Inferior
+- **Requerimiento del Usuario:**
+  1. En negocios gastronómicos (restaurantes, sodas, locales de comida), el precio que aparece abajo de la foto en la columna derecha debe actualizarse dinámicamente conforme el cliente va pidiendo (`Total: $XX.XX`).
+  2. Cuando el cliente pregunte *«¿Cuánto es?»*, *«¿Cuánto es para pagar?»* o consulte la cuenta, el sistema lo detecta y el botón inferior parpadea con resplandor dorado durante 10 segundos exactos.
+  3. **Aislamiento Estricto por Tipo de Negocio:** Esta funcionalidad se activa única y exclusivamente cuando el negocio está registrado como `restaurante`. En tiendas de productos estándar y servicios, el botón permanece 100% normal como estaba (precio individual estático, sin total acumulado y sin parpadeo).
+- **Implementación Arquitectónica ARQMODULAR (<160 líneas por archivo):**
+  1. *Esquema Cloudflare D1:* Migración en caliente de columna `business_type TEXT DEFAULT 'tienda'` en la tabla `tenants`, y configuración de `slug = 'geosoft'` a `business_type = 'restaurante'`. Actualizado `schema-d1.sql` y `schema.sql`.
+  2. *Extracción y Detección de Cuenta en Edge Functions (`functions/api/[[route]].js`):*
+     - Detección de negocio restaurante (`business_type === 'restaurante'`).
+     - Extracción precisa del monto total calculado por el LLM en la comanda (`orderTotal`).
+     - Retorno de flags `isRestaurant`, `orderTotal` y `isAskingTotal` en la API Edge `/api/chat/message`.
+     - Inclusión de `business_type` en consultas de inquilinos (`GET /api/tenants` y `GET /api/tenants/:slug`).
+  3. *Hook `useProductResolver.ts`:* Extracción reactiva de `businessType` desde los datos del inquilino y propagación a la vista de producto.
+  4. *Gestión de Estado en `ProductChatView.tsx`:*
+     - Estado `orderTotal` sincronizado en vivo con cada respuesta del bot.
+     - Temporizador de pulso de 10 segundos exactos (`isTotalPulsing`) con auto-cancelación y limpieza en desmontaje.
+  5. *Botón CTA Animado en `ProductShowcase.tsx`:*
+     - Si es restaurante y hay total acumulado, muestra `Total: $XX.XX` y en hover "Cerrar Orden".
+     - Si está en pulso (`isTotalPulsing`), activa animación luminosa ámbar/dorada (`ring-4 ring-amber-400 ring-offset-2 shadow-[0_0_35px_rgba(251,191,36,0.95)] animate-pulse`).
+     - En comercios de productos/servicios regulares, renderiza el precio unitario tradicional sin parpadeo ni alteración.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
 
 
 

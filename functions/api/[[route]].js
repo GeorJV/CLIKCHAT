@@ -717,7 +717,7 @@ export async function onRequest(context) {
 
     // LIST TENANTS: GET /api/tenants
     if (segments[0] === 'tenants' && segments.length === 1 && request.method === 'GET') {
-      const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status FROM tenants ORDER BY created_at DESC');
+      const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status, business_type FROM tenants ORDER BY created_at DESC');
       return jsonResponse({ tenants: rows });
     }
 
@@ -762,15 +762,16 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, custom_llm_key } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, custom_llm_key } = body;
 
       const hasCustomKey = custom_llm_key !== undefined;
-      const keyClause = hasCustomKey ? ', custom_llm_key = ?16' : '';
+      const keyClause = hasCustomKey ? ', custom_llm_key = ?17' : '';
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
         business_hours, system_prompt, slug, logo_url, tone_of_voice,
         response_delay_sec !== undefined ? Number(response_delay_sec) : null,
         operational_rules !== undefined ? operational_rules : null,
+        business_type !== undefined ? business_type : null,
         id
       ];
       if (hasCustomKey) {
@@ -778,7 +779,7 @@ export async function onRequest(context) {
       }
 
       await executeD1(
-        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules)${keyClause}, updated_at = datetime('now') WHERE id = ?15`,
+        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type)${keyClause}, updated_at = datetime('now') WHERE id = ?16`,
         params
       );
 
@@ -1303,7 +1304,9 @@ export async function onRequest(context) {
             answer: topFaq.answer,
             matchedItem: topFaq,
             stoppedEarly: true,
-            zeroCost: true
+            zeroCost: true,
+            orderTotal: null,
+            isRestaurant: targetTenant.business_type === 'restaurante'
           });
         }
       }
@@ -1450,6 +1453,19 @@ export async function onRequest(context) {
           );
         } catch (e) {}
 
+        const isRestaurant = targetTenant.business_type === 'restaurante';
+        let orderTotal = null;
+        if (isRestaurant) {
+          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$]*\$?\s*([\d]+(?:[.,]\d{1,2})?)/i)
+            || llmResult.text.match(/\$\s*([\d]+(?:[.,]\d{1,2})?)\s*(?:en\s*total|total)/i);
+          if (totalMatch) {
+            const rawVal = parseFloat(totalMatch[1].replace(',', '.'));
+            if (!isNaN(rawVal) && rawVal > 0) {
+              orderTotal = rawVal;
+            }
+          }
+        }
+
         return jsonResponse({
           sessionId: currentSessionId,
           level: 'level_3_catalog',
@@ -1458,7 +1474,10 @@ export async function onRequest(context) {
           answer: llmResult.text,
           products: prodsToInclude,
           provider: llmResult.provider,
-          quickActions
+          quickActions,
+          orderTotal,
+          isRestaurant,
+          isAskingTotal: isAskingTotalOrCheckout
         });
       }
 
@@ -1487,7 +1506,9 @@ export async function onRequest(context) {
         confidence: 0.15,
         answer: fallbackAnswer,
         isFallback: true,
-        requiresLeadInfo: true
+        requiresLeadInfo: true,
+        orderTotal: null,
+        isRestaurant: targetTenant.business_type === 'restaurante'
       });
     }
 

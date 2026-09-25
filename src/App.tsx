@@ -23,7 +23,7 @@ export function App() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
   const selectedTenantSlug = params?.get('t') || 'geosoft';
-  const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec } = useProductResolver(productId, selectedTenantSlug);
+  const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
   const hideTopBar = currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
 
@@ -95,6 +95,7 @@ export function App() {
                 initialProduct={productItem}
                 products={[productItem]}
                 responseDelaySec={responseDelaySec}
+                businessType={businessType}
                 onExit={() => navigate('/dashboard')}
               />
             )}

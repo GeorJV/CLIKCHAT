@@ -56,6 +56,7 @@ export interface Tenant {
   response_delay_sec?: number;
   custom_llm_key?: string;
   operational_rules?: string;
+  business_type?: string;
 }
 
 export interface ChatMessage {

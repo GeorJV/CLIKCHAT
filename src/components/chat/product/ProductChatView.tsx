@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../types/productChat';
 import { ProductChatColumn } from './ProductChatColumn'; import { ProductShowcase } from './ProductShowcase';
 import { ProductDetailModal } from './ProductDetailModal'; import { ProductFullscreenModal } from './ProductFullscreenModal';
@@ -7,21 +7,22 @@ import { DEFAULT_PRODUCT } from './productChatMock'; import { useMessageBatcher 
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
-  welcomeMessage?: string;
+  welcomeMessage?: string; businessType?: string;
   products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar,
-  welcomeMessage,
+  welcomeMessage, businessType = 'tienda',
   products = [], initialProduct, responseDelaySec, onExit,
 }) => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || {
-    ...DEFAULT_PRODUCT,
-    title: 'Catálogo Oficial',
-    image: '',
-    images: []
-  });
+  const isRestaurant = businessType === 'restaurante';
+  const [orderTotal, setOrderTotal] = useState<number | null>(null);
+  const [isTotalPulsing, setIsTotalPulsing] = useState(false);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
+
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,15 +35,13 @@ export const ProductChatView: React.FC<Props> = ({
   useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
   const [sessId, setSessId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const storageKey = `clik_sess_prod_${initialProduct?.id || products[0]?.id || 'default'}`;
-      const saved = sessionStorage.getItem(storageKey);
-      if (saved) return saved;
-      const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-      sessionStorage.setItem(storageKey, created);
-      return created;
-    }
-    return 'sess_' + Date.now().toString(36);
+    if (typeof window === 'undefined') return 'sess_' + Date.now().toString(36);
+    const key = `clik_sess_prod_${initialProduct?.id || products[0]?.id || 'default'}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) return saved;
+    const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+    sessionStorage.setItem(key, created);
+    return created;
   });
 
   useEffect(() => {
@@ -107,6 +106,15 @@ export const ProductChatView: React.FC<Props> = ({
           })
         });
         const data = res.ok ? await res.json() : null;
+        if (data?.isRestaurant || isRestaurant) {
+          if (typeof data?.orderTotal === 'number' && data.orderTotal > 0) setOrderTotal(data.orderTotal);
+          const askedTotal = data?.isAskingTotal || /cuanto\s*(es|debo|vale|sale|cuesta)|la\s*cuenta/i.test(userText);
+          if (askedTotal || data?.orderTotal) {
+            if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+            setIsTotalPulsing(true);
+            pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
+          }
+        }
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
         setMessages((prev) => [...prev, {
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
@@ -114,16 +122,13 @@ export const ProductChatView: React.FC<Props> = ({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           quickActions: data?.quickActions,
           ragTrace: {
-            levelUsed: (lvlMap[data?.level] || 3) as any,
-            confidence: data?.confidence || 0.95, executionTimeMs: 85,
+            levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 85,
             modelUsed: data?.provider || 'RAG Cloudflare Edge', reasoning: data?.levelLabel || 'RAG Catálogo D1'
           }
         }]);
       } catch {
         setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-      } finally {
-        setIsLoading(false);
-      }
+      } finally { setIsLoading(false); }
     },
   });
 
@@ -136,8 +141,7 @@ export const ProductChatView: React.FC<Props> = ({
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
-    if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); }
-    else { sendVoiceQuery(text); }
+    if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); } else { sendVoiceQuery(text); }
   };
 
   const handleConfirmCheckout = (data: ProductCheckoutData) => {
@@ -161,6 +165,7 @@ export const ProductChatView: React.FC<Props> = ({
         />
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles}
+          orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}
           onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }}
           onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
           onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }}

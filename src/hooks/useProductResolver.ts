@@ -40,6 +40,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(9);
+  const [businessType, setBusinessType] = useState<string>('tienda');
   const hasTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
             if (tData.tenant?.avatar_url && isMounted) setAgentAvatar(tData.tenant.avatar_url);
             if (tData.tenant?.welcome_message && isMounted) setWelcomeMessage(tData.tenant.welcome_message);
             if (tData.tenant?.response_delay_sec !== undefined && isMounted) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
+            if (tData.tenant?.business_type && isMounted) setBusinessType(tData.tenant.business_type);
             if (tData.products && tData.products.length > 0 && isMounted) {
               setProductItem(toProductItem(tData.products[0]));
               return;
@@ -112,6 +114,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
             if (tData.tenant.avatar_url) setAgentAvatar(tData.tenant.avatar_url);
             if (tData.tenant.welcome_message) setWelcomeMessage(tData.tenant.welcome_message);
             if (tData.tenant.response_delay_sec !== undefined) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
+            if (tData.tenant.business_type) setBusinessType(tData.tenant.business_type);
           }
           if (tData.products && Array.isArray(tData.products)) {
             const foundInTenant = tData.products.find((p: Product) => p.id === productId || p.slug === productId);
@@ -159,5 +162,5 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
     return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
-  return { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec };
+  return { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec, businessType };
 }

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     token_limit INTEGER DEFAULT 100000,
     tokens_used INTEGER DEFAULT 0,
     operational_rules TEXT DEFAULT '',
+    business_type TEXT DEFAULT 'tienda',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
