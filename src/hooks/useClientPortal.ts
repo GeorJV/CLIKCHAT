@@ -52,7 +52,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   const loadTenantData = useCallback(async (slugToLoad: string = tenantSlug, isBackground: boolean = false) => {
     if (!isBackground) setIsLoading(true);
     try {
-      const tRes = await fetch(`/api/tenants/${slugToLoad}`);
+      const tRes = await fetch(`/api/tenants/${slugToLoad}`, { cache: 'no-store' });
       if (tRes.ok) {
         const tData = await tRes.json();
         setTenant(prev => {
@@ -143,9 +143,12 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const deleteFaq = async (id: string) => {
+    try {
+      localStorage.removeItem('clikchat_faqs');
+    } catch (e) {}
     setFaqs(prev => prev.filter(f => f.id !== id));
     try {
-      await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/faqs/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
     } catch (err) {
       console.warn('FAQ deleted locally:', err);
     }
@@ -154,6 +157,9 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
 
   const updateFaq = async (id: string, answer: string, question?: string, category?: string) => {
     if (!answer.trim()) return false;
+    try {
+      localStorage.removeItem('clikchat_faqs');
+    } catch (e) {}
     setFaqs(prev => prev.map(f => {
       if (f.id !== id) return f;
       return {
@@ -164,9 +170,10 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       };
     }));
     try {
-      await fetch(`/api/faqs/${id}`, {
+      await fetch(`/api/faqs/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify({
           answer: answer.trim(),
           ...(question ? { question: question.trim() } : {}),

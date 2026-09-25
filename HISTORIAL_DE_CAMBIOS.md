@@ -175,8 +175,15 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   4. *Editor y Preview en Vivo (`InitialGreetingSection.tsx`):* Editor manual con contador de caracteres, simulación visual en tiempo real de burbuja WhatsApp de bienvenida y botón de guardado conectado a Cloudflare D1 mediante `onUpdateSettings({ welcome_message })`.
   5. *Despliegue:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
 
-
-
-
+### [2026-09-25] Sincronización Inmediata y Cero Obsolescencia en el RAG del Bot
+- **Objetivo y Garantía:** Asegurar que cada cambio que realice el dueño del negocio en el panel (agregar, editar o eliminar documentos, FAQs, productos o reglas de IA) se ejecute de inmediato y con 0 milisegundos de desfase en las respuestas del bot, sin arrastrar información vieja ni desincronización de base de datos.
+- **Diagnóstico y Corrección de Puntos Críticos:**
+  1. *Faltaba la ruta `DELETE /api/faqs/:id` en Edge Functions:* Cuando el usuario eliminaba una FAQ en el panel, el frontend la quitaba localmente, pero el backend respondía 404 y la FAQ continuaba activa en Cloudflare D1. Se implementó `DELETE /api/faqs/:id`, eliminando físicamente las preguntas borradas en D1 y purgando `faq_descuentos` residual.
+  2. *Intoxicación por Memoria Episódica en el LLM (Historial Conversacional):* Si en una conversación previa el bot había mencionado un descuento o política, al borrar el documento del RAG el LLM seguía viéndolo en su propio historial (`assistant: Tenemos 20% descuento VIP...`) y volvía a repetirlo. Se incorporó en el System Prompt de `callEdgeLLM` la **Regla Crítica de Actualidad Inmediata**: la información verificada actual es la única y absoluta fuente de verdad; está estrictamente prohibido arrastrar o confirmar promociones, precios o políticas del historial que ya no figuren en la base de datos oficial.
+  3. *Aviso Explícito de Promociones Vigentes:* En `POST /api/chat/message`, si el usuario consulta por descuentos y no existen documentos ni FAQs con promociones activas, el backend inyecta una directiva inequívoca al LLM confirmando que no existen cupones vigentes y que rigen únicamente los precios de lista del catálogo.
+  4. *Nuevo Endpoint `PUT /api/documents/:id` e Ingesta Paralela:* Se habilitó la edición de documentos con re-indexación automática y se optimizó la inserción de fragmentos (*chunks*) en Cloudflare D1 usando `Promise.all` concurrente (<200 ms).
+  5. *Cabeceras Anti-Caché Globales:* `jsonResponse()` ahora emite `Cache-Control: no-cache, no-store, must-revalidate, max-age=0`, `Pragma: no-cache` y `Expires: 0` para blindar todas las APIs contra cachés de navegador o proxies intermedios.
+  6. *Sincronización de Saludo Inicial:* `ProductChatView.tsx` y `useProductResolver.ts` ahora respetan y aplican de inmediato el `welcome_message` personalizado del inquilino.
+- **Despliegue y Protocolo:** Validado con compilación dual local (Frontend + Edge Functions con 0 errores) y desplegado en Cloudflare Pages CDN (`clikchat.pages.dev`).
 
 

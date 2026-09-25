@@ -53,7 +53,10 @@ function jsonResponse(data, status = 200) {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
   });
 }
@@ -154,10 +157,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - PROHIBIDO usar encabezados de código markdown como '###' o '##'.
    - PROHIBIDO pegar URLs crudas o enlaces larguísimos.
    - Usa negrita para enfatizar conceptos clave con moderación y utiliza emojis con buen gusto (ej: ✨, 🚀, 💡, 📲).
-4. PRECISIÓN, CERTEZA Y PRIORIDAD DE DOCUMENTOS RAG:
-   - Tienes a tu disposición la información oficial del negocio arriba (horarios, garantías, catálogo, inventario y documentos RAG). Responde con certeza y jamás digas con frialdad 'no tengo información'.
-   - Si existen documentos, manuales o políticas con promociones, descuentos VIP/PRO, cupones o condiciones puntuales, esta información prevalece siempre sobre respuestas genéricas. Utiliza los datos exactos del documento (porcentajes, días de prueba, códigos de descuento) para responder al cliente.
-   - Si NO existen documentos o FAQs que especifiquen promociones, códigos o cupones, queda ESTRICTAMENTE PROHIBIDO inventar porcentajes o códigos de descuento ficticios. En tal caso, remite amablemente a la política de precios oficial del catálogo o a consultar por WhatsApp.
+4. PRECISIÓN, CERTEZA Y PRIORIDAD ABSOLUTA DEL CONOCIMIENTO EN TIEMPO REAL:
+   - La sección '[INFORMACIÓN VERIFICADA DEL NEGOCIO / POLÍTICAS / CATÁLOGO / INVENTARIO]' representa el estado EXACTO, VIGENTE y EN TIEMPO REAL del negocio en este instante. Es tu ÚNICA y ABSOLUTA FUENTE DE VERDAD.
+   - CERO ARRASTRE DE HISTORIAL OBSOLETO: Si en mensajes anteriores de esta conversación tú o el usuario hablaron sobre algún descuento (ej: VIP, cupón, rebaja, código especial), producto, precio o política que YA NO APARECE en la información verificada actual, significa que FUE ELIMINADO O MODIFICADO POR EL NEGOCIO. Queda TERMINANTEMENTE PROHIBIDO seguir repitiendo o confirmando datos o descuentos que ya no figuren en la información verificada actual. Si el usuario insiste, aclara con amabilidad que dicha condición o promoción ya no se encuentra vigente.
+   - Si existen documentos, manuales o políticas activas con promociones, descuentos o cupones específicos, prevalecen con exactitud matemática (porcentajes, requisitos, vigencia).
+   - Si NO existen documentos o FAQs con promociones vigentes en la información verificada actual, queda ESTRICTAMENTE PROHIBIDO inventar descuentos o códigos ficticios; remite amablemente a los precios de lista del catálogo oficial o a consultar por WhatsApp.
 5. CIERRE CONVERSACIONAL NATURAL:
    - Termina siempre con una sola pregunta abierta, amable y entusiasta que invite al cliente a continuar la charla de forma fluida (ej: '¿En qué canal te gustaría automatizar primero?' o '¿Te gustaría ver una prueba con tus propios productos?').`;
 
@@ -785,12 +789,19 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { answer, question, category } = body;
+      const { answer, question, category, is_active } = body;
       await executeD1(
-        'UPDATE faqs SET answer = COALESCE(?1, answer), question = COALESCE(?2, question), category = COALESCE(?3, category), updated_at = datetime(\'now\') WHERE id = ?4',
-        [answer ?? null, question ?? null, category ?? null, id]
+        'UPDATE faqs SET answer = COALESCE(?1, answer), question = COALESCE(?2, question), category = COALESCE(?3, category), is_active = COALESCE(?4, is_active), updated_at = datetime(\'now\') WHERE id = ?5',
+        [answer ?? null, question ?? null, category ?? null, is_active !== undefined ? (is_active ? 1 : 0) : null, id]
       );
-      return jsonResponse({ success: true });
+      return jsonResponse({ success: true, message: 'FAQ actualizada exitosamente' });
+    }
+
+    // FAQS: DELETE /api/faqs/:id
+    if (segments[0] === 'faqs' && segments.length === 2 && request.method === 'DELETE') {
+      const id = segments[1];
+      await executeD1('DELETE FROM faqs WHERE id = ?1', [id]);
+      return jsonResponse({ success: true, message: 'FAQ eliminada exitosamente de Cloudflare D1' });
     }
 
     // CHAT: GET /api/chat/messages/:sessionId
@@ -1178,8 +1189,8 @@ export async function onRequest(context) {
 
       try {
         const [fRows, pRows, cRows, rRows] = await Promise.all([
-          executeD1('SELECT * FROM faqs WHERE tenant_id = ?1 AND is_active = 1', [actualTenantId]).catch(() => []),
-          executeD1('SELECT * FROM products WHERE tenant_id = ?1 AND is_active = 1 ORDER BY created_at DESC', [actualTenantId]).catch(() => []),
+          executeD1('SELECT * FROM faqs WHERE (tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1)) AND is_active = 1', [actualTenantId]).catch(() => []),
+          executeD1('SELECT * FROM products WHERE (tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1)) AND is_active = 1 ORDER BY created_at DESC', [actualTenantId]).catch(() => []),
           executeD1(
             'SELECT dc.content, kd.title FROM document_chunks dc JOIN knowledge_documents kd ON dc.document_id = kd.id WHERE dc.tenant_id = ?1 OR kd.tenant_id = ?1 OR dc.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) LIMIT 60',
             [actualTenantId]
@@ -1347,7 +1358,17 @@ export async function onRequest(context) {
 
         // 4. Documentos / Manuales / Reglas RAG Subidos
         if (chunksToInclude.length > 0) {
-          contextBlock += '\n\n--- DOCUMENTOS, MANUALES Y CONOCIMIENTO RAG ---\n' + chunksToInclude.map(c => `[DOCUMENTO: ${c.title}]\n${c.content}`).join('\n\n');
+          contextBlock += '\n\n--- DOCUMENTOS, MANUALES Y CONOCIMIENTO RAG (ACTUALIZADO EN VIVO) ---\n' + chunksToInclude.map(c => `[DOCUMENTO: ${c.title}]\n${c.content}`).join('\n\n');
+        } else {
+          contextBlock += '\n\n--- DOCUMENTOS RAG ---\n(No hay documentos adicionales registrados actualmente en la base de datos oficial)';
+        }
+
+        // Directiva explícita de promociones vigentes si el usuario pregunta por descuentos
+        const isAskingDiscount = /\b(descuento|descuentos|cupon|cupones|promo|promocion|promociones|rebaja|rebajas|oferta|ofertas|vip|pro|codigo)\b/i.test(message);
+        const hasDiscountInKnowledge = (chunksToInclude.some(c => /descuento|cupon|promo|rebaja|oferta|vip/i.test(`${c.title} ${c.content}`))) ||
+          (faqs.some(f => /descuento|cupon|promo|rebaja|oferta|vip/i.test(`${f.question} ${f.answer}`)));
+        if (isAskingDiscount && !hasDiscountInKnowledge) {
+          contextBlock += '\n\n[ESTADO OFICIAL DE PROMOCIONES]: Actualmente NO existen descuentos especiales, cupones ni promociones VIP/PRO vigentes en la base de datos oficial. Los precios válidos son única y exclusivamente los indicados en la lista de productos del catálogo.';
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -1574,14 +1595,14 @@ export async function onRequest(context) {
         chunks.push(clean);
       }
 
-      for (let i = 0; i < chunks.length; i++) {
+      await Promise.all(chunks.map((chk, i) => {
         const chunkId = 'chk_' + Date.now() + '_' + i;
-        const keywords = tokenize(chunks[i]).slice(0, 15);
-        await executeD1(
+        const keywords = tokenize(chk).slice(0, 15);
+        return executeD1(
           'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-          [chunkId, docId, actualTenantId, i, chunks[i], JSON.stringify(keywords)]
+          [chunkId, docId, actualTenantId, i, chk, JSON.stringify(keywords)]
         );
-      }
+      }));
 
       return jsonResponse({ success: true, document: { id: docId, title, chunksCount: chunks.length } }, 201);
     }
@@ -1607,12 +1628,61 @@ export async function onRequest(context) {
       });
     }
 
+    // DOCUMENTS: PUT /api/documents/:id (Editar y re-indexar chunks)
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'PUT') {
+      const id = segments[1];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { title, content, category } = body;
+      if (!title || !content) {
+        return jsonResponse({ error: 'title y content requeridos' }, 400);
+      }
+
+      await executeD1(
+        'UPDATE knowledge_documents SET title = ?1, raw_content = ?2, category = COALESCE(?3, category), updated_at = datetime(\'now\') WHERE id = ?4',
+        [title, content, category || null, id]
+      );
+
+      // Eliminar chunks anteriores y re-indexar
+      await executeD1('DELETE FROM document_chunks WHERE document_id = ?1', [id]);
+
+      const docRows = await executeD1('SELECT tenant_id FROM knowledge_documents WHERE id = ?1', [id]);
+      const actualTenantId = docRows[0]?.tenant_id || 'a0000000-0000-0000-0000-000000000001';
+
+      const clean = content.trim();
+      const chunks = [];
+      let start = 0;
+      while (start < clean.length) {
+        let end = start + 600;
+        if (end < clean.length) {
+          const cut = Math.max(clean.lastIndexOf('.', end), clean.lastIndexOf('\n', end));
+          if (cut > start + 150) end = cut + 1;
+        }
+        const chunkText = clean.slice(start, end).trim();
+        if (chunkText.length > 20) chunks.push(chunkText);
+        start = end - 100;
+        if (start >= clean.length - 40) break;
+      }
+      if (chunks.length === 0 && clean.length > 0) chunks.push(clean);
+
+      await Promise.all(chunks.map((chk, i) => {
+        const chunkId = 'chk_' + Date.now() + '_' + i;
+        const keywords = tokenize(chk).slice(0, 15);
+        return executeD1(
+          'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [chunkId, id, actualTenantId, i, chk, JSON.stringify(keywords)]
+        );
+      }));
+
+      return jsonResponse({ success: true, message: 'Documento actualizado y re-indexado exitosamente', chunksCount: chunks.length });
+    }
+
     // DOCUMENTS: DELETE /api/documents/:id
     if (segments[0] === 'documents' && segments.length === 2 && request.method === 'DELETE') {
       const id = segments[1];
       await executeD1('DELETE FROM document_chunks WHERE document_id = ?1', [id]);
       await executeD1('DELETE FROM knowledge_documents WHERE id = ?1', [id]);
-      return jsonResponse({ success: true, message: 'Documento eliminado' });
+      return jsonResponse({ success: true, message: 'Documento eliminado exitosamente de Cloudflare D1' });
     }
 
     return jsonResponse({ message: 'Ruta no encontrada' }, 404);

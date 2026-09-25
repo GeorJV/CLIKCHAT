@@ -21,7 +21,7 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
 
   const loadDocs = useCallback(async () => {
     try {
-      const res = await fetch(`/api/documents?tenantId=${effectiveTenantId}`);
+      const res = await fetch(`/api/documents?tenantId=${effectiveTenantId}&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents || []);
@@ -41,6 +41,7 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
       const res = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify({ tenant_id: effectiveTenantId, title: title.trim(), content: content.trim(), category })
       });
       if (res.ok) {
@@ -56,7 +57,7 @@ export const DocumentsManagerTab: React.FC<DocumentsManagerTabProps> = ({ tenant
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE', cache: 'no-store' });
       if (res.ok) setDocuments(prev => prev.filter(d => d.id !== id));
     } catch (e) {
       console.error(e);

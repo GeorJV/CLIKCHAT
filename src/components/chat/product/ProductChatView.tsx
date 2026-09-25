@@ -7,11 +7,13 @@ import { DEFAULT_PRODUCT } from './productChatMock'; import { useMessageBatcher 
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
+  welcomeMessage?: string;
   products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Clikchat Store', agentName = 'Sofía', agentAvatar,
+  welcomeMessage,
   products = [DEFAULT_PRODUCT], initialProduct, responseDelaySec, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || DEFAULT_PRODUCT);
@@ -53,22 +55,26 @@ export const ProductChatView: React.FC<Props> = ({
   useEffect(() => {
     if (!selectedProduct.title) return;
     let isMounted = true;
-    fetch(`/api/chat/messages/${sessId}`)
+    fetch(`/api/chat/messages/${sessId}`, { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (isMounted && data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
         } else if (isMounted) {
+          const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
+          const dynamicGreeting = welcomeMessage
+            ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title)
+            : defaultGreeting;
           setMessages([{
             id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
-            content: `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`,
+            content: dynamicGreeting,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
           }]);
         }
       }).catch(() => {});
     return () => { isMounted = false; };
-  }, [selectedProduct.id, selectedProduct.title, agentName, storeName, sessId]);
+  }, [selectedProduct.id, selectedProduct.title, agentName, storeName, sessId, welcomeMessage]);
 
   const trackEvent = (event: string, temperature?: string) => {
     if (!selectedProduct.id) return;

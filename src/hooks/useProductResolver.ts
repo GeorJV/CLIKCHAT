@@ -33,6 +33,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
   const [storeName, setStoreName] = useState<string>('Clikchat Store');
   const [agentName, setAgentName] = useState<string>('Sofía');
   const [agentAvatar, setAgentAvatar] = useState<string>('');
+  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(9);
   const hasTrackedRef = useRef<string | null>(null);
@@ -46,12 +47,13 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
       // If no productId, fetch first product of tenant or keep DEFAULT_PRODUCT
       if (!productId) {
         try {
-          const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug));
+          const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' });
           if (tRes.ok) {
             const tData = await tRes.json();
             if (tData.tenant?.name && isMounted) setStoreName(tData.tenant.name);
             if (tData.tenant?.bot_name && isMounted) setAgentName(tData.tenant.bot_name);
             if (tData.tenant?.avatar_url && isMounted) setAgentAvatar(tData.tenant.avatar_url);
+            if (tData.tenant?.welcome_message && isMounted) setWelcomeMessage(tData.tenant.welcome_message);
             if (tData.tenant?.response_delay_sec !== undefined && isMounted) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
             if (tData.products && tData.products.length > 0 && isMounted) {
               setProductItem(toProductItem(tData.products[0]));
@@ -79,8 +81,8 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
       // Fetch from Cloudflare D1 Edge
       try {
         const [prodRes, tenantRes] = await Promise.allSettled([
-          fetch('/api/products/' + encodeURIComponent(productId)),
-          fetch('/api/tenants/' + encodeURIComponent(tenantSlug))
+          fetch('/api/products/' + encodeURIComponent(productId), { cache: 'no-store' }),
+          fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' })
         ]);
 
         if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -96,6 +98,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
             if (tData.tenant.name) setStoreName(tData.tenant.name);
             if (tData.tenant.bot_name) setAgentName(tData.tenant.bot_name);
             if (tData.tenant.avatar_url) setAgentAvatar(tData.tenant.avatar_url);
+            if (tData.tenant.welcome_message) setWelcomeMessage(tData.tenant.welcome_message);
             if (tData.tenant.response_delay_sec !== undefined) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
           }
           if (tData.products && Array.isArray(tData.products)) {
@@ -134,5 +137,5 @@ export function useProductResolver(productId: string | null, tenantSlug: string)
     return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
-  return { productItem, storeName, agentName, agentAvatar, isLoading, responseDelaySec };
+  return { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec };
 }

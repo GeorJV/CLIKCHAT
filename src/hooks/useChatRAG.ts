@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatMessage } from '../types';
 import { UseChatRAGOptions, RAGResponsePayload } from '../types/chat';
 
@@ -8,10 +8,10 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
   const storageKey = `clik_sess_${tenantSlug || 'geosoft'}`;
   const [sessionId, setSessionId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(storageKey);
+      const saved = sessionStorage.getItem(storageKey);
       if (saved) return saved;
       const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-      localStorage.setItem(storageKey, created);
+      sessionStorage.setItem(storageKey, created);
       return created;
     }
     return 'sess_' + Date.now().toString(36);
@@ -25,7 +25,7 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
     let isMounted = true;
     async function loadSessionHistory() {
       try {
-        const res = await fetch(`/api/chat/messages/${encodeURIComponent(sessionId)}`);
+        const res = await fetch(`/api/chat/messages/${encodeURIComponent(sessionId)}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.messages && data.messages.length > 0) {
@@ -111,7 +111,7 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
     if (botDebounceTimerRef.current) clearTimeout(botDebounceTimerRef.current);
     pendingBatchRef.current = [];
     const newSessionId = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-    if (typeof window !== 'undefined') localStorage.setItem(storageKey, newSessionId);
+    if (typeof window !== 'undefined') sessionStorage.setItem(storageKey, newSessionId);
     setSessionId(newSessionId);
     if (tenant) {
       setMessages([{
