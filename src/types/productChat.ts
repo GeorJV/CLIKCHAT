@@ -26,6 +26,13 @@ export interface ProductRAGTrace {
   reasoning?: string;
 }
 
+export interface QuickActionOption {
+  id: string;
+  label: string;
+  actionText: string;
+  variant?: 'primary' | 'secondary' | 'success' | 'warning';
+}
+
 export interface ProductChatMessage {
   id: string;
   sessionId: string;
@@ -37,6 +44,7 @@ export interface ProductChatMessage {
   isAudio?: boolean;
   audioDuration?: number;
   audioUrl?: string;
+  quickActions?: QuickActionOption[];
 }
 
 export interface ProductCheckoutData {

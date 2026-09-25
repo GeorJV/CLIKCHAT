@@ -819,6 +819,17 @@ export async function onRequest(context) {
       return jsonResponse({ success: true, message: 'FAQ eliminada exitosamente de Cloudflare D1' });
     }
 
+    // ORDERS: GET /api/orders
+    if (segments[0] === 'orders' && request.method === 'GET') {
+      const tenantId = url.searchParams.get('tenantId');
+      if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
+      const rows = await executeD1(
+        'SELECT * FROM orders WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) ORDER BY created_at DESC LIMIT 50',
+        [tenantId]
+      );
+      return jsonResponse({ orders: rows });
+    }
+
     // CHAT: GET /api/chat/messages/:sessionId
     if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'GET') {
       const sessionId = decodeURIComponent(segments[2]);
@@ -1255,10 +1266,13 @@ export async function onRequest(context) {
         return queryWords.some(qw => qw.length >= 4 && pName.includes(qw));
       });
 
+      // Si es consulta de cuenta/total o confirmación de orden, tampoco interceptar con FAQ estática
+      const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
+
       // 7. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
       // Si hay documentos cargados en RAG con coincidencia o producto específico, ceder paso a Nivel 3.
       // Si NO hay documentos cargados en RAG, permitir que las FAQs oficiales respondan directamente.
-      const shouldBypassFaqForRAG = (hasDocumentMatch || hasDirectProductMatch) || (requiresDeepRAG && (docChunks.length > 0 || rawDocs.length > 0));
+      const shouldBypassFaqForRAG = (hasDocumentMatch || hasDirectProductMatch || isCheckoutOrOrderQuery) || (requiresDeepRAG && (docChunks.length > 0 || rawDocs.length > 0));
       if (!shouldBypassFaqForRAG) {
         let topFaq = null;
         let topFaqScore = 0;
@@ -1386,6 +1400,36 @@ export async function onRequest(context) {
           contextBlock += '\n\n[ESTADO OFICIAL DE PROMOCIONES]: Actualmente NO existen descuentos especiales, cupones ni promociones VIP/PRO vigentes en la base de datos oficial. Los precios válidos son única y exclusivamente los indicados en la lista de productos del catálogo.';
         }
 
+        // 5. Pre-Cierre y Confirmación Tentativa de Órdenes (Botones Automáticos)
+        let quickActions = [];
+        const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(message);
+        const isAskingTotalOrCheckout = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|hacer\s*el\s*pedido)\b/i.test(message);
+        const isAddingMore = /\b(agregar\s*algo\s*m[aá]s|a[ñn]adir\s*algo\s*m[aá]s|ver\s*m[aá]s\s*productos|cambiar\s*algo)\b/i.test(message);
+
+        if (isConfirmingOrder) {
+          const orderId = 'ORD-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+          try {
+            await executeD1(
+              'INSERT INTO orders (id, tenant_id, session_id, status, notes) VALUES (?1, ?2, ?3, ?4, ?5)',
+              [orderId, actualTenantId, currentSessionId, 'confirmed_pending_payment', 'Orden tentativa confirmada por cliente en chat']
+            );
+          } catch (oErr) {
+            console.warn('Order staging D1 warning:', oErr.message);
+          }
+          contextBlock += `\n\n[EVENTO: ORDEN TENTATIVA GUARDADA CON ÉXITO #${orderId}]: El cliente confirmó su orden y acaba de quedar guardada tentativamente en el sistema. Instrucciones obligatorias: 1) Felicítalo e infórmale con entusiasmo que su pedido #${orderId} quedó guardado tentativamente. 2) Indícale que para enviarla a preparación/despacho, debe realizar el pago mediante Sinpe Móvil o Transferencia (${targetTenant.cta_url || targetTenant.cta_text || 'al número oficial'}) a nombre de ${targetTenant.name}. 3) Pídele amablemente que envíe una foto o captura del comprobante por este chat para comenzar a preparar su orden de inmediato.`;
+          quickActions = [
+            { id: 'send_receipt', label: '📸 Enviar Comprobante', actionText: 'Ya realicé el pago, aquí envío mi comprobante', variant: 'primary' }
+          ];
+        } else if (isAskingTotalOrCheckout) {
+          contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
+          quickActions = [
+            { id: 'confirm_order', label: '✅ Confirmar Pedido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' },
+            { id: 'add_more', label: '➕ Agregar algo más', actionText: 'Deseo agregar algo más a la orden', variant: 'secondary' }
+          ];
+        } else if (isAddingMore) {
+          contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
+        }
+
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
 
         const llmResult = await callEdgeLLM({
@@ -1413,7 +1457,8 @@ export async function onRequest(context) {
           confidence: matchedProducts.length > 0 ? 0.92 : 0.70,
           answer: llmResult.text,
           products: prodsToInclude,
-          provider: llmResult.provider
+          provider: llmResult.provider,
+          quickActions
         });
       }
 

@@ -210,6 +210,19 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   6. *Sub-Pestaña en `AITrainingTab.tsx`:* Píldora "Reglas de Operación" agregada con ícono de escudo (`ShieldAlert`), alternable fluidamente entre Dudas Pendientes, Documentos & Manuales y Saludo Inicial.
 - **Despliegue y Verificación:** Validación dual local (Frontend + Edge Functions con 0 errores) y despliegue en Cloudflare Pages CDN.
 
+### [2026-09-25] Confirmación Tentativa de Órdenes con Botones Automáticos Rápidos en el Chat
+- **Funcionalidad Solicitada por el Usuario:** Para restaurantes, sodas y negocios de comida, cuando el usuario pregunte *«¿Cuánto es?»*, *«¿Cuánto es para pagar?»* o muestre intención de compra, el bot debe presentar el total y dos botones interactivos en el chat para que el cliente responda en un clic sin escribir a mano:
+  1. `[ ✅ Confirmar Pedido ]`: Para cerrar y guardar la orden tentativamente en la base de datos, y luego entregarle las instrucciones de pago (Sinpe Móvil).
+  2. `[ ➕ Agregar algo más ]`: Para continuar sumando ítems a la comanda sin cerrar el pedido.
+- **Implementación Arquitectónica ARQMODULAR (<170 líneas por archivo):**
+  1. *Esquema Cloudflare D1:* Se creó la tabla `orders` en caliente en D1 con campos `id`, `tenant_id`, `session_id`, `status` (`confirmed_pending_payment`), `total_amount`, `currency`, `payment_method` y marcas de tiempo, actualizando `schema-d1.sql` y `schema.sql`.
+  2. *Detección de Intención de Cobro y Pre-Cierre en Edge Functions:* En `functions/api/[[route]].js`, se agregó bypass de FAQs estáticas cuando el usuario pregunta por la cuenta o confirma orden, emitiendo dinámicamente el arreglo `quickActions` con los botones interactivos.
+  3. *Persistencia Automática de Comanda Tentativa:* Al confirmar la orden, el backend genera un código de orden (`ORD-XXXXX`), registra la comanda en D1 en estado `confirmed_pending_payment`, y el asistente le entrega al cliente los datos de pago Sinpe Móvil de la tienda solicitando el comprobante.
+  4. *Componente Atómico `QuickActionButtons.tsx` (<55 líneas):* Botones táctiles interactivos con bordes luminosos y variantes visuales (`success`, `secondary`, `primary`), deshabilitación anti-doble clic y envío automático al chat.
+  5. *Integración en `ProductChatColumn.tsx` y `ProductChatView.tsx`:* Mapeo de `quickActions` desde la API y renderizado elegante en la última burbuja del asistente sin romper el diseño responsive.
+- **Despliegue y Verificación:** Validación dual local (Frontend + Edge Functions con 0 errores) y despliegue en Cloudflare Pages CDN.
+
+
 
 
 

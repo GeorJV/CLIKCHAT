@@ -112,12 +112,11 @@ export const ProductChatView: React.FC<Props> = ({
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
           content: data?.answer || `Sobre **${selectedProduct.title}**: $${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}. ¿Deseas adquirirlo?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          quickActions: data?.quickActions,
           ragTrace: {
             levelUsed: (lvlMap[data?.level] || 3) as any,
-            confidence: data?.confidence || 0.95,
-            executionTimeMs: 85,
-            modelUsed: data?.provider || 'RAG Cloudflare Edge',
-            reasoning: data?.levelLabel || 'RAG Catálogo D1'
+            confidence: data?.confidence || 0.95, executionTimeMs: 85,
+            modelUsed: data?.provider || 'RAG Cloudflare Edge', reasoning: data?.levelLabel || 'RAG Catálogo D1'
           }
         }]);
       } catch {

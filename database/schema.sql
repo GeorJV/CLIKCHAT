@@ -286,3 +286,22 @@ CREATE POLICY "Tenant owners view unresolved" ON unresolved_queries
         tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid())
         OR (SELECT role FROM profiles WHERE id = auth.uid()) = 'superadmin'
     );
+
+-- Orders Table
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    session_id TEXT NOT NULL,
+    customer_name TEXT,
+    customer_phone TEXT,
+    customer_address TEXT,
+    order_items TEXT DEFAULT '[]',
+    total_amount NUMERIC(10, 2) DEFAULT 0,
+    currency TEXT DEFAULT 'CRC',
+    status TEXT DEFAULT 'confirmed_pending_payment',
+    payment_method TEXT DEFAULT 'sinpe',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+

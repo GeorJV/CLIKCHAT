@@ -112,3 +112,23 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ip_address TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    customer_name TEXT,
+    customer_phone TEXT,
+    customer_address TEXT,
+    order_items TEXT DEFAULT '[]',
+    total_amount REAL DEFAULT 0,
+    currency TEXT DEFAULT 'CRC',
+    status TEXT DEFAULT 'confirmed_pending_payment',
+    payment_method TEXT DEFAULT 'sinpe',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+

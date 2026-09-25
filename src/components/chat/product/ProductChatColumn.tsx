@@ -7,6 +7,7 @@ import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from '../ChatMessageContent';
+import { QuickActionButtons } from '../QuickActionButtons';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string;
@@ -93,6 +94,9 @@ export const ProductChatColumn: React.FC<Props> = ({
                 ) : isAssistant && msg.ragTrace ? (
                   <div className="space-y-1.5 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} />
+                    {msg.quickActions && msg.quickActions.length > 0 && (
+                      <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
+                    )}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
                       <ProductRAGBadge trace={msg.ragTrace} />
                       <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
@@ -101,6 +105,9 @@ export const ProductChatColumn: React.FC<Props> = ({
                 ) : isAssistant ? (
                   <div className="space-y-1 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} />
+                    {msg.quickActions && msg.quickActions.length > 0 && (
+                      <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
+                    )}
                     <div className="flex justify-end">
                       <span className={`text-[10px] select-none tabular-nums ${themeStyles.textSecondary}`}>{msg.timestamp || '20:03'}</span>
                     </div>
