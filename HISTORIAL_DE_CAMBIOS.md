@@ -277,6 +277,20 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - Aislamiento total: tiendas y negocios de productos/servicios preservan al 100% el estilo beige luxury `cuadro-amarillo-tornasol`.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-25] Botones Interactivos «+ Agregar» en Opciones Rápidas y Adicionales del Chat
+- **Requerimiento del Usuario:**
+  Cuando el bot presente opciones rápidas o adicionales gastronómicos con precio (ej: `- Refresco en lata ($1.50)`), debe aparecer un botón a la par de cada ítem con el texto `AGREGAR` para facilitar la compra inmediata con un solo toque.
+- **Implementación Arquitectónica ARQMODULAR (<175 líneas por archivo):**
+  1. *Detección de Opciones con Precio (`ChatMessageContent.tsx`):*
+     - Detección regex de viñetas (`-`, `*`, `•`) y listas numeradas con mención de precio (`($X.XX)`, `$X`, `USD`).
+     - Renderizado en fila interactiva (`flex items-center justify-between`): a la izquierda el nombre del platillo/adicional formateado con viñeta ámbar, y a la derecha el botón de acción rápida `+ Agregar`.
+     - Microinteracción visual gastronómica: gradiente naranja-ámbar (`from-orange-500 to-amber-500`), texto en contraste negro obsidiana (`text-zinc-950 font-black`), y transición momentánea (2.5s) a estado `✓ Agregado` (`text-emerald-300 bg-emerald-500/25`) para feedback inmediato al comensal.
+  2. *Conexión Reactiva al Chat (`ProductChatColumn.tsx`, `ServiceChatColumn.tsx`, `ChatMessageItem.tsx`, `MobileChatView.tsx`):*
+     - Propagación de callback `onActionClick` vinculado al emisor de mensajes `onSendMessage`.
+     - Al pulsar `+ Agregar`, dispara la adición al chat (ej: `Agregar Refresco en lata ($1.50)`), el bot procesa el cálculo del total, actualiza `orderTotal` y activa el parpadeo de 10 segundos en el botón inferior.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+
 
 
 

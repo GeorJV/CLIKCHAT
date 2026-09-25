@@ -93,7 +93,7 @@ export const ProductChatColumn: React.FC<Props> = ({
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
                 ) : isAssistant && msg.ragTrace ? (
                   <div className="space-y-1.5 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} />
+                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     {msg.quickActions && msg.quickActions.length > 0 && (
                       <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
                     )}
@@ -104,7 +104,7 @@ export const ProductChatColumn: React.FC<Props> = ({
                   </div>
                 ) : isAssistant ? (
                   <div className="space-y-1 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} />
+                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     {msg.quickActions && msg.quickActions.length > 0 && (
                       <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
                     )}

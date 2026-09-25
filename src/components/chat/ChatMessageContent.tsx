@@ -1,10 +1,11 @@
-import React from 'react';
-import { ExternalLink, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ExternalLink, MessageCircle, Plus, Check } from 'lucide-react';
 
 interface ChatMessageContentProps {
   content: string;
   isUser?: boolean;
   className?: string;
+  onActionClick?: (text: string) => void;
 }
 
 /**
@@ -70,9 +71,19 @@ function renderInlineFormatted(text: string, isUser: boolean): React.ReactNode[]
 export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
   content,
   isUser = false,
-  className = ''
+  className = '',
+  onActionClick
 }) => {
+  const [recentlyAdded, setRecentlyAdded] = useState<number | null>(null);
+
   if (!content) return null;
+
+  const handleAdd = (rawItem: string, idx: number) => {
+    setRecentlyAdded(idx);
+    setTimeout(() => setRecentlyAdded(null), 2500);
+    const cleanName = rawItem.replace(/\*\*/g, '').trim();
+    onActionClick?.(`Agregar ${cleanName}`);
+  };
 
   // Normalizar saltos y limpiar encabezados ###
   const lines = content.split('\n');
@@ -102,6 +113,51 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
               {renderInlineFormatted(cleanLine, isUser)}
             </div>
           );
+        }
+
+        // Detección de opciones con precio: viñetas o listas como "- Refresco en lata ($1.50)"
+        const bulletMatch = !isUser && trimmed.match(/^([-*•]|\d+[.)])\s+(.+)$/);
+        if (bulletMatch) {
+          const rawItem = bulletMatch[2];
+          const hasPrice = /(?:\$\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\$|USD))/i.test(rawItem);
+
+          if (hasPrice && onActionClick) {
+            const isAdded = recentlyAdded === idx;
+            return (
+              <div
+                key={`opt-${idx}`}
+                className="flex items-center justify-between gap-2.5 py-1 px-2.5 rounded-xl bg-amber-500/[0.08] border border-amber-400/25 hover:border-amber-400/50 transition duration-200 group my-1.5"
+              >
+                <div className="flex-1 min-w-0 font-medium text-slate-100 leading-snug break-words">
+                  <span className="text-amber-400 mr-1.5 font-bold">•</span>
+                  {renderInlineFormatted(rawItem, isUser)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleAdd(rawItem, idx)}
+                  disabled={isAdded}
+                  className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer ${
+                    isAdded
+                      ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 cursor-default'
+                      : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-black shadow-orange-950/40 border border-amber-300/70'
+                  }`}
+                  title={`Agregar ${rawItem.replace(/\*\*/g, '').trim()} a la orden`}
+                >
+                  {isAdded ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-300 stroke-[3]" />
+                      <span>Agregado</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3 h-3 stroke-[3]" />
+                      <span>Agregar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          }
         }
 
         return (

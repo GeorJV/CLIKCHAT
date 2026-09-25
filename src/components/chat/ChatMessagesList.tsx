@@ -8,13 +8,15 @@ interface ChatMessagesListProps {
   isLoading: boolean;
   onSelectProduct: (p: Product) => void;
   onOpenLeadModal: () => void;
+  onSendMessage?: (text: string) => void;
 }
 
 export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
   messages,
   isLoading,
   onSelectProduct,
-  onOpenLeadModal
+  onOpenLeadModal,
+  onSendMessage
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +32,7 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
           msg={msg}
           onSelectProduct={onSelectProduct}
           onOpenLeadModal={onOpenLeadModal}
+          onSendMessage={onSendMessage}
         />
       ))}
 

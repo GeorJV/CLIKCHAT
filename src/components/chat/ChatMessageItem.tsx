@@ -8,12 +8,14 @@ interface ChatMessageItemProps {
   msg: ChatMessage;
   onSelectProduct: (p: Product) => void;
   onOpenLeadModal: () => void;
+  onSendMessage?: (text: string) => void;
 }
 
 export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   msg,
   onSelectProduct,
-  onOpenLeadModal
+  onOpenLeadModal,
+  onSendMessage
 }) => {
   const isUser = msg.sender === 'user';
 
@@ -59,7 +61,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             </span>
           </div>
         ) : (
-          <ChatMessageContent content={msg.message} isUser={false} />
+          <ChatMessageContent content={msg.message} isUser={false} onActionClick={onSendMessage} />
         )}
 
         {/* Product Recommendations from RAG L3 */}

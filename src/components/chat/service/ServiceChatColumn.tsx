@@ -89,7 +89,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
                 ) : isAssistant && msg.ragTrace ? (
                   <div className="space-y-1.5 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} />
+                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
                       <ProductRAGBadge trace={msg.ragTrace} />
                       <span className="text-[10px] text-zinc-400 shrink-0 self-end select-none">{msg.timestamp || '20:03'}</span>
@@ -97,7 +97,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                   </div>
                 ) : isAssistant ? (
                   <div className="space-y-1 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} />
+                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     <div className="flex justify-end">
                       <span className={`text-[10px] select-none tabular-nums ${isAssistant ? 'text-zinc-400' : 'opacity-70'}`}>{msg.timestamp || '20:03'}</span>
                     </div>

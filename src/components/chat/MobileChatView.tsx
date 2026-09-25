@@ -72,6 +72,7 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
           isLoading={isLoading}
           onSelectProduct={(p) => { setSelectedProduct(p); setFullscreenProduct(p); }}
           onOpenLeadModal={() => setShowLeadModal(true)}
+          onSendMessage={(t) => sendMessage(t)}
         />
 
         <ChatQuickPills
