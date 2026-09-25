@@ -265,40 +265,47 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
   })();
 
-  // Detección heurística de consultas complejas (comparativas, cálculos, objeciones lógicas)
-  const reasoningRegex = /\b(comparar|comparaci[oó]n|comparado|comparativa|diferencia|cu[aá]l es mejor|por qu[eé] deber[ií]a|descuento total|calcula|presupuesto|cotizaci[oó]n detallada|pros y contras|especificaciones t[eé]cnicas|analiza|ventajas|desventajas)\b/i;
-  const isReasoning = reasoningRegex.test(userMessage);
+  // 1. Cadena de Alta Disponibilidad Permanente de DeepSeek (V3.2 -> V3.1 -> V3)
+  // Con allow_fallbacks activo para distribuir peticiones entre todos los centros de cómputo disponibles
+  const deepSeekPool = [
+    'deepseek/deepseek-v3.2',
+    'deepseek/deepseek-chat-v3.1',
+    'deepseek/deepseek-chat'
+  ];
 
-  const primaryModel = isReasoning ? 'openai/gpt-4o-mini' : 'deepseek/deepseek-chat';
-  const fallbackModel = isReasoning ? 'deepseek/deepseek-chat' : 'openai/gpt-4o-mini';
-
-  // 1. Intento con Modelo Principal (90% DeepSeek, 10% GPT-4o-mini)
-  try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openRouterKey}`,
-        'HTTP-Referer': 'https://clikchat.pages.dev',
-        'X-Title': 'ClikChat Edge AI'
-      },
-      body: JSON.stringify({
-        model: primaryModel,
-        messages,
-        temperature: isReasoning ? 0.45 : 0.55,
-        max_tokens: 380
-      })
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (text && text.trim().length > 0) return { text: text.trim(), provider: primaryModel };
+  for (const dsModel of deepSeekPool) {
+    try {
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openRouterKey}`,
+          'HTTP-Referer': 'https://clikchat.pages.dev',
+          'X-Title': 'ClikChat Edge AI'
+        },
+        body: JSON.stringify({
+          model: dsModel,
+          messages,
+          temperature: 0.5,
+          max_tokens: 380,
+          provider: {
+            allow_fallbacks: true
+          }
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text && text.trim().length > 0) {
+          return { text: text.trim(), provider: dsModel };
+        }
+      }
+    } catch (e) {
+      console.warn(`Intento con ${dsModel} falló:`, e.message);
     }
-  } catch (e) {
-    console.warn(`Fallo en modelo principal (${primaryModel}):`, e.message);
   }
 
-  // 2. Respaldo Cruzado Automático (Si DeepSeek falla usa GPT, si GPT falla usa DeepSeek)
+  // 2. Respaldo de Emergencia Extrema (Solo si todos los clusters de DeepSeek fallasen)
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -309,19 +316,19 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         'X-Title': 'ClikChat Edge AI'
       },
       body: JSON.stringify({
-        model: fallbackModel,
+        model: 'openai/gpt-4o-mini',
         messages,
-        temperature: 0.55,
+        temperature: 0.45,
         max_tokens: 380
       })
     });
     if (resp.ok) {
       const data = await resp.json();
       const text = data.choices?.[0]?.message?.content;
-      if (text && text.trim().length > 0) return { text: text.trim(), provider: fallbackModel };
+      if (text && text.trim().length > 0) return { text: text.trim(), provider: 'openai/gpt-4o-mini' };
     }
   } catch (e) {
-    console.warn(`Fallo en respaldo cruzado (${fallbackModel}):`, e.message);
+    console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
   }
 
   // 3. Respaldo: Cloudflare Workers AI Llama 3
