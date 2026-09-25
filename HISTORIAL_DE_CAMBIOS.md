@@ -310,6 +310,16 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - Regex ampliado para reconocer opciones con precios en colones, euros, dólares o códigos ISO (`(?:[\$₡€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡€£]|USD|CRC|EUR|COP|MXN))`) y renderizar el botón `+ Agregar`.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-25] Erradicación de Saludos y Despedidas Redundantes en Cada Mensaje Intermedio
+- **Causa Raíz:**
+  En el prompt del Edge LLM se indicaban como obligatorios en cada turno tanto el saludo (*«¡Buenas tardes!»*) como la frase de despedida o buenos deseos (*«¡Que tengas una tarde divertida!»*), provocando que la IA cerrara cada turno con una despedida prematura e iniciara cada respuesta volviendo a saludar al cliente como si fuera la primera vez.
+- **Solución y Blindaje:**
+  1. *Detección de Conversación en Curso:* Se evalúa `history.length > 0`. Si ya hay mensajes previos, se prohíbe terminantemente volver a saludar al inicio de cada mensaje.
+  2. *Prohibición de Despedidas Intermedias:* Se instruye explícitamente a la IA a NUNCA incluir frases de despedida ni de buenos deseos en mensajes intermedios donde la charla continúa y se están respondiendo consultas o armando pedidos.
+  3. *Uso Exclusivo en Cierre Real:* Las despedidas según la hora (tarde o noche) quedan restringidas estrictamente a cuando el cliente se despide explícitamente (*«gracias, adiós, hasta luego»*) o al confirmar/cerrar definitivamente una orden.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+
 
 
 

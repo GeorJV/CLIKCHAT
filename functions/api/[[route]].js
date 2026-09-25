@@ -166,12 +166,15 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
     ? `\n\n[REGLAS ESTRICTAS DE OPERACIÓN Y RESTRICCIONES DEL NEGOCIO (MÁXIMA PRIORIDAD OBLIGATORIA)]:\n${operationalRules.trim()}`
     : '';
 
+  const isOngoingConversation = Array.isArray(history) && history.length > 0;
+  const isFarewell = /\b(adios|adiós|chao|hasta\s*luego|muchas\s*gracias|gracias|bye|nos\s*vemos)\b/i.test(userMessage);
+
   const temporalInstruction = userTimeInfo
-    ? `\n7. SALUDOS Y DESPEDIDAS TEMPORALES SEGÚN LA HORA DEL USUARIO (OBLIGATORIO):
-   - HORA LOCAL DEL CLIENTE: ${userTimeInfo.userHour !== undefined ? userTimeInfo.userHour : 16}:00 (${userTimeInfo.greetingDesc || 'Tarde'}).
-   - Saludo obligatorio: "${userTimeInfo.greetingPhrase || '¡Buenas tardes!'}"
-   - Despedida o buen deseo obligatorio: "${userTimeInfo.farewellPhrase || '¡Que tengas una excelente tarde!'}"
-   - PROHIBICIÓN ABSOLUTA: ${userTimeInfo.timePeriod === 'tarde' ? 'PROHIBIDO decir "¡Que tengas un excelente día!", "¡Buen día!" o "¡Buenos días!". Debes decir SIEMPRE "¡Que tengas una excelente tarde!" o "¡Buenas tardes!".' : userTimeInfo.timePeriod === 'noche' ? 'PROHIBIDO decir "¡Que tengas un excelente día!", "¡Buen día!", "¡Buenos días!" o "¡Buenas tardes!". Debes decir SIEMPRE "¡Que tengas una excelente noche!" o "¡Buenas noches!".' : 'Usa saludos de mañana como "¡Buenos días!" o "¡Que tengas un excelente día!".'}`
+    ? `\n7. REGLAS NATURALES DE SALUDO Y DESPEDIDA SEGÚN LA HORA (${userTimeInfo.userHour !== undefined ? userTimeInfo.userHour : 16}:00 - ${userTimeInfo.greetingDesc || 'Tarde'}):
+   - CONVERSACIÓN EN CURSO: ${isOngoingConversation ? 'YA HAY MENSAJES PREVIOS. NO vuelvas a saludar con "¡Buenas tardes!" ni similares al inicio de cada mensaje. Habla de forma directa, fluida y natural como en WhatsApp.' : 'Es el primer mensaje: puedes saludar amablemente.'}
+   - PROHIBIDO DESPEDIRSE EN CADA MENSAJE: Si la conversación sigue activa respondiendo dudas o tomando el pedido, termina con tu pregunta de seguimiento comercial. NUNCA agregues frases de despedida (como "¡Que tengas una tarde divertida!", "¡Excelente tarde!", etc.) al final de respuestas intermedias.
+   - CUÁNDO DESPEDIRSE: ÚNICAMENTE si el cliente se despide expresamente o se cerró/confirmó la orden. En ese caso (y solo en ese caso), usa: "${userTimeInfo.farewellPhrase || '¡Que tengas una excelente tarde!'}"
+   - CONTROL DE HORARIO: ${userTimeInfo.timePeriod === 'tarde' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente día". Usa términos de tarde.' : userTimeInfo.timePeriod === 'noche' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente tarde". Usa términos de noche.' : 'Usa términos de mañana/día.'}`
     : '';
 
   const systemContent = `${systemPrompt}${rulesBlock}
