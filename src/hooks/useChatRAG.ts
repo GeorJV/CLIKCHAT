@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatMessage } from '../types';
 import { UseChatRAGOptions, RAGResponsePayload } from '../types/chat';
+import { adaptTemporalText } from '../utils/temporalGreeting';
 
 export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallback }: UseChatRAGOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -38,7 +39,7 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
       if (isMounted && tenant && messages.length === 0) {
         setMessages([{
           id: 'welcome-msg', sender: 'assistant',
-          message: tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.',
+          message: adaptTemporalText(tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.'),
           levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
         }]);
       }
@@ -60,7 +61,9 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
           tenantSlug: tenant?.slug || tenantSlug,
           tenantId: tenant?.id,
           sessionId,
-          message: batchedText
+          message: batchedText,
+          clientHour: new Date().getHours(),
+          clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
         })
       });
       if (!response.ok) throw new Error('Error en el servicio de chat');

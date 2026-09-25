@@ -129,10 +129,10 @@ export const ProductShowcase: React.FC<Props> = ({
             {/* Estado Normal: Si es restaurante y hay total dinámico muestra Total: $XX.XX; de lo contrario el precio base normal */}
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0 relative z-10">
               <span className="text-[#16120C] text-base sm:text-lg font-black tracking-wide drop-shadow-sm flex items-center gap-1.5">
-                {isRestaurant && orderTotal ? (
+                {isRestaurant ? (
                   <>
                     <span className="text-xs uppercase tracking-wider text-[#16120C]/80 font-bold">Total:</span>
-                    <span>${orderTotal.toFixed(2)}</span>
+                    <span>${((orderTotal !== null && orderTotal !== undefined) ? orderTotal : 0).toFixed(2)}</span>
                   </>
                 ) : (
                   `$${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}`

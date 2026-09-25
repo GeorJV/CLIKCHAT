@@ -80,7 +80,7 @@ export const FALLBACK_SESSIONS: ConversationSession[] = [
       { id: '20', sender: 'user', text: '¿Cuáles son los horarios de atención?', time: '14:30' },
       { id: '21', sender: 'assistant', text: 'Nuestro horario comercial es de lunes a sábado de 9:00 AM a 6:00 PM. El bot responde 24/7.', rag_level: 'semantic_cache', time: '14:30' },
       { id: '22', sender: 'user', text: 'Muchas gracias por la información.', time: '14:31' },
-      { id: '23', sender: 'assistant', text: '¡Con gusto Lucía! Que tengas un excelente día.', rag_level: 'semantic_cache', time: '14:31' }
+      { id: '23', sender: 'assistant', text: '¡Con gusto Lucía! Que tengas una excelente tarde.', rag_level: 'semantic_cache', time: '14:31' }
     ]
   },
   {

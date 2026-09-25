@@ -4,6 +4,7 @@ import { ProductChatColumn } from './ProductChatColumn'; import { ProductShowcas
 import { ProductDetailModal } from './ProductDetailModal'; import { ProductFullscreenModal } from './ProductFullscreenModal';
 import { ProductCheckoutModal } from './ProductCheckoutModal'; import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
 import { DEFAULT_PRODUCT } from './productChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { adaptTemporalText } from '../../../utils/temporalGreeting';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -17,10 +18,13 @@ export const ProductChatView: React.FC<Props> = ({
   products = [], initialProduct, responseDelaySec, onExit,
 }) => {
   const isRestaurant = businessType === 'restaurante';
-  const [orderTotal, setOrderTotal] = useState<number | null>(null);
+  const [orderTotal, setOrderTotal] = useState<number | null>(isRestaurant ? 0 : null);
   const [isTotalPulsing, setIsTotalPulsing] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
+  useEffect(() => {
+    if (isRestaurant && (orderTotal === null || orderTotal === undefined)) setOrderTotal(0);
+    return () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); };
+  }, [isRestaurant]);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
@@ -67,7 +71,7 @@ export const ProductChatView: React.FC<Props> = ({
         } else if (isMounted) {
           const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
           const dynamicGreeting = welcomeMessage
-            ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title)
+            ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
             : defaultGreeting;
           setMessages([{
             id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
@@ -102,7 +106,9 @@ export const ProductChatView: React.FC<Props> = ({
             tenantSlug: 'geosoft',
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
             sessionId: sessId,
-            message: userText
+            message: userText,
+            clientHour: new Date().getHours(),
+            clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
         const data = res.ok ? await res.json() : null;
@@ -158,14 +164,12 @@ export const ProductChatView: React.FC<Props> = ({
     <div className={`w-full h-full flex flex-col ${themeStyles.containerBg} ${themeStyles.textPrimary} overflow-hidden font-sans transition-colors duration-300`}>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-2 overflow-hidden min-h-0">
         <ProductChatColumn
-          storeName={storeName} agentName={agentName} agentAvatar={agentAvatar}
-          productTitle={selectedProduct.title} messages={messages} inputValue={inputValue}
-          isLoading={isLoading} theme={theme} themeStyles={themeStyles} onThemeChange={setTheme}
-          onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit}
+          storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} productTitle={selectedProduct.title}
+          messages={messages} inputValue={inputValue} isLoading={isLoading} theme={theme} themeStyles={themeStyles}
+          onThemeChange={setTheme} onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit}
         />
         <ProductShowcase
-          product={selectedProduct} themeStyles={themeStyles}
-          orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}
+          product={selectedProduct} themeStyles={themeStyles} orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}
           onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }}
           onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
           onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }}

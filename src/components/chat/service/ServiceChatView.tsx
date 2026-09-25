@@ -82,7 +82,9 @@ export const ServiceChatView: React.FC<Props> = ({
             tenantSlug: 'geosoft',
             tenantId: (selectedService as any).tenant_id,
             sessionId: sessId,
-            message: userText
+            message: userText,
+            clientHour: new Date().getHours(),
+            clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
         const data = res.ok ? await res.json() : null;

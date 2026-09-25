@@ -244,6 +244,23 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - En comercios de productos/servicios regulares, renderiza el precio unitario tradicional sin parpadeo ni alteración.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-25] Saludos Temporales Adaptativos por Hora (Día, Tarde, Noche) e Inicialización Cero en Restaurantes
+- **Requerimiento del Usuario:**
+  1. *Adaptación Temporal de Saludos y Despedidas:* El mensaje de despedida y buenos deseos del bot (ej: *«¡Que tengas un excelente día!»*) debe actualizarse según la hora local del usuario, cambiando a *«¡Que tengas una excelente tarde!»* por la tarde o *«¡Que tengas una excelente noche!»* por la noche.
+  2. *Monto Inicial en Restaurantes:* Al iniciar el bot en el módulo de restaurantes, el monto a pagar en el botón inferior debe ser siempre **Cero** (`Total: $0.00`), ya que el comensal no ha agregado alimentos todavía, y actualizarse dinámicamente conforme va pidiendo.
+- **Implementación Arquitectónica ARQMODULAR (<160 líneas por archivo):**
+  1. *Detección y Filtro Temporal en Edge Functions (`functions/api/[[route]].js`):*
+     - Recepción de `clientHour` y `clientTime` desde el cliente (con fallback horario local).
+     - Inyección de regla estricta de saludos en el prompt del LLM con prohibición expresa de desear "buen día" en la tarde o noche.
+     - Función determinista `adaptTemporalGreetings()` que filtra y garantiza al 100% que frases como "excelente día" se conviertan en "excelente tarde" o "excelente noche".
+  2. *Utilidad Modular Frontend (`src/utils/temporalGreeting.ts` < 50 líneas):*
+     - Funciones `getTimePeriod`, `getTemporalGreeting`, `getTemporalFarewell` y `adaptTemporalText` para bienvenida y mensajería.
+  3. *Inicialización en Cero para Restaurantes (`ProductChatView.tsx` & `ProductShowcase.tsx`):*
+     - En `ProductChatView.tsx`, cuando `isRestaurant` es activo, `orderTotal` arranca estrictamente en `0`.
+     - En `ProductShowcase.tsx`, cuando `isRestaurant` es activo, muestra `Total: $0.00` antes de ordenar (`((orderTotal ?? 0)).toFixed(2)`), erradicando el valor base de $49 del producto ilustrativo.
+     - En tiendas y servicios estándar, el botón mantiene el precio unitario del catálogo inalterado.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
 
 
 
