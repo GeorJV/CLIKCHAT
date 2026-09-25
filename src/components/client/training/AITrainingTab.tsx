@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { UnresolvedQueriesTab } from '../UnresolvedQueriesTab';
 import { DocumentsManagerTab } from '../DocumentsManagerTab';
 import { InitialGreetingSection } from './InitialGreetingSection';
+import { OperationalRulesSection } from './OperationalRulesSection';
 import { UnresolvedQuery, Tenant } from '../../../types';
-import { Brain, HelpCircle, FileText, Sparkles } from 'lucide-react';
+import { Brain, HelpCircle, FileText, Sparkles, ShieldAlert } from 'lucide-react';
 
 interface AITrainingTabProps {
   tenantId?: string;
@@ -20,7 +21,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
   unresolved,
   onResolve
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents' | 'greeting'>('unresolved');
+  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents' | 'greeting' | 'rules'>('unresolved');
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
@@ -33,7 +34,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
             <span>Entrenamiento AI</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Entrena el cerebro del bot respondiendo dudas reales, cargando manuales y definiendo el saludo inicial.
+            Entrena el cerebro del bot respondiendo dudas reales, cargando manuales, saludo inicial y reglas estrictas.
           </p>
         </div>
 
@@ -84,6 +85,19 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
             <Sparkles className="w-3.5 h-3.5" />
             <span>Saludo Inicial</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('rules')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
+              activeSubTab === 'rules'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>Reglas de Operación</span>
+          </button>
         </div>
       </div>
 
@@ -96,6 +110,9 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
       )}
       {activeSubTab === 'greeting' && (
         <InitialGreetingSection tenant={tenant || null} onUpdateSettings={onUpdateSettings} />
+      )}
+      {activeSubTab === 'rules' && (
+        <OperationalRulesSection tenant={tenant || null} onUpdateSettings={onUpdateSettings} />
       )}
     </div>
   );

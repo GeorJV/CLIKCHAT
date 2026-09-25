@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     status TEXT DEFAULT 'active',
     token_limit INTEGER DEFAULT 100000,
     tokens_used INTEGER DEFAULT 0,
+    operational_rules TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );

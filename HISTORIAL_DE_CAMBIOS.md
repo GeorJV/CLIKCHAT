@@ -199,5 +199,17 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   4. *Protección en Vista Móvil:* `MobileChatView.tsx` incluye guardia de carga con spinner (`if (isLoadingTenant || !tenant) return <Loader/>;`) para bloquear cualquier parpadeo en enlaces móviles o incrustados.
 - **Despliegue y Verificación:** Compilación frontend (`npm run build`), validación de Edge Functions (`esbuild`) y despliegue en Cloudflare Pages CDN.
 
+### [2026-09-25] Módulo de Reglas Estrictas de Operación, Restricciones y Anti-Alucinación
+- **Funcionalidad Solicitada por el Usuario:** Agregar en la sección de *Entrenamiento de AI* una sub-pestaña para configurar *Reglas Estrictas de Operación* y restricciones para el bot, definiendo explícitamente lo que no debe decir ni inventar (prohibición de inventar precios, descuentos, cupones, marcas competidoras, confidencialidad y escalamiento humano).
+- **Implementación Arquitectónica ARQMODULAR (<150 líneas por archivo):**
+  1. *Esquema Cloudflare D1:* Se añadió la columna `operational_rules TEXT DEFAULT ''` en la tabla `tenants` mediante migración D1 en caliente y se actualizó `schema-d1.sql` y `schema.sql`.
+  2. *Inyección de Alta Prioridad en Edge LLM:* En `functions/api/[[route]].js`, `PUT /api/tenants/:id` actualiza `operational_rules`. En `POST /api/chat/message`, se inyectan las directivas bajo `[REGLAS ESTRICTAS DE OPERACIÓN Y RESTRICCIONES DEL NEGOCIO (MÁXIMA PRIORIDAD OBLIGATORIA)]` en el System Prompt, con normas inviolables contra inventar precios, cupones inexistentes o hablar de la competencia.
+  3. *Catálogo de Plantillas (`rulesPresets.ts`):* 5 paquetes pre-diseñados (Anti-Alucinación & Precios, Protección de Marca & Competencia, Escalamiento a Humano, Seguridad & Privacidad, y Logística & Pagos) con opción de reemplazo o concatenación rápida.
+  4. *Carga Drag & Drop (`RulesDropzone.tsx`):* Componente atómico con detección de arrastre y lectura de archivos `.txt` o `.md` con políticas de la empresa.
+  5. *Editor Visual (`OperationalRulesSection.tsx`):* Editor multilínea con contador de caracteres, llamada visual de alerta de cumplimiento y botón de guardado en D1 con feedback visual instantáneo.
+  6. *Sub-Pestaña en `AITrainingTab.tsx`:* Píldora "Reglas de Operación" agregada con ícono de escudo (`ShieldAlert`), alternable fluidamente entre Dudas Pendientes, Documentos & Manuales y Saludo Inicial.
+- **Despliegue y Verificación:** Validación dual local (Frontend + Edge Functions con 0 errores) y despliegue en Cloudflare Pages CDN.
+
+
 
 

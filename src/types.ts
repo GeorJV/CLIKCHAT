@@ -55,6 +55,7 @@ export interface Tenant {
   tone_of_voice?: string;
   response_delay_sec?: number;
   custom_llm_key?: string;
+  operational_rules?: string;
 }
 
 export interface ChatMessage {
