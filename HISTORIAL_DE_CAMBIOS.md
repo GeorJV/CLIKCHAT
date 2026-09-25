@@ -290,6 +290,27 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
      - Al pulsar `+ Agregar`, dispara la adición al chat (ej: `Agregar Refresco en lata ($1.50)`), el bot procesa el cálculo del total, actualiza `orderTotal` y activa el parpadeo de 10 segundos en el botón inferior.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-25] Detección Automática del Precio y Tipo de Moneda del Comercio en el Botón CTA Parpadeante
+- **Requerimiento del Usuario:**
+  El sistema tiene que detectar el precio registrado por el comercio (`product.price`) y el tipo de moneda oficial (`product.currency`, ej: USD, CRC/Colones, EUR, etc.), y presentarlo dinámicamente en el botón inferior donde sale el precio parpadeando, adaptando símbolos (`$`, `₡`, `€`) y códigos de divisa de manera infalible.
+- **Implementación Arquitectónica ARQMODULAR (<180 líneas por archivo):**
+  1. *Módulo Universal de Monedas (`src/utils/currency.ts` 32 líneas):*
+     - Función `getCurrencySymbol(currency)` para resolución precisa de símbolos (`₡` para CRC, `€` para EUR, `£` para GBP, `$` para USD/otras).
+     - Función `formatPriceWithCurrency(amount, currency, showCode)` con formateo cultural (separación de miles en colones `₡4.500 CRC`, decimales en USD `$49.00 USD`).
+  2. *Presentación Dinámica en Botón CTA Parpadeante (`ProductShowcase.tsx` 174 líneas):*
+     - En el botón CTA gastronómico degradado anaranjado/amarillo, se detecta y muestra el precio base del comercio con su tipo de moneda oficial (ej. `Total: $49.00 USD` o `Total: ₡25.000 CRC`) o el total acumulado en comanda cuando se van pidiendo platillos/bebidas.
+     - En hover muestra `Cerrar Orden` o `Comprar Ahora`.
+     - Cuando el cliente pide la cuenta o añade ítems, parpadea con el halo ámbar durante 10 segundos preservando la moneda del comercio.
+  3. *Inicialización Sincronizada (`ProductChatView.tsx` 180 líneas):*
+     - `orderTotal` se inicializa con el precio base del producto del comercio (`selectedProduct?.price`), garantizando que coincida con el catálogo de dicho comercio desde el primer segundo.
+  4. *Inyección de Reglas de Moneda en Edge LLM (`functions/api/[[route]].js`):*
+     - Inyección de directiva `[REGLA DE MONEDA OFICIAL]` en el contexto del LLM con el símbolo y código de divisa del comercio.
+     - Extracción regex multi-moneda (`$`, `₡`, `€`, `CRC`, `USD`) para la comanda y retorno explícito de `currency` en el payload JSON.
+  5. *Detección de Opciones con Precio Multi-Divisa (`ChatMessageContent.tsx` 172 líneas):*
+     - Regex ampliado para reconocer opciones con precios en colones, euros, dólares o códigos ISO (`(?:[\$₡€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡€£]|USD|CRC|EUR|COP|MXN))`) y renderizar el botón `+ Agregar`.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+
 
 
 

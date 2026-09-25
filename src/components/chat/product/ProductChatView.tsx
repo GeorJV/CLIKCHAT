@@ -17,16 +17,14 @@ export const ProductChatView: React.FC<Props> = ({
   welcomeMessage, businessType = 'tienda',
   products = [], initialProduct, responseDelaySec, onExit,
 }) => {
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const isRestaurant = businessType === 'restaurante';
-  const [orderTotal, setOrderTotal] = useState<number | null>(isRestaurant ? 0 : null);
+  const [orderTotal, setOrderTotal] = useState<number | null>(selectedProduct?.price || (isRestaurant ? 0 : null));
   const [isTotalPulsing, setIsTotalPulsing] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (isRestaurant && (orderTotal === null || orderTotal === undefined)) setOrderTotal(0);
     return () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); };
-  }, [isRestaurant]);
-
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
+  }, []);
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +33,6 @@ export const ProductChatView: React.FC<Props> = ({
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [theme, setTheme] = useState<ProductChatTheme>('linear_dark');
   const themeStyles = PRODUCT_THEMES[theme];
-
   useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
   const [sessId, setSessId] = useState<string>(() => {
@@ -170,10 +167,8 @@ export const ProductChatView: React.FC<Props> = ({
         />
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles} orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}
-          onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }}
-          onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
-          onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }}
-          onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
+          onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }} onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
+          onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }} onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
         />
       </div>
       {detailModal && <ProductDetailModal product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)} onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }} />}

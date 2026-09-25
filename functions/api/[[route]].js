@@ -1447,11 +1447,16 @@ export async function onRequest(context) {
 
         // 3. Catálogo / Productos / Inventario
         const prodsToInclude = matchedProducts.length > 0 ? matchedProducts.slice(0, 3) : products.slice(0, 3);
+        const activeCurrency = prodsToInclude[0]?.currency || targetTenant.currency || 'USD';
+        const activeSym = activeCurrency.toUpperCase() === 'CRC' ? '₡' : activeCurrency.toUpperCase() === 'EUR' ? '€' : '$';
         contextBlock += '--- PRODUCTOS & INVENTARIO DISPONIBLE ---\n' + prodsToInclude.map(p => {
           const stock = p.details?.stock !== undefined ? ` | Stock: ${p.details.stock} unidades` : '';
           const sku = p.details?.sku ? ` | SKU: ${p.details.sku}` : '';
-          return `PRODUCTO: ${p.name}\nPRECIO: $${p.price} ${p.currency || 'USD'}${stock}${sku}\nDESCRIPCIÓN: ${p.full_description || p.short_description || 'Sin descripción adicional'}\nENLACE DIRECTO DE COMPRA: ${p.cta_url || (targetTenant.cta_url || '')}\n${p.embedding_text ? `MANUAL RAG ESPECÍFICO: ${p.embedding_text}\n` : ''}`;
+          const pCurr = (p.currency || activeCurrency).toUpperCase();
+          const pSym = pCurr === 'CRC' ? '₡' : pCurr === 'EUR' ? '€' : '$';
+          return `PRODUCTO: ${p.name}\nPRECIO: ${pSym}${p.price} ${pCurr}${stock}${sku}\nDESCRIPCIÓN: ${p.full_description || p.short_description || 'Sin descripción adicional'}\nENLACE DIRECTO DE COMPRA: ${p.cta_url || (targetTenant.cta_url || '')}\n${p.embedding_text ? `MANUAL RAG ESPECÍFICO: ${p.embedding_text}\n` : ''}`;
         }).join('\n\n');
+        contextBlock += `\n\n[REGLA DE MONEDA OFICIAL]: La moneda oficial del negocio es ${activeCurrency} (${activeSym}). Expresa siempre los precios, adicionales y totales de pedidos en ${activeCurrency} (${activeSym}).`;
 
         // 4. Documentos / Manuales / Reglas RAG Subidos
         if (chunksToInclude.length > 0) {
@@ -1523,8 +1528,8 @@ export async function onRequest(context) {
         const isRestaurant = targetTenant.business_type === 'restaurante';
         let orderTotal = null;
         if (isRestaurant) {
-          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$]*\$?\s*([\d]+(?:[.,]\d{1,2})?)/i)
-            || llmResult.text.match(/\$\s*([\d]+(?:[.,]\d{1,2})?)\s*(?:en\s*total|total)/i);
+          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡€]*[\$₡€]?\s*([\d]+(?:[.,]\d{1,2})?)/i)
+            || llmResult.text.match(/[\$₡€]?\s*([\d]+(?:[.,]\d{1,2})?)\s*(?:en\s*total|total)/i);
           if (totalMatch) {
             const rawVal = parseFloat(totalMatch[1].replace(',', '.'));
             if (!isNaN(rawVal) && rawVal > 0) {
@@ -1543,6 +1548,7 @@ export async function onRequest(context) {
           provider: llmResult.provider,
           quickActions,
           orderTotal,
+          currency: activeCurrency,
           isRestaurant,
           isAskingTotal: isAskingTotalOrCheckout
         });

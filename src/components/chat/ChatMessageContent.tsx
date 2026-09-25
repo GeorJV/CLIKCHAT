@@ -119,7 +119,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
         const bulletMatch = !isUser && trimmed.match(/^([-*•]|\d+[.)])\s+(.+)$/);
         if (bulletMatch) {
           const rawItem = bulletMatch[2];
-          const hasPrice = /(?:\$\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\$|USD))/i.test(rawItem);
+          const hasPrice = /(?:[\$₡€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡€£]|USD|CRC|EUR|COP|MXN))/i.test(rawItem);
 
           if (hasPrice && onActionClick) {
             const isAdded = recentlyAdded === idx;

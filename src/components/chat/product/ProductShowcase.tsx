@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck, ShoppingBag } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 import { ThemeStyles } from './productThemes';
+import { formatPriceWithCurrency } from '../../../utils/currency';
 
 interface Props {
   product: ProductItem;
@@ -128,18 +129,25 @@ export const ProductShowcase: React.FC<Props> = ({
                 : ''
             }`}
           >
-            {/* Estado Normal: Si es restaurante muestra Total: $XX.XX; de lo contrario el precio base normal */}
-            <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0 relative z-10">
+            {/* Estado Normal: Detecta precio del comercio y moneda, o total acumulado en comanda */}
+            <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-12 group-hover:opacity-0 relative z-10 px-2">
               <span className={`text-base sm:text-lg font-black tracking-wide drop-shadow-sm flex items-center gap-1.5 ${
                 isRestaurant ? 'text-zinc-950' : 'text-[#16120C]'
               }`}>
                 {isRestaurant ? (
                   <>
                     <span className="text-xs uppercase tracking-wider text-zinc-900/90 font-black">Total:</span>
-                    <span>${((orderTotal !== null && orderTotal !== undefined) ? orderTotal : 0).toFixed(2)}</span>
+                    <span>
+                      {formatPriceWithCurrency(
+                        orderTotal !== null && orderTotal !== undefined && orderTotal > 0
+                          ? orderTotal
+                          : product.price,
+                        product.currency
+                      )}
+                    </span>
                   </>
                 ) : (
-                  `$${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}`
+                  <span>{formatPriceWithCurrency(product.price, product.currency)}</span>
                 )}
               </span>
             </div>
