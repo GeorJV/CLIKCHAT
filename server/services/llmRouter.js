@@ -101,14 +101,15 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Modelo Principal: DeepSeek V3 (90% tráfico comercial)
+    // 1. Modelo Principal: GLM-5.3-Flash / DeepSeek V3 (Ultra bajo costo)
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
+    const activeModel = model || 'z-ai/glm-5.3-flash';
     const response = await callOpenRouter(messages, {
       apiKey,
-      model: model || 'deepseek/deepseek-chat',
+      model: activeModel,
       temperature: 0.35
     });
-    return { success: true, text: response, provider: model || 'deepseek/deepseek-chat' };
+    return { success: true, text: response, provider: activeModel };
   } catch (err) {
     console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo cruzado con GPT-4o Mini:', err.message);
     try {

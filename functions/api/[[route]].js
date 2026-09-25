@@ -272,15 +272,17 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
   })();
 
-  // 1. Cadena de Alta Disponibilidad Permanente de DeepSeek (V3.2 -> V3.1 -> V3)
-  // Con allow_fallbacks activo para distribuir peticiones entre todos los centros de cómputo disponibles
-  const deepSeekPool = [
+  // 1. Cadena de Alta Disponibilidad & Ultra Bajo Costo:
+  // Prioridad 1: GLM-5.3-Flash (Z.ai - Ultra económico: $0.045 entrada / $0.14 salida por 1M)
+  // Prioridad 2: DeepSeek V3.2 / V3.1
+  const modelPool = [
+    'z-ai/glm-5.3-flash',
     'deepseek/deepseek-v3.2',
     'deepseek/deepseek-chat-v3.1',
     'deepseek/deepseek-chat'
   ];
 
-  for (const dsModel of deepSeekPool) {
+  for (const dsModel of modelPool) {
     try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -294,7 +296,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           model: dsModel,
           messages,
           temperature: 0.5,
-          max_tokens: 380,
+          max_tokens: 450,
           provider: {
             allow_fallbacks: true
           }
@@ -302,9 +304,16 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       });
       if (resp.ok) {
         const data = await resp.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text && text.trim().length > 0) {
-          return { text: text.trim(), provider: dsModel };
+        const choice = data.choices?.[0]?.message;
+        let text = choice?.content || choice?.text;
+        if (!text && choice?.reasoning) {
+          text = choice.reasoning;
+        }
+        if (text) {
+          text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        }
+        if (text && text.length > 0) {
+          return { text, provider: dsModel };
         }
       }
     } catch (e) {
