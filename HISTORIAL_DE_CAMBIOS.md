@@ -166,6 +166,16 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   3. *Aislamiento de Parser Markdown:* `ChatMessageContent` se reserva para respuestas del bot (que contienen negritas, listas o enlaces), mientras los mensajes de usuario utilizan renderizado directo y compacto.
   4. *Despliegue Inmediato:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
 
+### [2026-09-25] Módulo de Configuración de Saludo Inicial en Entrenamiento de AI
+- **Funcionalidad Solicitada por el Usuario:** Agregar en la sección de *Entrenamiento de AI* una sub-pestaña para configurar el saludo inicial que da el bot al comenzar cada conversación, ofreciendo sugerencias prediseñadas donde solo se cambie el nombre del negocio, edición de texto a mano personalizada y la posibilidad de cargar o arrastrar (Drag & Drop) archivos de texto (.txt, .md).
+- **Implementación ARQMODULAR (<160 líneas por archivo):**
+  1. *Sub-pestaña `Saludo Inicial` en `AITrainingTab.tsx`:* Se añadió el tercer botón selector tipo píldora junto a *Dudas Pendientes* y *Documentos & Manuales*.
+  2. *Catálogo de Plantillas (`greetingPresets.ts`):* 5 sugerencias optimizadas para conversión comercial (Ventas, Servicios/Citas, Soporte Rápido, VIP/Exclusivo y Directo WhatsApp), con reemplazo dinámico `{negocio}` por el nombre real del comercio (`tenant.name`).
+  3. *Zona Drag & Drop (`GreetingDropzone.tsx`):* Componente atómico con detección de arrastre y lectura asíncrona mediante `FileReader` que vuelca instantáneamente el contenido de archivos `.txt` o `.md` al editor.
+  4. *Editor y Preview en Vivo (`InitialGreetingSection.tsx`):* Editor manual con contador de caracteres, simulación visual en tiempo real de burbuja WhatsApp de bienvenida y botón de guardado conectado a Cloudflare D1 mediante `onUpdateSettings({ welcome_message })`.
+  5. *Despliegue:* Compilado y desplegado a producción en Cloudflare Pages CDN (`clikchat.pages.dev`).
+
+
 
 
 

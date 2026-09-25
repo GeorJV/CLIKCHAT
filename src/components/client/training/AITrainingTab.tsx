@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
 import { UnresolvedQueriesTab } from '../UnresolvedQueriesTab';
 import { DocumentsManagerTab } from '../DocumentsManagerTab';
-import { UnresolvedQuery } from '../../../types';
-import { Brain, HelpCircle, FileText } from 'lucide-react';
+import { InitialGreetingSection } from './InitialGreetingSection';
+import { UnresolvedQuery, Tenant } from '../../../types';
+import { Brain, HelpCircle, FileText, Sparkles } from 'lucide-react';
 
 interface AITrainingTabProps {
   tenantId?: string;
+  tenant?: Tenant | null;
+  onUpdateSettings?: (updates: Partial<Tenant>) => Promise<boolean>;
   unresolved: UnresolvedQuery[];
   onResolve: (id: string, payload: { answer: string; category?: string; autoInjectToFaq: boolean }) => Promise<boolean>;
 }
 
-export const AITrainingTab: React.FC<AITrainingTabProps> = ({ tenantId, unresolved, onResolve }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents'>('unresolved');
+export const AITrainingTab: React.FC<AITrainingTabProps> = ({
+  tenantId,
+  tenant,
+  onUpdateSettings,
+  unresolved,
+  onResolve
+}) => {
+  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents' | 'greeting'>('unresolved');
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
@@ -24,16 +33,16 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({ tenantId, unresolv
             <span>Entrenamiento AI</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Entrena el cerebro del bot respondiendo dudas reales y cargando manuales de conocimiento.
+            Entrena el cerebro del bot respondiendo dudas reales, cargando manuales y definiendo el saludo inicial.
           </p>
         </div>
 
         {/* Sub-tabs Tipo Píldora */}
-        <div className="flex items-center gap-1.5 bg-[#121111] p-1 rounded-xl border border-[#262424] shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 bg-[#121111] p-1 rounded-xl border border-[#262424] shrink-0 self-start sm:self-auto overflow-x-auto max-w-full">
           <button
             type="button"
             onClick={() => setActiveSubTab('unresolved')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
               activeSubTab === 'unresolved'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
@@ -53,7 +62,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({ tenantId, unresolv
           <button
             type="button"
             onClick={() => setActiveSubTab('documents')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
               activeSubTab === 'documents'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
@@ -62,14 +71,31 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({ tenantId, unresolv
             <FileText className="w-3.5 h-3.5" />
             <span>Documentos & Manuales</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('greeting')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
+              activeSubTab === 'greeting'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Saludo Inicial</span>
+          </button>
         </div>
       </div>
 
       {/* Vista Dinámica */}
-      {activeSubTab === 'unresolved' ? (
+      {activeSubTab === 'unresolved' && (
         <UnresolvedQueriesTab unresolved={unresolved} onResolve={onResolve} />
-      ) : (
+      )}
+      {activeSubTab === 'documents' && (
         <DocumentsManagerTab tenantId={tenantId} />
+      )}
+      {activeSubTab === 'greeting' && (
+        <InitialGreetingSection tenant={tenant || null} onUpdateSettings={onUpdateSettings} />
       )}
     </div>
   );

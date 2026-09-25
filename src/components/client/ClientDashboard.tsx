@@ -85,7 +85,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             />
           )}
           {activeTab === 'training' && (
-            <AITrainingTab tenantId={tenant?.id} unresolved={unresolved} onResolve={resolveQuery} />
+            <AITrainingTab
+              tenantId={tenant?.id}
+              tenant={tenant}
+              onUpdateSettings={updateSettings}
+              unresolved={unresolved}
+              onResolve={resolveQuery}
+            />
           )}
           {activeTab === 'soporte' && (
             <SupportTab ownerEmail={tenant?.owner_email} tenantName={tenant?.name} />
