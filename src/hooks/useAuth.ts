@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AuthUser, AuthTenant, AuthResponse, LoginFormData, RegisterFormData } from '../types/auth';
+import { saveCachedTenant } from '../utils/fallbackTenant';
 
 const TOKEN_KEY = 'clikchat_auth_token';
 const USERS_KEY = 'clikchat_local_users';
@@ -50,13 +51,14 @@ export function useAuth() {
         const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
         const matched = localUsers.find((u: any) => u.id === userId);
         if (matched) {
+          const activeSlug = matched.tenantSlug || localStorage.getItem('clikchat_active_tenant_slug') || 'mi-negocio';
           setUser({
             id: matched.id,
             email: matched.email,
             name: matched.name,
             role: 'tenant_owner',
             tenantId: matched.tenantId,
-            tenantSlug: matched.tenantSlug
+            tenantSlug: activeSlug
           });
           setIsLoading(false);
           return;
@@ -69,20 +71,16 @@ export function useAuth() {
     })
       .then(async (res) => {
         const ct = res.headers.get('content-type') || '';
-        if (!res.ok || !ct.includes('application/json')) throw new Error('Sesión expirada');
+        if (!res.ok || !ct.includes('application/json')) throw new Error('Sesión');
         return res.json() as Promise<AuthResponse>;
       })
       .then((data) => {
         if (data.success && data.user) {
           setUser(data.user);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('clikchat_role', data.user.role);
-            if (data.user.tenantSlug) {
-              localStorage.setItem('clikchat_active_tenant_slug', data.user.tenantSlug);
-            }
-          }
+          localStorage.setItem('clikchat_role', data.user.role);
+          if (data.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', data.user.tenantSlug);
           if (data.tenant) setTenant(data.tenant);
-        } else {
+        } else if (!token.startsWith('local-') && token !== 'demo-token-active') {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem('clikchat_role');
         }
@@ -93,9 +91,7 @@ export function useAuth() {
           localStorage.removeItem('clikchat_role');
         }
       })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = useCallback(async (data: LoginFormData): Promise<boolean> => {
@@ -110,50 +106,53 @@ export function useAuth() {
         body: JSON.stringify(data)
       });
       const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
+      if (res.ok && ct.includes('application/json')) {
         const resData = (await res.json()) as AuthResponse;
-        if (res.ok && resData.success) {
+        if (resData.success) {
           if (resData.token) localStorage.setItem(TOKEN_KEY, resData.token);
           if (resData.user) {
             setUser(resData.user);
             localStorage.setItem('clikchat_role', resData.user.role);
-            if (resData.user.tenantSlug) {
-              localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
-            }
+            if (resData.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
           }
-          if (resData.tenant) setTenant(resData.tenant);
+          if (resData.tenant) {
+            setTenant(resData.tenant);
+            saveCachedTenant(resData.tenant as any);
+          }
+          setIsLoading(false);
           return true;
-        } else if (!isDemo) {
-          throw new Error(resData.error || 'Credenciales inválidas');
         }
-      } else if (!isDemo) {
-        throw new Error('Servidor no disponible momentáneamente');
       }
-    } catch (err: any) {
-      if (!isDemo) {
-        try {
-          const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-          const matched = localUsers.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase() && u.password === data.password);
-          if (matched) {
-            const u: AuthUser = {
-              id: matched.id,
-              email: matched.email,
-              name: matched.name,
-              role: 'tenant_owner',
-              tenantId: matched.tenantId,
-              tenantSlug: matched.tenantSlug
-            };
-            localStorage.setItem(TOKEN_KEY, `local-token-${matched.id}`);
-            localStorage.setItem('clikchat_role', u.role);
-            localStorage.setItem('clikchat_active_tenant_slug', u.tenantSlug);
-            setUser(u);
-            return true;
-          }
-        } catch (e) {}
-        setError(err.message || 'Error al iniciar sesión');
-        return false;
+      if (!res.ok && ct.includes('application/json') && !isDemo) {
+        const resData = (await res.json()) as AuthResponse;
+        if (resData.error) {
+          setError(resData.error);
+          setIsLoading(false);
+          return false;
+        }
       }
-    }
+    } catch (e) {}
+
+    try {
+      const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const matched = localUsers.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase() && u.password === data.password);
+      if (matched) {
+        const u: AuthUser = {
+          id: matched.id,
+          email: matched.email,
+          name: matched.name,
+          role: 'tenant_owner',
+          tenantId: matched.tenantId,
+          tenantSlug: matched.tenantSlug
+        };
+        localStorage.setItem(TOKEN_KEY, `local-token-${matched.id}`);
+        localStorage.setItem('clikchat_role', u.role);
+        localStorage.setItem('clikchat_active_tenant_slug', u.tenantSlug);
+        setUser(u);
+        setIsLoading(false);
+        return true;
+      }
+    } catch (e) {}
 
     if (isDemo) {
       localStorage.setItem(TOKEN_KEY, 'demo-token-active');
@@ -161,8 +160,12 @@ export function useAuth() {
       localStorage.setItem('clikchat_active_tenant_slug', 'geosoft');
       setUser(DEMO_USER);
       setTenant(DEMO_TENANT);
+      setIsLoading(false);
       return true;
     }
+
+    setError('Credenciales inválidas o cuenta no encontrada');
+    setIsLoading(false);
     return false;
   }, []);
 
@@ -176,55 +179,89 @@ export function useAuth() {
         body: JSON.stringify(data)
       });
       const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
+      if (res.ok && ct.includes('application/json')) {
         const resData = (await res.json()) as AuthResponse;
-        if (res.ok && resData.success) {
+        if (resData.success) {
           if (resData.token) localStorage.setItem(TOKEN_KEY, resData.token);
           if (resData.user) {
             setUser(resData.user);
             localStorage.setItem('clikchat_role', resData.user.role);
-            if (resData.user.tenantSlug) {
-              localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
-            }
+            if (resData.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
           }
-          if (resData.tenant) setTenant(resData.tenant);
+          if (resData.tenant) {
+            setTenant(resData.tenant);
+            saveCachedTenant(resData.tenant as any);
+          }
+          setIsLoading(false);
           return true;
         }
-        throw new Error(resData.error || 'Error al registrar la cuenta');
       }
-    } catch (err: any) {
-      const newSlug = data.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-      const newUser: AuthUser = {
-        id: `usr_${Date.now()}`,
-        email: data.email,
-        name: data.name,
-        role: 'tenant_owner',
-        tenantId: `tnt_${Date.now()}`,
-        tenantSlug: newSlug || 'mi-negocio'
-      };
-      try {
-        const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-        localUsers.push({ ...data, id: newUser.id, tenantId: newUser.tenantId, tenantSlug: newUser.tenantSlug });
-        localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
-      } catch (e) {}
+      if (!res.ok && ct.includes('application/json')) {
+        const resData = (await res.json()) as AuthResponse;
+        if (resData.error) {
+          setError(resData.error);
+          setIsLoading(false);
+          return false;
+        }
+      }
+    } catch (e) {}
 
-      localStorage.setItem(TOKEN_KEY, `local-token-${newUser.id}`);
-      localStorage.setItem('clikchat_role', newUser.role);
-      localStorage.setItem('clikchat_active_tenant_slug', newUser.tenantSlug);
-      setUser(newUser);
-      return true;
-    } finally {
-      setIsLoading(false);
-    }
-    return false;
+    const cleanSlug = data.businessName.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || `negocio-${Date.now().toString(36)}`;
+
+    const newTenantId = `ten_${Date.now()}`;
+    const newUser: AuthUser = {
+      id: `usr_${Date.now()}`,
+      email: data.email.trim().toLowerCase(),
+      name: data.name.trim(),
+      role: 'tenant_owner',
+      tenantId: newTenantId,
+      tenantSlug: cleanSlug
+    };
+
+    const isRestaurant = data.businessType === 'restaurante';
+    const newTenant: any = {
+      id: newTenantId,
+      slug: cleanSlug,
+      name: data.businessName.trim(),
+      owner_name: data.name.trim(),
+      owner_email: data.email.trim().toLowerCase(),
+      bot_name: 'Asesor Comercial',
+      business_type: data.businessType || 'tienda',
+      currency: data.currency || 'CRC',
+      plan: 'pro',
+      status: 'active',
+      welcome_message: isRestaurant
+        ? '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿En qué podemos deleitarte hoy?'
+        : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?',
+      system_prompt: isRestaurant
+        ? 'Eres el asesor comercial oficial del restaurante. Ayuda al cliente y guía su pedido a WhatsApp.'
+        : 'Eres el asesor comercial oficial de la tienda. Ayuda al cliente y guía su compra a WhatsApp.',
+      response_delay_sec: 1
+    };
+
+    saveCachedTenant(newTenant);
+    try {
+      const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      localUsers.push({ ...data, id: newUser.id, tenantId: newUser.tenantId, tenantSlug: newUser.tenantSlug });
+      localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
+    } catch (e) {}
+
+    localStorage.setItem(TOKEN_KEY, `local-token-${newUser.id}`);
+    localStorage.setItem('clikchat_role', newUser.role);
+    localStorage.setItem('clikchat_active_tenant_slug', cleanSlug);
+    setUser(newUser);
+    setTenant(newTenant as any);
+    setIsLoading(false);
+    return true;
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('clikchat_role');
-      localStorage.removeItem('clikchat_active_tenant_slug');
-    }
+    localStorage.removeItem('clikchat_role');
+    localStorage.removeItem('clikchat_active_tenant_slug');
     setUser(null);
     setTenant(null);
     setError(null);

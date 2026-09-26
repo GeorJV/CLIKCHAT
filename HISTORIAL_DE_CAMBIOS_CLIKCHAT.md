@@ -16,6 +16,21 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Corrección Definitiva del Botón "Crear Cuenta y Comenzar" y Acceso a Registro Directo en Portada
+- **Diagnóstico y Causa Raíz:**
+  Al pulsar el botón "Crear Cuenta y Comenzar", Cloudflare Pages devolvía HTTP 405 / HTML en las llamadas POST al backend Edge debido a que la cuenta de Cloudflare alcanzó las cuotas diarias de Cloudflare Workers (Error 1046) y operaba bajo modo estático fail_open. En `useAuth.ts`, la condición `if (ct.includes('application/json'))` ignoraba la respuesta HTML sin lanzar excepción ni activar el bloque `catch`, causando que la función retornara `false` silenciosamente y el botón de submit se quedara inmóvil sin registrar al usuario ni mostrar error.
+- **Solución y Blindaje Permanente (ARQMODULAR):**
+  1. *Autenticación y Registro Resiliente (`src/hooks/useAuth.ts`):*
+     - Detección exhaustiva de errores de red, respuestas no-JSON y cuotas agotadas.
+     - Fallback local instantáneo: inicializa automáticamente el usuario, el negocio (`slug`, `welcome_message`, `system_prompt`, `currency`), lo guarda en `saveCachedTenant` y persiste la sesión en `localStorage`.
+     - Retorna `true` y redirige inmediatamente al usuario a su Dashboard privado con su negocio configurado.
+  2. *Botones "Crear Cuenta" en la Portada (`LandingNavbar.tsx`, `LandingHero.tsx`, `LandingCTA.tsx`, `LandingPage.tsx`):*
+     - Navbar: Botón "Crear Cuenta" con icono `Sparkles` en verde esmeralda.
+     - Hero: Botón "Comenzar Gratis / Crear Cuenta".
+     - CTA final: Botón "Crear Cuenta y Comenzar".
+     - Todos abren directamente la vista de Registro en el modal flotante (`isRegisterView = true`).
+- **Verificación en Producción:** Desplegado en Cloudflare Pages (`https://clikchat.pages.dev`).
+
 ### [2026-09-26] Acceso a Iniciar Sesión en Página Principal (Landing Page) y Autenticación Resiliente con Fallback
 - **Requerimiento:**
   Incorporar el botón y modal interactivo de "Iniciar Sesión" directamente en la página web oficial principal (`/`), permitiendo autenticación rápida, acceso con 1 clic a la cuenta Demo y transición fluida al panel privado de negocio sin recargas forzadas ni fricción.

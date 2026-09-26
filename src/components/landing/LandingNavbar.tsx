@@ -6,13 +6,15 @@ interface LandingNavbarProps {
   onGoToDashboard: () => void;
   onGoToAdmin: () => void;
   onOpenLogin?: () => void;
+  onOpenRegister?: () => void;
 }
 
 export const LandingNavbar: React.FC<LandingNavbarProps> = ({
   onOpenDemo,
   onGoToDashboard,
   onGoToAdmin,
-  onOpenLogin
+  onOpenLogin,
+  onOpenRegister
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -55,23 +57,23 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
         <div className="hidden sm:flex items-center space-x-2.5">
           <button
             onClick={onOpenLogin || onGoToDashboard}
-            className="px-4 py-2.5 text-xs font-bold text-emerald-800 hover:text-emerald-950 transition rounded-xl border border-emerald-300/80 bg-emerald-50/80 hover:bg-emerald-100/90 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            className="px-3.5 py-2.5 text-xs font-bold text-zinc-700 hover:text-black transition rounded-xl border border-stone-300 hover:bg-stone-100 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
           >
-            <LogIn className="w-3.5 h-3.5 text-emerald-700" />
+            <LogIn className="w-3.5 h-3.5 text-zinc-600" />
             <span>Iniciar Sesión</span>
           </button>
           <button
-            onClick={onGoToDashboard}
-            className="px-3.5 py-2.5 text-xs font-semibold text-[#2c2824] hover:text-black transition rounded-xl border border-[#dcd6cb] hover:bg-[#f2eee5] cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+            onClick={onOpenRegister || onGoToDashboard}
+            className="px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer flex items-center gap-1.5 active:scale-95"
           >
-            Mi Negocio
+            <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Crear Cuenta</span>
           </button>
           <button
             onClick={onOpenDemo}
-            className="px-4 py-2.5 text-xs font-bold text-[#fbfaf8] bg-[#181716] hover:bg-[#2c2925] border border-[#2e2a25] transition rounded-xl shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
+            className="px-3.5 py-2.5 text-xs font-semibold text-[#fbfaf8] bg-[#181716] hover:bg-[#2c2925] border border-[#2e2a25] transition rounded-xl shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>Probar Demostración</span>
+            <span>Demo</span>
           </button>
         </div>
 
@@ -94,14 +96,20 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
           <button onClick={() => scrollTo('faq')} className="block w-full text-left text-sm font-medium text-[#2c2824] py-1">Preguntas Frecuentes</button>
           <div className="pt-3 flex flex-col gap-2 border-t border-[#e2ddd4]">
             <button
-              onClick={() => { setMobileMenuOpen(false); (onOpenLogin || onGoToDashboard)(); }}
-              className="w-full py-2.5 text-xs font-bold text-emerald-900 border border-emerald-300 rounded-xl text-center bg-emerald-50 flex items-center justify-center gap-1.5 cursor-pointer"
+              onClick={() => { setMobileMenuOpen(false); (onOpenRegister || onGoToDashboard)(); }}
+              className="w-full py-2.5 text-xs font-bold text-white bg-emerald-600 rounded-xl text-center shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <LogIn className="w-3.5 h-3.5 text-emerald-700" />
+              <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+              <span>Crear Cuenta Gratis</span>
+            </button>
+            <button
+              onClick={() => { setMobileMenuOpen(false); (onOpenLogin || onGoToDashboard)(); }}
+              className="w-full py-2.5 text-xs font-bold text-zinc-800 border border-stone-300 rounded-xl text-center bg-white flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-zinc-700" />
               <span>Iniciar Sesión</span>
             </button>
-            <button onClick={onGoToDashboard} className="w-full py-2.5 text-xs font-semibold text-[#2c2824] border border-[#dcd6cb] rounded-xl text-center bg-white cursor-pointer">Mi Negocio</button>
-            <button onClick={onOpenDemo} className="w-full py-2.5 text-xs font-bold text-white bg-[#181716] rounded-xl text-center shadow-md cursor-pointer">Probar Demostración</button>
+            <button onClick={onOpenDemo} className="w-full py-2.5 text-xs font-semibold text-[#2c2824] border border-[#dcd6cb] rounded-xl text-center bg-stone-50 cursor-pointer">Probar Demostración</button>
           </div>
         </div>
       )}

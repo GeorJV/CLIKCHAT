@@ -5,12 +5,14 @@ interface LandingHeroProps {
   onOpenDemo: () => void;
   onGoToDashboard: () => void;
   onOpenLogin?: () => void;
+  onOpenRegister?: () => void;
 }
 
 export const LandingHero: React.FC<LandingHeroProps> = ({
   onOpenDemo,
   onGoToDashboard,
-  onOpenLogin
+  onOpenLogin,
+  onOpenRegister
 }) => {
   return (
     <section className="relative overflow-hidden pt-14 pb-16 md:pt-22 md:pb-26 px-4 sm:px-6">
@@ -54,11 +56,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           </button>
 
           <button
-            onClick={onOpenLogin || onGoToDashboard}
+            onClick={onOpenRegister || onGoToDashboard}
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-[#f6f2e9] text-[#2c2720] font-semibold text-xs tracking-wider uppercase border border-[#d6cfc2] shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition cursor-pointer flex items-center justify-center gap-2"
           >
-            <ShoppingBag className="w-3.5 h-3.5 text-[#7c7161]" />
-            <span>Acceso al Panel de Tienda</span>
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Comenzar Gratis / Crear Cuenta</span>
           </button>
         </div>
 

@@ -38,6 +38,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     setShowAuthModal(true);
   };
 
+  const handleOpenRegister = () => {
+    setIsRegisterView(true);
+    setError(null);
+    setShowAuthModal(true);
+  };
+
   const handleLogin = async (data: LoginFormData) => {
     const success = await login(data);
     if (success) {
@@ -63,12 +69,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onGoToDashboard={onGoToDashboard}
         onGoToAdmin={onGoToAdmin}
         onOpenLogin={handleOpenLogin}
+        onOpenRegister={handleOpenRegister}
       />
       <main>
         <LandingHero
           onOpenDemo={handleOpenDemo}
           onGoToDashboard={onGoToDashboard}
           onOpenLogin={handleOpenLogin}
+          onOpenRegister={handleOpenRegister}
         />
         <LandingTrustBar />
         <LandingTargetAudience />
@@ -79,6 +87,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           onOpenDemo={handleOpenDemo}
           onGoToDashboard={onGoToDashboard}
           onOpenLogin={handleOpenLogin}
+          onOpenRegister={handleOpenRegister}
         />
       </main>
       <LandingFooter
