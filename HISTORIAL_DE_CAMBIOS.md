@@ -332,6 +332,25 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 - **Arquitectura ARQMODULAR:** Todos los componentes atómicos modificados (`BusinessIdentitySubTab.tsx`, `ProductChatColumn.tsx`, `ProductChatView.tsx`, etc.) permanecen estrictamente por debajo de 180 líneas de código.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-26] Flujo Conversacional de Venta Activa (Cross-Selling) y Formato Final de Comanda Digital
+- **Requerimiento del Usuario:**
+  1. *Flujo Conversacional de Venta:* Dotar al bot de una estrategia comercial proactiva para sugerir acompañamientos, bebidas y combos (Cross-selling / Upselling), hacer preguntas de avance hacia la compra y erradicar respuestas pasivas tipo *"¿En qué más te ayudo?"*.
+  2. *Formato Final del Pedido (Comanda Digital):* Al confirmar el pedido, generar una comanda estructurada oficial con número `#ORD-XXXXX`, fecha, desglose de ítems, precios, notas de cocina, modalidad (Express / Llevar / En Local), total en moneda oficial (`CRC`/`USD`) e instrucciones de Sinpe Móvil, junto con botones para enviar comprobante, copiar comanda y reenviar a WhatsApp de cocina.
+- **Implementación Arquitectónica ARQMODULAR (<150 líneas por archivo):**
+  1. *Esquema Cloudflare D1:* Migración en caliente de las columnas `sales_flow_rules` y `order_ticket_format` en la tabla `tenants`.
+  2. *Motor Backend Edge Functions (`functions/api/[[route]].js`):*
+     - Soporte en `PUT /api/tenants/:id` para guardar y persistir directivas de venta.
+     - Inyección prioritaria de `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA]` con reglas adaptadas según `business_type`.
+     - Generación obligatoria del Ticket / Comanda Oficial al confirmar orden (`isConfirmingOrder`), emitiendo botones `📸 Enviar Comprobante`, `📋 Copiar Pedido` y `📲 Enviar a WhatsApp`.
+  3. *Panel de Administración (Dashboard):*
+     - Nueva sub-pestaña `Flujo de Venta` en `AITrainingTab.tsx` (136 líneas).
+     - Componente atómico `SalesFlowSection.tsx` (132 líneas) con selector de plantillas prediseñadas (`salesFlowPresets.ts` 47 líneas) para Restaurante, Tienda y Servicios, y editor con guardado directo en D1.
+  4. *Renderizado de Comanda en Chat (`ChatMessageContent.tsx` 166 líneas y `QuickActionButtons.tsx` 77 líneas):*
+     - Renderizado monoespaciado alineado sin distorsión de caracteres de caja (`╔═║╠╚`).
+     - Acciones interactivas de copiado al portapapeles y enlace dinámico a WhatsApp.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+
 
 
 

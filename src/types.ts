@@ -58,6 +58,8 @@ export interface Tenant {
   operational_rules?: string;
   business_type?: string;
   currency?: string;
+  sales_flow_rules?: string;
+  order_ticket_format?: string;
 }
 
 export interface ChatMessage {

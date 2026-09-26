@@ -3,8 +3,9 @@ import { UnresolvedQueriesTab } from '../UnresolvedQueriesTab';
 import { DocumentsManagerTab } from '../DocumentsManagerTab';
 import { InitialGreetingSection } from './InitialGreetingSection';
 import { OperationalRulesSection } from './OperationalRulesSection';
+import { SalesFlowSection } from './SalesFlowSection';
 import { UnresolvedQuery, Tenant } from '../../../types';
-import { Brain, HelpCircle, FileText, Sparkles, ShieldAlert } from 'lucide-react';
+import { Brain, HelpCircle, FileText, Sparkles, ShieldAlert, TrendingUp } from 'lucide-react';
 
 interface AITrainingTabProps {
   tenantId?: string;
@@ -21,7 +22,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
   unresolved,
   onResolve
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents' | 'greeting' | 'rules'>('unresolved');
+  const [activeSubTab, setActiveSubTab] = useState<'unresolved' | 'documents' | 'greeting' | 'rules' | 'sales_flow'>('unresolved');
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
 
   return (
@@ -34,7 +35,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
             <span>Entrenamiento AI</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Entrena el cerebro del bot respondiendo dudas reales, cargando manuales, saludo inicial y reglas estrictas.
+            Entrena el cerebro del bot con dudas reales, manuales, saludo inicial, reglas y flujo de venta.
           </p>
         </div>
 
@@ -98,6 +99,19 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Reglas de Operación</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('sales_flow')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
+              activeSubTab === 'sales_flow'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Flujo de Venta</span>
+          </button>
         </div>
       </div>
 
@@ -113,6 +127,9 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
       )}
       {activeSubTab === 'rules' && (
         <OperationalRulesSection tenant={tenant || null} onUpdateSettings={onUpdateSettings} />
+      )}
+      {activeSubTab === 'sales_flow' && (
+        <SalesFlowSection tenant={tenant || null} onUpdateSettings={onUpdateSettings} />
       )}
     </div>
   );

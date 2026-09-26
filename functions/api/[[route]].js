@@ -801,10 +801,10 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format } = body;
 
       const hasCustomKey = custom_llm_key !== undefined;
-      const keyClause = hasCustomKey ? ', custom_llm_key = ?18' : '';
+      const keyClause = hasCustomKey ? ', custom_llm_key = ?20' : '';
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
         business_hours, system_prompt, slug, logo_url, tone_of_voice,
@@ -812,6 +812,8 @@ export async function onRequest(context) {
         operational_rules !== undefined ? operational_rules : null,
         business_type !== undefined ? business_type : null,
         currency !== undefined ? currency : null,
+        sales_flow_rules !== undefined ? sales_flow_rules : null,
+        order_ticket_format !== undefined ? order_ticket_format : null,
         id
       ];
       if (hasCustomKey) {
@@ -819,7 +821,7 @@ export async function onRequest(context) {
       }
 
       await executeD1(
-        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type), currency = COALESCE(?16, currency)${keyClause}, updated_at = datetime('now') WHERE id = ?17 OR slug = ?17`,
+        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type), currency = COALESCE(?16, currency), sales_flow_rules = COALESCE(?17, sales_flow_rules), order_ticket_format = COALESCE(?18, order_ticket_format)${keyClause}, updated_at = datetime('now') WHERE id = ?19 OR slug = ?19`,
         params
       );
 
@@ -1509,9 +1511,43 @@ export async function onRequest(context) {
           } catch (oErr) {
             console.warn('Order staging D1 warning:', oErr.message);
           }
-          contextBlock += `\n\n[EVENTO: ORDEN TENTATIVA GUARDADA CON ÉXITO #${orderId}]: El cliente confirmó su orden y acaba de quedar guardada tentativamente en el sistema. Instrucciones obligatorias: 1) Felicítalo e infórmale con entusiasmo que su pedido #${orderId} quedó guardado tentativamente. 2) Indícale que para enviarla a preparación/despacho, debe realizar el pago mediante Sinpe Móvil o Transferencia (${targetTenant.cta_url || targetTenant.cta_text || 'al número oficial'}) a nombre de ${targetTenant.name}. 3) Pídele amablemente que envíe una foto o captura del comprobante por este chat para comenzar a preparar su orden de inmediato.`;
+
+          const currencySymbol = activeCurrency.toUpperCase() === 'CRC' ? '₡' : '$';
+          const ticketTemplate = targetTenant.order_ticket_format && targetTenant.order_ticket_format.trim()
+            ? targetTenant.order_ticket_format.trim()
+            : `╔═══════════════════════════════════════╗
+   ${targetTenant.business_type === 'restaurante' ? '🍔' : '🛍️'} ${targetTenant.name.toUpperCase()}
+   🧾 PEDIDO OFICIAL: #${orderId}
+   📅 ${new Date().toLocaleDateString('es-CR')}
+╠═══════════════════════════════════════╣
+   DETALLE DE LA COMANDA:
+   (Lista aquí cada ítem con cantidad y precio en ${currencySymbol}, ej:
+   • 1x [Nombre Producto] ....... ${currencySymbol}[Monto])
+
+   🛵 ENTREGA: [Express a Domicilio / Para Llevar / En Local]
+   📍 DIRECCIÓN: [Dirección si fue indicada, o 'Por coordinar']
+   👤 CLIENTE: [Nombre o datos si fueron indicados]
+╠═══════════════════════════════════════╣
+   💰 TOTAL A PAGAR: ${currencySymbol}[Total Calculado] ${activeCurrency}
+╠═══════════════════════════════════════╣
+   📱 INSTRUCCIONES DE PAGO:
+   Sinpe Móvil: ${targetTenant.cta_url || targetTenant.cta_text || 'Número oficial de ' + targetTenant.name}
+╚═══════════════════════════════════════╝`;
+
+          contextBlock += `\n\n[EVENTO: ORDEN CONFIRMADA CON ÉXITO #${orderId}]: El cliente confirmó su orden. Instrucciones obligatorias:
+1) Felicítalo cordialmente informándole que su pedido #${orderId} quedó guardado.
+2) Presenta OBLIGATORIAMENTE el siguiente Ticket / Comanda Oficial sin alterar su estructura de caja con bordes:
+${ticketTemplate}
+3) Pídele que envíe una captura o foto de su comprobante por este chat para procesar su orden de inmediato.`;
+
+          const waUrl = targetTenant.cta_url && targetTenant.cta_url.includes('wa.me')
+            ? targetTenant.cta_url
+            : `https://wa.me/?text=${encodeURIComponent(`Hola, acabo de confirmar mi pedido #${orderId} en ${targetTenant.name}.`)}`;
+
           quickActions = [
-            { id: 'send_receipt', label: '📸 Enviar Comprobante', actionText: 'Ya realicé el pago, aquí envío mi comprobante', variant: 'primary' }
+            { id: 'send_receipt', label: '📸 Enviar Comprobante', actionText: 'Ya realicé el pago, aquí envío mi comprobante', variant: 'primary' },
+            { id: 'copy_order', label: '📋 Copiar Pedido', actionText: `COPIAR_PEDIDO:#${orderId}`, variant: 'secondary' },
+            { id: 'whatsapp_order', label: '📲 Enviar a WhatsApp', actionText: `WHATSAPP_REDIRECT:${waUrl}`, variant: 'success' }
           ];
         } else if (isAskingBillTotal) {
           contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total de la cuenta o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
@@ -1545,6 +1581,22 @@ export async function onRequest(context) {
           ];
         } else if (isAddingMore) {
           contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
+        }
+
+        // Inyección de Estrategia y Flujo Conversacional de Venta
+        if (targetTenant.sales_flow_rules && targetTenant.sales_flow_rules.trim()) {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA (MÁXIMA PRIORIDAD)]:\n${targetTenant.sales_flow_rules.trim()}`;
+        } else if (targetTenant.business_type === 'restaurante') {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - RESTAURANTE]:
+1. Sé proactivo, empático y enfocado a cerrar el pedido de forma ágil.
+2. Venta Cruzada (Cross-selling): Si el cliente pide un plato principal, sugiere de inmediato un acompañamiento (papas, aros de cebolla), bebida o postre.
+3. Pregunta de Avance: Termina siempre preguntando si desea sumarlo a su comanda o si es para comer en el local o para llevar/express.
+4. Conducción al Cierre: Cuando ya tenga ítems en la comanda, recuérdale que puede pedir el total diciendo "¿cuánto es?" para confirmar su pedido.`;
+        } else if (targetTenant.business_type === 'tienda') {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - TIENDA]:
+1. Resalta los beneficios clave del producto consultado.
+2. Sugiere alternativas o complementos compatibles del catálogo.
+3. Pregunta si desea proceder con el envío a su domicilio.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';

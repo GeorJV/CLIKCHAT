@@ -18,6 +18,20 @@ export const QuickActionButtons: React.FC<QuickActionButtonsProps> = ({
 
   const handleClick = (action: QuickActionOption) => {
     if (disabled || clickedId) return;
+    if (action.actionText.startsWith('WHATSAPP_REDIRECT:')) {
+      const url = action.actionText.replace('WHATSAPP_REDIRECT:', '');
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (action.actionText.startsWith('COPIAR_PEDIDO:')) {
+      setClickedId(action.id);
+      setTimeout(() => setClickedId(null), 2500);
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(action.actionText.replace('COPIAR_PEDIDO:', 'Pedido '));
+      }
+      onSelect('He copiado el número de mi pedido para mi registro.');
+      return;
+    }
     setClickedId(action.id);
     onSelect(action.actionText);
   };

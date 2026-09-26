@@ -115,6 +115,15 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           );
         }
 
+        // Detección de Comanda / Ticket con caracteres de caja
+        if (!isUser && /^[╔║╠╚═]/.test(trimmed)) {
+          return (
+            <div key={`line-${idx}`} className="font-mono text-[11px] sm:text-xs text-amber-200/90 whitespace-pre overflow-x-auto leading-tight select-text py-0.5">
+              {trimmed}
+            </div>
+          );
+        }
+
         // Detección de opciones con precio: viñetas o listas como "- Refresco en lata ($1.50)"
         const bulletMatch = !isUser && trimmed.match(/^([-*•]|\d+[.)])\s+(.+)$/);
         if (bulletMatch) {
@@ -124,18 +133,13 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           if (hasPrice && onActionClick) {
             const isAdded = recentlyAdded === idx;
             return (
-              <div
-                key={`opt-${idx}`}
-                className="flex items-center justify-between gap-2.5 py-1 px-2.5 rounded-xl bg-amber-500/[0.08] border border-amber-400/25 hover:border-amber-400/50 transition duration-200 group my-1.5"
-              >
+              <div key={`opt-${idx}`} className="flex items-center justify-between gap-2.5 py-1 px-2.5 rounded-xl bg-amber-500/[0.08] border border-amber-400/25 hover:border-amber-400/50 transition group my-1.5">
                 <div className="flex-1 min-w-0 font-medium text-slate-100 leading-snug break-words">
                   <span className="text-amber-400 mr-1.5 font-bold">•</span>
                   {renderInlineFormatted(rawItem, isUser)}
                 </div>
                 <button
-                  type="button"
-                  onClick={() => handleAdd(rawItem, idx)}
-                  disabled={isAdded}
+                  type="button" onClick={() => handleAdd(rawItem, idx)} disabled={isAdded}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer ${
                     isAdded
                       ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 cursor-default'
@@ -143,17 +147,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
                   }`}
                   title={`Agregar ${rawItem.replace(/\*\*/g, '').trim()} a la orden`}
                 >
-                  {isAdded ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-300 stroke-[3]" />
-                      <span>Agregado</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3 h-3 stroke-[3]" />
-                      <span>Agregar</span>
-                    </>
-                  )}
+                  {isAdded ? (<><Check className="w-3 h-3 text-emerald-300 stroke-[3]" /><span>Agregado</span></>) : (<><Plus className="w-3 h-3 stroke-[3]" /><span>Agregar</span></>)}
                 </button>
               </div>
             );
