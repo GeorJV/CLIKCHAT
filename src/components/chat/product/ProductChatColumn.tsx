@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, LogOut, Paperclip } from 'lucide-react';
+import { Send, LogOut, Paperclip, RotateCcw } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
@@ -10,17 +10,17 @@ import { ChatMessageContent } from '../ChatMessageContent';
 import { QuickActionButtons } from '../QuickActionButtons';
 
 interface Props {
-  storeName: string; agentName: string; agentAvatar?: string;
-  productTitle: string; messages: ProductChatMessage[];
-  inputValue: string; isLoading: boolean;
+  storeName: string; agentName: string; agentAvatar?: string; productTitle: string;
+  messages: ProductChatMessage[]; inputValue: string; isLoading: boolean;
   theme: ProductChatTheme; themeStyles: ThemeStyles; onThemeChange?: (t: ProductChatTheme) => void;
   onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
   onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
+  onResetChat?: () => void;
 }
 
 export const ProductChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, messages, inputValue,
-  isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit
+  isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit, onResetChat
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -32,22 +32,10 @@ export const ProductChatColumn: React.FC<Props> = ({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onInputChange(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-    }
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`; }
   };
-
-  const handleSend = () => {
-    if (inputValue.trim() && !isLoading) {
-      setFlightKey(Date.now());
-      onSendMessage(inputValue);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-  };
+  const handleSend = () => { if (inputValue.trim() && !isLoading) { setFlightKey(Date.now()); onSendMessage(inputValue); } };
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
 
   return (
     <section className={`flex flex-col h-full ${themeStyles.containerBg} border-b md:border-b-0 md:border-r ${themeStyles.chatColumnBorder} overflow-hidden relative min-h-0`}>
@@ -69,11 +57,18 @@ export const ProductChatColumn: React.FC<Props> = ({
             <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> En línea</span>
           </div>
         </div>
-        {onExit && (
-          <button type="button" onClick={onExit} className={`flex items-center gap-1.5 text-xs font-bold p-1 cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Volver al panel">
-            <LogOut className="w-3.5 h-3.5" /> <span>Salir</span>
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {onResetChat && (
+            <button type="button" onClick={onResetChat} className={`flex items-center gap-1 text-[11px] font-bold p-1 rounded-md cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Reiniciar chat">
+              <RotateCcw className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Reiniciar</span>
+            </button>
+          )}
+          {onExit && (
+            <button type="button" onClick={onExit} className={`flex items-center gap-1.5 text-xs font-bold p-1 cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Volver al panel">
+              <LogOut className="w-3.5 h-3.5" /> <span>Salir</span>
+            </button>
+          )}
+        </div>
       </header>
 
       <div className={`flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col ${themeStyles.messagesAreaBg} min-h-0`}>
@@ -164,12 +159,7 @@ export const ProductChatColumn: React.FC<Props> = ({
               <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />
             </button>
           ) : (
-            <ChatMicButton
-              disabled={isLoading}
-              onRecordingChange={setIsAudioRecording}
-              onAudioRecorded={onAudioRecorded}
-              onTranscription={(cleanText) => onSendMessage(cleanText, true)}
-            />
+            <ChatMicButton disabled={isLoading} onRecordingChange={setIsAudioRecording} onAudioRecorded={onAudioRecorded} onTranscription={(t) => onSendMessage(t, true)} />
           )}
         </form>
       </footer>

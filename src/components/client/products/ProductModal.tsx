@@ -51,12 +51,13 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !price || isSubmitting) return;
+    if (!name.trim() || isSubmitting) return;
     setIsSubmitting(true);
     const parsedBenefits = benefits.split('\n').map(b => b.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
     try {
+      const parsedPrice = price.trim() === '' ? 0 : (parseFloat(price) || 0);
       const success = await onSubmit({
-        name: name.trim(), price: parseFloat(price) || 0, currency,
+        name: name.trim(), price: parsedPrice, currency,
         short_description: description.trim(), full_description: description.trim(),
         images: imageUrl ? [imageUrl.trim()] : [], benefits: parsedBenefits,
         cta_label: 'Comprar Ahora', cta_url: externalUrl.trim(),
@@ -116,7 +117,7 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
             <button type="button" onClick={onClose} className="px-3.5 py-1.5 rounded-lg bg-[#222020] hover:bg-[#2c2929] border border-[#333030] text-zinc-300 font-medium text-xs transition-colors cursor-pointer">
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting || !name.trim() || !price} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer">
+            <button type="submit" disabled={isSubmitting || !name.trim()} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer">
               <Check className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Guardando...' : 'Guardar producto'}</span>
             </button>

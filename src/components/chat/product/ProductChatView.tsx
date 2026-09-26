@@ -22,9 +22,7 @@ export const ProductChatView: React.FC<Props> = ({
   const [orderTotal, setOrderTotal] = useState<number | null>(selectedProduct?.price || (isRestaurant ? 0 : null));
   const [isTotalPulsing, setIsTotalPulsing] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); };
-  }, []);
+  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
   const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,14 +43,21 @@ export const ProductChatView: React.FC<Props> = ({
     return created;
   });
 
+  const handleResetChat = () => {
+    if (typeof window !== 'undefined' && selectedProduct.id) {
+      sessionStorage.removeItem(`clik_sess_prod_${selectedProduct.id}`);
+      const newSess = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+      sessionStorage.setItem(`clik_sess_prod_${selectedProduct.id}`, newSess);
+      setSessId(newSess);
+      setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null));
+    }
+  };
+
   useEffect(() => {
     if (selectedProduct.id && typeof window !== 'undefined') {
       const storageKey = `clik_sess_prod_${selectedProduct.id}`;
       let cur = sessionStorage.getItem(storageKey);
-      if (!cur) {
-        cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-        sessionStorage.setItem(storageKey, cur);
-      }
+      if (!cur) { cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); sessionStorage.setItem(storageKey, cur); }
       setSessId(cur);
     }
   }, [selectedProduct.id]);
@@ -87,9 +92,7 @@ export const ProductChatView: React.FC<Props> = ({
   };
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800),
-    deliveryDelayMs: 200,
-    onSetLoading: setIsLoading,
+    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800), deliveryDelayMs: 200, onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onTriggerBotReply: async (batch) => {
       const userText = batch.join('\n').trim();
@@ -97,22 +100,18 @@ export const ProductChatView: React.FC<Props> = ({
       setIsLoading(true);
       try {
         const res = await fetch('/api/chat/message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: 'geosoft',
-            tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
-            sessionId: sessId,
-            message: userText,
-            clientHour: new Date().getHours(),
+            tenantSlug: 'geosoft', tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
+            sessionId: sessId, message: userText, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
         const data = res.ok ? await res.json() : null;
         if (data?.isRestaurant || isRestaurant) {
           if (typeof data?.orderTotal === 'number' && data.orderTotal > 0) setOrderTotal(data.orderTotal);
-          const askedTotal = data?.isAskingTotal || /cuanto\s*(es|debo|vale|sale|cuesta)|la\s*cuenta/i.test(userText);
-          if (askedTotal || data?.orderTotal) {
+          const askedTotal = data?.isAskingTotal || /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido)\b/i.test(userText);
+          if (askedTotal) {
             if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
             setIsTotalPulsing(true);
             pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
@@ -163,7 +162,7 @@ export const ProductChatView: React.FC<Props> = ({
         <ProductChatColumn
           storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} productTitle={selectedProduct.title}
           messages={messages} inputValue={inputValue} isLoading={isLoading} theme={theme} themeStyles={themeStyles}
-          onThemeChange={setTheme} onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit}
+          onThemeChange={setTheme} onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit} onResetChat={handleResetChat}
         />
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles} orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}

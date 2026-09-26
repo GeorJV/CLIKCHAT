@@ -27,6 +27,8 @@ export const QuickActionButtons: React.FC<QuickActionButtonsProps> = ({
       return 'bg-emerald-600 text-white border-emerald-500 scale-95 opacity-90 shadow-md';
     }
     switch (variant) {
+      case 'gastronomic':
+        return 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-black border-amber-300/70 shadow-sm shadow-orange-950/30';
       case 'success':
         return 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 shadow-sm';
       case 'primary':

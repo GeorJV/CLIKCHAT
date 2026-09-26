@@ -26,7 +26,7 @@ export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResu
       setIsLoadingTenant(true);
       setTenantError(null);
       try {
-        const res = await fetch(`/api/tenants/${tenantSlug}`);
+        const res = await fetch(`/api/tenants/${encodeURIComponent(tenantSlug)}`, { cache: 'no-store' });
         if (!res.ok) throw new Error('No se pudo cargar la tienda');
         const data = await res.json();
 

@@ -12,7 +12,9 @@ export const SuperAdminDashboard: React.FC = () => {
   const [newTenantName, setNewTenantName] = useState('');
   const [newTenantEmail, setNewTenantEmail] = useState('');
   const [newTenantPlan, setNewTenantPlan] = useState('pro');
-  const [newTenantPrice, setNewTenantPrice] = useState('79.00');
+  const [newTenantPrice, setNewTenantPrice] = useState('0.00');
+  const [newTenantBizType, setNewTenantBizType] = useState('restaurante');
+  const [newTenantCurrency, setNewTenantCurrency] = useState('CRC');
 
   // Multi-Model Playground state
   const [playgroundPrompt, setPlaygroundPrompt] = useState('¿Cuáles son los 3 factores que más convierten a un visitante indeciso en comprador?');
@@ -57,7 +59,9 @@ export const SuperAdminDashboard: React.FC = () => {
           name: newTenantName,
           owner_email: newTenantEmail,
           plan: newTenantPlan,
-          monthly_price: parseFloat(newTenantPrice)
+          monthly_price: parseFloat(newTenantPrice) || 0,
+          business_type: newTenantBizType,
+          currency: newTenantCurrency
         })
       });
 
@@ -255,13 +259,13 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
 
         {/* Create Tenant Form */}
-        <form onSubmit={handleCreateTenant} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 grid grid-cols-1 md:grid-cols-5 gap-2.5 items-end">
+        <form onSubmit={handleCreateTenant} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 grid grid-cols-1 md:grid-cols-6 gap-2.5 items-end">
           <div className="md:col-span-2">
             <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Nombre Negocio</label>
             <input
               type="text"
               required
-              placeholder="Ej: Calzados VIP"
+              placeholder="Ej: Comida Callejera XL"
               value={newTenantName}
               onChange={(e) => setNewTenantName(e.target.value)}
               className="w-full text-xs p-2 rounded-xl bg-slate-950 border border-slate-700 text-white"
@@ -273,7 +277,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <input
               type="email"
               required
-              placeholder="dueno@calzados.com"
+              placeholder="dueno@negocio.com"
               value={newTenantEmail}
               onChange={(e) => setNewTenantEmail(e.target.value)}
               className="w-full text-xs p-2 rounded-xl bg-slate-950 border border-slate-700 text-white"
@@ -281,18 +285,27 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Plan SaaS</label>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Tipo de Negocio</label>
             <select
-              value={newTenantPlan}
-              onChange={(e) => {
-                setNewTenantPlan(e.target.value);
-                setNewTenantPrice(e.target.value === 'enterprise' ? '199.00' : e.target.value === 'starter' ? '29.00' : '79.00');
-              }}
+              value={newTenantBizType}
+              onChange={(e) => setNewTenantBizType(e.target.value)}
               className="w-full text-xs p-2 rounded-xl bg-slate-950 border border-slate-700 text-white"
             >
-              <option value="starter">Starter ($29/m)</option>
-              <option value="pro">Pro ($79/m)</option>
-              <option value="enterprise">Enterprise ($199/m)</option>
+              <option value="restaurante">🍔 Restaurante / Comida</option>
+              <option value="tienda">🛍️ Tienda / Catálogo</option>
+              <option value="servicios">📅 Servicios / Citas</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Moneda Oficial</label>
+            <select
+              value={newTenantCurrency}
+              onChange={(e) => setNewTenantCurrency(e.target.value)}
+              className="w-full text-xs p-2 rounded-xl bg-slate-950 border border-slate-700 text-emerald-400 font-bold"
+            >
+              <option value="CRC">₡ Colones (CRC)</option>
+              <option value="USD">$ Dólares (USD)</option>
             </select>
           </div>
 
@@ -302,7 +315,7 @@ export const SuperAdminDashboard: React.FC = () => {
             className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white transition flex items-center justify-center space-x-1.5 disabled:opacity-50"
           >
             {isCreatingTenant ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : createTenantSuccess ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Plus className="w-4 h-4" />}
-            <span>{isCreatingTenant ? 'Creando...' : createTenantSuccess ? '¡Tenant Creado!' : 'Crear Tenant'}</span>
+            <span>{isCreatingTenant ? 'Creando...' : createTenantSuccess ? '¡Negocio Creado!' : 'Crear Negocio'}</span>
           </button>
         </form>
 

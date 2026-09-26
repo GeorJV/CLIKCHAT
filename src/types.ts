@@ -57,6 +57,7 @@ export interface Tenant {
   custom_llm_key?: string;
   operational_rules?: string;
   business_type?: string;
+  currency?: string;
 }
 
 export interface ChatMessage {

@@ -45,15 +45,15 @@ export const ProductModalFieldsLeft: React.FC<Props> = ({
       {/* Row 2: Precio, Moneda, SKU */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div>
-          <label className="block text-[11px] font-semibold text-zinc-300 mb-0.5">Precio *</label>
-          <input type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="25" className="w-full bg-[#121111] border border-[#282626] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500" />
+          <label className="block text-[11px] font-semibold text-zinc-300 mb-0.5">Precio (Opcional)</label>
+          <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00 (Opcional)" className="w-full bg-[#121111] border border-[#282626] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500" />
         </div>
         <div>
           <label className="block text-[11px] font-semibold text-zinc-300 mb-0.5">Moneda</label>
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full bg-[#121111] border border-[#282626] rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500">
-            <option value="USD">USD ($)</option>
-            <option value="CRC">CRC (₡)</option>
-            <option value="EUR">EUR (€)</option>
+            <option value="CRC">CRC (₡ Colones)</option>
+            <option value="USD">USD ($ Dólares)</option>
+            <option value="EUR">EUR (€ Euros)</option>
             <option value="MXN">MXN ($)</option>
             <option value="COP">COP ($)</option>
           </select>

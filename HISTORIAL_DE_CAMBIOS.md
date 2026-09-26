@@ -319,6 +319,20 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   3. *Uso Exclusivo en Cierre Real:* Las despedidas según la hora (tarde o noche) quedan restringidas estrictamente a cuando el cliente se despide explícitamente (*«gracias, adiós, hasta luego»*) o al confirmar/cerrar definitivamente una orden.
 - **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
 
+### [2026-09-26] Persistencia Blindada de «Mi Negocio», Moneda Oficial CRC/USD y Precios Opcionales
+- **Requerimiento del Usuario:**
+  1. *Persistencia en Mi Negocio:* El botón «Guardar Cambios» de «Mi Negocio» no estaba persistiendo los textos editados, restaurando valores anteriores tras unos segundos.
+  2. *Definición de Moneda y Monto Opcional:* Al crear un negocio o producto en catálogo, el monto debe ser opcional (puede no ponerse o ser 0, idóneo para restaurantes donde cada platillo tiene su propio precio y la comanda arranca en 0) y debe poderse definir la moneda oficial entre Colones (`CRC` [₡]) y Dólares (`USD` [$]).
+- **Diagnóstico y Corrección de Causa Raíz:**
+  1. *Desconexión y Polling Invasivo:* `useClientPortal` realizaba un sondeo cada 8 segundos que sobrescribía los campos del formulario mientras el usuario redactaba. Se implementó la guardia `isDirtyRef` para evitar sobreescritura accidental. Además, `loadTenantData` comparaba únicamente 6 campos de 16, descartando actualizaciones del servidor para `welcome_message`, `bot_name`, `business_type` o `currency`.
+  2. *Soporte Dual de Identificadores en D1:* `PUT /api/tenants/:id` fallaba si se enviaba el slug en vez del UUID de SQLite. Se blindó la consulta con `WHERE id = ?17 OR slug = ?17`.
+  3. *Campos Faltantes:* Se conectaron en el formulario `BusinessIdentitySubTab.tsx` los campos de `bot_name`, `welcome_message`, `business_type` y el nuevo selector de `Moneda Oficial (CRC / USD)`.
+  4. *Precios Opcionales:* En `ProductModal.tsx` y `ProductModalFieldsLeft.tsx`, se retiró el bloqueo que forzaba ingresar un precio, permitiendo dejarlo vacío o en 0, y priorizando las monedas `CRC (₡ Colones)` y `USD ($ Dólares)`.
+  5. *Reinicio Rápido de Chat:* Se añadió el botón «Reiniciar» con icono `RotateCcw` en la cabecera de `ProductChatColumn.tsx` y `ProductChatView.tsx`, permitiendo refrescar el chat y cargar inmediatamente los textos y mensajes de bienvenida actualizados.
+- **Arquitectura ARQMODULAR:** Todos los componentes atómicos modificados (`BusinessIdentitySubTab.tsx`, `ProductChatColumn.tsx`, `ProductChatView.tsx`, etc.) permanecen estrictamente por debajo de 180 líneas de código.
+- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+
 
 
 

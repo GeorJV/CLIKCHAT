@@ -39,7 +39,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
 
   const loadTenantsList = useCallback(async () => {
     try {
-      const res = await fetch('/api/tenants');
+      const res = await fetch('/api/tenants', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setAvailableTenants(data.tenants || []);
@@ -57,14 +57,7 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
         const tData = await tRes.json();
         setTenant(prev => {
           if (!prev) return tData.tenant;
-          if (
-            prev.id === tData.tenant?.id &&
-            prev.name === tData.tenant?.name &&
-            prev.slug === tData.tenant?.slug &&
-            prev.system_prompt === tData.tenant?.system_prompt &&
-            prev.primary_color === tData.tenant?.primary_color &&
-            prev.tone_of_voice === tData.tenant?.tone_of_voice
-          ) {
+          if (JSON.stringify(prev) === JSON.stringify(tData.tenant)) {
             return prev;
           }
           return tData.tenant;
@@ -295,16 +288,22 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   };
 
   const updateSettings = async (updates: Partial<Tenant>) => {
-    if (!tenant?.id) return false;
+    const targetIdentifier = tenant?.id || tenant?.slug || tenantSlug;
+    if (!targetIdentifier) return false;
     try {
-      const res = await fetch(`/api/tenants/${tenant.id}`, {
+      const res = await fetch(`/api/tenants/${encodeURIComponent(targetIdentifier)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
       if (res.ok) {
         const data = await res.json();
-        setTenant(data.tenant);
+        if (data.tenant) {
+          setTenant(data.tenant);
+          if (data.tenant.slug && data.tenant.slug !== tenantSlug) {
+            setTenantSlug(data.tenant.slug);
+          }
+        }
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
         return true;

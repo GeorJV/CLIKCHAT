@@ -626,7 +626,7 @@ export async function onRequest(context) {
     if (segments[0] === 'admin' && segments[1] === 'tenants' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, owner_email, owner_name, plan = 'pro', monthly_price = 79.0 } = body;
+      const { name, owner_email, owner_name, plan = 'pro', monthly_price = 0, business_type = 'restaurante', currency = 'CRC' } = body;
       if (!name || !owner_email) {
         return jsonResponse({ error: 'Nombre de negocio y email del dueño son obligatorios' }, 400);
       }
@@ -642,9 +642,9 @@ export async function onRequest(context) {
 
       await executeD1(
         `INSERT INTO tenants (
-          id, slug, name, owner_email, owner_name, plan, monthly_price, status, bot_name, welcome_message, system_prompt
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'active', 'Asesor Virtual', '¡Hola! ¿En qué puedo colaborarte hoy?', 'Eres el asesor comercial de la tienda.')`,
-        [id, slug, name, owner_email, owner_name || name, plan, parseFloat(monthly_price) || 79.0]
+          id, slug, name, owner_email, owner_name, plan, monthly_price, status, bot_name, welcome_message, system_prompt, business_type, currency
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'active', 'Asesor Virtual', '¡Hola! ¿En qué puedo colaborarte hoy?', 'Eres el asesor comercial de la tienda.', ?8, ?9)`,
+        [id, slug, name, owner_email, owner_name || name, plan, parseFloat(monthly_price) || 0, business_type, currency]
       );
 
       const created = await executeD1('SELECT * FROM tenants WHERE id = ?1', [id]);
@@ -756,7 +756,7 @@ export async function onRequest(context) {
 
     // LIST TENANTS: GET /api/tenants
     if (segments[0] === 'tenants' && segments.length === 1 && request.method === 'GET') {
-      const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status, business_type FROM tenants ORDER BY created_at DESC');
+      const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status, business_type, currency FROM tenants ORDER BY created_at DESC');
       return jsonResponse({ tenants: rows });
     }
 
@@ -801,16 +801,17 @@ export async function onRequest(context) {
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, custom_llm_key } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key } = body;
 
       const hasCustomKey = custom_llm_key !== undefined;
-      const keyClause = hasCustomKey ? ', custom_llm_key = ?17' : '';
+      const keyClause = hasCustomKey ? ', custom_llm_key = ?18' : '';
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
         business_hours, system_prompt, slug, logo_url, tone_of_voice,
         response_delay_sec !== undefined ? Number(response_delay_sec) : null,
         operational_rules !== undefined ? operational_rules : null,
         business_type !== undefined ? business_type : null,
+        currency !== undefined ? currency : null,
         id
       ];
       if (hasCustomKey) {
@@ -818,11 +819,11 @@ export async function onRequest(context) {
       }
 
       await executeD1(
-        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type)${keyClause}, updated_at = datetime('now') WHERE id = ?16`,
+        `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type), currency = COALESCE(?16, currency)${keyClause}, updated_at = datetime('now') WHERE id = ?17 OR slug = ?17`,
         params
       );
 
-      const updated = await executeD1('SELECT * FROM tenants WHERE id = ?1', [id]);
+      const updated = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [id]);
       return jsonResponse({ success: true, tenant: updated[0] });
     }
 
@@ -1479,7 +1480,22 @@ export async function onRequest(context) {
         // 5. Pre-Cierre y Confirmación Tentativa de Órdenes (Botones Automáticos)
         let quickActions = [];
         const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(message);
-        const isAskingTotalOrCheckout = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|hacer\s*el\s*pedido)\b/i.test(message);
+        
+        // Detectar si pregunta específicamente por un ítem/platillo (ej: "cuanto es la hamburguesa", "cuanto vale el mini cheese", "precio del combo")
+        const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(message);
+
+        // Consultar la cuenta general del pedido ("cuánto es", "la cuenta", "cuánto es para pagar")
+        const isAskingBillTotal = !isAskingSpecificItem && (
+          /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|cuanto\s*debo(\s*en\s*total)?|cobrar|cerrar\s*(mi\s*)?orden|cerrar\s*(el\s*)?pedido)\b/i.test(message)
+          && !/\b(cuanto\s*(vale|cuesta|sale))\b/i.test(message)
+        );
+
+        // Consultar precio puntual de un platillo o producto ("cuánto vale el mini cheese", "cuánto cuesta...")
+        const isAskingItemPrice = !isAskingBillTotal && !isConfirmingOrder && (
+          isAskingSpecificItem ||
+          /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*c[oó]mo\s*(est[aá]|sale))\b/i.test(message)
+        );
+
         const isAddingMore = /\b(agregar\s*algo\s*m[aá]s|a[ñn]adir\s*algo\s*m[aá]s|ver\s*m[aá]s\s*productos|cambiar\s*algo)\b/i.test(message);
 
         if (isConfirmingOrder) {
@@ -1496,11 +1512,31 @@ export async function onRequest(context) {
           quickActions = [
             { id: 'send_receipt', label: '📸 Enviar Comprobante', actionText: 'Ya realicé el pago, aquí envío mi comprobante', variant: 'primary' }
           ];
-        } else if (isAskingTotalOrCheckout) {
-          contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
+        } else if (isAskingBillTotal) {
+          contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total de la cuenta o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
           quickActions = [
             { id: 'confirm_order', label: '✅ Confirmar Pedido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' },
             { id: 'add_more', label: '➕ Agregar algo más', actionText: 'Deseo agregar algo más a la orden', variant: 'secondary' }
+          ];
+        } else if (isAskingItemPrice) {
+          let itemLabel = '➕ Agregar al pedido';
+          let itemAction = 'Agregar al pedido';
+
+          if (matchedProducts.length > 0) {
+            const mp = matchedProducts[0];
+            const sym = (mp.currency || activeCurrency).toUpperCase() === 'CRC' ? '₡' : '$';
+            itemLabel = `➕ Agregar ${mp.name}`;
+            itemAction = `Agregar ${mp.name} (${sym}${mp.price})`;
+          } else {
+            const cleanQuery = message.replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cuanto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|que\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡]/g, '').trim();
+            if (cleanQuery.length > 2) {
+              const formattedName = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
+              itemLabel = `➕ Agregar ${formattedName}`;
+              itemAction = `Agregar ${formattedName} al pedido`;
+            }
+          }
+          quickActions = [
+            { id: 'add_item', label: itemLabel, actionText: itemAction, variant: 'gastronomic' }
           ];
         } else if (isAddingMore) {
           contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
@@ -1553,7 +1589,7 @@ export async function onRequest(context) {
           orderTotal,
           currency: activeCurrency,
           isRestaurant,
-          isAskingTotal: isAskingTotalOrCheckout
+          isAskingTotal: isAskingBillTotal
         });
       }
 
