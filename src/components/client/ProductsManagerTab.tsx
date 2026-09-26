@@ -122,6 +122,8 @@ export const ProductsManagerTab: React.FC<ProductsManagerTabProps> = ({
         productToEdit={editingProduct}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
+        defaultCurrency={tenant?.currency || 'CRC'}
+        businessType={tenant?.business_type || 'tienda'}
       />
 
       {/* 4. Modal de RAG de Producto */}

@@ -16,6 +16,21 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Adaptabilidad Dinámica de Ficha de Producto para Restaurantes y Moneda por Defecto del Negocio
+- **Requerimiento del Usuario:**
+  1. Adecuar los campos "Beneficios" y "Detalle del Producto" para que reflejen la naturaleza gastronómica cuando el negocio es de tipo Restaurante.
+  2. Asignar por defecto la moneda configurada durante el registro del comercio (`tenant.currency`) en la creación de productos, en lugar de forzar 'USD'.
+- **Solución Implementada (ARQMODULAR):**
+  1. *Ficha de Producto Adaptable (`ProductModalFieldsRight.tsx` y `ProductModal.tsx`):*
+     - Para `restaurante`: "Beneficios" se convierte en **"Ingredientes y Alérgenos"** y "Detalle del Producto" se transforma en **"Notas de Cocina y Preparación"**, con ejemplos contextuales de gastronomía (ingredientes, alérgenos, tiempos de cocción).
+     - Para `tienda`: Mantiene los campos de retail y especificaciones técnicas.
+  2. *Moneda Predeterminada del Negocio (`ProductModal.tsx` y `ProductsManagerTab.tsx`):*
+     - El modal de producto ahora recibe `defaultCurrency={tenant?.currency || 'CRC'}` y `businessType={tenant?.business_type || 'tienda'}`.
+     - Al abrir el modal para un nuevo producto, el selector de moneda adopta automáticamente la divisa registrada por el negocio.
+- **Verificación en Producción:**
+  - Build de Vite sin errores. Desplegado en Cloudflare Pages (`https://clikchat.pages.dev`).
+  - Auditoría headless en vivo (`npm run verify`): 10/10 rutas certificadas con 0 errores.
+
 ### [2026-09-26] Corrección Definitiva de Pantalla Negra por ReferenceError TDZ y Blindaje con ErrorBoundary
 - **Diagnóstico Exacto (Verificado con Chrome DevTools Protocol en Producción):**
   Al acceder a `/user/mi-negocio/:slug/mi-negocio` con cualquier slug dinámico (ej: `pizzas-deli`), la consola del navegador arrojaba:

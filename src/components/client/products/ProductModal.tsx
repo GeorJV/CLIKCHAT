@@ -10,15 +10,27 @@ interface Props {
   productToEdit: Product | null;
   onClose: () => void;
   onSubmit: (data: Partial<Product> & { name: string; price: number }) => Promise<boolean>;
+  defaultCurrency?: string;
+  businessType?: string;
 }
 
-export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, onSubmit }) => {
+export const ProductModal: React.FC<Props> = ({
+  isOpen,
+  productToEdit,
+  onClose,
+  onSubmit,
+  defaultCurrency = 'CRC',
+  businessType = 'tienda'
+}) => {
   if (!isOpen) return null;
 
+  const resolvedCurrency = productToEdit?.currency || defaultCurrency || 'CRC';
+  const isRestaurant = businessType === 'restaurante';
+
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('General');
+  const [category, setCategory] = useState(isRestaurant ? 'Platos Fuertes' : 'General');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState(resolvedCurrency);
   const [sku, setSku] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -31,9 +43,9 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
   useEffect(() => {
     if (productToEdit) {
       setName(productToEdit.name || '');
-      setCategory(productToEdit.details?.category || 'General');
+      setCategory(productToEdit.details?.category || (isRestaurant ? 'Platos Fuertes' : 'General'));
       setPrice(productToEdit.price ? String(productToEdit.price) : '');
-      setCurrency(productToEdit.currency || 'USD');
+      setCurrency(productToEdit.currency || defaultCurrency || 'CRC');
       setSku(productToEdit.details?.sku || `SKU-${Date.now().toString().slice(-6)}`);
       setDescription(productToEdit.short_description || productToEdit.full_description || '');
       setImageUrl(productToEdit.images?.[0] || '');
@@ -42,13 +54,25 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
       setBenefits(productToEdit.benefits?.map(b => b.startsWith('•') ? b : `• ${b}`).join('\n') || '');
       setDetails(productToEdit.details?.specifications || '');
     } else {
-      setName(''); setCategory('General'); setPrice(''); setCurrency('USD');
+      setName('');
+      setCategory(isRestaurant ? 'Platos Fuertes' : 'General');
+      setPrice('');
+      setCurrency(defaultCurrency || 'CRC');
       setSku(`SKU-${Date.now().toString().slice(-6)}`);
-      setDescription(''); setImageUrl(''); setExternalUrl(''); setIsActive(true);
-      setBenefits('• Atención al cliente inmediata y disponible 24/7\n• Reducción de hasta un 80% en los tiempos de respuesta\n• Captación y calificación de clientes potenciales en piloto automático');
-      setDetails('Tecnología: IA generativa avanzada y Procesamiento de Lenguaje Natural (NLP)\n• Canales: Integrable en sitios web, WhatsApp, Facebook Messenger o Instagram\n• Idiomas: Soporte multilingüe (Español, Inglés, etc.)');
+      setDescription('');
+      setImageUrl('');
+      setExternalUrl('');
+      setIsActive(true);
+      setBenefits(isRestaurant
+        ? '• 100% Carne fresca y jugosa de primera calidad\n• Pan artesanal tostado al momento\n• Queso fundido y aderezo exclusivo de la casa'
+        : '• Garantía oficial y envío inmediato\n• Materiales de alta resistencia\n• Soporte prioritario'
+      );
+      setDetails(isRestaurant
+        ? '• Tiempo de cocina estimado: 15-20 min\n• Acompañamiento: Incluye papas o ensalada\n• Alérgenos: Contiene lácteos y gluten'
+        : '• Especificaciones técnicas completas\n• Contenido del paquete original\n• Compatible con estándares universales'
+      );
     }
-  }, [productToEdit, isOpen]);
+  }, [productToEdit, isOpen, defaultCurrency, isRestaurant]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +133,13 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
               />
             </div>
             <div className="lg:col-span-5">
-              <ProductModalFieldsRight benefits={benefits} setBenefits={setBenefits} details={details} setDetails={setDetails} />
+              <ProductModalFieldsRight
+                benefits={benefits}
+                setBenefits={setBenefits}
+                details={details}
+                setDetails={setDetails}
+                businessType={businessType}
+              />
             </div>
           </div>
 
