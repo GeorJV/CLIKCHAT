@@ -16,6 +16,39 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Integración de GLM-5.3-Flash como Modelo Titular de Ultra Bajo Costo ($0.045 / $0.14) con Descarte de Razonamiento y Failover a DeepSeek
+- **Requerimiento:**
+  Adoptar un modelo de lenguaje de ultra bajo costo para máxima rentabilidad y escalabilidad del SaaS en comercios y restaurantes, manteniendo el clúster de DeepSeek como respaldo automático de alta disponibilidad.
+- **Implementación Arquitectónica:**
+  1. *Modelo Titular:* Configuración de `z-ai/glm-5.3-flash` ($0.045 / 1M tokens de entrada, $0.14 / 1M tokens de salida) como primer motor de inferencia prioritario en `functions/api/[[route]].js` y `server/services/llmRouter.js`.
+  2. *Sanitización de Razonamiento:* Filtrado estricto de tokens de pensamiento (`message.reasoning` / `<think>...</think>`), entregando al cliente únicamente la respuesta comercial directa y reduciendo a cero el desperdicio de tokens de salida.
+  3. *Cadena de Resiliencia Multi-Nivel:* Si GLM experimenta micro-cortes o demoras, el sistema conmuta instantáneamente al pool de DeepSeek sin interrupciones perceptibles para el usuario.
+- **Commits:** `5bc650b`
+
+### [2026-09-26] Blindaje y Pool de Alta Disponibilidad Multicluster de DeepSeek (V3.2, V3.1) con `allow_fallbacks: true`
+- **Requerimiento:**
+  Erradicar definitivamente las saturaciones y errores HTTP 429 de límite de tasa en OpenRouter, asegurando disponibilidad 24/7 y respuestas rápidas.
+- **Implementación:**
+  1. Configuración de clústeres redundantes en OpenRouter con directiva `allow_fallbacks: true`.
+  2. Pool dinámico balanceado con clústeres de alta velocidad `deepseek/deepseek-chat`, `deepseek/deepseek-v3.2` y fallback dinámico.
+  3. Reintentos automáticos con backoff exponencial en `functions/api/[[route]].js` y `server/services/llmRouter.js`.
+- **Commits:** `8a9aeec`
+
+### [2026-09-26] Módulo de Cuotas y Consumo Real en Vivo (Esta Hora, Hoy 24h, Este Mes) con Cloudflare D1
+- **Requerimiento:**
+  Visualizar en tiempo real el consumo exacto de mensajes del comercio con 3 tarjetas métricas (*Esta Hora*, *Hoy 24h*, *Este Mes*), reflejando datos 100% reales desde Cloudflare D1 y replicando el estándar de QChatt.
+- **Implementación Arquitectónica ARQMODULAR (<150 líneas por archivo):**
+  1. *Capa de Tipos y Estado:*
+     - `src/types/quotas.ts` (45 líneas): Definición de métricas de consumo por ventana temporal y cuotas asignadas.
+     - `src/hooks/useTenantQuotas.ts` (90 líneas): Hook con auto-refresco y conexión al endpoint de cuotas.
+  2. *Capa de UI:*
+     - `src/components/client/quotas/TenantConsumptionSection.tsx` (135 líneas): Tarjetas visuales de métricas con barras de progreso y estado dinámico.
+     - Integración en `ClientDashboard.tsx` y `ChatbotQLinkTab.tsx`.
+  3. *Backend Edge Functions (`functions/api/[[route]].js`):*
+     - Endpoint `GET /api/quotas/:tenantId`: Consultas SQL agregadas con `strftime('%Y-%m-%d %H')`, `strftime('%Y-%m-%d')` y `strftime('%Y-%m')` sobre la tabla `chat_messages`.
+     - Fallback seguro de cuotas (`7e3f442`) para garantizar disponibilidad 24/7 sin bloqueos por saturación de cuota D1.
+- **Commits:** `14acddd`, `7e3f442`
+
 ### [2026-09-26] Transformación a SaaS Real con Cuentas Aisladas, Auto-Registro y Autenticación Edge (Cloudflare D1 + PBKDF2 + JWT)
 - **Requerimiento:**
   Convertir ClikChat en un SaaS real de grado de producción donde cada cliente tenga una cuenta 100% independiente, privada y aislada para su negocio o tienda, eliminando el selector público y operando exclusivamente sobre la infraestructura nativa de Cloudflare.
