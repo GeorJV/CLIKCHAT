@@ -13,7 +13,7 @@ export const ProductsHeader: React.FC<ProductsHeaderProps> = ({
   tenantSlug = 'acme-store'
 }) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
-  const storeUrl = `${origin}/?t=${tenantSlug}`;
+  const storeUrl = `${origin}/chat/${tenantSlug}`;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">

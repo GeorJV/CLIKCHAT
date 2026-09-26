@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] URLs Limpias Universales y Rol de Mesero Gastronómico Proactivo (Upselling IA)
+- **Requerimiento del Usuario:**
+  1. Activar URLs limpias y legibles eliminando parámetros técnicos de consulta (`?t=...&p=...`):
+     - Tienda/Restaurante: `https://clikchat.pages.dev/chat/:tenantSlug`
+     - Producto/Plato: `https://clikchat.pages.dev/chat/:tenantSlug/:productSlug`
+  2. Implementar el rol de "Mesero Profesional Gastronómico" para negocios de tipo restaurante:
+     - El bot sugiere proactivamente acompañamientos (papas rústicas, ensalada) y bebidas adicionales (*"¿Te gustaría acompañar tu hamburguesa con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?"*).
+- **Solución Implementada (ARQMODULAR):**
+  1. *Estructura de URLs Limpias y Retrocompatibilidad (`src/hooks/useAppRouter.ts`):*
+     - Ruteador adaptado para reconocer `/chat/:tenantSlug` y `/chat/:tenantSlug/:productSlug`.
+     - Normalización transparente con `window.history.replaceState` para redirigir enlaces viejos con `?t=` o `?p=` a la ruta limpia sin recargar.
+     - Actualización de todos los generadores y botones de enlace en: `ProductCard.tsx`, `ProductsHeader.tsx`, `ProductExactKpis.tsx`, `TenantExactMetrics.tsx`, `SettingsWelcomeKitStep.tsx` y `SuperAdminDashboard.tsx`.
+  2. *Mesero Gastronómico y Venta Cruzada IA (`useProductChatSession.ts`, `functions/api/[[route]].js`, `salesFlowPresets.ts`):*
+     - En el backend (`functions/api/[[route]].js`), se inyectó el protocolo de mesero para comercios gastronómicos, instruyendo al modelo a sugerir complementos y bebidas de forma fluida.
+     - En el frontend (`useProductChatSession.ts`), el saludo inicial de productos gastronómicos incluye la recomendación directa de acompañamientos y bebidas con sobreprecio opcional.
+     - En `salesFlowPresets.ts`, `useAuth.ts` y `fallbackTenant.ts`, se incorporaron las plantillas de atención gastronómica para nuevas cuentas.
+- **Verificación Real en Producción (3 Filtros):**
+  - Filtro 1: Compilación Vite y validación esbuild de Cloudflare Functions 100% exitosas.
+  - Filtro 2: Despliegue en Cloudflare Pages (`https://clikchat.pages.dev`).
+  - Filtro 3: Suite ampliada de Chrome Headless CDP (`npm run verify`): **11/11 rutas operativas** (incluyendo landing, chat limpio de negocio, chat limpio de producto, dashboard, super admin y panel cliente) con 0 errores y 100% de DOM renderizado.
+
 ### [2026-09-26] Adaptabilidad Dinámica de Ficha de Producto para Restaurantes y Moneda por Defecto del Negocio
 - **Requerimiento del Usuario:**
   1. Adecuar los campos "Beneficios" y "Detalle del Producto" para que reflejen la naturaleza gastronómica cuando el negocio es de tipo Restaurante.

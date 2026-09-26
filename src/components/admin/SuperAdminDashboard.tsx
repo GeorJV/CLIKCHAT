@@ -356,7 +356,7 @@ export const SuperAdminDashboard: React.FC = () => {
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end space-x-1.5">
                       <a
-                        href={`/chat?t=${t.slug}`}
+                        href={`/chat/${t.slug}`}
                         target="_blank"
                         rel="noreferrer"
                         title="Abrir Chat Bot"

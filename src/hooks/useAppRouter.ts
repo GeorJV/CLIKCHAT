@@ -107,9 +107,23 @@ export function useAppRouter() {
     }
   }
 
-  const isChatSlugUrl = parts[0] === 'chat' && parts.length >= 2;
-  if (isChatSlugUrl) {
-    routeTenantSlug = parts[1];
+  const isChatProductUrl = parts[0] === 'chat' && parts.length >= 3;
+  const isChatSlugUrl = parts[0] === 'chat' && parts.length === 2;
+  if (isChatProductUrl) {
+    routeTenantSlug = decodeURIComponent(parts[1]);
+    routeProductId = decodeURIComponent(parts[2]);
+  } else if (isChatSlugUrl) {
+    routeTenantSlug = decodeURIComponent(parts[1]);
+  }
+
+  // Normalización limpia de URLs anteriores con parámetros ?t= y ?p=
+  if (typeof window !== 'undefined' && searchParams.has('t') && !isPanelUrl) {
+    const tSlug = searchParams.get('t');
+    const pSlug = searchParams.get('p');
+    if (tSlug) {
+      const cleanPath = pSlug ? `/chat/${encodeURIComponent(tSlug)}/${encodeURIComponent(pSlug)}` : `/chat/${encodeURIComponent(tSlug)}`;
+      window.history.replaceState(null, '', cleanPath);
+    }
   }
 
   const isProductSlugUrl = parts[0] === 'producto' && parts.length >= 2;
@@ -118,7 +132,7 @@ export function useAppRouter() {
     if (parts[2]) routeProductId = parts[2];
   }
 
-  const isProductUrl = isProductSlugUrl || pathname === '/producto' || pathname.startsWith('/p/') || searchParams.has('p') || searchParams.get('view') === 'product';
+  const isProductUrl = isChatProductUrl || isProductSlugUrl || pathname === '/producto' || pathname.startsWith('/p/') || searchParams.has('p') || searchParams.get('view') === 'product';
   const isServiceUrl = pathname === '/servicio' || pathname.startsWith('/servicio/') || searchParams.has('s') || searchParams.get('view') === 'service';
   const isChatUrl = isChatSlugUrl || pathname === '/chat' || searchParams.get('view') === 'chat';
   const isAdminUrl = pathname === '/super-admin' || searchParams.get('view') === 'admin';

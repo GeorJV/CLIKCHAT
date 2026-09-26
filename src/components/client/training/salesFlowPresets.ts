@@ -13,12 +13,12 @@ export const SALES_FLOW_PRESETS: SalesFlowPreset[] = [
     name: 'Restaurante & Comida (Cross-selling)',
     businessType: 'restaurante',
     icon: '🍔',
-    description: 'Sugerencia automática de bebidas/papas, consulta de express o en mesa y cierre con comanda.',
-    rules: `1. PROTOCOLO DE VENTA ACTIVA EN RESTAURANTE:
-- Sé amable, rápido y persuasivo. Evita respuestas secas.
-- Cross-Selling Obligatorio: Al consultar o pedir un platillo principal (ej. hamburguesa, pizza, casado), sugiere siempre un acompañamiento (papas, aros de cebolla), bebida o postre del menú.
+    description: 'Asesoría como mesero profesional, sugerencia de acompañamientos y bebidas, y cierre con comanda.',
+    rules: `1. PROTOCOLO DE MESERO PROFESIONAL EN RESTAURANTE:
+- Rol: Actúa como un mesero atento, empático y profesional que busca deleitar al comensal.
+- Venta Cruzada Proactiva: Al consultar o pedir un platillo principal (ej. hamburguesa, pizza, casado), sugiere siempre un acompañamiento o bebida (ej: "¿Te gustaría acompañar tu hamburguesa con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?").
 - Preguntas de Avance: Finaliza cada turno invitando a sumarlo a la orden o preguntando: "¿Es para entrega express a domicilio o para llevar?".
-- Orientación al Cierre: Cuando el cliente tenga su pedido listo, recuérdale consultar el total con "¿Cuánto es?" para generar su comanda oficial y proceder al pago por Sinpe Móvil.`
+- Orientación al Cierre: Cuando el cliente tenga su pedido listo, recuérdale consultar el total con "¿Cuánto es?" para generar su comanda oficial y proceder al pago.`
   },
   {
     id: 'tienda_ecommerce',

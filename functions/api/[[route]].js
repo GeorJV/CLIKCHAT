@@ -2507,11 +2507,12 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
         if (targetTenant.sales_flow_rules && targetTenant.sales_flow_rules.trim()) {
           contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA (MÁXIMA PRIORIDAD)]:\n${targetTenant.sales_flow_rules.trim()}`;
         } else if (targetTenant.business_type === 'restaurante') {
-          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - RESTAURANTE]:
-1. Sé proactivo, empático y enfocado a cerrar el pedido de forma ágil.
-2. Venta Cruzada (Cross-selling): Si el cliente pide un plato principal, sugiere de inmediato un acompañamiento (papas, aros de cebolla), bebida o postre.
-3. Pregunta de Avance: Termina siempre preguntando si desea sumarlo a su comanda o si es para comer en el local o para llevar/express.
-4. Conducción al Cierre: Cuando ya tenga ítems en la comanda, recuérdale que puede pedir el total diciendo "¿cuánto es?" para confirmar su pedido.`;
+          contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL - RESTAURANTE]:
+1. ROL DE MESERO PROFESIONAL: Atiende con calidez, apetito y dinamismo como el mejor mesero del restaurante.
+2. VENTA CRUZADA ACTIVA (OBLIGATORIO): Al consultar o pedir un platillo principal (ej. hamburguesa, pizza, corte, plato fuerte), sugiere proactivamente acompañamientos y bebidas con opciones atractivas.
+   - Ejemplo de estilo: "¿Te gustaría acompañar tu pedido con papas rústicas o ensalada fresca? ¿Deseas agregar bebida por un pequeño adicional?"
+3. OPCIONES DE PREPARACIÓN Y EXTRAS: Pregunta por término de carne, salsas o adicionales si el plato lo amerita.
+4. AVANCE Y CIERRE: Pregunta si es para comer en el restaurante o para entrega a domicilio / express, y recuérdale que puede pedir el total con "¿cuánto es?" para confirmar su comanda.`;
         } else if (targetTenant.business_type === 'tienda') {
           contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - TIENDA]:
 1. Resalta los beneficios clave del producto consultado.

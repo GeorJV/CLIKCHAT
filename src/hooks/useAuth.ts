@@ -234,10 +234,10 @@ export function useAuth() {
       plan: 'pro',
       status: 'active',
       welcome_message: isRestaurant
-        ? '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿En qué podemos deleitarte hoy?'
+        ? '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿Qué se te antoja ordenar hoy?'
         : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?',
       system_prompt: isRestaurant
-        ? 'Eres el asesor comercial oficial del restaurante. Ayuda al cliente y guía su pedido a WhatsApp.'
+        ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, sugiere acompañamientos y bebidas (ej: "¿Te gustaría acompañar tu hamburguesa con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?"), y ayuda al cliente a armar su pedido.'
         : 'Eres el asesor comercial oficial de la tienda. Ayuda al cliente y guía su compra a WhatsApp.',
       response_delay_sec: 1
     };

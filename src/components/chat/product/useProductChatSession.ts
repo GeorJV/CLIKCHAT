@@ -61,8 +61,9 @@ export function useProductChatSession({
           if (typeof data?.activeOrder?.totalAmount === 'number' && data.activeOrder.totalAmount > 0) {
             onRestoreOrderTotal?.(data.activeOrder.totalAmount);
           }
-        } else if (isMounted) {
-          const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
+          const defaultGreeting = isRestaurant
+            ? `¡Hola! 👋 Te saluda **${agentName}** de **${storeName}**.\n\nVeo que se te antoja nuestro delicioso **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Te gustaría que te preparemos uno? ¿Te gustaría acompañarlo con papas rústicas o ensalada? ¿Deseas agregar bebida por un pequeño adicional?`
+            : `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
           const dynamicGreeting = welcomeMessage
             ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
             : defaultGreeting;
@@ -70,12 +71,12 @@ export function useProductChatSession({
             id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
             content: dynamicGreeting,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
+            ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida comanda' },
           }]);
         }
       }).catch(() => {});
     return () => { isMounted = false; };
-  }, [selectedProduct.id, selectedProduct.title, agentName, storeName, sessId, welcomeMessage]);
+  }, [selectedProduct.id, selectedProduct.title, selectedProduct.price, selectedProduct.currency, agentName, storeName, sessId, welcomeMessage, isRestaurant]);
 
   const trackEvent = (event: string, temperature?: string) => {
     if (!selectedProduct.id) return;

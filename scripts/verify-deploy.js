@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Script de Verificación Integral de Producción (Filtro 3 - Suite Completa)
  * Audita todas las rutas críticas en Chrome Headless para garantizar 0 fallos.
  */
@@ -10,7 +10,8 @@ const BASE_URL = process.env.BASE_URL || 'https://clikchat.pages.dev';
 
 const ROUTES = [
   { path: '/', label: 'Web Oficial / Landing' },
-  { path: '/chat/geosoft', label: 'Chat Móvil con Bot' },
+  { path: '/chat/geosoft', label: 'Chat Negocio (Ruta Limpia)' },
+  { path: '/chat/geosoft/demo-producto', label: 'Chat Producto (Ruta Limpia)' },
   { path: '/producto', label: 'Chat de Catálogo Producto' },
   { path: '/servicio', label: 'Chat de Reserva de Servicio' },
   { path: '/user/mi-negocio/geosoft/mi-negocio', label: 'Panel: Mi Negocio' },
