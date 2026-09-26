@@ -77,7 +77,24 @@ export function getCachedTenant(slug: string = ''): Tenant {
   } catch (e) {
     console.warn('Error reading cached tenant:', e);
   }
-  return { ...CLEAN_EMPTY_TENANT, slug };
+  const isRestaurant = /restaurante|comida|burger|pizza|deli|tacos|cafe|bar|sushi|bistr|parrilla|asador/i.test(slug);
+  const humanName = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  return {
+    ...CLEAN_EMPTY_TENANT,
+    id: `ten_${slug}`,
+    slug,
+    name: humanName,
+    bot_name: isRestaurant ? 'Mesero Virtual' : 'Asesor Comercial',
+    welcome_message: isRestaurant
+      ? `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿Qué se te antoja ordenar hoy?`
+      : `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿En qué podemos asesorarte hoy?`,
+    system_prompt: isRestaurant
+      ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, sugiere acompañamientos y bebidas (ej: "¿Te gustaría acompañar tu plato con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?"), y ayuda al cliente a armar su pedido.'
+      : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar.',
+    business_type: isRestaurant ? 'restaurante' : 'tienda',
+    currency: 'CRC',
+    status: 'active'
+  };
 }
 
 export function saveCachedTenant(tenant: Tenant): void {

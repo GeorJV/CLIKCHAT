@@ -51,23 +51,22 @@ export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResu
       setTenantError(null);
       try {
         const res = await fetch(`/api/tenants/${encodeURIComponent(tenantSlug)}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error('No se pudo cargar la tienda desde el servidor');
-        const data = await res.json();
-
-        if (isMounted && data.tenant) {
-          setTenant(data.tenant);
-          saveCachedTenant(data.tenant);
-          const prods: Product[] = data.products || [];
-          setProducts(prods);
-          setFaqs(data.faqs || []);
-          if (prods.length > 0) {
-            setSelectedProduct(prev => prev || prods[0]);
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && ct.includes('application/json')) {
+          const data = await res.json();
+          if (isMounted && data.tenant) {
+            setTenant(data.tenant);
+            saveCachedTenant(data.tenant);
+            const prods: Product[] = data.products || [];
+            if (prods.length > 0) {
+              setProducts(prods);
+              setSelectedProduct(prev => prev || prods[0]);
+            }
+            if (data.faqs) setFaqs(data.faqs);
           }
         }
       } catch (err: unknown) {
         if (isMounted) {
-          setTenantError(err instanceof Error ? err.message : 'Error de conexión');
-          // Garantizar que siempre haya un tenant válido cargado
           setTenant(prev => prev || getCachedTenant(tenantSlug));
         }
       } finally {

@@ -108,7 +108,7 @@ export function App() {
 
         {currentView === 'product' && (
           <div className="h-full w-full overflow-hidden bg-[#222020]">
-            {isResolvingProduct || !productItem ? (
+            {isResolvingProduct && !productItem ? (
               <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
                 <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
                 <span className="text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</span>
@@ -119,8 +119,8 @@ export function App() {
                 agentName={agentName || 'Asistente Virtual'}
                 agentAvatar={agentAvatar}
                 welcomeMessage={welcomeMessage}
-                initialProduct={productItem}
-                products={[productItem]}
+                initialProduct={productItem || DEFAULT_PRODUCT}
+                products={productItem ? [productItem] : [DEFAULT_PRODUCT]}
                 responseDelaySec={responseDelaySec}
                 businessType={businessType}
                 onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
@@ -131,7 +131,7 @@ export function App() {
 
         {currentView === 'service' && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
-            {isResolvingProduct || !storeName ? (
+            {isResolvingProduct && !storeName ? (
               <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
                 <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
                 <span className="text-xs font-semibold text-zinc-300">Cargando servicio y asesoría virtual...</span>

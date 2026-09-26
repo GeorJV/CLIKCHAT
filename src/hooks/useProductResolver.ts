@@ -14,34 +14,57 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
     category: p.details?.category || 'Catálogo Oficial',
     price: Number(p.price) || 0,
     originalPrice: p.price ? Math.round(Number(p.price) * 1.35) : undefined,
-    currency: p.currency || 'USD',
+    currency: p.currency || 'CRC',
     image: images[0] || '',
-    images: images,
+    images,
     stock: 25,
     inStock: true,
     benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : [
-      'Disponibilidad 24/7: Atención siempre activa, incluso fuera de horario.',
-      'Respuestas instantáneas: Reduce el tiempo de espera para tus clientes.',
-      'Mejora la satisfacción con experiencias personalizadas y reduce costos operativos.'
+      'Disponibilidad inmediata y atención personalizada 24/7.',
+      'Garantía de calidad y satisfacción asegurada.'
     ],
     description: p.full_description || p.short_description || '',
     specifications: p.details || {}
   };
 }
 
+function synthesizeFallbackProduct(idOrSlug: string, isRestaurant: boolean, currency: string = 'CRC'): ProductItem {
+  const isId = idOrSlug.startsWith('prod_');
+  const title = isId ? (isRestaurant ? 'Especialidad de la Casa' : 'Producto Destacado') : idOrSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  const isCRC = (currency || 'CRC').toUpperCase() === 'CRC';
+  const price = isCRC ? (isRestaurant ? 5500 : 15000) : (isRestaurant ? 9.99 : 24.99);
+
+  return {
+    id: idOrSlug,
+    title,
+    slug: isId ? 'especialidad' : idOrSlug,
+    category: isRestaurant ? 'Plato Principal' : 'Catálogo Oficial',
+    price,
+    currency,
+    image: '',
+    images: [],
+    stock: 50,
+    inStock: true,
+    benefits: isRestaurant ? ['Ingredientes frescos del día.', 'Preparación artesanal al momento.', 'Guarnición o bebida opcional.'] : ['Garantía oficial y entrega inmediata.', 'Atención personalizada 24/7.'],
+    description: isRestaurant ? `Disfruta de ${title}, preparado con ingredientes frescos y auténtico sabor.` : `${title} con las mejores especificaciones de la tienda.`,
+    specifications: {}
+  };
+}
+
 export function useProductResolver(productId: string | null, tenantSlug: string = 'geosoft') {
   const cached = getCachedTenant(tenantSlug);
   const isDemo = tenantSlug === 'geosoft';
-  const initialStoreName = cached.name || (isDemo ? 'Restaurante ClikChat' : '');
+  const isRestaurant = cached.business_type === 'restaurante';
+  const initialStoreName = cached.name || (isDemo ? 'Restaurante ClikChat' : 'Tienda Oficial');
 
   const [productItem, setProductItem] = useState<ProductItem | null>(null);
   const [storeName, setStoreName] = useState<string>(initialStoreName);
-  const [agentName, setAgentName] = useState<string>(cached.bot_name || (isDemo ? 'Asesora Virtual' : ''));
+  const [agentName, setAgentName] = useState<string>(cached.bot_name || (isRestaurant ? 'Mesero Virtual' : 'Asesor Comercial'));
   const [agentAvatar, setAgentAvatar] = useState<string>(cached.avatar_url || '');
   const [welcomeMessage, setWelcomeMessage] = useState<string>(cached.welcome_message || '');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(cached.response_delay_sec || 1);
-  const [businessType, setBusinessType] = useState<string>(cached.business_type || (isDemo ? 'restaurante' : 'tienda'));
+  const [businessType, setBusinessType] = useState<string>(cached.business_type || (isRestaurant ? 'restaurante' : 'tienda'));
   const hasTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -50,117 +73,99 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
     async function resolve() {
       setIsLoading(true);
 
-      // If no productId, fetch first product of tenant
+      // 1. Si no hay productId, resolver catálogo general de la tienda
       if (!productId) {
+        let defaultItem: ProductItem = {
+          ...DEFAULT_PRODUCT,
+          title: `Catálogo Oficial`,
+          description: `Bienvenido a la tienda de ${initialStoreName}.`,
+          currency: cached.currency || 'CRC'
+        };
         try {
           const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' });
-          if (tRes.ok) {
+          const ct = tRes.headers.get('content-type') || '';
+          if (tRes.ok && ct.includes('application/json')) {
             const tData = await tRes.json();
             if (tData.tenant?.name && isMounted) setStoreName(tData.tenant.name);
-            if (tData.tenant?.bot_name && isMounted) setAgentName(tData.tenant.bot_name);
-            if (tData.tenant?.avatar_url && isMounted) setAgentAvatar(tData.tenant.avatar_url);
-            if (tData.tenant?.welcome_message && isMounted) setWelcomeMessage(tData.tenant.welcome_message);
-            if (tData.tenant?.response_delay_sec !== undefined && tData.tenant?.response_delay_sec !== null && isMounted) {
-              setResponseDelaySec(Math.max(1, Number(tData.tenant.response_delay_sec)));
-            }
-            if (tData.tenant?.business_type && isMounted) setBusinessType(tData.tenant.business_type);
-            if (tData.products && tData.products.length > 0 && isMounted) {
-              setProductItem(toProductItem(tData.products[0]));
-              return;
+            if (tData.products && tData.products.length > 0) {
+              defaultItem = toProductItem(tData.products[0]);
             }
           }
         } catch (e) {}
+
         if (isMounted) {
-          setProductItem({
-            ...DEFAULT_PRODUCT,
-            title: `Catálogo Oficial`,
-            description: `Bienvenido a la tienda de ${initialStoreName}.`,
-            image: '',
-            images: []
-          });
+          setProductItem(defaultItem);
+          setIsLoading(false);
         }
-        setIsLoading(false);
         return;
       }
 
-      // Check localStorage for instant preview
+      // 2. Comprobar caché local multi-fuente (prioridad instantánea sin latencia)
+      let resolvedItem: ProductItem | null = null;
       try {
-        const savedProds = localStorage.getItem('clikchat_products');
-        if (savedProds) {
-          const list: Product[] = JSON.parse(savedProds);
-          const found = list.find((p) => p.id === productId || p.slug === productId);
-          if (found && isMounted) {
-            setProductItem(toProductItem(found));
+        const localKeys = [`clikchat_products_${tenantSlug}`, 'clikchat_products'];
+        for (const key of localKeys) {
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const list: Product[] = JSON.parse(saved);
+            const found = list.find((p) => p.id === productId || p.slug === productId || p.name?.toLowerCase() === productId.replace(/-/g, ' ').toLowerCase());
+            if (found) {
+              resolvedItem = toProductItem(found);
+              break;
+            }
           }
         }
       } catch (e) {}
 
-      // Fetch from Cloudflare D1 Edge
-      try {
-        const [prodRes, tenantRes] = await Promise.allSettled([
-          fetch('/api/products/' + encodeURIComponent(productId), { cache: 'no-store' }),
-          fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' })
-        ]);
-
-        if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
-          const data = await prodRes.value.json();
-          if (data.product && isMounted) {
-            setProductItem(toProductItem(data.product));
-          }
-        }
-
-        if (tenantRes.status === 'fulfilled' && tenantRes.value.ok) {
-          const tData = await tenantRes.value.json();
-          if (tData.tenant && isMounted) {
-            if (tData.tenant.name) setStoreName(tData.tenant.name);
-            if (tData.tenant.bot_name) setAgentName(tData.tenant.bot_name);
-            if (tData.tenant.avatar_url) setAgentAvatar(tData.tenant.avatar_url);
-            if (tData.tenant.welcome_message) setWelcomeMessage(tData.tenant.welcome_message);
-            if (tData.tenant.response_delay_sec !== undefined && tData.tenant.response_delay_sec !== null) {
-              setResponseDelaySec(Math.max(1, Number(tData.tenant.response_delay_sec)));
-            }
-            if (tData.tenant.business_type) setBusinessType(tData.tenant.business_type);
-          }
-          if (tData.products && Array.isArray(tData.products)) {
-            const foundInTenant = tData.products.find((p: Product) => p.id === productId || p.slug === productId);
-            if (foundInTenant && isMounted) {
-              setProductItem(toProductItem(foundInTenant));
-            } else if (tData.products.length > 0 && isMounted) {
-              setProductItem(toProductItem(tData.products[0]));
-            } else if (isMounted) {
-              setProductItem({
-                ...DEFAULT_PRODUCT,
-                title: `Catálogo Oficial`,
-                description: `Bienvenido a la tienda de ${tData.tenant?.name || initialStoreName}.`,
-                image: '',
-                images: []
-              });
-            }
-          }
-        }
-
-        // Deduplicar: Contar estrictamente 1 sola apertura por sesión de visita
-        const now = Date.now();
-        const sessionKey = `clik_view_${productId}`;
-        const lastTracked = typeof window !== 'undefined' ? sessionStorage.getItem(sessionKey) : null;
-        const cooldownMs = 15000;
-
-        if (hasTrackedRef.current !== productId && (!lastTracked || now - Number(lastTracked) > cooldownMs)) {
-          hasTrackedRef.current = productId;
-          if (typeof window !== 'undefined') {
-            try { sessionStorage.setItem(sessionKey, String(now)); } catch (e) {}
-          }
-          fetch('/api/products/' + encodeURIComponent(productId) + '/track', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'view' })
-          }).catch(() => {});
-        }
-      } catch (err) {
-        console.warn('Error resolviendo producto para QLink:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
+      if (resolvedItem && isMounted) {
+        setProductItem(resolvedItem);
       }
+
+      // 3. Consulta de red resiliente con verificación estricta de Content-Type
+      try {
+        const prodPromise = fetch('/api/products/' + encodeURIComponent(productId), { cache: 'no-store' })
+          .then(async res => {
+            const ct = res.headers.get('content-type') || '';
+            if (res.ok && ct.includes('application/json')) return res.json();
+            return null;
+          }).catch(() => null);
+
+        const tenantPromise = fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' })
+          .then(async res => {
+            const ct = res.headers.get('content-type') || '';
+            if (res.ok && ct.includes('application/json')) return res.json();
+            return null;
+          }).catch(() => null);
+
+        const [prodData, tenantData] = await Promise.all([prodPromise, tenantPromise]);
+
+        if (prodData?.product && isMounted) {
+          resolvedItem = toProductItem(prodData.product);
+          setProductItem(resolvedItem);
+        }
+
+        if (tenantData?.tenant && isMounted) {
+          const t = tenantData.tenant;
+          if (t.name) setStoreName(t.name);
+          if (t.bot_name) setAgentName(t.bot_name);
+          if (t.avatar_url) setAgentAvatar(t.avatar_url);
+          if (t.welcome_message) setWelcomeMessage(t.welcome_message);
+          if (t.business_type) setBusinessType(t.business_type);
+        }
+
+        if (!resolvedItem && tenantData?.products && Array.isArray(tenantData.products)) {
+          const foundInTenant = tenantData.products.find((p: Product) => p.id === productId || p.slug === productId);
+          if (foundInTenant && isMounted) {
+            resolvedItem = toProductItem(foundInTenant);
+            setProductItem(resolvedItem);
+          }
+        }
+      } catch (err) {}
+
+      if (!resolvedItem && isMounted) {
+        setProductItem(synthesizeFallbackProduct(productId, isRestaurant, cached.currency || 'CRC'));
+      }
+      if (isMounted) setIsLoading(false);
     }
 
     resolve();
