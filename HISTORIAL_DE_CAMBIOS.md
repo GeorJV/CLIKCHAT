@@ -22,6 +22,8 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   2. Detección instantánea en cliente (`orderPriceExtractor.ts`) al pulsar `[➕ Agregar]` o solicitar un producto, sumando el precio inmediatamente al botón y activando el efecto parpadeante (ring-pulse dorado) de 10 segundos.
   3. Gestión y persistencia de comanda activa en Cloudflare D1 (`orders` con estado `draft`), actualizando el acumulado matemáticamente e inyectándolo al contexto del LLM para el cierre de comanda y cotización exacta.
   4. Sincronización bidireccional y recuperación automática del total acumulado ante recargas de página vía `GET /api/chat/messages/:sessionId`.
+  5. Flujo de Resumen de Comanda: Respuesta obligatoria "¡Perfecto! 😊 Entonces tu pedido queda así:" con la lista completa de ítems acumulados y total cada vez que el cliente suma o modifica su comanda.
+  6. Consultas de Ingredientes / Contenido: Detección inteligente de preguntas sobre qué trae o incluye un producto/combo/platillo, con explicación apetitosa, precio oficial, pregunta de cierre "¿Deseas agregar [Producto] a tu pedido?" y botón interactivo rápido `[➕ Sí, quiero agregar X]`.
 - **Arquitectura Modular (ARQMODULAR):** Creación de componentes y hooks atómicos `orderPriceExtractor.ts` (70 líneas), `ProductModalsContainer.tsx` (56 líneas) y `useProductChatSession.ts` (98 líneas), manteniendo todos los archivos estrictamente < 175 líneas.
 
 ### [2026-09-24] Corrección Universal de Codificación UTF-8 en Cloudflare D1 y Edge Gateway

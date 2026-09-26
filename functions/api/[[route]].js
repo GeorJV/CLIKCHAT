@@ -1514,6 +1514,11 @@ export async function onRequest(context) {
           /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*como\s*(esta|sale))\b/i.test(normMsg)
         );
 
+        // Consultar qué trae, qué incluye, qué contiene o ingredientes de un ítem/combo
+        const isAskingItemDetails = !isAskingBillTotal && !isConfirmingOrder && (
+          /\b(que\s*(trae|incluye|contiene|lleva|viene)|de\s*que\s*(es|esta\s*hech[oa])|cuales\s*son\s*los\s*ingredientes|ingredientes|como\s*viene|que\s*es\s*(el|la|este|esta)|cuentame\s*de|informacion\s*de)\b/i.test(normMsg)
+        );
+
         const isAddingMore = /\b(agregar\s*algo\s*mas|anadir\s*algo\s*mas|ver\s*mas\s*productos|cambiar\s*algo)\b/i.test(normMsg);
 
         // Gestión y persistencia de comanda activa en D1 por sesión
@@ -1577,7 +1582,13 @@ export async function onRequest(context) {
 Total acumulado actual: ${currencySymbol}${draftTotal} ${activeCurrency}
 Ítems registrados:
 ${draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${it.price})`).join('\n')}
-Instrucción de venta: Confirma de manera cálida que el ítem fue sumado a su comanda, menciona que su total acumulado va en ${currencySymbol}${draftTotal} ${activeCurrency}, y sugiere un acompañamiento o pregunta si desea pedir la cuenta diciendo "¿cuánto es?".`;
+Instrucción obligatoria de respuesta:
+1) Si el cliente agregó un ítem o consulta el estado de su orden, responde con esta frase:
+"¡Perfecto! 😊 Entonces tu pedido queda así:"
+2) A continuación, presenta de forma OBLIGATORIA el resumen de los ítems que lleva la orden hasta el momento en formato de lista clara:
+${draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${it.price})`).join('\n')}
+💰 Total acumulado: ${currencySymbol}${draftTotal} ${activeCurrency}
+3) Luego sugiere con entusiasmo y amabilidad si desea agregar una bebida, acompañamiento o postre, o si desea pedir la cuenta diciendo "¿cuánto es?".`;
         }
 
         let renderedTicket = '';
@@ -1651,27 +1662,45 @@ ${renderedTicket}
             { id: 'confirm_order', label: '✅ Confirmar Pedido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' },
             { id: 'add_more', label: '➕ Agregar algo más', actionText: 'Deseo agregar algo más a la orden', variant: 'secondary' }
           ];
-        } else if (isAskingItemPrice) {
-          let itemLabel = '➕ Agregar al pedido';
+        } else if (isAskingItemDetails || isAskingItemPrice) {
+          let itemLabel = '➕ Sí, lo quiero agregar';
           let itemAction = 'Agregar al pedido';
+          let prodName = '';
+          let prodPrice = 0;
 
           if (matchedProducts.length > 0) {
             const mp = matchedProducts[0];
             const sym = (mp.currency || activeCurrency).toUpperCase() === 'CRC' ? '₡' : '$';
-            itemLabel = `➕ Agregar ${mp.name}`;
+            prodName = mp.name;
+            prodPrice = mp.price;
+            itemLabel = `➕ Sí, quiero agregar ${mp.name}`;
             itemAction = `Agregar ${mp.name} (${sym}${mp.price})`;
           } else {
             const cleanQuery = message
               .replace(/^[¿¡\s]+/, '')
-              .replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|qu[eé]\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '')
+              .replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:qu[eé]\s*(?:trae|incluye|contiene|lleva|es)|cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|c[oó]mo\s*viene)\s*(?:el|la|los|las|un|una)?\s*/i, '')
               .replace(/[?¿!¡]/g, '')
               .trim();
             if (cleanQuery.length > 2) {
               const formattedName = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
-              itemLabel = `➕ Agregar ${formattedName}`;
+              prodName = formattedName;
+              itemLabel = `➕ Sí, quiero agregar ${formattedName}`;
               itemAction = `Agregar ${formattedName} al pedido`;
             }
           }
+
+          if (isAskingItemDetails) {
+            contextBlock += `\n\n[CONSULTA SOBRE DETALLES / INGREDIENTES / CONTENIDO DEL PRODUCTO]:
+El cliente está preguntando qué trae, qué incluye o cuáles son los ingredientes ${prodName ? `de "${prodName}"` : 'del producto'}.
+Instrucciones obligatorias:
+1) Explica con amabilidad, entusiasmo y apetitosidad qué ingredientes, componentes o porciones trae según la información del catálogo.
+2) Menciona claramente su precio oficial (${activeSym}${prodPrice || '[Precio]'}).
+3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"`;
+          } else if (isAskingItemPrice) {
+            contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
+Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda.`;
+          }
+
           quickActions = [
             { id: 'add_item', label: itemLabel, actionText: itemAction, variant: 'gastronomic' }
           ];
