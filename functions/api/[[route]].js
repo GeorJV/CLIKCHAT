@@ -993,6 +993,47 @@ export async function onRequest(context) {
       });
     }
 
+    // DELETE ACCOUNT: POST /api/auth/delete-account
+    if (segments[0] === 'auth' && segments[1] === 'delete-account' && (request.method === 'POST' || request.method === 'DELETE')) {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const authUser = await getAuthUser(request, env);
+      const targetEmail = (authUser?.email || body?.email || '').toLowerCase().trim();
+
+      if (!targetEmail) {
+        return jsonResponse({ error: 'No se pudo identificar la cuenta a eliminar' }, 400);
+      }
+
+      if (targetEmail === 'demo@clikchat.com' || targetEmail === 'superadmin@clikchat.com') {
+        return jsonResponse({ error: 'La cuenta de demostración o del sistema está protegida y no puede ser eliminada.' }, 403);
+      }
+
+      try {
+        let userRows = await executeD1('SELECT id, tenant_id FROM users WHERE email = ?1 LIMIT 1', [targetEmail]);
+        const tenantId = userRows[0]?.tenant_id || authUser?.tenantId;
+
+        if (tenantId && tenantId !== 'a0000000-0000-0000-0000-000000000001') {
+          await executeD1('DELETE FROM chat_messages WHERE tenant_id = ?1', [tenantId]);
+          await executeD1('DELETE FROM products WHERE tenant_id = ?1', [tenantId]);
+          await executeD1('DELETE FROM faqs WHERE tenant_id = ?1', [tenantId]);
+          await executeD1('DELETE FROM orders WHERE tenant_id = ?1', [tenantId]);
+          await executeD1('DELETE FROM tenants WHERE id = ?1', [tenantId]);
+        }
+        await executeD1('DELETE FROM users WHERE email = ?1', [targetEmail]);
+      } catch (d1Err) {
+        console.warn('D1 delete account warning (handled):', d1Err.message);
+      }
+
+      if (memoryUsers.has(targetEmail)) {
+        memoryUsers.delete(targetEmail);
+      }
+
+      return jsonResponse({
+        success: true,
+        message: 'Cuenta y datos asociados eliminados definitivamente'
+      });
+    }
+
     // TRACKING: POST /api/products/:id/track
     if (segments[0] === 'products' && segments.length >= 3 && segments[2] === 'track' && request.method === 'POST') {
       const id = segments[1];

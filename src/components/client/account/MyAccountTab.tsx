@@ -5,6 +5,7 @@ import { AuthUser } from '../../../types/auth';
 import { AccountBillingCard } from './AccountBillingCard';
 import { AccountContactCard } from './AccountContactCard';
 import { AccountSecurityCard } from './AccountSecurityCard';
+import { AccountDangerZoneCard } from './AccountDangerZoneCard';
 
 interface MyAccountTabProps {
   tenant: Tenant | null;
@@ -40,6 +41,9 @@ export const MyAccountTab: React.FC<MyAccountTabProps> = ({
 
       {/* 3. Tarjeta de Seguridad y Cambio de Contraseña */}
       <AccountSecurityCard userEmail={userEmail} />
+
+      {/* 4. Zona de Peligro: Eliminar Cuenta */}
+      <AccountDangerZoneCard tenant={tenant} userEmail={userEmail} />
     </div>
   );
 };
