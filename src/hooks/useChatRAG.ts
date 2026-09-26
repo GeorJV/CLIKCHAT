@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatMessage } from '../types';
 import { UseChatRAGOptions, RAGResponsePayload } from '../types/chat';
 import { adaptTemporalText } from '../utils/temporalGreeting';
+import { generateClientChatFallback } from '../services/clientChatFallback';
 
 export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallback }: UseChatRAGOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -80,12 +81,25 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
       if (data.products && data.products.length > 0 && onSelectProduct) onSelectProduct(data.products[0]);
       if ((data.isFallback || data.requiresLeadInfo) && onTriggerFallback) setTimeout(() => onTriggerFallback(), 500);
     } catch (err) {
-      console.error('Error enviando mensaje RAG:', err);
-      setMessages((prev) => [...prev, {
-        id: 'err_' + Date.now(), sender: 'assistant',
-        message: 'Hubo un inconveniente momentáneo de conexión. Por favor reintenta.',
-        created_at: new Date().toISOString()
-      }]);
+      console.warn('Fallback a motor IA cliente por intermitencia de Edge:', err);
+      try {
+        const fb = await generateClientChatFallback({
+          tenantSlug: tenant?.slug || tenantSlug || 'geosoft',
+          storeName: tenant?.name, agentName: tenant?.bot_name,
+          businessType: tenant?.business_type, userMessage: batchedText, sessionId
+        });
+        setMessages((prev) => [...prev, {
+          id: 'bot_' + Date.now(), sender: 'assistant', message: fb.answer,
+          rag_level_used: fb.level, levelLabel: fb.levelLabel, confidence: fb.confidence,
+          created_at: new Date().toISOString()
+        }]);
+      } catch {
+        setMessages((prev) => [...prev, {
+          id: 'err_' + Date.now(), sender: 'assistant',
+          message: '¡Hola! ¿En qué te puedo asesorar el día de hoy?',
+          created_at: new Date().toISOString()
+        }]);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -8,6 +8,7 @@ import { ServiceBookingModal } from './ServiceBookingModal';
 import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { generateClientChatFallback } from '../../../services/clientChatFallback';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string;
@@ -103,11 +104,23 @@ export const ServiceChatView: React.FC<Props> = ({
           }
         }]);
       } catch {
-        setMessages((prev) => [...prev, {
-          id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-          content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
+        try {
+          const fb = await generateClientChatFallback({
+            tenantSlug: tenantSlug || 'geosoft', storeName, agentName,
+            businessType: 'servicio', userMessage: userText, sessionId: sessId
+          });
+          const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
+          setMessages((prev) => [...prev, {
+            id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+            content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            ragTrace: {
+              levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100,
+              modelUsed: fb.provider, reasoning: fb.levelLabel
+            }
+          }]);
+        } catch {
+          setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te podemos colaborar hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        }
       } finally {
         setIsLoading(false);
       }

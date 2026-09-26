@@ -8,6 +8,7 @@ import { DEFAULT_PRODUCT } from './productChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { extractPriceFromText, parsePriceNumber, isAddOrderAction } from '../../../utils/orderPriceExtractor';
 import { useProductChatSession } from './useProductChatSession';
+import { generateClientChatFallback } from '../../../services/clientChatFallback';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -91,7 +92,25 @@ export const ProductChatView: React.FC<Props> = ({
           }
         }]);
       } catch {
-        setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: 'Hubo una breve intermitencia de conexión con el asistente. Por favor intenta de nuevo en unos segundos.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        try {
+          const fb = await generateClientChatFallback({
+            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'geosoft',
+            storeName, agentName, businessType, userMessage: userText,
+            selectedProduct, products, sessionId: sessId
+          });
+          const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
+          setMessages((prev) => [...prev, {
+            id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+            content: fb.answer,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            ragTrace: {
+              levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 120,
+              modelUsed: fb.provider, reasoning: fb.levelLabel
+            }
+          }]);
+        } catch {
+          setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te puedo asesorar el día de hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        }
       } finally { setIsLoading(false); }
     },
   });

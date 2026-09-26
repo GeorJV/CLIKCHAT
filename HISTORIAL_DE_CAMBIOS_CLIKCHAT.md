@@ -16,6 +16,19 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Erradicación de Fallbacks Falsos de Catálogo y Motor IA Cliente Resiliente Anti-Caídas
+- **Diagnóstico del Fallo Reportado por el Usuario ("QUE ESTA PASANDO" con repetición de "Sobre Comida Callejera XI: $5500.00 CRC. ¿Deseas adquirirlo?"):**
+  1. *Fallback Artificial Repetitivo:* En `ProductChatView.tsx`, cuando la llamada de red fallaba o no traía respuesta, existía un fallback estático con plantilla de venta: `content: data?.answer || "Sobre " + selectedProduct.title + ": $" + selectedProduct.price + " ¿Deseas adquirirlo?"`.
+  2. *Causa Raíz de Red (Cloudflare Free Tier Limit & 405 Method Not Allowed):* La cuenta gratuita de Cloudflare alcanzó temporalmente el límite diario de Workers (Error 1046: 429 Too Many Requests). Con `fail_open: true`, Cloudflare Pages caía al SPA estático (`dist/index.html`). Al intentar hacer POST contra un archivo HTML estático, el servidor web retornaba HTTP 405 Method Not Allowed, activando el texto de fallback en bucle ante cualquier consulta del usuario.
+- **Solución Definitiva (ARQMODULAR & Resiliencia Multi-Capa):**
+  1. *Eliminación de Respuestas Fantasma:* Erradicado el texto repetitivo de venta en `ProductChatView.tsx` y `ServiceChatView.tsx`.
+  2. *Motor IA Resiliente en Cliente (`src/services/clientChatFallback.ts`):* Se implementó un servicio modular (<130 líneas) que se activa automáticamente si la Edge API está saturada, throttled o inaccesible. Responde saludos de forma cálida y contextualizada con la identidad del negocio y conecta directamente con el motor multi-LLM (OpenRouter / DeepSeek) sin interrumpir la experiencia del usuario.
+  3. *Blindaje de Enrutamiento Cloudflare:* Restablecido `public/_routes.json` con `include: ["/api/*"]` para enrutamiento exacto a Functions sin colisión estática.
+- **Verificación en Producción (3 Filtros):**
+  - Filtro 1: Compilación Vite (`npm run build`) en 6.25s y validación esbuild de Cloudflare Functions con 0 errores.
+  - Filtro 2: Despliegue en Cloudflare Pages (`https://clikchat.pages.dev`).
+  - Filtro 3: Suite integral de Chrome Headless CDP (`npm run verify`): **11/11 rutas operativas (100%)** con 0 errores de consola y DOM íntegro verificado. Hash desplegado verificado en vivo.
+
 ### [2026-09-26] Corrección de Falso Positivo en Dropzone de Documentos RAG y Soporte Nativo de PDFs
 - **Diagnóstico del Fallo Reportado por el Usuario ("POR QUE SALE ESTO: No se pudo procesar ningún archivo... NINGUN ARCHIVO NI PDF NI DOCXS NI TXT NI NADA"):**
   1. *Falso Positivo en Eventos Drag/Drop o Clics Vacíos:* En `DocumentDropzone.tsx`, la función `handleFiles` se disparaba ante interacciones del usuario sobre la zona de arrastre (por ejemplo, arrastrar un elemento visual, selección de texto o cancelar un diálogo de archivos) recibiendo `FileList` con objetos vacíos o de tamaño 0 bytes (`file.size === 0`). Al entrar al loop de análisis y no detectar texto, se marcaba un error genérico.
