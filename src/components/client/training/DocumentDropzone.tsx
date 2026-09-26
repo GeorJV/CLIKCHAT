@@ -78,36 +78,36 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
 
   return (
     <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".txt,.md,.csv,.doc,.docx,.xlsx,.xls,.pdf"
+        onChange={(e) => handleFiles(e.target.files)}
+        className="hidden"
+      />
+
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => !isProcessing && fileInputRef.current?.click()}
-        className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition flex flex-col items-center justify-center text-center cursor-pointer ${
+        className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition flex flex-col items-center justify-center text-center cursor-pointer select-none ${
           isDragging ? 'border-emerald-500 bg-emerald-500/[0.08] scale-[1.01]' : 'border-[#333030] bg-[#141212] hover:border-emerald-500/50 hover:bg-[#181616]'
         } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".txt,.md,.csv,.doc,.docx,.xlsx,.xls,.pdf"
-          onChange={(e) => handleFiles(e.target.files)}
-          className="hidden"
-        />
-
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-lg">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-lg pointer-events-none">
           {isProcessing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <UploadCloud className="w-6 h-6" />}
         </div>
 
-        <h4 className="text-sm font-bold text-white mb-1">
+        <h4 className="text-sm font-bold text-white mb-1 pointer-events-none">
           {isDragging ? '¡Suelta tus archivos aquí!' : 'Arrastra y suelta tus documentos o haz clic para explorar tu PC'}
         </h4>
-        <p className="text-xs text-zinc-400 max-w-md mb-3">
+        <p className="text-xs text-zinc-400 max-w-md mb-3 pointer-events-none">
           Sube manuales, términos, políticas o tablas de datos para que la IA responda consultas con certeza total.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 pointer-events-none select-none">
           <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
             <FileText className="w-3 h-3 text-rose-400" /> PDF (.PDF)
           </span>
