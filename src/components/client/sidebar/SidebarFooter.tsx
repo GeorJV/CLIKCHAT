@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Gift } from 'lucide-react';
+import { Sparkles, Gift, LogOut } from 'lucide-react';
 
 interface SidebarFooterProps {
   isExpanded: boolean;
@@ -7,6 +7,7 @@ interface SidebarFooterProps {
   onSwitchToPro: () => void;
   showToast: (msg: string) => void;
   tenantSlug: string;
+  onLogout?: () => void;
 }
 
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({
@@ -14,7 +15,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isSimpleMode,
   onSwitchToPro,
   showToast,
-  tenantSlug
+  tenantSlug,
+  onLogout
 }) => {
   const handleInvite = () => {
     const inviteUrl = `https://clikchat.pages.dev/?ref=${tenantSlug || 'partner'}`;
@@ -53,6 +55,21 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         <Gift className="w-3.5 h-3.5 text-amber-400 shrink-0" />
         {isExpanded && <span>Invita & Gana</span>}
       </button>
+
+      {/* Logout Button */}
+      {onLogout && (
+        <button
+          type="button"
+          onClick={onLogout}
+          title="Cerrar Sesión"
+          className={`${
+            isExpanded ? 'w-full py-2 px-3 space-x-1.5 rounded-xl' : 'w-8 h-8 p-0 mx-auto rounded-lg'
+          } flex items-center justify-center border border-[#282626] bg-[#181717] hover:bg-red-500/10 hover:border-red-500/40 text-zinc-400 hover:text-red-400 text-xs font-semibold transition shadow-sm cursor-pointer active:scale-95`}
+        >
+          <LogOut className="w-3.5 h-3.5 shrink-0" />
+          {isExpanded && <span>Cerrar Sesión</span>}
+        </button>
+      )}
     </div>
   );
 };

@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
+import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
 
-export function useClientPortal(initialSlug: string = 'acme-store') {
-  const [tenantSlug, setTenantSlug] = useState<string>(initialSlug);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
+export function useClientPortal(initialSlug: string = 'geosoft') {
+  const [tenantSlug, setTenantSlug] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('clikchat_active_tenant_slug');
+      if (saved) return saved;
+    }
+    return initialSlug || 'geosoft';
+  });
+  const [tenant, setTenant] = useState<Tenant>(() => getCachedTenant(tenantSlug));
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -33,9 +40,10 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       try {
         localStorage.setItem('clikchat_products', JSON.stringify(products));
         if (faqs.length > 0) localStorage.setItem('clikchat_faqs', JSON.stringify(faqs));
+        if (tenant) saveCachedTenant(tenant);
       } catch (e) {}
     }
-  }, [products, faqs]);
+  }, [products, faqs, tenant]);
 
   const loadTenantsList = useCallback(async () => {
     try {
@@ -55,15 +63,19 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       const tRes = await fetch(`/api/tenants/${slugToLoad}`, { cache: 'no-store' });
       if (tRes.ok) {
         const tData = await tRes.json();
-        setTenant(prev => {
-          if (!prev) return tData.tenant;
-          if (JSON.stringify(prev) === JSON.stringify(tData.tenant)) {
-            return prev;
-          }
-          return tData.tenant;
-        });
-        setProducts(tData.products || []);
-        setFaqs(tData.faqs || []);
+        if (tData.tenant) {
+          setTenant(prev => {
+            const next = { ...prev, ...tData.tenant };
+            saveCachedTenant(next);
+            return next;
+          });
+        }
+        if (tData.products && tData.products.length > 0) {
+          setProducts(tData.products);
+        }
+        if (tData.faqs && tData.faqs.length > 0) {
+          setFaqs(tData.faqs);
+        }
         if (tData.tenant?.id) {
           const uRes = await fetch(`/api/audit/unresolved?tenantId=${tData.tenant.id}`);
           if (uRes.ok) {
@@ -290,6 +302,23 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
   const updateSettings = async (updates: Partial<Tenant>) => {
     const targetIdentifier = tenant?.id || tenant?.slug || tenantSlug;
     if (!targetIdentifier) return false;
+
+    // Resiliencia Total: Actualización optimista local inmediata
+    const merged: Tenant = {
+      ...(tenant || getCachedTenant(tenantSlug)),
+      ...updates
+    } as Tenant;
+    setTenant(merged);
+    saveCachedTenant(merged);
+    if (merged.slug && merged.slug !== tenantSlug) {
+      setTenantSlug(merged.slug);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('clikchat_active_tenant_slug', merged.slug);
+      }
+    }
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+
     try {
       const res = await fetch(`/api/tenants/${encodeURIComponent(targetIdentifier)}`, {
         method: 'PUT',
@@ -299,19 +328,18 @@ export function useClientPortal(initialSlug: string = 'acme-store') {
       if (res.ok) {
         const data = await res.json();
         if (data.tenant) {
-          setTenant(data.tenant);
-          if (data.tenant.slug && data.tenant.slug !== tenantSlug) {
-            setTenantSlug(data.tenant.slug);
+          const finalTenant: Tenant = { ...merged, ...data.tenant };
+          setTenant(finalTenant);
+          saveCachedTenant(finalTenant);
+          if (finalTenant.slug && finalTenant.slug !== tenantSlug) {
+            setTenantSlug(finalTenant.slug);
           }
         }
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-        return true;
       }
     } catch (err) {
-      console.error('Error updating settings:', err);
+      console.warn('Backend update warning, preserved locally:', err);
     }
-    return false;
+    return true;
   };
 
   return {

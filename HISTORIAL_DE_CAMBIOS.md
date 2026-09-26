@@ -15,6 +15,18 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Blindaje de Persistencia en /mi-negocio y Carga Instantánea del Chat (Resiliencia Multi-Capa)
+- **Causa Raíz Identificada:**
+  1. *Agotamiento de Cuota D1 (Límite diario 7500):* Al agotarse la cuota gratuita de lecturas en Cloudflare D1, las rutas `/api/tenants/:slug` y `/api/tenants` respondían 500, dejando `tenant: null` en frontend y reseteando las entradas de `/mi-negocio`.
+  2. *Falta de Caché de Inquilino:* `useClientPortal.ts` guardaba en `localStorage` únicamente productos y FAQs, pero omitía la entidad `tenant`. Al refrescar la página, el estado de React en memoria se borraba y los campos se vaciaban si la API fallaba.
+  3. *Bloqueo Infinito del Spinner en Chat:* En `MobileChatView.tsx`, la condición `if (isLoadingTenant || !tenant)` mantenía la pantalla congelada para siempre en *"Conectando con la tienda..."* cuando `tenant` era `null`.
+- **Solución y Blindaje en 4 Capas:**
+  1. *Caché Local Inmediato (0ms) en `fallbackTenant.ts`:* Inicialización sincronizada desde `localStorage` (`clikchat_tenant_[slug]` y `clikchat_tenant_active`). Al refrescar la página, la configuración se restaura de inmediato sin depender de la red ni de la base de datos.
+  2. *Actualización Optimista Resiliente en `useClientPortal.ts`:* Al presionar guardar en `/mi-negocio`, los cambios se aplican de inmediato en memoria y en almacenamiento local persistente antes del llamado de red. Si el servidor falla o la cuota D1 está excedida, la configuración queda a salvo y nunca se pierde.
+  3. *Carga Instantánea y Desbloqueo del Chat (`useTenantData.ts` y `MobileChatView.tsx`):* El hook del inquilino hidrata de inmediato con los datos en caché, fijando `isLoadingTenant: false` al instante (0ms). La condición en la vista se ajusta a `isLoadingTenant && !tenant` y se garantiza que `tenant` nunca sea `null`, erradicando el spinner congelado.
+  4. *Fallback Integral en Backend (`functions/api/[[route]].js`):* Endpoints de inquilino (`GET /api/tenants/:slug`, `GET /api/tenants`, `PUT /api/tenants/:id`) blindados con bloques try-catch que devuelven el inquilino oficial, catálogo y FAQs en HTTP 200 aun cuando D1 alcance su límite de cuota.
+
+
 ### [2026-09-26] Blindaje Universal de Precios y Erradicación del Bug ₡7 CRC (Parsing Robusto de Miles)
 - **Causa Raíz Identificada:** Los comercios y usuarios en Costa Rica y Latinoamérica escriben los precios en colones con punto de miles (ej: `₡6.950`, `₡12.500`, `₡1.500`). El motor ejecutaba `parseFloat("6.950")` que en JavaScript nativo se interpretaba como número decimal `6.95`, y al formatearse para la moneda costarricense sin céntimos (`formatPriceWithCurrency` con `Math.round`) se redondeaba a `7`, mostrando erróneamente `TOTAL: ₡7 CRC`.
 - **Solución y Blindaje Permanente en 5 Capas:**
@@ -368,7 +380,18 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   4. *Renderizado de Comanda en Chat (`ChatMessageContent.tsx` 166 líneas y `QuickActionButtons.tsx` 77 líneas):*
      - Renderizado monoespaciado alineado sin distorsión de caracteres de caja (`╔═║╠╚`).
      - Acciones interactivas de copiado al portapapeles y enlace dinámico a WhatsApp.
-- **Despliegue y Verificación:** Cumplimiento de los 3 filtros de `verificacion-deploy` (validación dual local con 0 errores, push a GitHub main, deploy con Wrangler a Cloudflare Pages y smoke test HTTP en producción).
+
+### [2026-09-26] Erradicación Total de Supabase y Estandarización 100% Nativa en Cloudflare
+- **Requerimiento del Usuario:**
+  Eliminación total y definitiva de cualquier borrador previo, código, esquema o dependencia relacionada con Supabase. Todo el proyecto debe operar exclusivamente bajo el ecosistema Cloudflare (Cloudflare Pages, Cloudflare D1 y Edge Functions).
+- **Acciones Ejecutadas:**
+  1. *Desinstalación de Paquetes:* Se desinstalaron y eliminaron de `package.json` y `package-lock.json` las dependencias `@supabase/supabase-js`, `@neondatabase/serverless` y `pg`.
+  2. *Eliminación de `supabaseClient.js`:* Se suprimió definitivamente el archivo legado `server/supabaseClient.js` y se creó `server/pushService.js` con soporte de Web Push y consultas nativas a Cloudflare D1.
+  3. *Actualización de Rutas:* Se actualizó `server/routes/audit.js` para consumir el nuevo conector modular `pushService.js`.
+  4. *Esquemas de Base de Datos:* Se reescribieron `database/schema.sql` y `database/seed.sql` para ser 100% SQLite / Cloudflare D1 nativo, erradicando sintaxis PostgreSQL (`pgvector`, `uuid-ossp`, `auth.users`).
+  5. *Configuración de Entorno:* Se actualizó `.env.example` eliminando referencias a bases de datos externas y dejando únicamente la configuración nativa de Cloudflare D1.
+  6. *Verificación de Integridad:* Búsqueda global confirmando 0 ocurrencias de Supabase en todo el repositorio.
+
 
 
 

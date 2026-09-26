@@ -36,7 +36,7 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
     onTriggerFallback: () => setShowLeadModal(true)
   });
 
-  if (isLoadingTenant || !tenant) {
+  if (isLoadingTenant && !tenant) {
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />

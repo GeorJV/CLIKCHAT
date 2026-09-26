@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ProductItem } from '../types/productChat';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT } from '../components/chat/product/productChatMock';
+import { getCachedTenant } from '../utils/fallbackTenant';
 
 export function toProductItem(p: Partial<Product> & { id: string; name: string; price: number }): ProductItem {
   const images = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
@@ -29,18 +30,17 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
 }
 
 export function useProductResolver(productId: string | null, tenantSlug: string = 'geosoft') {
-  const initialStoreName = tenantSlug
-    ? (tenantSlug.toLowerCase() === 'geosoft' ? 'GeoSoft' : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1))
-    : 'GeoSoft';
+  const cached = getCachedTenant(tenantSlug);
+  const initialStoreName = cached.name || 'Restaurante ClikChat';
 
   const [productItem, setProductItem] = useState<ProductItem | null>(null);
   const [storeName, setStoreName] = useState<string>(initialStoreName);
-  const [agentName, setAgentName] = useState<string>('Asistente Virtual');
-  const [agentAvatar, setAgentAvatar] = useState<string>('');
-  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
+  const [agentName, setAgentName] = useState<string>(cached.bot_name || 'Asesora Virtual');
+  const [agentAvatar, setAgentAvatar] = useState<string>(cached.avatar_url || '');
+  const [welcomeMessage, setWelcomeMessage] = useState<string>(cached.welcome_message || '');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [responseDelaySec, setResponseDelaySec] = useState<number>(1);
-  const [businessType, setBusinessType] = useState<string>('tienda');
+  const [responseDelaySec, setResponseDelaySec] = useState<number>(cached.response_delay_sec || 1);
+  const [businessType, setBusinessType] = useState<string>(cached.business_type || 'restaurante');
   const hasTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {

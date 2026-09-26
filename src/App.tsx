@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LandingPage } from './components/landing/LandingPage';
 import { MobileChatView } from './components/chat/MobileChatView';
 import { ProductChatView } from './components/chat/product/ProductChatView';
@@ -22,7 +22,20 @@ export function App() {
   const { pathname, search, currentView, navigate } = useAppRouter();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
-  const selectedTenantSlug = params?.get('t') || 'geosoft';
+  const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => {
+    if (params?.get('t')) return params.get('t')!;
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('clikchat_active_tenant_slug') || 'geosoft';
+    }
+    return 'geosoft';
+  });
+
+  useEffect(() => {
+    const t = params?.get('t');
+    if (t && t !== selectedTenantSlug) {
+      setSelectedTenantSlug(t);
+    }
+  }, [search]);
   const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
   const hideTopBar = currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
@@ -126,7 +139,12 @@ export function App() {
             <ClientDashboard
               tenantSlug={selectedTenantSlug}
               onOpenLiveChat={() => navigate('/chat')}
-              onSelectTenant={(slug) => setSelectedTenantSlug(slug)}
+              onSelectTenant={(slug) => {
+                setSelectedTenantSlug(slug);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('clikchat_active_tenant_slug', slug);
+                }
+              }}
             />
           </div>
         )}

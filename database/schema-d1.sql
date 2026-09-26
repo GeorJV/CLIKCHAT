@@ -26,6 +26,20 @@ CREATE TABLE IF NOT EXISTS tenants (
     updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT DEFAULT 'tenant_owner',
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,

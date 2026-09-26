@@ -65,7 +65,7 @@ router.post('/resolve/:id', async (req, res) => {
 
     // Trigger Web Push Notification to user's mobile device
     if (item.session_id) {
-      const { sendPushToSession } = require('../supabaseClient');
+      const { sendPushToSession } = require('../pushService');
       sendPushToSession(item.session_id, {
         title: '💬 ClikChat: Respuesta de la Tienda',
         body: `El asesor respondió: "${answer.trim().substring(0, 85)}..."`,

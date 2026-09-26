@@ -10,13 +10,15 @@ interface ClientSidebarProps {
   setActiveTab: (tab: ClientTab) => void;
   unresolvedCount: number;
   tenantSlug: string;
+  onLogout?: () => void;
 }
 
 export const ClientSidebar: React.FC<ClientSidebarProps> = ({
   activeTab,
   setActiveTab,
   unresolvedCount,
-  tenantSlug
+  tenantSlug,
+  onLogout
 }) => {
   const [isSimpleMode, setIsSimpleMode] = useState(true);
   const [isPinned, setIsPinned] = useState(true);
@@ -77,6 +79,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
         }}
         showToast={showToast}
         tenantSlug={tenantSlug}
+        onLogout={onLogout}
       />
 
       {/* Toast Flotante para Feedback Interactivo */}
