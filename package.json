@@ -9,6 +9,7 @@
     "client": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "verify": "node scripts/verify-deploy.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "tunnel": "node scripts/start-tunnel.js"
   },
