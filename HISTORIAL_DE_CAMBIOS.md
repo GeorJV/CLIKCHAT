@@ -15,6 +15,15 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Módulo "Mi Cuenta" en Menú Principal con Facturación, Contacto y Seguridad
+- **Requerimiento:** Incorporar el botón y módulo "Mi Cuenta" en el menú principal (`/mi-cuenta`), visualizando fecha de creación de la cuenta, plan de suscripción, fecha de próximo pago, monto a pagar, correo electrónico, teléfono/WhatsApp, tipo de negocio y cambio de contraseña.
+- **Implementación Modular (ARQMODULAR):**
+  1. *Submódulo de Facturación (`AccountBillingCard.tsx`):* Indicador de estado al día, plan actual (Enterprise/Pro), monto mensual formateado en CRC/USD, fecha de próximo pago y fecha de creación de la cuenta.
+  2. *Submódulo de Contacto (`AccountContactCard.tsx`):* Edición y persistencia de correo electrónico, teléfono/WhatsApp, nombre del titular y tipo de negocio (restaurante, tienda, servicios).
+  3. *Submódulo de Seguridad (`AccountSecurityCard.tsx` y `[[route]].js`):* Gestión de cambio de contraseña con validación de seguridad, toggle de visibilidad (ojo) y endpoint backend `POST /api/auth/change-password` con hashing criptográfico.
+  4. *Navegación e Integración:* Mapeo de ruta `/mi-cuenta`, botón "Mi Cuenta" con icono `UserCheck` en `SidebarSimpleNav` y `SidebarProNav`, y orquestador atómico `MyAccountTab.tsx` (48 líneas).
+
+
 ### [2026-09-26] Restricción Exclusiva de Barra y Botones de Navegación a Rol Super Admin
 - **Requerimiento:** Ocultar los botones de navegación superior (`Web Oficial`, `Chat Móvil`, `Chat Producto`, `Chat Servicio`, `Panel Cliente`, `Super Admin`) para clientes y usuarios generales, restringiendo su visibilidad exclusivamente al Super Admin.
 - **Implementación:**

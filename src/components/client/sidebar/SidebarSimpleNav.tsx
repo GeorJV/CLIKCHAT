@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClientTab } from '../../../types/client';
-import { Bot, Store, ShoppingBag, Brain, MessageSquare, Users, Calendar, LifeBuoy } from 'lucide-react';
+import { Bot, Store, ShoppingBag, Brain, MessageSquare, Users, Calendar, LifeBuoy, UserCheck } from 'lucide-react';
 
 interface SidebarSimpleNavProps {
   activeTab: ClientTab;
@@ -18,6 +18,7 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
   const navItems = [
     { id: 'chatbot' as ClientTab, label: 'Dashboard Principal', icon: Bot },
     { id: 'business' as ClientTab, label: 'Mi Negocio', icon: Store },
+    { id: 'account' as ClientTab, label: 'Mi Cuenta', icon: UserCheck },
     { id: 'products' as ClientTab, label: 'Mis Productos', icon: ShoppingBag },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },

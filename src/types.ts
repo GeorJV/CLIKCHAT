@@ -60,6 +60,9 @@ export interface Tenant {
   currency?: string;
   sales_flow_rules?: string;
   order_ticket_format?: string;
+  created_at?: string;
+  phone?: string;
+  next_payment_date?: string;
 }
 
 export interface ChatMessage {

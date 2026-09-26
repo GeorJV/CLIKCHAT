@@ -15,6 +15,7 @@ import { AgendaTab } from './AgendaTab';
 import { AITrainingTab } from './training/AITrainingTab';
 import { SupportTab } from './support/SupportTab';
 import { UserProfileTab } from './UserProfileTab';
+import { MyAccountTab } from './account/MyAccountTab';
 import { SwitchTenantModal } from './modals/SwitchTenantModal';
 
 interface ClientDashboardProps {
@@ -127,14 +128,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
           {activeTab === 'clientes' && <ClientsTab tenantId={tenant?.id} />}
           {activeTab === 'agenda' && <AgendaTab tenantId={tenant?.id} />}
-          {activeTab === 'user' && (
-            <UserProfileTab
-              userId={user?.id}
-              tenantName={tenant?.name}
-              tenantSlug={currentSlug}
-              ownerName={user?.name || tenant?.owner_name}
-              ownerEmail={user?.email || tenant?.owner_email}
-              plan={tenant?.plan}
+          {(activeTab === 'account' || activeTab === 'user') && (
+            <MyAccountTab
+              tenant={tenant}
+              user={user}
+              onUpdateSettings={updateSettings}
             />
           )}
         </div>

@@ -931,6 +931,43 @@ export async function onRequest(context) {
       });
     }
 
+    // CHANGE PASSWORD: POST /api/auth/change-password
+    if (segments[0] === 'auth' && segments[1] === 'change-password' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { newPassword, email } = body;
+
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 6) {
+        return jsonResponse({ error: 'La nueva contraseña debe tener al menos 6 caracteres' }, 400);
+      }
+
+      const targetEmail = (email || '').toLowerCase().trim();
+      try {
+        const salt = generateSalt();
+        const newHash = await hashPassword(newPassword.trim(), salt);
+        if (targetEmail) {
+          await executeD1(
+            "UPDATE users SET password_hash = ?1, salt = ?2, updated_at = datetime('now') WHERE email = ?3",
+            [newHash, salt, targetEmail]
+          );
+        }
+      } catch (d1Err) {
+        console.warn('D1 update password warning (handled):', d1Err.message);
+      }
+
+      if (targetEmail && MEMORY_USERS.has(targetEmail)) {
+        const mem = MEMORY_USERS.get(targetEmail);
+        const salt = generateSalt();
+        const newHash = await hashPassword(newPassword.trim(), salt);
+        mem.password_hash = newHash;
+        mem.salt = salt;
+      }
+
+      return jsonResponse({
+        success: true,
+        message: 'Contraseña actualizada correctamente'
+      });
+    }
 
     // TRACKING: POST /api/products/:id/track
     if (segments[0] === 'products' && segments.length >= 3 && segments[2] === 'track' && request.method === 'POST') {

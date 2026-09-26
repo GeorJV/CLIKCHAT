@@ -13,7 +13,8 @@ export type ClientTab =
   | 'agenda'
   | 'training'
   | 'soporte'
-  | 'user';
+  | 'user'
+  | 'account';
 
 export interface DocumentChunk {
   id: string;

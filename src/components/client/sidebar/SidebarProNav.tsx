@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   ChevronDown, ChevronRight, LayoutDashboard, Users,
-  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy
+  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy, UserCheck
 } from 'lucide-react';
 
 interface SidebarProNavProps {
@@ -74,6 +74,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         {openCats.agencia && (
           <nav className="space-y-0.5">
             {renderItem('chatbot', 'Dashboard Principal', LayoutDashboard)}
+            {renderItem('account', 'Mi Cuenta', UserCheck)}
             {renderItem('clientes', 'Gestión de Clientes', Users)}
             {renderItem('soporte', 'Soporte', LifeBuoy)}
           </nav>
