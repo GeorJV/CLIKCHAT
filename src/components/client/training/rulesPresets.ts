@@ -56,3 +56,52 @@ export const RULE_PRESETS: RulePreset[] = [
 export function applyRuleTemplate(template: string, businessName: string): string {
   return template.replace(/\{negocio\}/g, businessName);
 }
+
+export function isRulePresetActive(currentText: string, preset: RulePreset): boolean {
+  if (!currentText || !currentText.trim()) return false;
+  const firstLine = preset.template.split('\n')[0].replace(':', '').trim().toLowerCase();
+  return currentText.toLowerCase().includes(firstLine) || currentText.toLowerCase().includes(preset.title.toLowerCase());
+}
+
+export function toggleRulePreset(
+  currentText: string,
+  preset: RulePreset,
+  businessName: string
+): { nextText: string; isNowActive: boolean } {
+  const formatted = applyRuleTemplate(preset.template, businessName);
+  const firstLine = preset.template.split('\n')[0].replace(':', '').trim().toLowerCase();
+  const currentlyActive = isRulePresetActive(currentText, preset);
+
+  if (currentlyActive) {
+    if (currentText.includes(formatted)) {
+      const cleaned = currentText.replace(formatted, '').replace(/\n{3,}/g, '\n\n').trim();
+      return { nextText: cleaned, isNowActive: false };
+    }
+    const lines = currentText.split('\n');
+    const keptLines: string[] = [];
+    let inSection = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lower = line.toLowerCase();
+      if (lower.includes(firstLine) || lower.includes(preset.title.toLowerCase())) {
+        inSection = true;
+        continue;
+      }
+      if (inSection) {
+        if (line.trim().startsWith('REGLAS DE ') || line.trim().startsWith('###')) {
+          inSection = false;
+          keptLines.push(line);
+        }
+        continue;
+      }
+      keptLines.push(line);
+    }
+    const cleaned = keptLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    return { nextText: cleaned, isNowActive: false };
+  } else {
+    const trimmed = (currentText || '').trim();
+    const nextText = trimmed ? `${trimmed}\n\n${formatted}` : formatted;
+    return { nextText, isNowActive: true };
+  }
+}
