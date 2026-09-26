@@ -1478,25 +1478,26 @@ export async function onRequest(context) {
         }
 
         // 5. Pre-Cierre y Confirmación Tentativa de Órdenes (Botones Automáticos)
+        const normMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         let quickActions = [];
-        const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(message);
+        const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
         
         // Detectar si pregunta específicamente por un ítem/platillo (ej: "cuanto es la hamburguesa", "cuanto vale el mini cheese", "precio del combo")
-        const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(message);
+        const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(normMsg);
 
         // Consultar la cuenta general del pedido ("cuánto es", "la cuenta", "cuánto es para pagar")
         const isAskingBillTotal = !isAskingSpecificItem && (
-          /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|cuanto\s*debo(\s*en\s*total)?|cobrar|cerrar\s*(mi\s*)?orden|cerrar\s*(el\s*)?pedido)\b/i.test(message)
-          && !/\b(cuanto\s*(vale|cuesta|sale))\b/i.test(message)
+          /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|cuanto\s*debo(\s*en\s*total)?|cobrar|cerrar\s*(mi\s*)?orden|cerrar\s*(el\s*)?pedido)\b/i.test(normMsg)
+          && !/\b(cuanto\s*(vale|cuesta|sale))\b/i.test(normMsg)
         );
 
         // Consultar precio puntual de un platillo o producto ("cuánto vale el mini cheese", "cuánto cuesta...")
         const isAskingItemPrice = !isAskingBillTotal && !isConfirmingOrder && (
           isAskingSpecificItem ||
-          /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*c[oó]mo\s*(est[aá]|sale))\b/i.test(message)
+          /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*como\s*(esta|sale))\b/i.test(normMsg)
         );
 
-        const isAddingMore = /\b(agregar\s*algo\s*m[aá]s|a[ñn]adir\s*algo\s*m[aá]s|ver\s*m[aá]s\s*productos|cambiar\s*algo)\b/i.test(message);
+        const isAddingMore = /\b(agregar\s*algo\s*mas|anadir\s*algo\s*mas|ver\s*mas\s*productos|cambiar\s*algo)\b/i.test(normMsg);
 
         if (isConfirmingOrder) {
           const orderId = 'ORD-' + Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -1528,7 +1529,7 @@ export async function onRequest(context) {
             itemLabel = `➕ Agregar ${mp.name}`;
             itemAction = `Agregar ${mp.name} (${sym}${mp.price})`;
           } else {
-            const cleanQuery = message.replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cuanto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|que\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡]/g, '').trim();
+            const cleanQuery = message.replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|qu[eé]\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡]/g, '').trim();
             if (cleanQuery.length > 2) {
               const formattedName = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
               itemLabel = `➕ Agregar ${formattedName}`;
