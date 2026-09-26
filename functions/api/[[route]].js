@@ -152,6 +152,67 @@ function adaptTemporalGreetings(text, timePeriod) {
   return result;
 }
 
+function parsePriceNumber(raw, isCRC = false) {
+  if (raw === null || raw === undefined) return 0;
+  if (typeof raw === 'number') {
+    if (isNaN(raw)) return 0;
+    if (isCRC && raw > 0 && raw < 50) return Math.round(raw * 1000);
+    return isCRC ? Math.round(raw) : raw;
+  }
+  let clean = String(raw).trim();
+  if (!clean) return 0;
+
+  // 1. Separador de miles con punto y decimales con coma: "6.950,00" o "12.500,50"
+  if (/^\d{1,3}(\.\d{3})+,\d{1,2}$/.test(clean)) {
+    const val = parseFloat(clean.replace(/\./g, '').replace(',', '.'));
+    return isCRC ? Math.round(val) : (val || 0);
+  }
+
+  // 2. Separador de miles con coma y decimales con punto: "6,950.00" o "12,500.50"
+  if (/^\d{1,3}(,\d{3})+\.\d{1,2}$/.test(clean)) {
+    const val = parseFloat(clean.replace(/,/g, ''));
+    return isCRC ? Math.round(val) : (val || 0);
+  }
+
+  // 3. Separador de miles con punto (SIN decimales): "6.950", "12.500", "1.500", "1.250.000"
+  if (/^\d{1,3}(\.\d{3})+$/.test(clean)) {
+    return parseFloat(clean.replace(/\./g, '')) || 0;
+  }
+
+  // 4. Separador de miles con coma (SIN decimales): "6,950", "12,000", "1,250,000"
+  if (/^\d{1,3}(,\d{3})+$/.test(clean)) {
+    return parseFloat(clean.replace(/,/g, '')) || 0;
+  }
+
+  // 5. Coma decimal simple: "12,50" o "8,5"
+  if (/^\d+,\d{1,2}$/.test(clean)) {
+    const val = parseFloat(clean.replace(',', '.'));
+    if (isCRC) {
+      if (val > 0 && val < 50) return Math.round(val * 1000);
+      return Math.round(val) || 0;
+    }
+    return val || 0;
+  }
+
+  // 6. Punto decimal simple: "8.50" o "12.99"
+  if (/^\d+\.\d{1,2}$/.test(clean)) {
+    const val = parseFloat(clean);
+    if (isCRC) {
+      if (val > 0 && val < 50) return Math.round(val * 1000);
+      return Math.round(val) || 0;
+    }
+    return val || 0;
+  }
+
+  // 7. Número entero limpio: "6950", "12000"
+  clean = clean.replace(/[,.]/g, '');
+  let finalVal = parseFloat(clean) || 0;
+  if (isCRC && finalVal > 0 && finalVal < 50) {
+    finalVal = Math.round(finalVal * 1000);
+  }
+  return isCRC ? Math.round(finalVal) : finalVal;
+}
+
 async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo }) {
   let userCustomConfig = null;
   if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
@@ -489,9 +550,11 @@ export async function onRequest(context) {
       );
       if (!rows.length) return jsonResponse({ error: 'Producto no encontrado' }, 404);
       const row = rows[0];
+      const isCRC = (row.currency || '').toUpperCase() === 'CRC';
       return jsonResponse({
         product: {
           ...row,
+          price: parsePriceNumber(row.price, isCRC),
           metrics: {
             views: Number(row.m_views) || 0,
             buyClicks: Number(row.m_buy_clicks) || 0,
@@ -510,10 +573,13 @@ export async function onRequest(context) {
       let body = {};
       try { body = await request.json(); } catch (e) {}
       const { name, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url, is_active, embedding_text } = body;
+      const cleanPrice = price !== undefined && price !== null
+        ? parsePriceNumber(price, (currency || '').toUpperCase() === 'CRC')
+        : null;
       await executeD1(
         'UPDATE products SET name = COALESCE(?1, name), price = COALESCE(?2, price), currency = COALESCE(?3, currency), short_description = COALESCE(?4, short_description), full_description = COALESCE(?5, full_description), images = COALESCE(?6, images), benefits = COALESCE(?7, benefits), details = COALESCE(?8, details), cta_label = COALESCE(?9, cta_label), cta_url = COALESCE(?10, cta_url), is_active = COALESCE(?11, is_active), embedding_text = COALESCE(?12, embedding_text), updated_at = datetime(\'now\') WHERE id = ?13',
         [
-          name ?? null, price ?? null, currency ?? null, short_description ?? null, full_description ?? null,
+          name ?? null, cleanPrice, currency ?? null, short_description ?? null, full_description ?? null,
           images ? JSON.stringify(images) : null, benefits ? JSON.stringify(benefits) : null,
           details ? JSON.stringify(details) : null, cta_label ?? null, cta_url ?? null,
           is_active === undefined ? null : (is_active ? 1 : 0),
@@ -538,6 +604,8 @@ export async function onRequest(context) {
       const { tenant_id, name, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url } = body;
       const id = body.id || ('prod_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
       const slug = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const itemCurr = (currency || 'USD').toUpperCase();
+      const cleanPrice = parsePriceNumber(price, itemCurr === 'CRC');
 
       let resolvedTenantId = tenant_id;
       if (!resolvedTenantId || resolvedTenantId === 'tenant-demo') {
@@ -548,7 +616,7 @@ export async function onRequest(context) {
       await executeD1(
         'INSERT INTO products (id, tenant_id, name, slug, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
         [
-          id, resolvedTenantId, name, slug, price, currency || 'USD',
+          id, resolvedTenantId, name, slug, cleanPrice, currency || 'USD',
           short_description || '', full_description || short_description || '',
           JSON.stringify(images || []), JSON.stringify(benefits || []),
           JSON.stringify(details || {}), cta_label || 'Comprar', cta_url || ''
@@ -587,17 +655,21 @@ export async function onRequest(context) {
 
       const rows = await executeD1(querySql, params);
       return jsonResponse({
-        products: rows.map(r => ({
-          ...r,
-          metrics: {
-            views: Number(r.m_views) || 0,
-            buyClicks: Number(r.m_buy_clicks) || 0,
-            benefitViews: Number(r.m_benefit_views) || 0,
-            coldLeads: Number(r.m_cold_leads) || 0,
-            warmLeads: Number(r.m_warm_leads) || 0,
-            hotLeads: Number(r.m_hot_leads) || 0
-          }
-        }))
+        products: rows.map(r => {
+          const isCRC = (r.currency || '').toUpperCase() === 'CRC';
+          return {
+            ...r,
+            price: parsePriceNumber(r.price, isCRC),
+            metrics: {
+              views: Number(r.m_views) || 0,
+              buyClicks: Number(r.m_buy_clicks) || 0,
+              benefitViews: Number(r.m_benefit_views) || 0,
+              coldLeads: Number(r.m_cold_leads) || 0,
+              warmLeads: Number(r.m_warm_leads) || 0,
+              hotLeads: Number(r.m_hot_leads) || 0
+            }
+          };
+        })
       });
     }
 
@@ -887,9 +959,10 @@ export async function onRequest(context) {
           [sessionId]
         );
         if (orderRows && orderRows.length > 0) {
+          const isCRC = (orderRows[0].currency || '').toUpperCase() === 'CRC';
           activeOrder = {
             id: orderRows[0].id,
-            totalAmount: Number(orderRows[0].total_amount) || 0,
+            totalAmount: parsePriceNumber(orderRows[0].total_amount, isCRC),
             currency: orderRows[0].currency
           };
         }
@@ -1314,7 +1387,14 @@ export async function onRequest(context) {
           ).catch(() => [])
         ]);
         faqs = fRows;
-        products = pRows;
+        products = pRows.map(p => {
+          const pCurr = (p.currency || targetTenant.currency || 'USD').toUpperCase();
+          const pIsCRC = pCurr === 'CRC';
+          return {
+            ...p,
+            price: parsePriceNumber(p.price, pIsCRC)
+          };
+        });
         docChunks = cRows;
         rawDocs = rRows;
       } catch (dataErr) {
@@ -1539,16 +1619,17 @@ export async function onRequest(context) {
 
         const isAddingItemAction = !isConfirmingOrder && /\b(agregar|sumar|anotar|anotame|agregame|sumame|quiero|ponme|dame|ordenar|pedir)\b/i.test(normMsg);
         if (isAddingItemAction) {
+          const isCRC = activeCurrency.toUpperCase() === 'CRC' || /₡|CRC|colones/i.test(message);
           let addedPrice = null;
           const matchPrice = message.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)|\((?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*\)/i);
           if (matchPrice) {
             const raw = matchPrice[1] || matchPrice[2] || matchPrice[3];
-            addedPrice = parseFloat(raw.replace(/,/g, ''));
+            addedPrice = parsePriceNumber(raw, isCRC);
           }
 
           let itemName = message.replace(/^(?:agregar|sumar|anotar|quiero|ponme|dame)\s+/i, '').replace(/\([^)]*\)/g, '').trim();
           if ((!addedPrice || isNaN(addedPrice)) && matchedProducts.length > 0) {
-            addedPrice = Number(matchedProducts[0].price) || 0;
+            addedPrice = parsePriceNumber(matchedProducts[0].price, isCRC);
             if (!itemName) itemName = matchedProducts[0].name;
           }
 
@@ -1577,17 +1658,27 @@ export async function onRequest(context) {
         }
 
         if (draftTotal > 0 || draftItems.length > 0) {
-          const currencySymbol = activeCurrency.toUpperCase() === 'CRC' ? '₡' : '$';
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const currencySymbol = isCRC ? '₡' : '$';
+          const formattedDraftTotal = isCRC
+            ? Math.round(draftTotal).toLocaleString('es-CR')
+            : draftTotal.toFixed(2);
           contextBlock += `\n\n[COMANDA ACTIVA EN CURSO DEL CLIENTE]:
-Total acumulado actual: ${currencySymbol}${draftTotal} ${activeCurrency}
+Total acumulado actual: ${currencySymbol}${formattedDraftTotal} ${activeCurrency}
 Ítems registrados:
-${draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${it.price})`).join('\n')}
+${draftItems.map(it => {
+  const pFormatted = isCRC ? Math.round(Number(it.price)).toLocaleString('es-CR') : Number(it.price).toFixed(2);
+  return `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${pFormatted})`;
+}).join('\n')}
 Instrucción obligatoria de respuesta:
-1) Si el cliente agregó un ítem o consulta el estado de su orden, responde con esta frase:
+1) Si el cliente agregó un ítem o consulta el estado de su orden, responde OBLIGATORIAMENTE con esta frase de apertura:
 "¡Perfecto! 😊 Entonces tu pedido queda así:"
 2) A continuación, presenta de forma OBLIGATORIA el resumen de los ítems que lleva la orden hasta el momento en formato de lista clara:
-${draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${it.price})`).join('\n')}
-💰 Total acumulado: ${currencySymbol}${draftTotal} ${activeCurrency}
+${draftItems.map(it => {
+  const pFormatted = isCRC ? Math.round(Number(it.price)).toLocaleString('es-CR') : Number(it.price).toFixed(2);
+  return `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${pFormatted})`;
+}).join('\n')}
+💰 Total acumulado: ${currencySymbol}${formattedDraftTotal} ${activeCurrency}
 3) Luego sugiere con entusiasmo y amabilidad si desea agregar una bebida, acompañamiento o postre, o si desea pedir la cuenta diciendo "¿cuánto es?".`;
         }
 
@@ -1670,11 +1761,13 @@ ${renderedTicket}
 
           if (matchedProducts.length > 0) {
             const mp = matchedProducts[0];
-            const sym = (mp.currency || activeCurrency).toUpperCase() === 'CRC' ? '₡' : '$';
+            const isCRC = (mp.currency || activeCurrency).toUpperCase() === 'CRC';
+            const sym = isCRC ? '₡' : '$';
             prodName = mp.name;
-            prodPrice = mp.price;
+            prodPrice = parsePriceNumber(mp.price, isCRC);
+            const formattedPrice = isCRC ? Math.round(prodPrice).toLocaleString('es-CR') : prodPrice.toFixed(2);
             itemLabel = `➕ Sí, quiero agregar ${mp.name}`;
-            itemAction = `Agregar ${mp.name} (${sym}${mp.price})`;
+            itemAction = `Agregar ${mp.name} (${sym}${formattedPrice})`;
           } else {
             const cleanQuery = message
               .replace(/^[¿¡\s]+/, '')
@@ -1690,11 +1783,13 @@ ${renderedTicket}
           }
 
           if (isAskingItemDetails) {
+            const isCRC = activeCurrency.toUpperCase() === 'CRC';
+            const formattedPrice = isCRC ? Math.round(Number(prodPrice)).toLocaleString('es-CR') : Number(prodPrice).toFixed(2);
             contextBlock += `\n\n[CONSULTA SOBRE DETALLES / INGREDIENTES / CONTENIDO DEL PRODUCTO]:
 El cliente está preguntando qué trae, qué incluye o cuáles son los ingredientes ${prodName ? `de "${prodName}"` : 'del producto'}.
 Instrucciones obligatorias:
 1) Explica con amabilidad, entusiasmo y apetitosidad qué ingredientes, componentes o porciones trae según la información del catálogo.
-2) Menciona claramente su precio oficial (${activeSym}${prodPrice || '[Precio]'}).
+2) Menciona claramente su precio oficial (${activeSym}${formattedPrice || '[Precio]'}).
 3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"`;
           } else if (isAskingItemPrice) {
             contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
@@ -1747,12 +1842,13 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
         } catch (e) {}
 
         const isRestaurant = targetTenant.business_type === 'restaurante';
+        const isCRC = activeCurrency.toUpperCase() === 'CRC';
         let orderTotal = draftTotal > 0 ? draftTotal : null;
         if (isRestaurant && !orderTotal) {
           const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡€]*[\$₡€]?\s*([\d,.]+)/i)
             || llmResult.text.match(/[\$₡€]?\s*([\d,.]+)\s*(?:en\s*total|total)/i);
           if (totalMatch) {
-            const rawVal = parseFloat(totalMatch[1].replace(/,/g, ''));
+            const rawVal = parsePriceNumber(totalMatch[1], isCRC);
             if (!isNaN(rawVal) && rawVal > 0) {
               orderTotal = rawVal;
             }
@@ -1760,6 +1856,13 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
         }
         if (isRestaurant && orderTotal === null) {
           orderTotal = 0;
+        }
+
+        if (isAddingItemAction && draftItems.length > 0) {
+          const expectedGreeting = '¡Perfecto! 😊 Entonces tu pedido queda así:';
+          if (!llmResult.text.includes('¡Perfecto!') && !llmResult.text.includes('Entonces tu pedido queda así')) {
+            llmResult.text = `${expectedGreeting}\n\n${llmResult.text.trim()}`;
+          }
         }
 
         if (isConfirmingOrder && renderedTicket && !llmResult.text.includes('╔═')) {
@@ -1867,8 +1970,8 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
       for (const item of importItems) {
         if (!item.name) continue;
         const id = 'prod_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-        const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const price = parseFloat(item.price) || 0;
+        const itemCurr = (item.currency || 'USD').toUpperCase();
+        const price = parsePriceNumber(item.price, itemCurr === 'CRC');
         const details = {
           stock: item.stock !== undefined ? parseInt(item.stock, 10) : 10,
           sku: item.sku || '',

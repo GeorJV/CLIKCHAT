@@ -6,7 +6,7 @@ import { ProductModalsContainer } from './ProductModalsContainer';
 import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
 import { DEFAULT_PRODUCT } from './productChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
-import { extractPriceFromText, isAddOrderAction } from '../../../utils/orderPriceExtractor';
+import { extractPriceFromText, parsePriceNumber, isAddOrderAction } from '../../../utils/orderPriceExtractor';
 import { useProductChatSession } from './useProductChatSession';
 
 interface Props {
@@ -104,7 +104,17 @@ export const ProductChatView: React.FC<Props> = ({
     if (!text) return;
     setInputValue('');
     if (isRestaurant && isAddOrderAction(text)) {
-      const addedPrice = extractPriceFromText(text);
+      let addedPrice = extractPriceFromText(text, selectedProduct?.currency);
+      if ((addedPrice === null || addedPrice <= 0) && products.length > 0) {
+        const norm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const matched = products.find(p => {
+          const pName = p.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return norm.includes(pName) || pName.includes(norm.replace(/agregar|quiero|sumar|anotar/g, '').trim());
+        });
+        if (matched && matched.price > 0) {
+          addedPrice = parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC');
+        }
+      }
       if (addedPrice !== null && addedPrice > 0) {
         setOrderTotal((prev) => (prev ?? 0) + addedPrice);
         if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);

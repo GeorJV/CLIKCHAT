@@ -15,6 +15,15 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Blindaje Universal de Precios y Erradicación del Bug ₡7 CRC (Parsing Robusto de Miles)
+- **Causa Raíz Identificada:** Los comercios y usuarios en Costa Rica y Latinoamérica escriben los precios en colones con punto de miles (ej: `₡6.950`, `₡12.500`, `₡1.500`). El motor ejecutaba `parseFloat("6.950")` que en JavaScript nativo se interpretaba como número decimal `6.95`, y al formatearse para la moneda costarricense sin céntimos (`formatPriceWithCurrency` con `Math.round`) se redondeaba a `7`, mostrando erróneamente `TOTAL: ₡7 CRC`.
+- **Solución y Blindaje Permanente en 5 Capas:**
+  1. *Algoritmo Universal de Precios (`orderPriceExtractor.ts` y `[[route]].js`):* Detección inequívoca de grupos de 3 dígitos con punto (`/^\d{1,3}(\.\d{3})+$/`) reconociéndolos como miles (`6950`, `12500`, `1500`) tanto con punto como con coma.
+  2. *Autocuración de Residuos CRC:* Protección matemática en colones costarricenses (donde no existen precios menores a 50 colones): cualquier valor menor a 50 en contexto CRC (`val > 0 && val < 50`, ej: `6.95`) se normaliza multiplicando por 1000 a `6950`.
+  3. *Botones Rápidos con Precio Formateado Oficial:* Al consultar ingredientes o detalles de un producto (`isAskingItemDetails`), el botón de sugerencia rápida inyecta el precio oficial con separador de miles (`actionText: "Agregar [Producto] (₡6,950)"`), eliminando desalineaciones entre catálogo y comanda.
+  4. *Apertura Obligatoria de Resumen:* Todo agregado a la orden inicia de forma estricta con `"¡Perfecto! 😊 Entonces tu pedido queda así:"` seguido de la lista de ítems y total acumulado formateado en `es-CR`.
+  5. *Sanitización en D1:* Los endpoints de catálogo (`GET /api/products`, `POST /api/products`, `PUT /api/products/:id`) normalizan automáticamente los precios para garantizar integridad numérica absoluta.
+
 ### [2026-09-26] Blindaje de Velocidad Inmediata del Chatbot y Total de Comanda Dinámico en Tiempo Real
 - **Celeridad y Velocidad Inmediata:** Eliminación del retraso de 9 segundos por defecto en el batcher y hooks (`useProductResolver`, `useChatRAG`, `useMessageBatcher`, `ProductChatView`, `ServiceChatView`), fijando por defecto el Modo Inmediato (1 segundo). Retroalimentación instantánea de escritura ("Consultando catálogo oficial...") y renderizado inmediato (0ms) del mensaje del usuario al presionar enviar.
 - **Total Dinámico y Detección de Agregado al Instante:**

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../types/productChat';
 import { adaptTemporalText } from '../../../utils/temporalGreeting';
+import { formatPriceWithCurrency } from '../../../utils/currency';
 
 interface UseProductChatSessionOptions {
   selectedProduct: ProductItem;
@@ -61,7 +62,7 @@ export function useProductChatSession({
             onRestoreOrderTotal?.(data.activeOrder.totalAmount);
           }
         } else if (isMounted) {
-          const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
+          const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
           const dynamicGreeting = welcomeMessage
             ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
             : defaultGreeting;
@@ -89,7 +90,7 @@ export function useProductChatSession({
     trackEvent('buy_click');
     setMessages((prev) => [...prev, {
       id: `order-${Date.now()}`, sessionId: sessId, tenantId: 'tenant', sender: 'assistant',
-      content: `🛍️ **¡Pedido Registrado con Éxito!**\n\n- **Producto:** ${data.product.title} (x${data.quantity})\n- **Total:** $${data.totalAmount.toFixed(2)} ${data.product.currency}\n- **Destinatario:** ${data.customerName} (${data.customerPhone})\n- **Dirección:** ${data.shippingAddress}\n\nTe contactaremos a tu WhatsApp con el enlace de despacho.`,
+      content: `🛍️ **¡Pedido Registrado con Éxito!**\n\n- **Producto:** ${data.product.title} (x${data.quantity})\n- **Total:** ${formatPriceWithCurrency(data.totalAmount, data.product.currency)}\n- **Destinatario:** ${data.customerName} (${data.customerPhone})\n- **Dirección:** ${data.shippingAddress}\n\nTe contactaremos a tu WhatsApp con el enlace de despacho.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }]);
   };

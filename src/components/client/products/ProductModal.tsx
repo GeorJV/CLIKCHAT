@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, X, Check } from 'lucide-react';
 import { Product } from '../../../types';
+import { parsePriceNumber } from '../../../utils/orderPriceExtractor';
 import { ProductModalFieldsLeft } from './ProductModalFieldsLeft';
 import { ProductModalFieldsRight } from './ProductModalFieldsRight';
 
@@ -55,7 +56,7 @@ export const ProductModal: React.FC<Props> = ({ isOpen, productToEdit, onClose, 
     setIsSubmitting(true);
     const parsedBenefits = benefits.split('\n').map(b => b.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
     try {
-      const parsedPrice = price.trim() === '' ? 0 : (parseFloat(price) || 0);
+      const parsedPrice = price.trim() === '' ? 0 : parsePriceNumber(price, currency.trim().toUpperCase() === 'CRC');
       const success = await onSubmit({
         name: name.trim(), price: parsedPrice, currency,
         short_description: description.trim(), full_description: description.trim(),
