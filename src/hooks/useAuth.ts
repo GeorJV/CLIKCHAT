@@ -27,13 +27,18 @@ export function useAuth() {
       .then((data) => {
         if (data.success && data.user) {
           setUser(data.user);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('clikchat_role', data.user.role);
+          }
           if (data.tenant) setTenant(data.tenant);
         } else {
           localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem('clikchat_role');
         }
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem('clikchat_role');
       })
       .finally(() => {
         setIsLoading(false);
@@ -55,7 +60,12 @@ export function useAuth() {
       }
 
       if (resData.token) localStorage.setItem(TOKEN_KEY, resData.token);
-      if (resData.user) setUser(resData.user);
+      if (resData.user) {
+        setUser(resData.user);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('clikchat_role', resData.user.role);
+        }
+      }
       if (resData.tenant) setTenant(resData.tenant);
       return true;
     } catch (err: any) {
@@ -81,7 +91,12 @@ export function useAuth() {
       }
 
       if (resData.token) localStorage.setItem(TOKEN_KEY, resData.token);
-      if (resData.user) setUser(resData.user);
+      if (resData.user) {
+        setUser(resData.user);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('clikchat_role', resData.user.role);
+        }
+      }
       if (resData.tenant) setTenant(resData.tenant);
       return true;
     } catch (err: any) {
@@ -94,6 +109,9 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('clikchat_role');
+    }
     setUser(null);
     setTenant(null);
     setError(null);

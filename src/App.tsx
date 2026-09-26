@@ -8,6 +8,7 @@ import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
 import { useAppRouter, AppView } from './hooks/useAppRouter';
+import { useAuth } from './hooks/useAuth';
 
 const NAV_VIEWS = [
   { id: 'landing' as AppView, label: 'Web Oficial', icon: Globe, path: '/' },
@@ -20,8 +21,18 @@ const NAV_VIEWS = [
 
 export function App() {
   const { pathname, search, currentView, navigate } = useAppRouter();
+  const { user } = useAuth();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = params?.get('p') || null;
+
+  const isSuperAdmin = Boolean(
+    user?.role === 'superadmin' ||
+    currentView === 'admin' ||
+    (typeof window !== 'undefined' && localStorage.getItem('clikchat_role') === 'superadmin') ||
+    params?.has('admin') ||
+    params?.get('role') === 'superadmin'
+  );
+
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => {
     if (params?.get('t')) return params.get('t')!;
     if (typeof window !== 'undefined') {
@@ -38,11 +49,11 @@ export function App() {
   }, [search]);
   const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
-  const hideTopBar = currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
+  const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
-      {!hideTopBar && (
+      {!hideTopBar && isSuperAdmin && (
         <nav className="h-12 shrink-0 bg-[#151414] border-b border-[#282626] flex items-center justify-between px-3 md:px-6 z-40">
           <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <div className="w-7 h-7 rounded-lg bg-[#1a1919] border border-[#2e2b2b] flex items-center justify-center font-mono font-black text-emerald-400 text-xs shadow-sm">

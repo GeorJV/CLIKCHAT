@@ -15,6 +15,14 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Restricción Exclusiva de Barra y Botones de Navegación a Rol Super Admin
+- **Requerimiento:** Ocultar los botones de navegación superior (`Web Oficial`, `Chat Móvil`, `Chat Producto`, `Chat Servicio`, `Panel Cliente`, `Super Admin`) para clientes y usuarios generales, restringiendo su visibilidad exclusivamente al Super Admin.
+- **Implementación:**
+  1. *Control de Acceso en `src/App.tsx`:* Integración de `useAuth` y evaluación de rol (`user?.role === 'superadmin' || currentView === 'admin' || localStorage.getItem('clikchat_role') === 'superadmin' || params.has('admin')`).
+  2. *Ocultación Total en Dashboard de Cliente:* Cuando el usuario no es Super Admin, la barra superior se oculta por completo, dejando el panel de cliente en pantalla completa con su propia barra lateral (`ClientSidebar`), sin exponer accesos ni switches de otros módulos del sistema.
+  3. *Persistencia de Rol en `src/hooks/useAuth.ts`:* Almacenamiento sincronizado de `clikchat_role` en `localStorage` tras autenticación para evitar parpadeos visuales durante la carga.
+
+
 ### [2026-09-26] Blindaje de Persistencia en /mi-negocio y Carga Instantánea del Chat (Resiliencia Multi-Capa)
 - **Causa Raíz Identificada:**
   1. *Agotamiento de Cuota D1 (Límite diario 7500):* Al agotarse la cuota gratuita de lecturas en Cloudflare D1, las rutas `/api/tenants/:slug` y `/api/tenants` respondían 500, dejando `tenant: null` en frontend y reseteando las entradas de `/mi-negocio`.
