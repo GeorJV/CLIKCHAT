@@ -955,8 +955,8 @@ export async function onRequest(context) {
         console.warn('D1 update password warning (handled):', d1Err.message);
       }
 
-      if (targetEmail && MEMORY_USERS.has(targetEmail)) {
-        const mem = MEMORY_USERS.get(targetEmail);
+      if (targetEmail && memoryUsers.has(targetEmail)) {
+        const mem = memoryUsers.get(targetEmail);
         const salt = generateSalt();
         const newHash = await hashPassword(newPassword.trim(), salt);
         mem.password_hash = newHash;
