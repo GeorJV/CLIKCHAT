@@ -409,6 +409,30 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   5. *Configuración de Entorno:* Se actualizó `.env.example` eliminando referencias a bases de datos externas y dejando únicamente la configuración nativa de Cloudflare D1.
   6. *Verificación de Integridad:* Búsqueda global confirmando 0 ocurrencias de Supabase en todo el repositorio.
 
+### [2026-09-26] Transformación a SaaS Real con Cuentas Aisladas, Auto-Registro y Autenticación Edge (Cloudflare D1 + PBKDF2 + JWT)
+- **Requerimiento del Usuario:**
+  Convertir ClikChat en un SaaS real de grado de producción donde cada cliente tenga una cuenta 100% independiente, privada y aislada para su negocio o tienda, eliminando el selector público y operando exclusivamente sobre la infraestructura de Cloudflare.
+- **Implementación Arquitectónica ARQMODULAR (<150 líneas por archivo):**
+  1. *Esquema Cloudflare D1:*
+     - Creación de la tabla `users` en `schema-d1.sql` y `schema.sql` con `id`, `tenant_id`, `email UNIQUE`, `password_hash`, `salt`, `name`, `role` (`tenant_owner`, `superadmin`) y marcas de tiempo.
+  2. *Motor Criptográfico y Endpoints Edge (`functions/api/[[route]].js`):*
+     - Criptografía nativa en Cloudflare Edge con Web Crypto API: `generateSalt()`, `hashPassword()` (PBKDF2 con HMAC-SHA256 y 100,000 iteraciones), `createJWT()` y `verifyJWT()` (firmas HMAC-SHA256 con expiración a 30 días).
+     - `POST /api/auth/register`: Flujo de onboarding completo que genera el `tenant` con `slug` único deduplicado, inicializa el bot según tipo de negocio (tienda, restaurante, servicios) y moneda oficial (`CRC`/`USD`), encripta la contraseña y emite el token de sesión.
+     - `POST /api/auth/login`: Validación de credenciales contra PBKDF2 y emisión de JWT para acceso privado.
+     - `GET /api/auth/me`: Verificación de tokens Bearer para recuperación de perfil y datos del negocio asociado.
+     - Soporte para credenciales de demostración preconfiguradas (`demo@clikchat.com` / `demo1234`).
+  3. *Frontend (Capa de Estado y UI):*
+     - `src/types/auth.ts` (40 líneas): Interfaces para usuario, credenciales, respuestas y formularios.
+     - `src/hooks/useAuth.ts` (108 líneas): Hook de sesión persistente en `localStorage` con auto-verificación en montaje y métodos `login`, `register`, `logout`.
+     - `src/components/client/ClientRegister.tsx` (147 líneas): Formulario de auto-registro para nuevos clientes.
+     - `src/components/client/ClientLogin.tsx` (126 líneas): Erradicación del menú desplegable público e inicio de sesión privado con email y contraseña.
+     - `src/components/client/ClientDashboard.tsx` (146 líneas): Guardia de autenticación y aislamiento multi-tenant estricto; cada usuario solo visualiza y modifica su propia tienda.
+     - `src/components/client/ClientSidebar.tsx` y `SidebarFooter.tsx`: Botón oficial de "Cerrar Sesión" (`LogOut`) con limpieza de token.
+- **Verificación y Pruebas:**
+  - Script de pruebas de autenticación Edge ejecutado con 100% de éxito (registro, login, rechazo 401 por clave incorrecta, token Bearer y credenciales demo).
+  - Compilación de producción con Vite (`npm run build`) completada con 0 errores en 16.61s.
+
+
 
 
 

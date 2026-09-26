@@ -1,6 +1,7 @@
 import { Tenant } from '../types';
 
-export const DEFAULT_FALLBACK_TENANT: Tenant = {
+// Tenant de demostración reservado EXCLUSIVAMENTE para la tienda demo 'geosoft'
+export const DEMO_GEOSOFT_TENANT: Tenant = {
   id: 'a0000000-0000-0000-0000-000000000001',
   slug: 'geosoft',
   name: 'Restaurante ClikChat',
@@ -22,34 +23,65 @@ export const DEFAULT_FALLBACK_TENANT: Tenant = {
   sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
   order_ticket_format: '',
   tone_of_voice: 'Profesional y Cortés',
+  response_delay_sec: 1,
+  phone: '+506 8888-8888',
+  created_at: '2026-01-15T00:00:00Z'
+};
+
+// Plantilla 100% limpia y vacía para TODAS las cuentas nuevas
+export const CLEAN_EMPTY_TENANT: Tenant = {
+  id: '',
+  slug: '',
+  name: '',
+  owner_name: '',
+  owner_email: '',
+  bot_name: '',
+  avatar_url: '',
+  plan: 'pro',
+  monthly_price: 49,
+  status: 'active',
+  primary_color: '#10b981',
+  business_type: 'tienda',
+  currency: 'CRC',
+  business_hours: '',
+  cta_text: '',
+  cta_url: '',
+  welcome_message: '',
+  system_prompt: '',
+  sales_flow_rules: '',
+  order_ticket_format: '',
+  tone_of_voice: 'Profesional y Cortés',
   response_delay_sec: 1
 };
 
-export function getCachedTenant(slug: string = 'geosoft'): Tenant {
-  if (typeof window === 'undefined') return { ...DEFAULT_FALLBACK_TENANT, slug };
+export const DEFAULT_FALLBACK_TENANT: Tenant = CLEAN_EMPTY_TENANT;
+
+export function getCachedTenant(slug: string = ''): Tenant {
+  if (slug === 'geosoft') return DEMO_GEOSOFT_TENANT;
+  if (!slug) return { ...CLEAN_EMPTY_TENANT };
+  if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug };
   try {
-    const activeSlug = localStorage.getItem('clikchat_active_tenant_slug') || slug;
-    const targetSlug = slug || activeSlug;
-    const saved = localStorage.getItem(`clikchat_tenant_${targetSlug}`) || localStorage.getItem('clikchat_tenant_active');
+    const saved = localStorage.getItem(`clikchat_tenant_${slug}`);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object' && parsed.name) {
-        return { ...DEFAULT_FALLBACK_TENANT, ...parsed, slug: parsed.slug || targetSlug };
+      if (parsed && typeof parsed === 'object') {
+        return { ...CLEAN_EMPTY_TENANT, ...parsed, slug: parsed.slug || slug };
       }
     }
   } catch (e) {
     console.warn('Error reading cached tenant:', e);
   }
-  return { ...DEFAULT_FALLBACK_TENANT, slug };
+  return { ...CLEAN_EMPTY_TENANT, slug };
 }
 
 export function saveCachedTenant(tenant: Tenant): void {
   if (typeof window === 'undefined' || !tenant) return;
   try {
-    const slug = tenant.slug || 'geosoft';
-    localStorage.setItem(`clikchat_tenant_${slug}`, JSON.stringify(tenant));
-    localStorage.setItem('clikchat_tenant_active', JSON.stringify(tenant));
-    localStorage.setItem('clikchat_active_tenant_slug', slug);
+    const slug = tenant.slug || '';
+    if (slug) {
+      localStorage.setItem(`clikchat_tenant_${slug}`, JSON.stringify(tenant));
+      localStorage.setItem('clikchat_active_tenant_slug', slug);
+    }
   } catch (e) {
     console.warn('Error saving cached tenant:', e);
   }
