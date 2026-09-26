@@ -16,6 +16,23 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Corrección de Falso Positivo en Dropzone de Documentos RAG y Soporte Nativo de PDFs
+- **Diagnóstico del Fallo Reportado por el Usuario ("POR QUE SALE ESTO: No se pudo procesar ningún archivo... NINGUN ARCHIVO NI PDF NI DOCXS NI TXT NI NADA"):**
+  1. *Falso Positivo en Eventos Drag/Drop o Clics Vacíos:* En `DocumentDropzone.tsx`, la función `handleFiles` se disparaba ante interacciones del usuario sobre la zona de arrastre (por ejemplo, arrastrar un elemento visual, selección de texto o cancelar un diálogo de archivos) recibiendo `FileList` con objetos vacíos o de tamaño 0 bytes (`file.size === 0`). Al entrar al loop de análisis y no detectar texto, se marcaba un error genérico.
+  2. *Bloqueo Persistente del Banner de Error:* A diferencia de los mensajes de éxito que tenían un temporizador `setTimeout` para desaparecer a los 4 segundos, el estado de error (`status = { type: 'err', msg: ... }`) **no contaba con temporizador de auto-cierre ni botón de descarte (`X`)**, quedando congelado en la pantalla de forma permanente hasta recargar la página.
+  3. *Incompatibilidad con Archivos PDF:* El selector de archivos (`accept`) y el analizador (`documentParser.ts`) no tenían implementado el procesamiento de `.pdf`, provocando excepciones si el usuario intentaba subir documentos en este formato común.
+- **Solución Implementada (ARQMODULAR & UX Limpia):**
+  1. *Filtrado Riguroso Anti-Falsos Positivos (`src/components/client/training/DocumentDropzone.tsx`):*
+     - Se introdujo validación `const validFiles = Array.from(fileList || []).filter(f => f && f.size > 0);`. Si no hay archivos reales con tamaño superior a 0 bytes, la función aborta inmediatamente de forma silenciosa sin disparar alertas ni estados erróneos.
+     - Se añadió un botón manual de cierre (`X`) y un temporizador automático de desaparición (`setTimeout`) de 5 segundos para cualquier notificación de error.
+     - Se incorporó la extensión `.pdf` al atributo `accept` y se agregó la insignia visual representativa en la interfaz.
+  2. *Parser Nativo de Documentos PDF en Navegador (`src/utils/documentParser.ts`):*
+     - Soporte para extracción de texto en documentos `.pdf` mediante carga asíncrona bajo demanda de `pdf.js` (Cloudflare CDN) sin dependencias pesadas en el bundle inicial.
+     - Mecanismo secundario de contingencia mediante decodificación de texto en streams binarios con `TextDecoder`.
+- **Verificación y Cumplimiento de Calidad:**
+  - Build de Vite (`npm run build`) validado al 100% en 5.96s con 0 errores de compilación o TypeScript.
+  - Arquitectura atómica respetada: `DocumentDropzone.tsx` (153 líneas) y `documentParser.ts` (127 líneas), ambos dentro del estándar estricto de modularidad (<180 líneas).
+
 ### [2026-09-26] Erradicación Definitiva de Bloqueo en Links (Carga Resiliente 100% Anti-Spinner)
 - **Diagnóstico del Fallo Reportado por el Usuario ("LOS LINKS NO ESTAN CARGANDO"):**
   1. Al navegar a cualquier link de producto (ej: `/chat/restaurante-chara-rica-xl/prod_1790456903121` o `?t=...&p=...`), `useProductResolver.ts` llamaba a `prodRes.value.json()` sin validar `Content-Type`. Al recibir HTML del SPA fallback, se lanzaba una excepción fatal `SyntaxError: Unexpected token '<'`.

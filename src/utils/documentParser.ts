@@ -85,5 +85,43 @@ export async function parseDocumentFile(file: File): Promise<{ title: string; co
     return { title: cleanTitle, content: combined.trim(), fileType: ext };
   }
 
-  throw new Error(`Formato de archivo .${ext} no soportado. Usa .txt, .docx, .xlsx o .csv`);
+  // 4. Archivos PDF (.pdf)
+  if (ext === 'pdf') {
+    try {
+      await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      const pdfjs = (window as any).pdfjsLib;
+      if (pdfjs) {
+        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= Math.min(pdf.numPages, 80); i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          if (pageText.trim().length > 0) {
+            fullText += `--- PÁGINA ${i} ---\n${pageText}\n\n`;
+          }
+        }
+        if (fullText.trim().length > 0) {
+          return { title: cleanTitle, content: fullText.trim(), fileType: ext };
+        }
+      }
+    } catch (e) {
+      console.warn('Fallo extrayendo PDF con pdf.js:', e);
+    }
+
+    // Fallback binario para texto en PDF
+    const buffer = await file.arrayBuffer();
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+    const matches = text.match(/[\w\sÁÉÍÓÚáéíóúñÑ.,;:!¿?()\-]{4,}/g) || [];
+    const extracted = matches.join(' ').slice(0, 15000).trim();
+    if (extracted.length > 50) {
+      return { title: cleanTitle, content: extracted, fileType: ext };
+    }
+    throw new Error('El PDF no contiene texto digital legible (puede ser una imagen o escaneo).');
+  }
+
+  throw new Error(`Formato de archivo .${ext} no soportado. Usa .pdf, .docx, .xlsx, .txt o .csv`);
 }
+

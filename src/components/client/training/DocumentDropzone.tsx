@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw, FileSpreadsheet, FileCode } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw, FileSpreadsheet, FileCode, X } from 'lucide-react';
 import { parseDocumentFile } from '../../../utils/documentParser';
 
 interface Props {
@@ -17,19 +17,27 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
   const effectiveTenantId = tenantId || 'a0000000-0000-0000-0000-000000000001';
 
   const handleFiles = async (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
+    // Filtrar únicamente archivos reales con tamaño > 0 bytes para evitar falsos positivos
+    const validFiles = Array.from(fileList || []).filter(f => f && f.size > 0);
+    if (validFiles.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setIsProcessing(true);
     setStatus(null);
 
-    const files = Array.from(fileList);
     let successCount = 0;
+    let lastError = '';
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setProgressMsg(`Procesando (${i + 1}/${files.length}): ${file.name}...`);
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      setProgressMsg(`Procesando (${i + 1}/${validFiles.length}): ${file.name}...`);
       try {
         const { title, content, fileType } = await parseDocumentFile(file);
-        if (!content) throw new Error('El archivo no contiene texto legible.');
+        if (!content || content.trim().length === 0) {
+          throw new Error(`El archivo "${file.name}" está vacío o no contiene texto legible.`);
+        }
 
         const res = await fetch('/api/documents', {
           method: 'POST',
@@ -42,9 +50,15 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
           })
         });
 
-        if (res.ok) successCount++;
+        if (res.ok) {
+          successCount++;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Error del servidor al subir ${file.name}`);
+        }
       } catch (err: any) {
         console.error(`Error procesando ${file.name}:`, err);
+        lastError = err.message || `No se pudo procesar ${file.name}`;
       }
     }
 
@@ -56,8 +70,9 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
       setStatus({ type: 'ok', msg: `¡${successCount} documento(s) indexado(s) exitosamente en Cloudflare D1!` });
       await onUploadSuccess();
       setTimeout(() => setStatus(null), 4000);
-    } else {
-      setStatus({ type: 'err', msg: 'No se pudo procesar ningún archivo. Verifica que contengan texto.' });
+    } else if (lastError) {
+      setStatus({ type: 'err', msg: lastError });
+      setTimeout(() => setStatus(null), 5000);
     }
   };
 
@@ -76,7 +91,7 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".txt,.md,.csv,.doc,.docx,.xlsx,.xls"
+          accept=".txt,.md,.csv,.doc,.docx,.xlsx,.xls,.pdf"
           onChange={(e) => handleFiles(e.target.files)}
           className="hidden"
         />
@@ -93,6 +108,9 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
+            <FileText className="w-3 h-3 text-rose-400" /> PDF (.PDF)
+          </span>
           <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
             <FileText className="w-3 h-3 text-sky-400" /> .TXT / .MD / .CSV
           </span>
@@ -113,11 +131,21 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
       )}
 
       {status && (
-        <div className={`p-3 rounded-xl border text-xs flex items-center gap-2 font-medium ${
+        <div className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 font-medium animate-fade-in ${
           status.type === 'ok' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
         }`}>
-          {status.type === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-          <span>{status.msg}</span>
+          <div className="flex items-center gap-2">
+            {status.type === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            <span>{status.msg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setStatus(null); }}
+            className="text-zinc-400 hover:text-white p-0.5 rounded transition cursor-pointer"
+            title="Cerrar aviso"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
     </div>
