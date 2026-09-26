@@ -139,9 +139,9 @@ export const ProductShowcase: React.FC<Props> = ({
                     <span className="text-xs uppercase tracking-wider text-zinc-900/90 font-black">Total:</span>
                     <span>
                       {formatPriceWithCurrency(
-                        orderTotal !== null && orderTotal !== undefined && orderTotal > 0
+                        orderTotal !== null && orderTotal !== undefined
                           ? orderTotal
-                          : product.price,
+                          : 0,
                         product.currency
                       )}
                     </span>

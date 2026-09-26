@@ -39,7 +39,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
   const [agentAvatar, setAgentAvatar] = useState<string>('');
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [responseDelaySec, setResponseDelaySec] = useState<number>(9);
+  const [responseDelaySec, setResponseDelaySec] = useState<number>(1);
   const [businessType, setBusinessType] = useState<string>('tienda');
   const hasTrackedRef = useRef<string | null>(null);
 
@@ -59,7 +59,9 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
             if (tData.tenant?.bot_name && isMounted) setAgentName(tData.tenant.bot_name);
             if (tData.tenant?.avatar_url && isMounted) setAgentAvatar(tData.tenant.avatar_url);
             if (tData.tenant?.welcome_message && isMounted) setWelcomeMessage(tData.tenant.welcome_message);
-            if (tData.tenant?.response_delay_sec !== undefined && isMounted) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
+            if (tData.tenant?.response_delay_sec !== undefined && tData.tenant?.response_delay_sec !== null && isMounted) {
+              setResponseDelaySec(Math.max(1, Number(tData.tenant.response_delay_sec)));
+            }
             if (tData.tenant?.business_type && isMounted) setBusinessType(tData.tenant.business_type);
             if (tData.products && tData.products.length > 0 && isMounted) {
               setProductItem(toProductItem(tData.products[0]));
@@ -113,7 +115,9 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
             if (tData.tenant.bot_name) setAgentName(tData.tenant.bot_name);
             if (tData.tenant.avatar_url) setAgentAvatar(tData.tenant.avatar_url);
             if (tData.tenant.welcome_message) setWelcomeMessage(tData.tenant.welcome_message);
-            if (tData.tenant.response_delay_sec !== undefined) setResponseDelaySec(Number(tData.tenant.response_delay_sec));
+            if (tData.tenant.response_delay_sec !== undefined && tData.tenant.response_delay_sec !== null) {
+              setResponseDelaySec(Math.max(1, Number(tData.tenant.response_delay_sec)));
+            }
             if (tData.tenant.business_type) setBusinessType(tData.tenant.business_type);
           }
           if (tData.products && Array.isArray(tData.products)) {

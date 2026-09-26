@@ -10,8 +10,8 @@ interface UseMessageBatcherOptions {
 }
 
 export function useMessageBatcher({
-  debounceMs = 1200,
-  deliveryDelayMs = 250,
+  debounceMs = 800,
+  deliveryDelayMs = 0,
   onDeliverUserMessage,
   onTriggerBotReply,
   onSetLoading,
@@ -30,31 +30,38 @@ export function useMessageBatcher({
       botDebounceTimerRef.current = null;
     }
 
-    setTimeout(() => {
-      const userMsg: ProductChatMessage = {
-        id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        sessionId: 'sess',
-        tenantId: 'tenant',
-        sender: 'user',
-        content: trimmed,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
+    const userMsg: ProductChatMessage = {
+      id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      sessionId: 'sess',
+      tenantId: 'tenant',
+      sender: 'user',
+      content: trimmed,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    if (deliveryDelayMs > 0) {
+      setTimeout(() => onDeliverUserMessage(userMsg), deliveryDelayMs);
+    } else {
       onDeliverUserMessage(userMsg);
-    }, deliveryDelayMs);
+    }
+
+    // Mostrar feedback de carga/escritura inmediatamente al usuario
+    onSetLoading?.(true);
 
     botDebounceTimerRef.current = setTimeout(async () => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
 
       if (batchToProcess.length > 0) {
-        onSetLoading?.(true);
         try {
           await onTriggerBotReply(batchToProcess);
         } finally {
           onSetLoading?.(false);
         }
+      } else {
+        onSetLoading?.(false);
       }
-    }, debounceMs);
+    }, Math.max(debounceMs, 300));
   }, [debounceMs, deliveryDelayMs, onDeliverUserMessage, onTriggerBotReply, onSetLoading]);
 
   // Procesa consulta de voz en el bot sin agregar mensaje de texto duplicado del usuario

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../types/productChat';
-import { ProductChatColumn } from './ProductChatColumn'; import { ProductShowcase } from './ProductShowcase';
-import { ProductDetailModal } from './ProductDetailModal'; import { ProductFullscreenModal } from './ProductFullscreenModal';
-import { ProductCheckoutModal } from './ProductCheckoutModal'; import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
-import { DEFAULT_PRODUCT } from './productChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
-import { adaptTemporalText } from '../../../utils/temporalGreeting';
+import { ProductItem } from '../../../types/productChat';
+import { ProductChatColumn } from './ProductChatColumn';
+import { ProductShowcase } from './ProductShowcase';
+import { ProductModalsContainer } from './ProductModalsContainer';
+import { ProductChatTheme, PRODUCT_THEMES } from './productThemes';
+import { DEFAULT_PRODUCT } from './productChatMock';
+import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { extractPriceFromText, isAddOrderAction } from '../../../utils/orderPriceExtractor';
+import { useProductChatSession } from './useProductChatSession';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
@@ -19,11 +22,14 @@ export const ProductChatView: React.FC<Props> = ({
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const isRestaurant = businessType === 'restaurante';
-  const [orderTotal, setOrderTotal] = useState<number | null>(selectedProduct?.price || (isRestaurant ? 0 : null));
+  const [orderTotal, setOrderTotal] = useState<number | null>(() => (isRestaurant ? 0 : (selectedProduct?.price || null)));
   const [isTotalPulsing, setIsTotalPulsing] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { if (isRestaurant && orderTotal === null) setOrderTotal(0); }, [isRestaurant]);
   useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
-  const [messages, setMessages] = useState<ProductChatMessage[]>([]);
+  useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'benefits' | 'specs' | null>(null);
@@ -31,68 +37,15 @@ export const ProductChatView: React.FC<Props> = ({
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [theme, setTheme] = useState<ProductChatTheme>('linear_dark');
   const themeStyles = PRODUCT_THEMES[theme];
-  useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
-  const [sessId, setSessId] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'sess_' + Date.now().toString(36);
-    const key = `clik_sess_prod_${initialProduct?.id || products[0]?.id || 'default'}`;
-    const saved = sessionStorage.getItem(key);
-    if (saved) return saved;
-    const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-    sessionStorage.setItem(key, created);
-    return created;
+  const { messages, setMessages, sessId, handleResetChat, trackEvent, handleConfirmCheckout } = useProductChatSession({
+    selectedProduct, storeName, agentName, welcomeMessage, isRestaurant,
+    onResetOrderTotal: () => setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null)),
+    onRestoreOrderTotal: (total) => setOrderTotal(total)
   });
 
-  const handleResetChat = () => {
-    if (typeof window !== 'undefined' && selectedProduct.id) {
-      sessionStorage.removeItem(`clik_sess_prod_${selectedProduct.id}`);
-      const newSess = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-      sessionStorage.setItem(`clik_sess_prod_${selectedProduct.id}`, newSess);
-      setSessId(newSess);
-      setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null));
-    }
-  };
-
-  useEffect(() => {
-    if (selectedProduct.id && typeof window !== 'undefined') {
-      const storageKey = `clik_sess_prod_${selectedProduct.id}`;
-      let cur = sessionStorage.getItem(storageKey);
-      if (!cur) { cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); sessionStorage.setItem(storageKey, cur); }
-      setSessId(cur);
-    }
-  }, [selectedProduct.id]);
-
-  useEffect(() => {
-    if (!selectedProduct?.title || !storeName) return;
-    let isMounted = true;
-    fetch(`/api/chat/messages/${sessId}`, { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (isMounted && data?.messages && data.messages.length > 0) {
-          setMessages(data.messages);
-        } else if (isMounted) {
-          const defaultGreeting = `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** ($${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
-          const dynamicGreeting = welcomeMessage
-            ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
-            : defaultGreeting;
-          setMessages([{
-            id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
-            content: dynamicGreeting,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida catálogo' },
-          }]);
-        }
-      }).catch(() => {});
-    return () => { isMounted = false; };
-  }, [selectedProduct.id, selectedProduct.title, agentName, storeName, sessId, welcomeMessage]);
-
-  const trackEvent = (event: string, temperature?: string) => {
-    if (!selectedProduct.id) return;
-    fetch(`/api/products/${selectedProduct.id}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event, temperature }) }).catch(() => {});
-  };
-
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800), deliveryDelayMs: 200, onSetLoading: setIsLoading,
+    debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400), deliveryDelayMs: 0, onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onTriggerBotReply: async (batch) => {
       const userText = batch.join('\n').trim();
@@ -109,7 +62,14 @@ export const ProductChatView: React.FC<Props> = ({
         });
         const data = res.ok ? await res.json() : null;
         if (data?.isRestaurant || isRestaurant) {
-          if (typeof data?.orderTotal === 'number' && data.orderTotal > 0) setOrderTotal(data.orderTotal);
+          if (typeof data?.orderTotal === 'number') {
+            setOrderTotal(data.orderTotal);
+            if (data.orderTotal > 0) {
+              if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+              setIsTotalPulsing(true);
+              pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
+            }
+          }
           const askedTotal = data?.isAskingTotal || /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido)\b/i.test(userText);
           if (askedTotal) {
             if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
@@ -143,17 +103,16 @@ export const ProductChatView: React.FC<Props> = ({
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
+    if (isRestaurant && isAddOrderAction(text)) {
+      const addedPrice = extractPriceFromText(text);
+      if (addedPrice !== null && addedPrice > 0) {
+        setOrderTotal((prev) => (prev ?? 0) + addedPrice);
+        if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+        setIsTotalPulsing(true);
+        pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
+      }
+    }
     if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); } else { sendVoiceQuery(text); }
-  };
-
-  const handleConfirmCheckout = (data: ProductCheckoutData) => {
-    trackEvent('lead', 'hot');
-    trackEvent('buy_click');
-    setMessages((prev) => [...prev, {
-      id: `order-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-      content: `🛍️ **¡Pedido Registrado con Éxito!**\n\n- **Producto:** ${data.product.title} (x${data.quantity})\n- **Total:** $${data.totalAmount.toFixed(2)} ${data.product.currency}\n- **Destinatario:** ${data.customerName} (${data.customerPhone})\n- **Dirección:** ${data.shippingAddress}\n\nTe contactaremos a tu WhatsApp con el enlace de despacho.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
   };
 
   return (
@@ -170,9 +129,13 @@ export const ProductChatView: React.FC<Props> = ({
           onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }} onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
         />
       </div>
-      {detailModal && <ProductDetailModal product={selectedProduct} mode={detailModal} onClose={() => setDetailModal(null)} onProceedBuy={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }} />}
-      {fullscreenOpen && <ProductFullscreenModal product={selectedProduct} storeName={storeName} onClose={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }} onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} />}
-      {checkoutOpen && <ProductCheckoutModal product={selectedProduct} storeName={storeName} onClose={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} />}
+      <ProductModalsContainer
+        product={selectedProduct} storeName={storeName} detailModal={detailModal} fullscreenOpen={fullscreenOpen} checkoutOpen={checkoutOpen}
+        onCloseDetail={() => setDetailModal(null)} onProceedBuyDetail={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
+        onCloseFullscreen={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
+        onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }}
+        onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout}
+      />
     </div>
   );
 };

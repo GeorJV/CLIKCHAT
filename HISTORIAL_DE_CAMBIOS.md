@@ -15,6 +15,15 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Blindaje de Velocidad Inmediata del Chatbot y Total de Comanda Dinámico en Tiempo Real
+- **Celeridad y Velocidad Inmediata:** Eliminación del retraso de 9 segundos por defecto en el batcher y hooks (`useProductResolver`, `useChatRAG`, `useMessageBatcher`, `ProductChatView`, `ServiceChatView`), fijando por defecto el Modo Inmediato (1 segundo). Retroalimentación instantánea de escritura ("Consultando catálogo oficial...") y renderizado inmediato (0ms) del mensaje del usuario al presionar enviar.
+- **Total Dinámico y Detección de Agregado al Instante:**
+  1. El módulo de restaurante arranca de forma limpia en 0 (comanda vacía) en lugar de tomar valores arbitrarios de productos del catálogo.
+  2. Detección instantánea en cliente (`orderPriceExtractor.ts`) al pulsar `[➕ Agregar]` o solicitar un producto, sumando el precio inmediatamente al botón y activando el efecto parpadeante (ring-pulse dorado) de 10 segundos.
+  3. Gestión y persistencia de comanda activa en Cloudflare D1 (`orders` con estado `draft`), actualizando el acumulado matemáticamente e inyectándolo al contexto del LLM para el cierre de comanda y cotización exacta.
+  4. Sincronización bidireccional y recuperación automática del total acumulado ante recargas de página vía `GET /api/chat/messages/:sessionId`.
+- **Arquitectura Modular (ARQMODULAR):** Creación de componentes y hooks atómicos `orderPriceExtractor.ts` (70 líneas), `ProductModalsContainer.tsx` (56 líneas) y `useProductChatSession.ts` (98 líneas), manteniendo todos los archivos estrictamente < 175 líneas.
+
 ### [2026-09-24] Corrección Universal de Codificación UTF-8 en Cloudflare D1 y Edge Gateway
 - **Causa Raíz:** Al insertar las FAQs de horarios y promociones mediante PowerShell Windows, los caracteres con tilde y eñe (`ó`, `á`, `í`, `ñ`) se enviaron con codificación Windows-1252/ISO-8859-1 en lugar de UTF-8 puro, almacenando caracteres de reemplazo ().
 - **Solución y Blindaje:**

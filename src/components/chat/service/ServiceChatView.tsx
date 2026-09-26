@@ -66,8 +66,8 @@ export const ServiceChatView: React.FC<Props> = ({
   }, [selectedService.id, sessId]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: Math.max((responseDelaySec ?? 9) * 1000, 800),
-    deliveryDelayMs: 200,
+    debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400),
+    deliveryDelayMs: 0,
     onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onTriggerBotReply: async (batch) => {

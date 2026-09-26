@@ -100,9 +100,12 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
       sender: 'user', message: trimmed, created_at: new Date().toISOString()
     };
     setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
     if (botDebounceTimerRef.current) clearTimeout(botDebounceTimerRef.current);
-    const delaySec = tenant?.response_delay_sec !== undefined ? Number(tenant.response_delay_sec) : 9;
-    const debounceMs = Math.max(delaySec * 1000, 800);
+    const delaySec = tenant?.response_delay_sec !== undefined && tenant?.response_delay_sec !== null
+      ? Number(tenant.response_delay_sec)
+      : 1;
+    const debounceMs = Math.max(delaySec * 1000, 400);
     botDebounceTimerRef.current = setTimeout(() => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
