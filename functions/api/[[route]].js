@@ -1529,7 +1529,11 @@ export async function onRequest(context) {
             itemLabel = `➕ Agregar ${mp.name}`;
             itemAction = `Agregar ${mp.name} (${sym}${mp.price})`;
           } else {
-            const cleanQuery = message.replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|qu[eé]\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡]/g, '').trim();
+            const cleanQuery = message
+              .replace(/^[¿¡\s]+/, '')
+              .replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|qu[eé]\s*precio\s*tiene)\s*(?:el|la|los|las|un|una)?\s*/i, '')
+              .replace(/[?¿!¡]/g, '')
+              .trim();
             if (cleanQuery.length > 2) {
               const formattedName = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
               itemLabel = `➕ Agregar ${formattedName}`;
