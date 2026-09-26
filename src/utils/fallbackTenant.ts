@@ -58,13 +58,19 @@ export const DEFAULT_FALLBACK_TENANT: Tenant = CLEAN_EMPTY_TENANT;
 
 export function getCachedTenant(slug: string = ''): Tenant {
   if (slug === 'geosoft') return DEMO_GEOSOFT_TENANT;
-  if (!slug) return { ...CLEAN_EMPTY_TENANT };
+  if (!slug) {
+    if (typeof window !== 'undefined') {
+      const activeSlug = localStorage.getItem('clikchat_active_tenant_slug');
+      if (activeSlug && activeSlug !== 'geosoft') return getCachedTenant(activeSlug);
+    }
+    return { ...CLEAN_EMPTY_TENANT };
+  }
   if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug };
   try {
     const saved = localStorage.getItem(`clikchat_tenant_${slug}`);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object') {
+      if (parsed && typeof parsed === 'object' && (parsed.name || parsed.id)) {
         return { ...CLEAN_EMPTY_TENANT, ...parsed, slug: parsed.slug || slug };
       }
     }
@@ -76,9 +82,23 @@ export function getCachedTenant(slug: string = ''): Tenant {
 
 export function saveCachedTenant(tenant: Tenant): void {
   if (typeof window === 'undefined' || !tenant) return;
+  // Blindaje anti-vaciado: nunca sobreescribir con un esqueleto vacío
+  if (!tenant.name && !tenant.id && !tenant.bot_name && tenant.slug !== 'geosoft') {
+    return;
+  }
   try {
     const slug = tenant.slug || '';
     if (slug) {
+      const existing = localStorage.getItem(`clikchat_tenant_${slug}`);
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          const merged = { ...parsed, ...tenant };
+          localStorage.setItem(`clikchat_tenant_${slug}`, JSON.stringify(merged));
+          localStorage.setItem('clikchat_active_tenant_slug', slug);
+          return;
+        } catch (e) {}
+      }
       localStorage.setItem(`clikchat_tenant_${slug}`, JSON.stringify(tenant));
       localStorage.setItem('clikchat_active_tenant_slug', slug);
     }

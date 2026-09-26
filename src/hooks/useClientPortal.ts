@@ -48,25 +48,31 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
     if (initialSlug && initialSlug !== tenantSlug) {
       setTenantSlug(initialSlug);
       const cached = getCachedTenant(initialSlug);
-      setTenant(cached);
+      if (cached && (cached.name || cached.id)) {
+        setTenant(cached);
+      }
       try {
         const savedProds = localStorage.getItem(`clikchat_products_${initialSlug}`);
-        setProducts(savedProds ? JSON.parse(savedProds) : []);
+        if (savedProds) setProducts(JSON.parse(savedProds));
         const savedFaqs = localStorage.getItem(`clikchat_faqs_${initialSlug}`);
-        setFaqs(savedFaqs ? JSON.parse(savedFaqs) : []);
-      } catch (e) {
-        setProducts([]);
-        setFaqs([]);
-      }
+        if (savedFaqs) setFaqs(JSON.parse(savedFaqs));
+      } catch (e) {}
+      loadTenantData(initialSlug);
     }
-  }, [initialSlug]);
+  }, [initialSlug, tenantSlug, loadTenantData]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && tenantSlug) {
       try {
-        localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(products));
-        localStorage.setItem(`clikchat_faqs_${tenantSlug}`, JSON.stringify(faqs));
-        if (tenant) saveCachedTenant(tenant);
+        if (products && products.length > 0) {
+          localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(products));
+        }
+        if (faqs && faqs.length > 0) {
+          localStorage.setItem(`clikchat_faqs_${tenantSlug}`, JSON.stringify(faqs));
+        }
+        if (tenant && (tenant.name || tenant.id)) {
+          saveCachedTenant(tenant);
+        }
       } catch (e) {}
     }
   }, [products, faqs, tenant, tenantSlug]);
@@ -92,6 +98,9 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
         const tData = await tRes.json();
         if (tData.tenant) {
           setTenant(prev => {
+            if (!tData.tenant.name && !tData.tenant.id && prev.name) {
+              return prev;
+            }
             const next = { ...prev, ...tData.tenant };
             saveCachedTenant(next);
             return next;

@@ -79,11 +79,17 @@ export function useAppRouter() {
   let routeProductId: string | null = searchParams.get('p') || null;
   let panelTabFromRoute: ClientTab | null = null;
 
-  const isPanelUrl = parts[0] === 'panel' && parts.length >= 2;
+  const isPanelUrl = (parts[0] === 'panel' && parts.length >= 2) || (parts[0] === 'user' && parts[1] === 'mi-negocio' && parts.length >= 3);
   if (isPanelUrl) {
-    routeTenantSlug = parts[1];
-    const section = parts[2] ? `/${parts[2]}` : '/dashboard';
-    panelTabFromRoute = ROUTE_TAB_MAP[section] || 'chatbot';
+    if (parts[0] === 'user') {
+      routeTenantSlug = decodeURIComponent(parts[2]);
+      const section = parts[3] ? `/${parts[3]}` : '/dashboard';
+      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'chatbot';
+    } else {
+      routeTenantSlug = parts[1];
+      const section = parts[2] ? `/${parts[2]}` : '/dashboard';
+      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'chatbot';
+    }
   }
 
   const isChatSlugUrl = parts[0] === 'chat' && parts.length >= 2;

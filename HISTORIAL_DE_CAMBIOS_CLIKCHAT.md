@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Blindaje Universal de Datos, Persistencia Local y Protección Anti-Vaciado por Recarga (F5) en Frontend y Cloudflare Edge
+- **Requerimiento:**
+  Garantizar que bajo ninguna circunstancia los datos del cliente, inputs, formularios de identidad de negocio, catálogos o menús se borren al refrescar la página (F5 / reload), blindando la arquitectura tanto en el cliente como en el backend Edge.
+- **Implementación Arquitectónica ARQMODULAR (<150-180 líneas por archivo):**
+  1. *Blindaje de Caché y Anti-Vaciado (`src/utils/fallbackTenant.ts`):*
+     - Guardas estrictas en `saveCachedTenant`: nunca sobreescribe datos válidos con esqueletos vacíos.
+     - Detección reactiva de `clikchat_active_tenant_slug` para resolver de inmediato el tenant en caché ante recargas transitorias.
+  2. *Protección en Estado del Portal (`src/hooks/useClientPortal.ts`):*
+     - Guardas condicionales en `products` y `faqs`: solo persiste colecciones con contenido real, evitando que respuestas transitorias vacías pisen datos válidos.
+     - Carga inmediata y sincronizada de datos de inquilino al detectar cambio de slug.
+  3. *Auto-Persistencia Instantánea de Borradores en Inputs (`src/components/client/business/BusinessIdentitySubTab.tsx`):*
+     - Captura reactiva de cada pulsación de tecla (`useEffect` sobre estados) vinculada a `clikchat_draft_identity_{slug}` en `localStorage`.
+     - Si el usuario refresca sin guardar o en medio de la edición, todos sus campos (nombre, slug, bot, bienvenida, tono, prompt, logo, avatar, moneda) se restauran intactos.
+  4. *Resolución de Rutas y Estado Activo (`src/components/client/ClientDashboard.tsx`, `src/hooks/useAppRouter.ts`):*
+     - Eliminación del fallback destructivo `'acme-store'`.
+     - Soporte y normalización fluida para rutas `/panel/:slug/:tab` y `/user/mi-negocio/:slug/:tab`.
+     - Persistencia del subtab activo en `BusinessSettingsTab.tsx`.
+  5. *Resiliencia Edge y UPSERT Cloudflare D1 (`functions/api/[[route]].js`):*
+     - Almacén en memoria volátil `memoryTenants = new Map()` en el isolate de Cloudflare Pages Functions.
+     - UPSERT resiliente en `PUT /api/tenants/:id`: si el registro aún no existe en D1 (por microcortes o cuotas), ejecuta automáticamente un `INSERT` de rescate.
+- **Archivos:** `BusinessIdentitySubTab.tsx`, `useClientPortal.ts`, `fallbackTenant.ts`, `ClientDashboard.tsx`, `BusinessSettingsTab.tsx`, `useAppRouter.ts`, `functions/api/[[route]].js`.
+
 ### [2026-09-26] Integración de GLM-5.3-Flash como Modelo Titular de Ultra Bajo Costo ($0.045 / $0.14) con Descarte de Razonamiento y Failover a DeepSeek
 - **Requerimiento:**
   Adoptar un modelo de lenguaje de ultra bajo costo para máxima rentabilidad y escalabilidad del SaaS en comercios y restaurantes, manteniendo el clúster de DeepSeek como respaldo automático de alta disponibilidad.

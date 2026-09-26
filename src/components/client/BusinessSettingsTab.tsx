@@ -33,7 +33,22 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   onCreateBulkFaqs,
   initialSubTab = 'identity'
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'identity' | 'faqs' | 'cadence'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'identity' | 'ai' | 'cadence' | 'faqs'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('clikchat_business_subtab');
+      if (saved === 'identity' || saved === 'ai' || saved === 'cadence' || saved === 'faqs') {
+        return saved;
+      }
+    }
+    return initialSubTab;
+  });
+
+  const handleSelectSubTab = (tab: 'identity' | 'ai' | 'cadence' | 'faqs') => {
+    setActiveSubTab(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('clikchat_business_subtab', tab);
+    }
+  };
 
   return (
     <div className="space-y-4 max-w-5xl text-slate-100 font-sans">
@@ -50,7 +65,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
 
         <div className="flex items-center gap-1 bg-[#121111] p-1 rounded-xl border border-[#262424] shrink-0 flex-wrap">
           <button
-            type="button" onClick={() => setActiveSubTab('identity')}
+            type="button" onClick={() => handleSelectSubTab('identity')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeSubTab === 'identity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
@@ -60,7 +75,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </button>
 
           <button
-            type="button" onClick={() => setActiveSubTab('ai')}
+            type="button" onClick={() => handleSelectSubTab('ai')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeSubTab === 'ai' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
@@ -70,7 +85,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </button>
 
           <button
-            type="button" onClick={() => setActiveSubTab('cadence')}
+            type="button" onClick={() => handleSelectSubTab('cadence')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeSubTab === 'cadence' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
@@ -80,7 +95,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </button>
 
           <button
-            type="button" onClick={() => setActiveSubTab('faqs')}
+            type="button" onClick={() => handleSelectSubTab('faqs')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeSubTab === 'faqs' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}

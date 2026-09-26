@@ -699,6 +699,9 @@ const memoryUsers = new Map([
   ]
 ]);
 
+// In-memory fallback tenant store (for high-availability & resilience against transient D1 quotas)
+const memoryTenants = new Map();
+
 export async function onRequest(context) {
   const { request, env } = context;
   currentEnv = env || {};
@@ -840,6 +843,8 @@ export async function onRequest(context) {
         console.warn('User D1 insert warning:', uErr.message);
       }
       memoryUsers.set(cleanEmail, newUser);
+      memoryTenants.set(tenantId, newTenant);
+      memoryTenants.set(slug, newTenant);
 
       // 5. Generate JWT token
       const secret = getJwtSecret(env);
@@ -1401,7 +1406,11 @@ export async function onRequest(context) {
         if (!tRows.length) tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1', [slug]);
         if (!tRows.length && slug === 'geosoft') tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
         
-        let tenant = tRows.length ? tRows[0] : getFallbackTenant(slug);
+        let tenant = tRows.length ? tRows[0] : (memoryTenants.get(slug) || getFallbackTenant(slug));
+        if (tenant && tenant.id) {
+          memoryTenants.set(tenant.id, tenant);
+          if (tenant.slug) memoryTenants.set(tenant.slug, tenant);
+        }
 
         let products = [];
         try {
@@ -1448,7 +1457,7 @@ export async function onRequest(context) {
         });
       } catch (err) {
         console.warn('D1 error in GET tenant, serving fallback:', err.message);
-        const tenant = getFallbackTenant(slug);
+        const tenant = memoryTenants.get(slug) || getFallbackTenant(slug);
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
         const fallbackProds = slug === 'geosoft' ? getFallbackProducts() : [];
         const fallbackFaqs = slug === 'geosoft' ? getFallbackFaqs() : [];
@@ -1502,9 +1511,55 @@ export async function onRequest(context) {
         updated = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [id]);
       } catch (e) {}
 
+      // Si no existía en D1, realizar INSERT de rescate (UPSERT resiliente)
+      if (!updated.length) {
+        const insertId = id.startsWith('ten_') ? id : ('ten_' + Date.now());
+        const insertSlug = slug || id;
+        try {
+          await executeD1(
+            `INSERT INTO tenants (id, slug, name, owner_email, owner_name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, sales_flow_rules, order_ticket_format, plan, status)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, 'pro', 'active')`,
+            [
+              insertId,
+              insertSlug,
+              name || 'Mi Negocio',
+              body.owner_email || 'usuario@clikchat.com',
+              body.owner_name || name || 'Administrador',
+              bot_name || 'Asesor Comercial',
+              avatar_url || '',
+              welcome_message || '',
+              primary_color || '#10b981',
+              cta_text || '',
+              cta_url || '',
+              business_hours || '',
+              system_prompt || '',
+              logo_url || '',
+              tone_of_voice || 'Profesional y Cortés',
+              response_delay_sec !== undefined ? Number(response_delay_sec) : null,
+              operational_rules || '',
+              business_type || 'tienda',
+              currency || 'CRC',
+              sales_flow_rules || '',
+              order_ticket_format || ''
+            ]
+          );
+          updated = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?2 LIMIT 1', [insertId, insertSlug]);
+        } catch (insertErr) {
+          console.warn('D1 tenant upsert insert warning:', insertErr.message);
+        }
+      }
+
+      const finalTenant = updated[0] || {
+        ...(memoryTenants.get(id) || memoryTenants.get(slug) || getFallbackTenant(id)),
+        ...body
+      };
+
+      if (finalTenant.id) memoryTenants.set(finalTenant.id, finalTenant);
+      if (finalTenant.slug) memoryTenants.set(finalTenant.slug, finalTenant);
+
       return jsonResponse({
         success: true,
-        tenant: updated[0] || { ...getFallbackTenant(id), ...body }
+        tenant: finalTenant
       });
     }
 
