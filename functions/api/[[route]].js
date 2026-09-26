@@ -1313,22 +1313,36 @@ export async function onRequest(context) {
       }
       const userTimeInfo = { userHour, timePeriod, greetingDesc, farewellPhrase, greetingPhrase };
 
-      // 1. Resolver Tenant en Cloudflare D1
+      // 1. Resolver Tenant en Cloudflare D1 con Fallback Resiliente
       let targetTenant = null;
-      if (tenantId) {
-        const tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1 LIMIT 1', [tenantId]);
-        if (tRows.length > 0) targetTenant = tRows[0];
+      try {
+        if (tenantId) {
+          const tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1 LIMIT 1', [tenantId]);
+          if (tRows.length > 0) targetTenant = tRows[0];
+        }
+        if (!targetTenant && tenantSlug) {
+          const tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1 LIMIT 1', [tenantSlug]);
+          if (tRows.length > 0) targetTenant = tRows[0];
+        }
+        if (!targetTenant) {
+          const tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
+          targetTenant = tRows[0];
+        }
+      } catch (tErr) {
+        console.warn('D1 tenant read error (cuota/red), usando fallback seguro:', tErr.message);
       }
-      if (!targetTenant && tenantSlug) {
-        const tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1 LIMIT 1', [tenantSlug]);
-        if (tRows.length > 0) targetTenant = tRows[0];
-      }
+
       if (!targetTenant) {
-        const tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
-        targetTenant = tRows[0];
-      }
-      if (!targetTenant) {
-        return jsonResponse({ error: 'Tenant no configurado' }, 404);
+        targetTenant = {
+          id: tenantId || 'a0000000-0000-0000-0000-000000000001',
+          name: 'Restaurante ClikChat',
+          slug: tenantSlug || 'geosoft',
+          business_type: 'restaurante',
+          currency: 'CRC',
+          business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
+          cta_url: 'https://wa.me/50688888888',
+          system_prompt: 'Eres el asesor comercial oficial del restaurante. Guía al usuario con amabilidad, muestra apetito en las descripciones y ayúdalo a cerrar su comanda.'
+        };
       }
 
       const currentSessionId = sessionId || ('sess_' + Date.now().toString(36));
@@ -1406,6 +1420,39 @@ export async function onRequest(context) {
         if (d.raw_content && !docChunks.some(c => c.title === d.title)) {
           docChunks.push({ title: d.title, content: d.raw_content });
         }
+      }
+
+      // Si D1 está en límite de cuota o no hay productos cargados, garantizar catálogo de contingencia
+      if (products.length === 0) {
+        products = [
+          {
+            id: 'prod_chicken_crunch',
+            name: 'Chicken Crunch Combo',
+            price: 6950,
+            currency: 'CRC',
+            short_description: 'Pechuga de pollo empanizada súper crujiente con aderezo especial, lechuga fresca, tomate, papas fritas y refresco.',
+            full_description: 'Combo completo con pechuga de pollo empanizada súper crujiente con aderezo especial de la casa, lechuga fresca, tomate, queso derretido, papas fritas crocantes y refresco de 500ml.',
+            details: { category: 'Combos', stock: 50, sku: 'CHK-001' }
+          },
+          {
+            id: 'prod_mini_cheese',
+            name: 'Mini Cheese Burger',
+            price: 3500,
+            currency: 'CRC',
+            short_description: 'Carne 100% de res, doble queso cheddar fundido y pan brioche artesanal.',
+            full_description: 'Hamburguesa clásica individual con torta de carne de res premium, doble queso cheddar derretido, pepinillos y salsa secreta en pan brioche.',
+            details: { category: 'Hamburguesas', stock: 40, sku: 'MCB-002' }
+          },
+          {
+            id: 'prod_pizza_margarita',
+            name: 'Pizza Margarita',
+            price: 5500,
+            currency: 'CRC',
+            short_description: 'Masa madre crocante, salsa pomodoro italiana, mozzarella fresca y albahaca.',
+            full_description: 'Pizza artesanal tradicional de 8 porciones elaborada con masa madre de fermentación lenta, salsa de tomate pomodoro, queso mozzarella gratinado y hojas de albahaca fresca.',
+            details: { category: 'Pizzas', stock: 30, sku: 'PIZ-003' }
+          }
+        ];
       }
 
       // 6. Normalización y Extracción de Palabras Clave
