@@ -11,13 +11,13 @@ import { useProductChatSession } from './useProductChatSession';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string;
-  welcomeMessage?: string; businessType?: string;
+  welcomeMessage?: string; businessType?: string; tenantSlug?: string;
   products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar,
-  welcomeMessage, businessType = 'tienda',
+  welcomeMessage, businessType = 'tienda', tenantSlug = 'geosoft',
   products = [], initialProduct, responseDelaySec, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
@@ -55,12 +55,14 @@ export const ProductChatView: React.FC<Props> = ({
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: 'geosoft', tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
+            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'geosoft',
+            tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
             sessionId: sessId, message: userText, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
-        const data = res.ok ? await res.json() : null;
+        if (!res.ok) throw new Error('Error en el servidor de chat');
+        const data = await res.json();
         if (data?.isRestaurant || isRestaurant) {
           if (typeof data?.orderTotal === 'number') {
             setOrderTotal(data.orderTotal);
@@ -80,7 +82,7 @@ export const ProductChatView: React.FC<Props> = ({
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
         setMessages((prev) => [...prev, {
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-          content: data?.answer || `Sobre **${selectedProduct.title}**: $${selectedProduct.price.toFixed(2)} ${selectedProduct.currency}. ¿Deseas adquirirlo?`,
+          content: data?.answer || `¡Hola! Con gusto te asesoro. ¿En qué te puedo colaborar hoy?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           quickActions: data?.quickActions,
           ragTrace: {
@@ -89,7 +91,7 @@ export const ProductChatView: React.FC<Props> = ({
           }
         }]);
       } catch {
-        setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: 'Hubo una breve intermitencia de conexión. ¿Podrías reiterar tu consulta?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: 'Hubo una breve intermitencia de conexión con el asistente. Por favor intenta de nuevo en unos segundos.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
       } finally { setIsLoading(false); }
     },
   });

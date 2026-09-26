@@ -119,6 +119,7 @@ export function App() {
                 agentName={agentName || 'Asistente Virtual'}
                 agentAvatar={agentAvatar}
                 welcomeMessage={welcomeMessage}
+                tenantSlug={selectedTenantSlug}
                 initialProduct={productItem || DEFAULT_PRODUCT}
                 products={productItem ? [productItem] : [DEFAULT_PRODUCT]}
                 responseDelaySec={responseDelaySec}
@@ -141,6 +142,7 @@ export function App() {
                 storeName={storeName || 'Centro Especializado'}
                 agentName={agentName || 'Asesora Profesional'}
                 agentAvatar={agentAvatar}
+                tenantSlug={selectedTenantSlug}
                 responseDelaySec={responseDelaySec}
                 onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />

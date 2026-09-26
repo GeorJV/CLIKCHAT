@@ -10,12 +10,12 @@ import { DEFAULT_SERVICE } from './serviceChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 
 interface Props {
-  storeName?: string; agentName?: string; agentAvatar?: string;
+  storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string;
   services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
-  storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar,
+  storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'geosoft',
   services = [], initialService, responseDelaySec, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || {
@@ -79,7 +79,7 @@ export const ServiceChatView: React.FC<Props> = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: 'geosoft',
+            tenantSlug: tenantSlug || 'geosoft',
             tenantId: (selectedService as any).tenant_id,
             sessionId: sessId,
             message: userText,
@@ -87,11 +87,12 @@ export const ServiceChatView: React.FC<Props> = ({
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
-        const data = res.ok ? await res.json() : null;
+        if (!res.ok) throw new Error('Error en el servicio de chat');
+        const data = await res.json();
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
         setMessages((prev) => [...prev, {
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-          content: data?.answer || `¡Con gusto! **${selectedService.title}** es una sesión 1 a 1. Puedes pulsar **"Agendar Cita"** para coordinar.`,
+          content: data?.answer || `¡Con gusto te asesoro! ¿En qué te podemos colaborar hoy?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           ragTrace: {
             levelUsed: (lvlMap[data?.level] || 3) as any,
