@@ -9,6 +9,7 @@ import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe } from
 import { useProductResolver } from './hooks/useProductResolver';
 import { useAppRouter, AppView, getTenantTabPath } from './hooks/useAppRouter';
 import { useAuth } from './hooks/useAuth';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const NAV_VIEWS = [
   { id: 'landing' as AppView, label: 'Web Oficial', icon: Globe, path: '/' },
@@ -149,16 +150,18 @@ export function App() {
 
         {currentView === 'client' && (
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
-            <ClientDashboard
-              tenantSlug={selectedTenantSlug}
-              onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)}
-              onSelectTenant={(slug) => {
-                setSelectedTenantSlug(slug);
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('clikchat_active_tenant_slug', slug);
-                }
-              }}
-            />
+            <ErrorBoundary fallbackTitle="Panel del Negocio">
+              <ClientDashboard
+                tenantSlug={selectedTenantSlug}
+                onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)}
+                onSelectTenant={(slug) => {
+                  setSelectedTenantSlug(slug);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('clikchat_active_tenant_slug', slug);
+                  }
+                }}
+              />
+            </ErrorBoundary>
           </div>
         )}
 

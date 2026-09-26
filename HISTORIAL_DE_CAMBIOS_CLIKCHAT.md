@@ -16,21 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
-### [2026-09-26] Redirección Canónica Post-Registro a Mi Negocio y Eliminación de Pantalla Negra en /dashboard
-- **Diagnóstico y Causa Raíz:**
-  Al registrarse o iniciar sesión, el flujo redirigía a la ruta genérica `/dashboard` o `/panel/:slug/dashboard`. Si el usuario no estaba autenticado o si la pestaña activa no coincidía, `ClientDashboard.tsx` no renderizaba ningún componente hijo o quedaba un contenedor colapsado sin dimensiones mínimas, provocando una pantalla completamente negra. Además, la estructura canónica requerida exige que cada usuario ingrese a su URL propia `/user/mi-negocio/{slug}/mi-negocio`.
-- **Solución y Blindaje Permanente (ARQMODULAR):**
-  1. *Estructura de URLs Canónica (`src/hooks/useAppRouter.ts`):*
-     - `getTenantTabPath(slug, tab)` genera `/user/mi-negocio/${slug}${tabPath}` (`/mi-negocio`, `/productos`, `/conversaciones`, `/mi-cuenta`).
-     - Normalización automática en el navegador: cualquier acceso a `/dashboard` o `/panel/:slug/:sec` se reescribe de inmediato en la barra de direcciones a `/user/mi-negocio/:slug/:sec`.
-  2. *Redirección Post-Registro y Post-Login (`src/components/landing/LandingPage.tsx` y `src/App.tsx`):*
-     - `handleRegister` y `handleLogin` sincronizan el slug creado (`cleanSlug`) y redirigen inmediatamente a `/user/mi-negocio/{slug}/mi-negocio`.
-  3. *Eliminación de Pantallas Negras y Fallback Seguro (`src/components/client/ClientDashboard.tsx`, `ClientLogin.tsx`, `ClientRegister.tsx`):*
-     - Contenedores con `min-h-[85vh]` y centrado vertical/horizontal.
-     - Fallback por defecto en `ClientDashboard` que ante cualquier ruta o pestaña inesperada renderiza `BusinessSettingsTab` en lugar de una pantalla vacía.
-- **Verificación en Producción:**
-  - Build de Vite y esbuild sin errores. Desplegado en Cloudflare Pages (`https://clikchat.pages.dev`).
-  - Verificación HTTP 200 OK y bundle `index-DWk-TLnK.js` activo en vivo.
+### [2026-09-26] Corrección Definitiva de Pantalla Negra por ReferenceError TDZ y Blindaje con ErrorBoundary
+- **Diagnóstico Exacto (Verificado con Chrome DevTools Protocol en Producción):**
+  Al acceder a `/user/mi-negocio/:slug/mi-negocio` con cualquier slug dinámico (ej: `pizzas-deli`), la consola del navegador arrojaba:
+  `ReferenceError: Cannot access 'z' before initialization at C3 (useClientPortal.ts)`.
+  *Causa:* En `useClientPortal.ts`, el `useEffect` para cambio de slug invocaba y listaba en sus dependencias a `loadTenantData`, pero `loadTenantData` estaba declarado líneas más abajo con `const`. En JavaScript (Temporal Dead Zone), evaluar o invocar una función `const` antes de su línea de asignación lanza un `ReferenceError` fatal inmediato durante el primer render, destruyendo el árbol React y dejando la pantalla completamente en negro.
+- **Solución Definitiva (ARQMODULAR):**
+  1. *Reordenamiento de Ciclo de Vida (`src/hooks/useClientPortal.ts`):*
+     - Se declararon `loadTenantsList` y `loadTenantData` con `useCallback` inmediatamente después de los `useState` y **antes** de cualquier `useEffect` que los consuma.
+     - Se agregó verificación estricta de `content-type: application/json` antes de parsear respuestas en `loadTenantData` y `loadTenantsList`.
+  2. *Componente Universal ErrorBoundary (`src/components/common/ErrorBoundary.tsx`):*
+     - Atrapa cualquier excepción imprevista de React y renderiza una tarjeta estilizada en modo oscuro con botón para recargar y reanudar, impidiendo que la pantalla vuelva a quedar negra.
+     - En `src/App.tsx`, el `<ClientDashboard>` queda completamente protegido dentro de `<ErrorBoundary>`.
+- **Verificación Real en Producción (3 Filtros):**
+  - Filtro 1: `npm run build` sin errores, esbuild validado.
+  - Filtro 2: Despliegue en Cloudflare Pages (`https://clikchat.pages.dev`).
+  - Filtro 3: Prueba automatizada con Headless Chrome CDP en vivo (`clikchat.pages.dev/user/mi-negocio/pizzas-deli/mi-negocio`): 0 excepciones, DOM renderizado con éxito tanto para sesión anónima (formulario) como autenticada (sidebar y pestañas completas).
 
 ### [2026-09-26] Corrección Definitiva del Botón "Crear Cuenta y Comenzar" y Acceso a Registro Directo en Portada
 - **Diagnóstico y Causa Raíz:**
