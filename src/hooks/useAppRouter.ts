@@ -4,7 +4,7 @@ import { ClientTab } from '../types/client';
 export type AppView = 'landing' | 'chat' | 'product' | 'service' | 'client' | 'admin';
 
 export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
-  '/dashboard': 'chatbot',
+  '/dashboard': 'business',
   '/mi-negocio': 'business',
   '/productos': 'products',
   '/conversaciones': 'conversations',
@@ -18,7 +18,7 @@ export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
 };
 
 export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
-  chatbot: '/dashboard',
+  chatbot: '/mi-negocio',
   business: '/mi-negocio',
   products: '/productos',
   faqs: '/mi-negocio',
@@ -34,9 +34,10 @@ export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
   account: '/mi-cuenta',
 };
 
-export function getTenantTabPath(slug?: string, tab: ClientTab = 'chatbot'): string {
-  const tabPath = TAB_ROUTE_MAP[tab] || '/dashboard';
-  return slug ? `/panel/${slug}${tabPath}` : tabPath;
+export function getTenantTabPath(slug?: string, tab: ClientTab = 'business'): string {
+  const activeSlug = slug || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+  const tabPath = TAB_ROUTE_MAP[tab] || '/mi-negocio';
+  return `/user/mi-negocio/${encodeURIComponent(activeSlug)}${tabPath}`;
 }
 
 export function useAppRouter() {
@@ -79,16 +80,30 @@ export function useAppRouter() {
   let routeProductId: string | null = searchParams.get('p') || null;
   let panelTabFromRoute: ClientTab | null = null;
 
-  const isPanelUrl = (parts[0] === 'panel' && parts.length >= 2) || (parts[0] === 'user' && parts[1] === 'mi-negocio' && parts.length >= 3);
+  const isPanelUrl = (parts[0] === 'user' && parts[1] === 'mi-negocio' && parts.length >= 2) || (parts[0] === 'panel' && parts.length >= 2) || parts[0] === 'dashboard';
   if (isPanelUrl) {
     if (parts[0] === 'user') {
-      routeTenantSlug = decodeURIComponent(parts[2]);
-      const section = parts[3] ? `/${parts[3]}` : '/dashboard';
-      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'chatbot';
-    } else {
+      routeTenantSlug = decodeURIComponent(parts[2] || '');
+      const section = parts[3] ? `/${parts[3]}` : '/mi-negocio';
+      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'business';
+      if (!parts[3] && routeTenantSlug && typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/user/mi-negocio/${encodeURIComponent(routeTenantSlug)}/mi-negocio`);
+      }
+    } else if (parts[0] === 'panel') {
       routeTenantSlug = parts[1];
-      const section = parts[2] ? `/${parts[2]}` : '/dashboard';
-      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'chatbot';
+      const section = parts[2] ? `/${parts[2]}` : '/mi-negocio';
+      panelTabFromRoute = ROUTE_TAB_MAP[section] || 'business';
+      if (typeof window !== 'undefined') {
+        const canonical = `/user/mi-negocio/${encodeURIComponent(parts[1])}${section}`;
+        window.history.replaceState(null, '', canonical);
+      }
+    } else if (parts[0] === 'dashboard') {
+      const activeSlug = (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+      routeTenantSlug = activeSlug;
+      panelTabFromRoute = 'business';
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/user/mi-negocio/${encodeURIComponent(activeSlug)}/mi-negocio`);
+      }
     }
   }
 
@@ -120,7 +135,7 @@ export function useAppRouter() {
 
   const isUserRoute = pathname.startsWith('/user/');
   const userId = isUserRoute ? pathname.replace('/user/', '') : null;
-  const currentTab: ClientTab = panelTabFromRoute || (isUserRoute ? 'user' : (ROUTE_TAB_MAP[pathname] || 'chatbot'));
+  const currentTab: ClientTab = panelTabFromRoute || (ROUTE_TAB_MAP[pathname] || 'business');
 
   return {
     pathname,

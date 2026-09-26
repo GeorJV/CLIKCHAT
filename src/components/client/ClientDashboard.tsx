@@ -52,10 +52,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   }, [activeSlug]);
 
   useEffect(() => {
-    if (isAuthenticated && activeSlug && !isPanelUrl) {
+    if (isAuthenticated && activeSlug && (!isPanelUrl || pathname === '/dashboard' || pathname.startsWith('/panel/'))) {
       navigate(getTenantTabPath(activeSlug, activeTab), { replace: true });
     }
-  }, [isAuthenticated, activeSlug, isPanelUrl, activeTab, navigate]);
+  }, [isAuthenticated, activeSlug, isPanelUrl, pathname, activeTab, navigate]);
 
   if (isAuthLoading) {
     return (
@@ -146,6 +146,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               tenant={tenant}
               user={user}
               onUpdateSettings={updateSettings}
+            />
+          )}
+          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user'].includes(activeTab) && (
+            <BusinessSettingsTab
+              tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
+              onOpenLiveChat={onOpenLiveChat} faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq}
+              onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} initialSubTab="identity"
             />
           )}
         </div>

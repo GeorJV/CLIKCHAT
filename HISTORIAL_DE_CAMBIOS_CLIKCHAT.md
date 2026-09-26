@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Redirección Canónica Post-Registro a Mi Negocio y Eliminación de Pantalla Negra en /dashboard
+- **Diagnóstico y Causa Raíz:**
+  Al registrarse o iniciar sesión, el flujo redirigía a la ruta genérica `/dashboard` o `/panel/:slug/dashboard`. Si el usuario no estaba autenticado o si la pestaña activa no coincidía, `ClientDashboard.tsx` no renderizaba ningún componente hijo o quedaba un contenedor colapsado sin dimensiones mínimas, provocando una pantalla completamente negra. Además, la estructura canónica requerida exige que cada usuario ingrese a su URL propia `/user/mi-negocio/{slug}/mi-negocio`.
+- **Solución y Blindaje Permanente (ARQMODULAR):**
+  1. *Estructura de URLs Canónica (`src/hooks/useAppRouter.ts`):*
+     - `getTenantTabPath(slug, tab)` genera `/user/mi-negocio/${slug}${tabPath}` (`/mi-negocio`, `/productos`, `/conversaciones`, `/mi-cuenta`).
+     - Normalización automática en el navegador: cualquier acceso a `/dashboard` o `/panel/:slug/:sec` se reescribe de inmediato en la barra de direcciones a `/user/mi-negocio/:slug/:sec`.
+  2. *Redirección Post-Registro y Post-Login (`src/components/landing/LandingPage.tsx` y `src/App.tsx`):*
+     - `handleRegister` y `handleLogin` sincronizan el slug creado (`cleanSlug`) y redirigen inmediatamente a `/user/mi-negocio/{slug}/mi-negocio`.
+  3. *Eliminación de Pantallas Negras y Fallback Seguro (`src/components/client/ClientDashboard.tsx`, `ClientLogin.tsx`, `ClientRegister.tsx`):*
+     - Contenedores con `min-h-[85vh]` y centrado vertical/horizontal.
+     - Fallback por defecto en `ClientDashboard` que ante cualquier ruta o pestaña inesperada renderiza `BusinessSettingsTab` en lugar de una pantalla vacía.
+- **Verificación en Producción:**
+  - Build de Vite y esbuild sin errores. Desplegado en Cloudflare Pages (`https://clikchat.pages.dev`).
+  - Verificación HTTP 200 OK y bundle `index-DWk-TLnK.js` activo en vivo.
+
 ### [2026-09-26] Corrección Definitiva del Botón "Crear Cuenta y Comenzar" y Acceso a Registro Directo en Portada
 - **Diagnóstico y Causa Raíz:**
   Al pulsar el botón "Crear Cuenta y Comenzar", Cloudflare Pages devolvía HTTP 405 / HTML en las llamadas POST al backend Edge debido a que la cuenta de Cloudflare alcanzó las cuotas diarias de Cloudflare Workers (Error 1046) y operaba bajo modo estático fail_open. En `useAuth.ts`, la condición `if (ct.includes('application/json'))` ignoraba la respuesta HTML sin lanzar excepción ni activar el bloque `catch`, causando que la función retornara `false` silenciosamente y el botón de submit se quedara inmóvil sin registrar al usuario ni mostrar error.

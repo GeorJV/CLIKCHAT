@@ -7,7 +7,7 @@ import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
-import { useAppRouter, AppView } from './hooks/useAppRouter';
+import { useAppRouter, AppView, getTenantTabPath } from './hooks/useAppRouter';
 import { useAuth } from './hooks/useAuth';
 
 const NAV_VIEWS = [
@@ -33,14 +33,9 @@ export function App() {
     params?.get('role') === 'superadmin'
   );
 
-  const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => {
-    if (routeTenantSlug) return routeTenantSlug;
-    if (params?.get('t')) return params.get('t')!;
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('clikchat_active_tenant_slug') || 'geosoft';
-    }
-    return 'geosoft';
-  });
+  const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => (
+    routeTenantSlug || params?.get('t') || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft'
+  ));
 
   useEffect(() => {
     const t = routeTenantSlug || params?.get('t');
@@ -58,7 +53,7 @@ export function App() {
     <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
       {!hideTopBar && isSuperAdmin && (
         <nav className="h-12 shrink-0 bg-[#151414] border-b border-[#282626] flex items-center justify-between px-3 md:px-6 z-40">
-          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate('/dashboard')}>
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}>
             <div className="w-7 h-7 rounded-lg bg-[#1a1919] border border-[#2e2b2b] flex items-center justify-center font-mono font-black text-emerald-400 text-xs shadow-sm">
               CK
             </div>
@@ -71,7 +66,7 @@ export function App() {
             {NAV_VIEWS.map(({ id, label, icon: Icon, path }) => (
               <button
                 key={id}
-                onClick={() => navigate(path)}
+                onClick={() => navigate(id === 'client' ? getTenantTabPath(selectedTenantSlug, 'business') : path)}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                   currentView === id
                     ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm'
@@ -91,7 +86,11 @@ export function App() {
         {currentView === 'landing' && (
           <div className="h-full w-full overflow-y-auto bg-[#0a0a0c]">
             <LandingPage
-              onGoToDashboard={() => navigate('/dashboard')}
+              onGoToDashboard={(targetSlug) => {
+                const active = targetSlug || localStorage.getItem('clikchat_active_tenant_slug') || selectedTenantSlug || 'geosoft';
+                setSelectedTenantSlug(active);
+                navigate(getTenantTabPath(active, 'business'));
+              }}
               onGoToAdmin={() => navigate('/super-admin')}
             />
           </div>
@@ -101,7 +100,7 @@ export function App() {
           <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
             <MobileChatView
               tenantSlug={selectedTenantSlug}
-              onNavigateToPanel={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
+              onNavigateToPanel={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
             />
           </div>
         )}
@@ -123,7 +122,7 @@ export function App() {
                 products={[productItem]}
                 responseDelaySec={responseDelaySec}
                 businessType={businessType}
-                onExit={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
+                onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />
             )}
           </div>
@@ -142,7 +141,7 @@ export function App() {
                 agentName={agentName || 'Asesora Profesional'}
                 agentAvatar={agentAvatar}
                 responseDelaySec={responseDelaySec}
-                onExit={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
+                onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />
             )}
           </div>

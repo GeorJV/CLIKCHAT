@@ -32,7 +32,7 @@ export const ClientRegister: React.FC<ClientRegisterProps> = ({
   };
 
   return (
-    <div className="min-h-full flex items-center justify-center p-4">
+    <div className="w-full min-h-[85vh] flex items-center justify-center p-4 my-auto">
       <div className="w-full max-w-lg onyx-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-[#282626]">
         <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#1e1d1d] border border-[#2e2b2b] text-emerald-400 mx-auto mb-3">
           <Store className="w-6 h-6" />

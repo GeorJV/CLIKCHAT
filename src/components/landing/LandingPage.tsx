@@ -15,7 +15,7 @@ import { LoginFormData, RegisterFormData } from '../../types/auth';
 import { X } from 'lucide-react';
 
 interface LandingPageProps {
-  onGoToDashboard: () => void;
+  onGoToDashboard: (slug?: string) => void;
   onGoToAdmin: () => void;
 }
 
@@ -48,7 +48,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const success = await login(data);
     if (success) {
       setShowAuthModal(false);
-      onGoToDashboard();
+      const active = localStorage.getItem('clikchat_active_tenant_slug') || undefined;
+      onGoToDashboard(active);
     }
     return success;
   };
@@ -57,7 +58,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const success = await register(data);
     if (success) {
       setShowAuthModal(false);
-      onGoToDashboard();
+      const active = localStorage.getItem('clikchat_active_tenant_slug') || undefined;
+      onGoToDashboard(active);
     }
     return success;
   };
