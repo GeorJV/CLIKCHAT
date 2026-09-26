@@ -432,6 +432,45 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   - Script de pruebas de autenticación Edge ejecutado con 100% de éxito (registro, login, rechazo 401 por clave incorrecta, token Bearer y credenciales demo).
   - Compilación de producción con Vite (`npm run build`) completada con 0 errores en 16.61s.
 
+### [2026-09-26] Módulo de Cuotas y Consumo Real en Vivo (Esta Hora, Hoy 24h, Este Mes) con Cloudflare D1
+- **Requerimiento del Usuario:**
+  Visualizar en tiempo real el consumo exacto de mensajes del comercio con 3 tarjetas métricas (*Esta Hora*, *Hoy 24h*, *Este Mes*), reflejando datos 100% reales desde Cloudflare D1.
+- **Implementación Arquitectónica ARQMODULAR (<150 líneas por archivo):**
+  1. *Capa de Tipos y Estado:*
+     - `src/types/quotas.ts`: Definición de métricas de consumo por ventana temporal y cuotas asignadas.
+     - `src/hooks/useTenantQuotas.ts`: Hook con auto-refresco y conexión al endpoint de cuotas.
+  2. *Capa de UI:*
+     - `src/components/client/quotas/TenantConsumptionSection.tsx`: Tarjetas visuales de métricas con barras de progreso y estado dinámico.
+     - Integración en `ClientDashboard.tsx` y `ChatbotQLinkTab.tsx`.
+  3. *Backend Edge Functions (`functions/api/[[route]].js`):*
+     - Endpoint `GET /api/quotas/:tenantId`: Consultas SQL agregadas con `strftime('%Y-%m-%d %H')`, `strftime('%Y-%m-%d')` y `strftime('%Y-%m')` sobre la tabla `chat_messages`.
+     - Fallback seguro de cuotas (`7e3f442`) para garantizar disponibilidad 24/7 sin bloqueos por saturación.
+
+### [2026-09-26] Blindaje y Pool de Alta Disponibilidad Multicluster de DeepSeek (V3.2, V3.1)
+- **Requerimiento del Usuario:**
+  Erradicar por completo los errores HTTP 429 de saturación y limitaciones de tasa en OpenRouter, garantizando respuesta instantánea ininterrumpida.
+- **Implementación:**
+  1. Configuración de clústeres redundantes en OpenRouter con directiva `allow_fallbacks: true`.
+  2. Pool balanceado con clústeres de alta velocidad `deepseek/deepseek-chat`, `deepseek/deepseek-v3.2` y fallback dinámico.
+  3. Reintentos automáticos con backoff exponencial en `functions/api/[[route]].js` y `server/services/llmRouter.js`.
+
+### [2026-09-26] Integración de GLM-5.3-Flash como Modelo Titular de Ultra Bajo Costo ($0.045 / $0.14)
+- **Requerimiento del Usuario:**
+  Adoptar un modelo de lenguaje con ultra bajo costo para máxima rentabilidad del SaaS en comercios y restaurantes, manteniendo DeepSeek como respaldo.
+- **Implementación:**
+  1. *Modelo Titular:* Configuración de `z-ai/glm-5.3-flash` ($0.045 / 1M tokens de entrada, $0.14 / 1M tokens de salida) como primer motor de inferencia prioritario.
+  2. *Sanitización de Razonamiento:* Filtrado estricto de tokens de pensamiento (`reasoning` / `<think>`) para evitar consumo innecesario de salida y entregar al cliente únicamente la respuesta comercial directa y limpia.
+  3. *Cadena de Resiliencia:* Si GLM experimenta cualquier demora o micro-corte, el sistema conmuta instantáneamente al pool de DeepSeek sin que el usuario final perciba interrupción.
+
+### [2026-09-26] Módulo "Mi Cuenta" en Menú Principal y Aislamiento de Seguridad
+- **Requerimiento del Usuario:**
+  Permitir a cada suscriptor gestionar sus credenciales, consultar su plan/suscripción y cambiar su contraseña de manera privada e intuitiva.
+- **Implementación:**
+  1. *Interfaz:* Subpestaña `MyAccountSubTab.tsx` en el panel principal con resumen de plan, datos de contacto y formulario de seguridad.
+  2. *Seguridad Edge:* Endpoint `PUT /api/auth/change-password` con verificación de contraseña actual mediante hash PBKDF2 y generación de nuevo salt seguro.
+  3. *Control de Acceso:* Barra de navegación superior restringida estrictamente al rol `superadmin`, garantizando aislamiento visual y operativo total para los comercios.
+
+
 
 
 
