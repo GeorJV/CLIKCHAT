@@ -24,6 +24,7 @@
 - **Solución Implementada (ARQMODULAR & UX Limpia):**
   1. *Filtrado Riguroso Anti-Falsos Positivos (`src/components/client/training/DocumentDropzone.tsx`):*
      - Se introdujo validación `const validFiles = Array.from(fileList || []).filter(f => f && f.size > 0);`. Si no hay archivos reales con tamaño superior a 0 bytes, la función aborta inmediatamente de forma silenciosa sin disparar alertas ni estados erróneos.
+     - Aislamiento estructural del `<input type="file">` fuera del contenedor clickeable e inyección de `pointer-events-none select-none` en las etiquetas e iconos internos para prevenir que clics o micro-arrastres involuntarios de texto activen el motor de subida.
      - Se añadió un botón manual de cierre (`X`) y un temporizador automático de desaparición (`setTimeout`) de 5 segundos para cualquier notificación de error.
      - Se incorporó la extensión `.pdf` al atributo `accept` y se agregó la insignia visual representativa en la interfaz.
   2. *Parser Nativo de Documentos PDF en Navegador (`src/utils/documentParser.ts`):*
