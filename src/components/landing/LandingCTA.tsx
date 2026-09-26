@@ -4,11 +4,13 @@ import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 interface LandingCTAProps {
   onOpenDemo: () => void;
   onGoToDashboard: () => void;
+  onOpenLogin?: () => void;
 }
 
 export const LandingCTA: React.FC<LandingCTAProps> = ({
   onOpenDemo,
-  onGoToDashboard
+  onGoToDashboard,
+  onOpenLogin
 }) => {
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-18">
@@ -31,7 +33,7 @@ export const LandingCTA: React.FC<LandingCTAProps> = ({
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
           <button
-            onClick={onGoToDashboard}
+            onClick={onOpenLogin || onGoToDashboard}
             className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#dfc18b] hover:bg-[#caa461] text-[#161514] font-bold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition active:scale-95 group"
           >
             <span>Iniciar Ahora</span>

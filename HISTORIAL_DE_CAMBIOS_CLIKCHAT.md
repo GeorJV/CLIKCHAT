@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-26] Acceso a Iniciar Sesión en Página Principal (Landing Page) y Autenticación Resiliente con Fallback
+- **Requerimiento:**
+  Incorporar el botón y modal interactivo de "Iniciar Sesión" directamente en la página web oficial principal (`/`), permitiendo autenticación rápida, acceso con 1 clic a la cuenta Demo y transición fluida al panel privado de negocio sin recargas forzadas ni fricción.
+- **Implementación Arquitectónica ARQMODULAR (<150-180 líneas por archivo):**
+  1. *Botón de Inicio de Sesión en Barra de Navegación (`src/components/landing/LandingNavbar.tsx`):*
+     - Botón destacado con icono `LogIn` y estilo esmeralda tanto en la barra superior de escritorio como en el menú desplegable móvil.
+  2. *Modal Interactivo de Autenticación en Portada (`src/components/landing/LandingPage.tsx`):*
+     - Ventana flotante con desenfoque de fondo (`backdrop-blur-md`), botón de cierre `X` y conmutación ágil entre Inicio de Sesión (`ClientLogin`) y Creación de Cuenta (`ClientRegister`).
+     - Al autenticarse con éxito, redirige automáticamente al usuario al Dashboard privado de su negocio (`/dashboard` o `/panel/:slug/:tab`).
+  3. *Enlace en Botones de Llamada a la Acción (`LandingHero.tsx`, `LandingCTA.tsx`):*
+     - Soporte para `onOpenLogin`, permitiendo que las acciones de "Acceso al Panel de Tienda" e "Iniciar Ahora" abran directamente el modal de acceso.
+  4. *Blindaje de Resiliencia en Autenticación (`src/hooks/useAuth.ts`):*
+     - Detección y fallback instantáneo para credenciales de demostración (`demo@clikchat.com` / `demo1234`) y cuentas registradas localmente en caso de cuotas de red o saturación de Edge Workers.
+     - Prevención de excepciones por respuestas no-JSON en llamadas asíncronas.
+- **Verificación en Producción:** Desplegado con éxito en Cloudflare Pages (`https://clikchat.pages.dev`) con respuesta HTTP 200 verificada tanto en la raíz como en `/dashboard`.
+
 ### [2026-09-26] Blindaje Universal de Datos, Persistencia Local y Protección Anti-Vaciado por Recarga (F5) en Frontend y Cloudflare Edge
 - **Requerimiento:**
   Garantizar que bajo ninguna circunstancia los datos del cliente, inputs, formularios de identidad de negocio, catálogos o menús se borren al refrescar la página (F5 / reload), blindando la arquitectura tanto en el cliente como en el backend Edge.
