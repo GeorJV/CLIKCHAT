@@ -45,8 +45,10 @@ export function App() {
     const t = params?.get('t');
     if (t && t !== selectedTenantSlug) {
       setSelectedTenantSlug(t);
+    } else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !params?.get('t')) {
+      setSelectedTenantSlug(user.tenantSlug);
     }
-  }, [search]);
+  }, [search, user?.tenantSlug]);
   const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));

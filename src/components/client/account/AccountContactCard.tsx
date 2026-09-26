@@ -9,18 +9,18 @@ interface AccountContactCardProps {
 
 export const AccountContactCard: React.FC<AccountContactCardProps> = ({ tenant, onUpdateSettings }) => {
   const [email, setEmail] = useState(tenant?.owner_email || '');
-  const [phone, setPhone] = useState(tenant?.phone || '+506 8888-8888');
+  const [phone, setPhone] = useState(tenant?.phone || '');
   const [ownerName, setOwnerName] = useState(tenant?.owner_name || '');
-  const [businessType, setBusinessType] = useState(tenant?.business_type || 'restaurante');
+  const [businessType, setBusinessType] = useState(tenant?.business_type || 'tienda');
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (tenant) {
-      if (tenant.owner_email) setEmail(tenant.owner_email);
-      if (tenant.phone) setPhone(tenant.phone);
-      if (tenant.owner_name) setOwnerName(tenant.owner_name);
-      if (tenant.business_type) setBusinessType(tenant.business_type);
+      if (tenant.owner_email !== undefined) setEmail(tenant.owner_email || '');
+      if (tenant.phone !== undefined) setPhone(tenant.phone || '');
+      if (tenant.owner_name !== undefined) setOwnerName(tenant.owner_name || '');
+      if (tenant.business_type !== undefined) setBusinessType(tenant.business_type || 'tienda');
     }
   }, [tenant]);
 
@@ -88,8 +88,7 @@ export const AccountContactCard: React.FC<AccountContactCardProps> = ({ tenant, 
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+506 8888-8888"
-              required
+              placeholder="Ej: +506 8888-8888"
               className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
             />
           </div>

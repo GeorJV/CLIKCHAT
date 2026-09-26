@@ -16,7 +16,7 @@ export const AccountBillingCard: React.FC<AccountBillingCardProps> = ({ tenant }
     : `$${Number(monthlyAmount).toFixed(2)} USD`;
 
   // Calcular fechas legibles
-  const createdDate = tenant?.created_at ? new Date(tenant.created_at) : new Date(2026, 0, 15);
+  const createdDate = tenant?.created_at ? new Date(tenant.created_at) : new Date();
   const formattedCreated = createdDate.toLocaleDateString('es-CR', {
     day: 'numeric',
     month: 'long',

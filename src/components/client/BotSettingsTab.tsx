@@ -22,11 +22,9 @@ export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({
   const [name, setName] = useState(tenant?.name || '');
   const [slug, setSlug] = useState(tenant?.slug || '');
   const [phone, setPhone] = useState(tenant?.cta_url || '');
-  const [agentName, setAgentName] = useState(tenant?.bot_name || 'Asistente Virtual');
-  const [agentRole, setAgentRole] = useState('Asesor Comercial & Ventas');
-  const [faqBase, setFaqBase] = useState(
-    tenant?.business_hours || 'Lunes a Sábado de 9:00 AM a 6:00 PM. Entregas a todo el país.'
-  );
+  const [agentName, setAgentName] = useState(tenant?.bot_name || '');
+  const [agentRole, setAgentRole] = useState('');
+  const [faqBase, setFaqBase] = useState(tenant?.business_hours || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -34,8 +32,8 @@ export const BotSettingsTab: React.FC<BotSettingsTabProps> = ({
       setName(tenant.name || '');
       setSlug(tenant.slug || '');
       setPhone(tenant.cta_url || '');
-      setAgentName(tenant.bot_name || 'Asistente Virtual');
-      if (tenant.business_hours) setFaqBase(tenant.business_hours);
+      setAgentName(tenant.bot_name || '');
+      setFaqBase(tenant.business_hours || '');
     }
   }, [tenant]);
 

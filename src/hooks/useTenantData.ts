@@ -17,8 +17,12 @@ export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResu
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('clikchat_products');
+        const saved = localStorage.getItem(`clikchat_products_${tenantSlug}`);
         if (saved) return JSON.parse(saved);
+        if (tenantSlug === 'geosoft') {
+          const oldGlobal = localStorage.getItem('clikchat_products');
+          if (oldGlobal) return JSON.parse(oldGlobal);
+        }
       } catch (e) {}
     }
     return [];
@@ -26,8 +30,12 @@ export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResu
   const [faqs, setFaqs] = useState<FAQ[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('clikchat_faqs');
+        const saved = localStorage.getItem(`clikchat_faqs_${tenantSlug}`);
         if (saved) return JSON.parse(saved);
+        if (tenantSlug === 'geosoft') {
+          const oldGlobal = localStorage.getItem('clikchat_faqs');
+          if (oldGlobal) return JSON.parse(oldGlobal);
+        }
       } catch (e) {}
     }
     return [];

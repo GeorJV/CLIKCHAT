@@ -12,11 +12,12 @@ interface BusinessIdentitySubTabProps {
 export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
   tenant, tenantSlug, onUpdateSettings, saveSuccess
 }) => {
-  const [bizType, setBizType] = useState(tenant?.business_type || 'restaurante');
+  const isDemo = (tenant?.slug === 'geosoft') || (tenantSlug === 'geosoft');
+  const [bizType, setBizType] = useState(tenant?.business_type || (isDemo ? 'restaurante' : 'tienda'));
   const [currency, setCurrency] = useState(tenant?.currency || 'CRC');
-  const [name, setName] = useState(tenant?.name || 'Restaurante ClikChat');
-  const [slug, setSlug] = useState(tenant?.slug || tenantSlug || 'geosoft');
-  const [botName, setBotName] = useState(tenant?.bot_name || 'Asesora Virtual');
+  const [name, setName] = useState(tenant?.name || (isDemo ? 'Restaurante ClikChat' : ''));
+  const [slug, setSlug] = useState(tenant?.slug || (isDemo ? 'geosoft' : (tenantSlug && tenantSlug !== 'geosoft' ? tenantSlug : '')));
+  const [botName, setBotName] = useState(tenant?.bot_name || (isDemo ? 'Asesora Virtual' : ''));
   const [welcomeMessage, setWelcomeMessage] = useState(tenant?.welcome_message || '');
   const [tone, setTone] = useState(tenant?.tone_of_voice || 'Profesional y Cortés');
   const [systemPrompt, setSystemPrompt] = useState(tenant?.system_prompt || '');
@@ -28,16 +29,17 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
 
   useEffect(() => {
     if (tenant && !isDirtyRef.current) {
-      if (tenant.name) setName(tenant.name);
-      if (tenant.slug) setSlug(tenant.slug);
-      if (tenant.bot_name) setBotName(tenant.bot_name);
-      if (tenant.welcome_message !== undefined) setWelcomeMessage(tenant.welcome_message);
-      if (tenant.tone_of_voice) setTone(tenant.tone_of_voice);
-      if (tenant.logo_url !== undefined) setLogoUrl(tenant.logo_url);
-      if (tenant.avatar_url !== undefined) setAvatarUrl(tenant.avatar_url);
-      if (tenant.system_prompt !== undefined) setSystemPrompt(tenant.system_prompt);
-      if (tenant.business_type) setBizType(tenant.business_type);
-      if (tenant.currency) setCurrency(tenant.currency);
+      const isDemoStore = tenant.slug === 'geosoft' || tenantSlug === 'geosoft';
+      setName(tenant.name || (isDemoStore ? 'Restaurante ClikChat' : ''));
+      setSlug(tenant.slug || (isDemoStore ? 'geosoft' : (tenantSlug && tenantSlug !== 'geosoft' ? tenantSlug : '')));
+      setBotName(tenant.bot_name || (isDemoStore ? 'Asesora Virtual' : ''));
+      setWelcomeMessage(tenant.welcome_message || '');
+      setTone(tenant.tone_of_voice || 'Profesional y Cortés');
+      setLogoUrl(tenant.logo_url || '');
+      setAvatarUrl(tenant.avatar_url || '');
+      setSystemPrompt(tenant.system_prompt || '');
+      setBizType(tenant.business_type || (isDemoStore ? 'restaurante' : 'tienda'));
+      setCurrency(tenant.currency || 'CRC');
     }
   }, [tenant, tenantSlug]);
 
@@ -73,7 +75,7 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
             <input
               type="text" value={name} onChange={(e) => { setName(e.target.value); isDirtyRef.current = true; }}
               className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold"
-              placeholder="Ej. GeoSoft" required
+              placeholder="Ej: Mi Restaurante o Tienda" required
             />
           </div>
           <div>
@@ -88,7 +90,7 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
               <input
                 type="text" value={slug} onChange={(e) => { setSlug(e.target.value); isDirtyRef.current = true; }}
                 className="bg-transparent flex-1 text-emerald-400 font-mono focus:outline-none text-xs font-bold"
-                placeholder="geosoft" required
+                placeholder="mi-negocio" required
               />
             </div>
           </div>

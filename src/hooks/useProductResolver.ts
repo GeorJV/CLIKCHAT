@@ -31,16 +31,17 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
 
 export function useProductResolver(productId: string | null, tenantSlug: string = 'geosoft') {
   const cached = getCachedTenant(tenantSlug);
-  const initialStoreName = cached.name || 'Restaurante ClikChat';
+  const isDemo = tenantSlug === 'geosoft';
+  const initialStoreName = cached.name || (isDemo ? 'Restaurante ClikChat' : '');
 
   const [productItem, setProductItem] = useState<ProductItem | null>(null);
   const [storeName, setStoreName] = useState<string>(initialStoreName);
-  const [agentName, setAgentName] = useState<string>(cached.bot_name || 'Asesora Virtual');
+  const [agentName, setAgentName] = useState<string>(cached.bot_name || (isDemo ? 'Asesora Virtual' : ''));
   const [agentAvatar, setAgentAvatar] = useState<string>(cached.avatar_url || '');
   const [welcomeMessage, setWelcomeMessage] = useState<string>(cached.welcome_message || '');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(cached.response_delay_sec || 1);
-  const [businessType, setBusinessType] = useState<string>(cached.business_type || 'restaurante');
+  const [businessType, setBusinessType] = useState<string>(cached.business_type || (isDemo ? 'restaurante' : 'tienda'));
   const hasTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {

@@ -213,26 +213,50 @@ function parsePriceNumber(raw, isCRC = false) {
   return isCRC ? Math.round(finalVal) : finalVal;
 }
 
-function getFallbackTenant(slug = 'geosoft') {
+function getFallbackTenant(slug = '') {
+  if (slug === 'geosoft') {
+    return {
+      id: 'a0000000-0000-0000-0000-000000000001',
+      slug: 'geosoft',
+      name: 'Restaurante ClikChat',
+      owner_name: 'George Anders',
+      owner_email: 'Georgeandersmail@gmail.com',
+      bot_name: 'Asesora Virtual',
+      avatar_url: '',
+      plan: 'enterprise',
+      status: 'active',
+      business_type: 'restaurante',
+      currency: 'CRC',
+      business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
+      cta_text: 'Pedir por WhatsApp',
+      cta_url: 'https://wa.me/50688888888',
+      welcome_message: '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿En qué podemos deleitarte hoy?',
+      system_prompt: 'Eres el asesor comercial oficial del restaurante. Guía al usuario con amabilidad, muestra apetito en las descripciones y ayúdalo a cerrar su comanda.',
+      sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
+      order_ticket_format: '',
+      phone: '+506 8888-8888'
+    };
+  }
   return {
-    id: 'a0000000-0000-0000-0000-000000000001',
-    slug: slug || 'geosoft',
-    name: 'Restaurante ClikChat',
-    owner_name: 'George Anders',
-    owner_email: 'Georgeandersmail@gmail.com',
-    bot_name: 'Asesora Virtual',
+    id: '',
+    slug: slug || '',
+    name: '',
+    owner_name: '',
+    owner_email: '',
+    bot_name: '',
     avatar_url: '',
-    plan: 'enterprise',
+    plan: 'pro',
     status: 'active',
-    business_type: 'restaurante',
+    business_type: 'tienda',
     currency: 'CRC',
-    business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
-    cta_text: 'Pedir por WhatsApp',
-    cta_url: 'https://wa.me/50688888888',
-    welcome_message: '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿En qué podemos deleitarte hoy?',
-    system_prompt: 'Eres el asesor comercial oficial del restaurante. Guía al usuario con amabilidad, muestra apetito en las descripciones y ayúdalo a cerrar su comanda.',
-    sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
-    order_ticket_format: ''
+    business_hours: '',
+    cta_text: '',
+    cta_url: '',
+    welcome_message: '',
+    system_prompt: '',
+    sales_flow_rules: '',
+    order_ticket_format: '',
+    phone: ''
   };
 }
 
@@ -872,7 +896,7 @@ export async function onRequest(context) {
         if (tRows.length > 0) tenant = tRows[0];
       } catch (e) {}
       if (!tenant) {
-        tenant = getFallbackTenant(user.tenant_id || 'acme-store');
+        tenant = getFallbackTenant(user.tenant_id || '');
       }
 
       const secret = getJwtSecret(env);
@@ -914,7 +938,7 @@ export async function onRequest(context) {
         if (tRows.length > 0) tenant = tRows[0];
       } catch (e) {}
       if (!tenant) {
-        tenant = getFallbackTenant(authUser.tenantSlug || 'acme-store');
+        tenant = getFallbackTenant(authUser.tenantSlug || '');
       }
 
       return jsonResponse({
@@ -1334,30 +1358,35 @@ export async function onRequest(context) {
       try {
         let tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1', [slug]);
         if (!tRows.length) tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1', [slug]);
-        if (!tRows.length) tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
+        if (!tRows.length && slug === 'geosoft') tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
         
         let tenant = tRows.length ? tRows[0] : getFallbackTenant(slug);
 
         let products = [];
         try {
-          products = await executeD1(
-            'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.tenant_id = ?1 AND p.is_active = 1 ORDER BY p.created_at ASC',
-            [tenant.id]
-          );
+          if (tenant && tenant.id) {
+            products = await executeD1(
+              'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.tenant_id = ?1 AND p.is_active = 1 ORDER BY p.created_at ASC',
+              [tenant.id]
+            );
+          }
         } catch (e) {
-          products = getFallbackProducts();
+          products = slug === 'geosoft' ? getFallbackProducts() : [];
         }
-        if (!products.length) products = getFallbackProducts();
+        if (!products.length && slug === 'geosoft') products = getFallbackProducts();
 
         let faqs = [];
         try {
-          faqs = await executeD1(
-            'SELECT * FROM faqs WHERE tenant_id = ?1 ORDER BY created_at DESC',
-            [tenant.id]
-          );
+          if (tenant && tenant.id) {
+            faqs = await executeD1(
+              'SELECT * FROM faqs WHERE tenant_id = ?1 ORDER BY created_at DESC',
+              [tenant.id]
+            );
+          }
         } catch (e) {
-          faqs = getFallbackFaqs();
+          faqs = slug === 'geosoft' ? getFallbackFaqs() : [];
         }
+        if (!faqs.length && slug === 'geosoft') faqs = getFallbackFaqs();
 
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
         return jsonResponse({
@@ -1380,14 +1409,16 @@ export async function onRequest(context) {
         console.warn('D1 error in GET tenant, serving fallback:', err.message);
         const tenant = getFallbackTenant(slug);
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
+        const fallbackProds = slug === 'geosoft' ? getFallbackProducts() : [];
+        const fallbackFaqs = slug === 'geosoft' ? getFallbackFaqs() : [];
         return jsonResponse({
           tenant,
-          products: getFallbackProducts().map(p => ({
+          products: fallbackProds.map(p => ({
             ...p,
             price: parsePriceNumber(p.price, isCRC),
             metrics: { views: 0, buyClicks: 0, benefitViews: 0, coldLeads: 0, warmLeads: 0, hotLeads: 0 }
           })),
-          faqs: getFallbackFaqs()
+          faqs: fallbackFaqs
         });
       }
     }
@@ -1859,25 +1890,16 @@ export async function onRequest(context) {
           const tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1 LIMIT 1', [tenantSlug]);
           if (tRows.length > 0) targetTenant = tRows[0];
         }
-        if (!targetTenant) {
+        if (!targetTenant && (tenantSlug === 'geosoft' || !tenantSlug)) {
           const tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
-          targetTenant = tRows[0];
+          if (tRows.length > 0) targetTenant = tRows[0];
         }
       } catch (tErr) {
         console.warn('D1 tenant read error (cuota/red), usando fallback seguro:', tErr.message);
       }
 
       if (!targetTenant) {
-        targetTenant = {
-          id: tenantId || 'a0000000-0000-0000-0000-000000000001',
-          name: 'Restaurante ClikChat',
-          slug: tenantSlug || 'geosoft',
-          business_type: 'restaurante',
-          currency: 'CRC',
-          business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
-          cta_url: 'https://wa.me/50688888888',
-          system_prompt: 'Eres el asesor comercial oficial del restaurante. Guía al usuario con amabilidad, muestra apetito en las descripciones y ayúdalo a cerrar su comanda.'
-        };
+        targetTenant = getFallbackTenant(tenantSlug || '');
       }
 
       const currentSessionId = sessionId || ('sess_' + Date.now().toString(36));

@@ -5,6 +5,7 @@ import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
 
 export function useClientPortal(initialSlug: string = 'geosoft') {
   const [tenantSlug, setTenantSlug] = useState<string>(() => {
+    if (initialSlug && initialSlug !== 'geosoft') return initialSlug;
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('clikchat_active_tenant_slug');
       if (saved) return saved;
@@ -15,8 +16,12 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('clikchat_products');
+        const saved = localStorage.getItem(`clikchat_products_${tenantSlug}`);
         if (saved !== null) return JSON.parse(saved);
+        if (tenantSlug === 'geosoft') {
+          const old = localStorage.getItem('clikchat_products');
+          if (old) return JSON.parse(old);
+        }
       } catch (e) {}
     }
     return [];
@@ -24,8 +29,12 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
   const [faqs, setFaqs] = useState<FAQ[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('clikchat_faqs');
-        if (saved) return JSON.parse(saved);
+        const saved = localStorage.getItem(`clikchat_faqs_${tenantSlug}`);
+        if (saved !== null) return JSON.parse(saved);
+        if (tenantSlug === 'geosoft') {
+          const old = localStorage.getItem('clikchat_faqs');
+          if (old) return JSON.parse(old);
+        }
       } catch (e) {}
     }
     return [];
@@ -36,14 +45,31 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (initialSlug && initialSlug !== tenantSlug) {
+      setTenantSlug(initialSlug);
+      const cached = getCachedTenant(initialSlug);
+      setTenant(cached);
       try {
-        localStorage.setItem('clikchat_products', JSON.stringify(products));
-        if (faqs.length > 0) localStorage.setItem('clikchat_faqs', JSON.stringify(faqs));
+        const savedProds = localStorage.getItem(`clikchat_products_${initialSlug}`);
+        setProducts(savedProds ? JSON.parse(savedProds) : []);
+        const savedFaqs = localStorage.getItem(`clikchat_faqs_${initialSlug}`);
+        setFaqs(savedFaqs ? JSON.parse(savedFaqs) : []);
+      } catch (e) {
+        setProducts([]);
+        setFaqs([]);
+      }
+    }
+  }, [initialSlug]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && tenantSlug) {
+      try {
+        localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(products));
+        localStorage.setItem(`clikchat_faqs_${tenantSlug}`, JSON.stringify(faqs));
         if (tenant) saveCachedTenant(tenant);
       } catch (e) {}
     }
-  }, [products, faqs, tenant]);
+  }, [products, faqs, tenant, tenantSlug]);
 
   const loadTenantsList = useCallback(async () => {
     try {
@@ -58,6 +84,7 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
   }, []);
 
   const loadTenantData = useCallback(async (slugToLoad: string = tenantSlug, isBackground: boolean = false) => {
+    if (!slugToLoad) return;
     if (!isBackground) setIsLoading(true);
     try {
       const tRes = await fetch(`/api/tenants/${slugToLoad}`, { cache: 'no-store' });
@@ -70,11 +97,17 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
             return next;
           });
         }
-        if (tData.products && tData.products.length > 0) {
+        if (Array.isArray(tData.products)) {
           setProducts(tData.products);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`clikchat_products_${slugToLoad}`, JSON.stringify(tData.products));
+          }
         }
-        if (tData.faqs && tData.faqs.length > 0) {
+        if (Array.isArray(tData.faqs)) {
           setFaqs(tData.faqs);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`clikchat_faqs_${slugToLoad}`, JSON.stringify(tData.faqs));
+          }
         }
         if (tData.tenant?.id) {
           const uRes = await fetch(`/api/audit/unresolved?tenantId=${tData.tenant.id}`);
@@ -247,7 +280,7 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
     setProducts(prev => {
       const next = [newProd, ...prev];
       if (typeof window !== 'undefined') {
-        localStorage.setItem('clikchat_products', JSON.stringify(next));
+        localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(next));
       }
       return next;
     });
@@ -267,7 +300,7 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
     setProducts(prev => {
       const next = prev.map(p => p.id === id ? { ...p, ...updates } : p);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('clikchat_products', JSON.stringify(next));
+        localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(next));
       }
       return next;
     });
@@ -287,7 +320,7 @@ export function useClientPortal(initialSlug: string = 'geosoft') {
     setProducts(prev => {
       const next = prev.filter(p => p.id !== id);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('clikchat_products', JSON.stringify(next));
+        localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(next));
       }
       return next;
     });

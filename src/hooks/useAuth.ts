@@ -29,6 +29,9 @@ export function useAuth() {
           setUser(data.user);
           if (typeof window !== 'undefined') {
             localStorage.setItem('clikchat_role', data.user.role);
+            if (data.user.tenantSlug) {
+              localStorage.setItem('clikchat_active_tenant_slug', data.user.tenantSlug);
+            }
           }
           if (data.tenant) setTenant(data.tenant);
         } else {
@@ -64,6 +67,9 @@ export function useAuth() {
         setUser(resData.user);
         if (typeof window !== 'undefined') {
           localStorage.setItem('clikchat_role', resData.user.role);
+          if (resData.user.tenantSlug) {
+            localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
+          }
         }
       }
       if (resData.tenant) setTenant(resData.tenant);
@@ -95,6 +101,9 @@ export function useAuth() {
         setUser(resData.user);
         if (typeof window !== 'undefined') {
           localStorage.setItem('clikchat_role', resData.user.role);
+          if (resData.user.tenantSlug) {
+            localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
+          }
         }
       }
       if (resData.tenant) setTenant(resData.tenant);
@@ -111,6 +120,7 @@ export function useAuth() {
     localStorage.removeItem(TOKEN_KEY);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('clikchat_role');
+      localStorage.removeItem('clikchat_active_tenant_slug');
     }
     setUser(null);
     setTenant(null);

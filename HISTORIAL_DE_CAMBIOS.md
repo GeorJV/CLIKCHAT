@@ -470,6 +470,22 @@ Cualquier funcionalidad registrada aquí está blindada: ninguna IA puede elimin
   2. *Seguridad Edge:* Endpoint `PUT /api/auth/change-password` con verificación de contraseña actual mediante hash PBKDF2 y generación de nuevo salt seguro.
   3. *Control de Acceso:* Barra de navegación superior restringida estrictamente al rol `superadmin`, garantizando aislamiento visual y operativo total para los comercios.
 
+### [2026-09-26] Limpieza Absoluta de Cuentas Nuevas y Confinamiento Estricto de Datos Demo
+- **Requerimiento del Usuario:**
+  1. *ESTOS DATOS NO DEBEN ESTAR LLENOS EN LAS CUENTAS RECIEN CREADAS, ESO DEBE ESTAR VACIO* (Eliminación de 'Restaurante ClikChat', slug 'geosoft' y 'Asesora Virtual' en cuentas nuevas).
+  2. *LAS CUENTAS NUEVAS TAMPOCO DEBEN TENER DATOS DE DEMO, DEBEN SER CUENTAS COMPLETAMENTE LIMPIAS DE DATOS DE DEMO* (Catálogo de productos y FAQs vacíos por defecto).
+- **Implementación Arquitectónica ARQMODULAR (<150-180 líneas por archivo):**
+  1. *Backend Edge (`functions/api/[[route]].js`):*
+     - `getFallbackTenant(slug)`: Confinado 'Restaurante ClikChat' y datos demo exclusivamente al slug `geosoft`. Para cualquier otro slug, retorna campos 100% limpios y vacíos.
+     - `GET /api/tenants/:slug`: Eliminado `SELECT * FROM tenants LIMIT 1` que inyectaba el tenant 1 (`geosoft`) ante slugs nuevos. Inyección de productos (`getFallbackProducts()`) y FAQs (`getFallbackFaqs()`) reservada exclusivamente para `slug === 'geosoft'`. Nuevos comercios reciben arrays vacíos (`products: []`, `faqs: []`).
+     - `/api/chat/message`: Eliminado el fallback forzado a tenant 1 si el slug no es demo.
+  2. *Frontend & Almacenamiento Aislado por Tenant (`useClientPortal.ts`, `useTenantData.ts`, `useProductResolver.ts`):*
+     - Aislamiento de caché local por slug (`clikchat_products_${slug}`, `clikchat_faqs_${slug}`) erradicando la clave global que filtraba productos demo a cuentas nuevas.
+     - Reseteo y sincronización inmediata al alternar de cuenta o iniciar sesión con `useAuth`.
+     - Modos vacíos (Empty States) verificados en `ProductsManagerTab.tsx` y `FaqList.tsx`.
+  3. *Módulos de Configuración de Negocio e Identidad (`BusinessIdentitySubTab.tsx`, `AccountContactCard.tsx`, `BotSettingsTab.tsx`):*
+     - Eliminados valores predeterminados de demostración en `useState` y `useEffect`.
+     - Placeholders limpios y genéricos (`Ej: Mi Restaurante o Tienda`, `mi-negocio`, `Ej: +506 8888-8888`).
 
 
 
