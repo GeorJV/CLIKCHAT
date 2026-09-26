@@ -20,10 +20,10 @@ const NAV_VIEWS = [
 ] as const;
 
 export function App() {
-  const { pathname, search, currentView, navigate } = useAppRouter();
+  const { pathname, search, currentView, routeTenantSlug, routeProductId, navigate } = useAppRouter();
   const { user } = useAuth();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
-  const productId = params?.get('p') || null;
+  const productId = routeProductId || params?.get('p') || null;
 
   const isSuperAdmin = Boolean(
     user?.role === 'superadmin' ||
@@ -34,6 +34,7 @@ export function App() {
   );
 
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => {
+    if (routeTenantSlug) return routeTenantSlug;
     if (params?.get('t')) return params.get('t')!;
     if (typeof window !== 'undefined') {
       return localStorage.getItem('clikchat_active_tenant_slug') || 'geosoft';
@@ -42,16 +43,16 @@ export function App() {
   });
 
   useEffect(() => {
-    const t = params?.get('t');
+    const t = routeTenantSlug || params?.get('t');
     if (t && t !== selectedTenantSlug) {
       setSelectedTenantSlug(t);
-    } else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !params?.get('t')) {
+    } else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !t) {
       setSelectedTenantSlug(user.tenantSlug);
     }
-  }, [search, user?.tenantSlug]);
+  }, [search, routeTenantSlug, user?.tenantSlug]);
   const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
-  const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && params?.has('t') && !params?.has('panel'));
+  const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
@@ -100,7 +101,7 @@ export function App() {
           <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
             <MobileChatView
               tenantSlug={selectedTenantSlug}
-              onNavigateToPanel={() => navigate('/dashboard')}
+              onNavigateToPanel={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
             />
           </div>
         )}
@@ -122,7 +123,7 @@ export function App() {
                 products={[productItem]}
                 responseDelaySec={responseDelaySec}
                 businessType={businessType}
-                onExit={() => navigate('/dashboard')}
+                onExit={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
               />
             )}
           </div>
@@ -141,7 +142,7 @@ export function App() {
                 agentName={agentName || 'Asesora Profesional'}
                 agentAvatar={agentAvatar}
                 responseDelaySec={responseDelaySec}
-                onExit={() => navigate('/dashboard')}
+                onExit={() => navigate(`/panel/${selectedTenantSlug}/dashboard`)}
               />
             )}
           </div>
@@ -151,7 +152,7 @@ export function App() {
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
             <ClientDashboard
               tenantSlug={selectedTenantSlug}
-              onOpenLiveChat={() => navigate('/chat')}
+              onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)}
               onSelectTenant={(slug) => {
                 setSelectedTenantSlug(slug);
                 if (typeof window !== 'undefined') {

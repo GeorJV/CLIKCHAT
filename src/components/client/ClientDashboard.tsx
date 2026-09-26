@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useClientPortal } from '../../hooks/useClientPortal';
-import { useAppRouter, TAB_ROUTE_MAP } from '../../hooks/useAppRouter';
+import { useAppRouter, getTenantTabPath } from '../../hooks/useAppRouter';
 import { ClientTab } from '../../types/client';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientLogin } from './ClientLogin';
@@ -29,13 +29,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   onOpenLiveChat,
   onSelectTenant
 }) => {
-  const { navigate, currentTab } = useAppRouter();
+  const { navigate, currentTab, routeTenantSlug, isPanelUrl, pathname } = useAppRouter();
   const { user, isAuthenticated, isLoading: isAuthLoading, error: authError, login, register, logout } = useAuth();
   const [isRegisterView, setIsRegisterView] = useState(false);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const activeTab: ClientTab = currentTab;
 
-  const activeSlug = user?.tenantSlug || tenantSlug;
+  const activeSlug = routeTenantSlug || user?.tenantSlug || tenantSlug;
 
   const {
     tenantSlug: currentSlug, setTenantSlug, tenant, products, faqs, unresolved,
@@ -43,6 +43,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct,
     updateSettings, loadTenantData
   } = useClientPortal(activeSlug);
+
+  useEffect(() => {
+    if (isAuthenticated && activeSlug && !isPanelUrl) {
+      navigate(getTenantTabPath(activeSlug, activeTab), { replace: true });
+    }
+  }, [isAuthenticated, activeSlug, isPanelUrl, activeTab, navigate]);
 
   if (isAuthLoading) {
     return (
@@ -77,7 +83,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     <div className="h-full w-full flex bg-[#151414] text-slate-100 overflow-hidden font-sans">
       <ClientSidebar
         activeTab={activeTab}
-        setActiveTab={(tab) => navigate(TAB_ROUTE_MAP[tab] || '/dashboard')}
+        setActiveTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
         unresolvedCount={pendingCount}
         tenantSlug={currentSlug}
         onLogout={logout}
@@ -145,6 +151,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         currentSlug={currentSlug}
         onSelectTenant={(slug) => {
           setTenantSlug(slug);
+          navigate(getTenantTabPath(slug, activeTab));
           if (onSelectTenant) onSelectTenant(slug);
         }}
         onLogout={logout}
