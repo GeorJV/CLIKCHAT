@@ -1522,7 +1522,7 @@ export async function onRequest(context) {
         let draftTotal = 0;
         try {
           const dOrders = await executeD1(
-            "SELECT id, order_items, total_amount, currency FROM orders WHERE session_id = ?1 AND tenant_id = ?2 AND status IN ('draft', 'active') ORDER BY created_at DESC LIMIT 1",
+            "SELECT id, order_items, total_amount, currency, status FROM orders WHERE session_id = ?1 AND (tenant_id = ?2 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?2 OR id = ?2)) ORDER BY created_at DESC LIMIT 1",
             [currentSessionId, actualTenantId]
           );
           if (dOrders && dOrders.length > 0) {
@@ -1552,7 +1552,7 @@ export async function onRequest(context) {
             draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
 
             try {
-              if (draftOrder) {
+              if (draftOrder && draftOrder.status === 'draft') {
                 await executeD1(
                   "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
                   [JSON.stringify(draftItems), draftTotal, draftOrder.id]
@@ -1563,7 +1563,7 @@ export async function onRequest(context) {
                   "INSERT INTO orders (id, tenant_id, session_id, order_items, total_amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'draft')",
                   [newDraftId, actualTenantId, currentSessionId, JSON.stringify(draftItems), draftTotal, activeCurrency]
                 );
-                draftOrder = { id: newDraftId };
+                draftOrder = { id: newDraftId, status: 'draft' };
               }
             } catch (dErr) {
               console.warn('Draft order save error:', dErr.message);
@@ -1580,18 +1580,19 @@ ${draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${
 Instrucción de venta: Confirma de manera cálida que el ítem fue sumado a su comanda, menciona que su total acumulado va en ${currencySymbol}${draftTotal} ${activeCurrency}, y sugiere un acompañamiento o pregunta si desea pedir la cuenta diciendo "¿cuánto es?".`;
         }
 
+        let renderedTicket = '';
         if (isConfirmingOrder) {
           const orderId = 'ORD-' + Math.random().toString(36).substring(2, 7).toUpperCase();
           try {
-            if (draftOrder) {
+            if (draftOrder && draftOrder.status === 'draft') {
               await executeD1(
                 "UPDATE orders SET id = ?1, status = 'confirmed_pending_payment', total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
                 [orderId, draftTotal > 0 ? draftTotal : 0, draftOrder.id]
               );
             } else {
               await executeD1(
-                'INSERT INTO orders (id, tenant_id, session_id, status, notes) VALUES (?1, ?2, ?3, ?4, ?5)',
-                [orderId, actualTenantId, currentSessionId, 'confirmed_pending_payment', 'Orden tentativa confirmada por cliente en chat']
+                'INSERT INTO orders (id, tenant_id, session_id, total_amount, status, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+                [orderId, actualTenantId, currentSessionId, draftTotal > 0 ? draftTotal : 0, 'confirmed_pending_payment', 'Orden tentativa confirmada por cliente en chat']
               );
             }
           } catch (oErr) {
@@ -1620,10 +1621,19 @@ Instrucción de venta: Confirma de manera cálida que el ítem fue sumado a su c
    Sinpe Móvil: ${targetTenant.cta_url || targetTenant.cta_text || 'Número oficial de ' + targetTenant.name}
 ╚═══════════════════════════════════════╝`;
 
+          renderedTicket = ticketTemplate;
+          if (draftItems.length > 0) {
+            const itemsText = draftItems.map(it => `• ${it.quantity || 1}x ${it.name} ....... ${currencySymbol}${it.price}`).join('\n   ');
+            renderedTicket = renderedTicket.replace(/\(Lista aquí cada ítem con cantidad y precio[^)]*\)/, itemsText);
+          }
+          if (draftTotal > 0) {
+            renderedTicket = renderedTicket.replace(/\[Total Calculado\]/, draftTotal.toLocaleString('es-CR'));
+          }
+
           contextBlock += `\n\n[EVENTO: ORDEN CONFIRMADA CON ÉXITO #${orderId}]: El cliente confirmó su orden. Instrucciones obligatorias:
 1) Felicítalo cordialmente informándole que su pedido #${orderId} quedó guardado.
 2) Presenta OBLIGATORIAMENTE el siguiente Ticket / Comanda Oficial sin alterar su estructura de caja con bordes:
-${ticketTemplate}
+${renderedTicket}
 3) Pídele que envíe una captura o foto de su comprobante por este chat para procesar su orden de inmediato.`;
 
           const waUrl = targetTenant.cta_url && targetTenant.cta_url.includes('wa.me')
@@ -1710,10 +1720,10 @@ ${ticketTemplate}
         const isRestaurant = targetTenant.business_type === 'restaurante';
         let orderTotal = draftTotal > 0 ? draftTotal : null;
         if (isRestaurant && !orderTotal) {
-          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡€]*[\$₡€]?\s*([\d]+(?:[.,]\d{1,2})?)/i)
-            || llmResult.text.match(/[\$₡€]?\s*([\d]+(?:[.,]\d{1,2})?)\s*(?:en\s*total|total)/i);
+          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡€]*[\$₡€]?\s*([\d,.]+)/i)
+            || llmResult.text.match(/[\$₡€]?\s*([\d,.]+)\s*(?:en\s*total|total)/i);
           if (totalMatch) {
-            const rawVal = parseFloat(totalMatch[1].replace(',', '.'));
+            const rawVal = parseFloat(totalMatch[1].replace(/,/g, ''));
             if (!isNaN(rawVal) && rawVal > 0) {
               orderTotal = rawVal;
             }
@@ -1721,6 +1731,10 @@ ${ticketTemplate}
         }
         if (isRestaurant && orderTotal === null) {
           orderTotal = 0;
+        }
+
+        if (isConfirmingOrder && renderedTicket && !llmResult.text.includes('╔═')) {
+          llmResult.text += '\n\n' + renderedTicket;
         }
 
         return jsonResponse({
