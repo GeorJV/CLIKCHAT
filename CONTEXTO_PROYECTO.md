@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 12:15 GMT-6
-- **Versión Actual:** 1.29.1 (Datos 100% Reales D1 y OpenRouter API en Super Admin)
+- **Última Actualización:** 2026-09-28 13:55 GMT-6
+- **Versión Actual:** 1.30.0 (Motor Gastronómico de Ventas Activo & Vitrina de Alto Valor en Panel Cliente)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Super Admin QChatt Standard: Pestañas "Dashboard Financiero", "Directorio de Negocios" y "Consola & IA".
-  - Métricas 100% Reales: Eliminada toda simulación o estimación artificial.
-  - Telemetría IA Real: OpenRouter API en vivo ($1.5864 mes / 86 msgs en Comida Callejera XL, 0 msgs en Admin = $0.00).
-  - Finanzas Reales: Flujo de caja e ingresos históricos calculados directo sobre la tabla `orders` de Cloudflare D1.
-  - Gestión D1: Modal de detalle para actualización en caliente de suscripciones, moneda y estado.
-  - Build Verificado: Vite compilado al 100% con 0 errores y desplegado en Cloudflare Pages.
+  - Motor Gastronómico de Ventas: Badge activo 🟢 con 4 habilidades de hospitalidad, upselling proactivo y cálculo de comanda.
+  - Cero Jargon Técnico para Clientes: Erradicados selectores de APIs del frente; ajustes de API colapsables para desarrolladores.
+  - Telemetría & Finanzas Reales en Super Admin: Consumo OpenRouter API y pedidos de D1 sincronizados.
+  - Build Verificado: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
+  - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
