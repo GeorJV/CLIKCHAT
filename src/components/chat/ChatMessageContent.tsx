@@ -89,7 +89,8 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
     onActionClick?.(`Agregar ${cleanName}`);
   };
 
-  // Normalizar saltos y limpiar encabezados ###
+  // Detección de si este mensaje es un resumen o confirmación de comanda actual
+  const isOrderSummaryMessage = !isUser && /(?:pedido|orden|cuenta|comanda)\s+(?:y\s+)?queda\s+as[ií]|llevamos\s+anotad[oa]|resumen\s+de\s+(?:tu\s+)?(?:pedido|orden)|total\s+acumulado|tu\s+pedido\s+actual/i.test(content);
   const lines = content.split('\n');
 
   return (
@@ -136,23 +137,31 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           const hasPrice = !isShippingOrPolicy && /(?:[\$₡¢€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡¢€£]|USD|CRC|EUR|COP|MXN)|(?:CRC|colones?)\s*[\d,.]+)/i.test(rawItem);
 
           if (hasPrice && onActionClick) {
-            const isAdded = recentlyAdded === idx;
+            const hasQuantity = /^\*{0,2}\d+\s*x\s+/i.test(rawItem);
+            const isAdded = recentlyAdded === idx || (isOrderSummaryMessage && hasQuantity) || hasQuantity || isOrderSummaryMessage;
             return (
-              <div key={`opt-${idx}`} className="flex items-center justify-between gap-2.5 py-1 px-2.5 rounded-xl bg-amber-500/[0.08] border border-amber-400/25 hover:border-amber-400/50 transition group my-1.5">
+              <div
+                key={`opt-${idx}`}
+                className={`flex items-center justify-between gap-2.5 py-1 px-2.5 rounded-xl border transition group my-1.5 ${
+                  isAdded
+                    ? 'bg-emerald-500/[0.07] border-emerald-500/30'
+                    : 'bg-amber-500/[0.08] border-amber-400/25 hover:border-amber-400/50'
+                }`}
+              >
                 <div className="flex-1 min-w-0 font-medium text-slate-100 leading-snug break-words">
-                  <span className="text-amber-400 mr-1.5 font-bold">•</span>
+                  <span className={`mr-1.5 font-bold ${isAdded ? 'text-emerald-400' : 'text-amber-400'}`}>•</span>
                   {renderInlineFormatted(rawItem, isUser)}
                 </div>
                 <button
-                  type="button" onClick={() => handleAdd(rawItem, idx)} disabled={isAdded}
+                  type="button" onClick={() => handleAdd(rawItem, idx)}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer ${
                     isAdded
-                      ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 cursor-default'
+                      ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]'
                       : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-black shadow-orange-950/40 border border-amber-300/70'
                   }`}
-                  title={`Agregar ${rawItem.replace(/\*\*/g, '').trim()} a la orden`}
+                  title={isAdded ? 'Producto en la orden. Clic para añadir otra unidad.' : `Agregar ${rawItem.replace(/\*\*/g, '').trim()} a la orden`}
                 >
-                  {isAdded ? (<><Check className="w-3 h-3 text-emerald-300 stroke-[3]" /><span>Agregado</span></>) : (<><Plus className="w-3 h-3 stroke-[3]" /><span>Agregar</span></>)}
+                  {isAdded ? (<><Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" /><span>Agregado</span></>) : (<><Plus className="w-3 h-3 stroke-[3]" /><span>Agregar</span></>)}
                 </button>
               </div>
             );
