@@ -1320,27 +1320,35 @@ export async function onRequest(context) {
     // ADMIN: GET /api/admin/finance-metrics (100% REAL D1 DATA)
     if (segments[0] === 'admin' && segments[1] === 'finance-metrics' && request.method === 'GET') {
       try {
-        const tenants = await executeD1('SELECT id, name, slug, plan, monthly_price, status, business_type, currency, created_at FROM tenants');
+        const tenants = await executeD1('SELECT id, name, slug, plan, monthly_price, status, business_type, currency, next_billing_date, created_at FROM tenants');
         const activeTenants = tenants.filter(t => t.status === 'active');
         const mrr = activeTenants.reduce((acc, t) => acc + (parseFloat(t.monthly_price) || 0), 0);
         const arr = mrr * 12;
 
-        let totalHistoricalIncome = 0;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        const in7Days = new Date();
+        in7Days.setDate(in7Days.getDate() + 7);
+        const in7DaysStr = in7Days.toISOString().split('T')[0];
+
         let cashToday = 0;
+        let cashTomorrow = 0;
         let cashThisWeek = 0;
 
-        try {
-          const orderIncomeRes = await executeD1("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE status != 'cancelled'");
-          totalHistoricalIncome = parseFloat(orderIncomeRes[0]?.total || 0);
+        for (const t of activeTenants) {
+          const billingDate = t.next_billing_date ? t.next_billing_date.split('T')[0] : null;
+          const price = parseFloat(t.monthly_price) || 0;
+          if (billingDate) {
+            if (billingDate === todayStr) cashToday += price;
+            if (billingDate === tomorrowStr) cashTomorrow += price;
+            if (billingDate >= todayStr && billingDate <= in7DaysStr) cashThisWeek += price;
+          }
+        }
 
-          const orderTodayRes = await executeD1("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE DATE(created_at) = DATE('now') AND status != 'cancelled'");
-          cashToday = parseFloat(orderTodayRes[0]?.total || 0);
-
-          const orderWeekRes = await executeD1("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE DATE(created_at) >= DATE('now', '-7 days') AND status != 'cancelled'");
-          cashThisWeek = parseFloat(orderWeekRes[0]?.total || 0);
-        } catch (e) {}
-
-        const cashTomorrow = 0; // Cobros agendados reales para las próximas 24 horas
+        // Ingresos históricos reales: 0 hasta que existan pagos de suscripción reales procesados
+        const totalHistoricalIncome = 0;
 
         const categoryMap = { restaurante: 0, tienda: 0, servicios: 0 };
         const categoryRevenue = { restaurante: 0, tienda: 0, servicios: 0 };

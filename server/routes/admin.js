@@ -98,32 +98,36 @@ router.post('/playground', async (req, res) => {
 // Financial Metrics & Cash Flow
 router.get('/finance-metrics', async (req, res) => {
   try {
-    const tenantsRes = await query('SELECT id, name, slug, plan, monthly_price, status, business_type, currency, created_at FROM tenants');
+    const tenantsRes = await query('SELECT id, name, slug, plan, monthly_price, status, business_type, currency, next_billing_date, created_at FROM tenants');
     const tenants = tenantsRes.rows || [];
     const activeTenants = tenants.filter(t => t.status === 'active');
     const mrr = activeTenants.reduce((acc, t) => acc + (parseFloat(t.monthly_price) || 0), 0);
     const arr = mrr * 12;
 
-    const cashToday = activeTenants.length > 0 ? Number((mrr * 0.08).toFixed(2)) : 0;
-    const cashTomorrow = activeTenants.length > 0 ? Number((mrr * 0.12).toFixed(2)) : 0;
-    const cashThisWeek = activeTenants.length > 0 ? Number((mrr * 0.35).toFixed(2)) : 0;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const in7Days = new Date();
+    in7Days.setDate(in7Days.getDate() + 7);
+    const in7DaysStr = in7Days.toISOString().split('T')[0];
 
-    let totalHistoricalIncome = 0;
     let cashToday = 0;
+    let cashTomorrow = 0;
     let cashThisWeek = 0;
 
-    try {
-      const orderIncomeRes = await query("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE status != 'cancelled'");
-      totalHistoricalIncome = parseFloat(orderIncomeRes.rows[0]?.total || 0);
+    for (const t of activeTenants) {
+      const billingDate = t.next_billing_date ? t.next_billing_date.split('T')[0] : null;
+      const price = parseFloat(t.monthly_price) || 0;
+      if (billingDate) {
+        if (billingDate === todayStr) cashToday += price;
+        if (billingDate === tomorrowStr) cashTomorrow += price;
+        if (billingDate >= todayStr && billingDate <= in7DaysStr) cashThisWeek += price;
+      }
+    }
 
-      const orderTodayRes = await query("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE DATE(created_at) = CURRENT_DATE AND status != 'cancelled'");
-      cashToday = parseFloat(orderTodayRes.rows[0]?.total || 0);
-
-      const orderWeekRes = await query("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE created_at >= NOW() - INTERVAL '7 days' AND status != 'cancelled'");
-      cashThisWeek = parseFloat(orderWeekRes.rows[0]?.total || 0);
-    } catch (e) {}
-
-    const cashTomorrow = 0; // 0 si no hay cobros agendados reales
+    // Ingresos históricos reales: 0 hasta que existan pagos de suscripción reales procesados
+    const totalHistoricalIncome = 0;
 
     const categoryMap = { restaurante: 0, tienda: 0, servicios: 0 };
     const categoryRevenue = { restaurante: 0, tienda: 0, servicios: 0 };
