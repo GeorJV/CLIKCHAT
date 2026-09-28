@@ -81,7 +81,11 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
   const handleAdd = (rawItem: string, idx: number) => {
     setRecentlyAdded(idx);
     setTimeout(() => setRecentlyAdded(null), 2500);
-    const cleanName = rawItem.replace(/\*\*/g, '').trim();
+    let cleanName = rawItem.replace(/\*\*/g, '').trim();
+    const colonIdx = cleanName.indexOf(':');
+    if (colonIdx !== -1) {
+      cleanName = cleanName.substring(0, colonIdx).trim();
+    }
     onActionClick?.(`Agregar ${cleanName}`);
   };
 
@@ -124,12 +128,12 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           );
         }
 
-        // Detección de opciones con precio: viñetas o listas como "- Refresco en lata ($1.50)"
-        const bulletMatch = !isUser && trimmed.match(/^([-*•]|\d+[.)])\s+(.+)$/);
+        // Detección de opciones con precio: viñetas o listas como "- Refresco en lata ($1.50)" o "1. Combo (¢6,950)"
+        const bulletMatch = !isUser && trimmed.match(/^(?:[-*•]|\*{0,2}\d+[.)]\*{0,2})\s+(.+)$/);
         if (bulletMatch) {
-          const rawItem = bulletMatch[2];
+          const rawItem = bulletMatch[1];
           const isShippingOrPolicy = /\b(?:domicilio|express|env[ií]o|entrega|recoger|compras\s*\+|gratis\s*en|m[ií]nimo\s*de)\b/i.test(rawItem);
-          const hasPrice = !isShippingOrPolicy && /(?:[\$₡¢€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡¢€£]|USD|CRC|EUR|COP|MXN))/i.test(rawItem);
+          const hasPrice = !isShippingOrPolicy && /(?:[\$₡¢€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡¢€£]|USD|CRC|EUR|COP|MXN)|(?:CRC|colones?)\s*[\d,.]+)/i.test(rawItem);
 
           if (hasPrice && onActionClick) {
             const isAdded = recentlyAdded === idx;
