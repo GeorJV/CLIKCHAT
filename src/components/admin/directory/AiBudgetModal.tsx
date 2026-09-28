@@ -11,8 +11,8 @@ interface Props {
 
 const PRESET_MODELS = [
   { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3' },
+  { id: 'z-ai/glm-5.3-flash', name: 'GLM 5.3 Flash (Económico)' },
   { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1 (Razonamiento)' },
-  { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
   { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B' },
   { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash' }
 ];

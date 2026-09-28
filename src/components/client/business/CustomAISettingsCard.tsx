@@ -126,7 +126,7 @@ export const CustomAISettingsCard: React.FC<Props> = ({ tenant, onUpdateSettings
               <div>
                 <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Proveedor / Plataforma</label>
                 <select value={provider} onChange={(e) => handleProviderChange(e.target.value)} className="w-full bg-[#111010] border border-[#333] rounded-lg px-2.5 py-1.5 text-xs text-white">
-                  <option value="openrouter">OpenRouter (Multi-LLM / DeepSeek / Claude)</option>
+                  <option value="openrouter">OpenRouter (Multi-LLM / DeepSeek / Llama)</option>
                   <option value="openai">OpenAI (Directo GPT-4o)</option>
                   <option value="google">Google AI Studio (Gemini)</option>
                   <option value="groq">Groq (Ultra Rápido Llama 3.3)</option>

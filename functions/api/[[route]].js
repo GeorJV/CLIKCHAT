@@ -499,8 +499,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   })();
 
   // 1. Cadena de Alta Disponibilidad & Ultra Bajo Costo:
-  // Prioridad 1: GLM-5.3-Flash (Z.ai - Ultra económico: $0.045 entrada / $0.14 salida por 1M)
-  // Prioridad 2: DeepSeek V3.2 / V3.1
+  // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
+  const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
+  const isGuardrailLeak = (t) => !t || /user safety:\s*safe/i.test(t) || /response safety:\s*safe/i.test(t) || /^safety:\s*safe/i.test(t);
+
   const modelPool = [
     'deepseek/deepseek-chat',
     'z-ai/glm-5.3-flash',
@@ -508,6 +510,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   ];
 
   for (const dsModel of modelPool) {
+    if (BANNED_EXPENSIVE_MODELS.some(b => dsModel.toLowerCase().includes(b))) {
+      console.warn(`[BLINDAJE COSTOS] Modelo ${dsModel} estrictamente bloqueado en la clave del sistema.`);
+      continue;
+    }
     try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -524,7 +530,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           max_tokens: 450,
           include_reasoning: false,
           provider: {
-            allow_fallbacks: true
+            allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude
           }
         })
       });
@@ -535,7 +541,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         if (text) {
           text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         }
-        if (text && text.length > 0) {
+        if (text && !isGuardrailLeak(text) && text.length > 0) {
           return { text, provider: dsModel };
         }
       }
@@ -544,7 +550,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     }
   }
 
-  // 2. Respaldo de Emergencia Extrema (Solo si todos los clusters de DeepSeek fallasen)
+  // 2. Respaldo de Emergencia GPT-4o-mini (Cero fallbacks a Claude)
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -558,19 +564,22 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         model: 'openai/gpt-4o-mini',
         messages,
         temperature: 0.45,
-        max_tokens: 380
+        max_tokens: 380,
+        provider: {
+          allow_fallbacks: false
+        }
       })
     });
     if (resp.ok) {
       const data = await resp.json();
       const text = data.choices?.[0]?.message?.content;
-      if (text && text.trim().length > 0) return { text: text.trim(), provider: 'openai/gpt-4o-mini' };
+      if (text && !isGuardrailLeak(text) && text.trim().length > 0) return { text: text.trim(), provider: 'openai/gpt-4o-mini' };
     }
   } catch (e) {
     console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
   }
 
-  // 3. Respaldo: Cloudflare Workers AI Llama 3
+  // 3. Respaldo: Cloudflare Workers AI Llama 3 (Con filtro estricto anti-guardrail)
   if (env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
@@ -580,15 +589,21 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           { role: 'user', content: userMessage }
         ]
       });
-      if (cfResp?.response) return { text: cfResp.response.trim(), provider: 'cloudflare_workers_ai' };
+      if (cfResp?.response) {
+        const clean = cfResp.response.trim();
+        if (!isGuardrailLeak(clean) && clean.length > 0) {
+          return { text: clean, provider: 'cloudflare_workers_ai' };
+        }
+        console.warn('Workers AI devolvió reporte de seguridad en vez de respuesta comercial, descartando.');
+      }
     } catch (e) {
       console.warn('Workers AI Llama falló en Edge:', e.message);
     }
   }
 
-  // 5. Plantilla de contingencia
+  // 4. Plantilla de contingencia gastronómica/comercial humana
   return {
-    text: `¡Hola! Con mucho gusto te asesoro. ¿Tienes alguna consulta sobre nuestros productos o te gustaría ordenar algo en particular?`,
+    text: `¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?`,
     provider: 'context_template'
   };
 }
@@ -1779,6 +1794,10 @@ export async function onRequest(context) {
       const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
         try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
       })();
+
+      if (model.toLowerCase().includes('claude') || model.toLowerCase().includes('anthropic')) {
+        return jsonResponse({ error: 'Modelos de la familia Claude están estrictamente bloqueados para proteger el presupuesto de OpenRouter.' }, 403);
+      }
 
       let output = '';
       if (model.startsWith('gemini')) {
