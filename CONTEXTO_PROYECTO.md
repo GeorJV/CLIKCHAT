@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-26 15:51 GMT-6
-- **Versión Actual:** 1.22.0 (Plantillas Rápidas Anti-Alucinación Interactivas con Auto-Guardado y Feedback Visual)
+- **Última Actualización:** 2026-09-28 09:14 GMT-6
+- **Versión Actual:** 1.23.0 (Saludos Cortos y Naturales con Rol de Mesera Activo y Corte Rápido Nivel 1)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Reglas de Operación Interactivas: `RulePresetCards.tsx` con activación/desactivación en 1 clic, auto-guardado en D1 y badges visuales.
-  - Chat Edge 24/7 Serverless: Ruta `POST /api/chat/message` activa en Cloudflare Functions. Cero servidores Node requeridos.
-  - RAG 4 Niveles Real: N1 Memoria Episódica D1, N2 FAQs a $0 tokens, N3 Catálogo/Documentos con OpenRouter GPT-4o-mini y Gemini, N4 Fallback HITL.
-  - Verificación 3 Filtros: 11/11 rutas certificadas con Chrome Headless en producción.
+  - Saludos Naturales y Breves: Nivel 1 en Edge intercepta "Hola", "Buenas", etc., con respuesta cálida de mesera (<30ms, $0 tokens).
+  - Rol de Mesera Preservado 100%: Toma de comanda, ingredientes, upselling proactivo al consultar platillos y cálculo de cuenta intactos.
+  - Saneamiento de Fallbacks: Erradicado el volcado masivo de contexto en `context_template` para evitar biblias de texto ante intermitencias.
+  - Verificación de Build: Compilación limpia en Vite (`npm run build`) y validación de sintaxis Node en Cloudflare Functions.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
