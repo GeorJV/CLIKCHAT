@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 17:34 GMT-6
-- **Versión Actual:** 1.46.0 (Detalle de la Orden / Comanda en Botón Detalle del Producto)
+- **Última Actualización:** 2026-09-28 17:38 GMT-6
+- **Versión Actual:** 1.47.0 (Erradicación Total de Parpadeo Anti-Flash de Bot y Píldoras Falsas)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 326e9b2)
 - **Estado Actual del Sistema:**
-  - Comanda en Detalle de la Orden: El botón exterior se adapta a "Detalle de la Orden (N)" con badge ámbar. Al abrirlo, despliega un ticket gastronómico digital Dark & Gold (OrderTicketModalContent) con desglose por ítem (cantidades, unitarios, subtotales y total acumulado).
-  - Botón Agregado Presionado y Verde: Al emitir el resumen de pedido ("queda así:", cantidades "1x", "4x"), los botones se muestran automáticamente como "✓ Agregado", con sombra interior de botón presionado y tono esmeralda. Las sugerencias de menú conservan su botón naranja "+ Agregar".
-  - Dichos Coloquiales y Agregación Referencial: Soporte universal para expresiones ("dame uno de esos", "quiero uno", "si quiero ese", "agregalo", etc.) con resolución de producto desde el historial y RAG chunks.
-  - Rescate Post-LLM de Comanda: Si la IA confirma que anotó un producto ("Tu [Producto] ya está anotado"), el sistema lo extrae, busca su precio en documentos/catálogo y actualiza automáticamente `orderTotal` y la tabla `orders` en D1.
-  - Motor Titular GLM-5.3-Flash Ultra-Rápido (~700ms) con blindaje anti-CoT activo.
+  - Erradicación de Parpadeo en Recarga: Cache de `localStorage` priorizado en `fallbackTenant.ts` y sincronizado en `useTenantData.ts`. El bot conserva su nombre e identidad (`Valeria (Mesera Virtual)`) desde el frame 1 de carga sin saltos.
+  - Píldoras Contextuales: Erradicado el texto falso de "Smartwatch Titan Pro" y "Fallback Marte" de `ChatQuickPills.tsx`, reemplazado por prompts reales adaptados al tipo de negocio (Ver Menú, Especialidades, Pedir a Domicilio).
+  - Precios CTA Reales: Erradicado el falso "$249 USD" de `PersistentCTA.tsx`, sustituido por el precio real del catálogo o llamada a la acción gastronómica.
+  - Verificado en Chrome Headless CDP (Zero Flash confirmado en 50/50 pasos).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
