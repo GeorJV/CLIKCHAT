@@ -2994,9 +2994,15 @@ export async function onRequest(context) {
         // Detección de consultas informativas (NO son acciones de agregar a la compra)
         const isInformationalInquiry = isAskingItemDetails || isAskingItemPrice || isAskingDiscount || /\b(saber|conocer|ver|preguntar|consultar|averiguar|informacion|info|horario|horarios|abren|cierran|ubicacion|donde|cuando|como vienen|que trae|que lleva|que incluye|tienen|hacen|menu|carta|catalogo|promocion|promociones|descuento|descuentos)\b/i.test(normMsg);
 
-        const hasExplicitAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(normMsg);
-        const hasExplicitOrderIntent = !isInformationalInquiry && /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(normMsg);
-        const startsWithAdd = /^agregar\b/i.test(normMsg);
+        const hasExplicitAddVerb = /\b(agregar|agregame|agregale|agregamelo|agregalo|anadir|anademe|anadelo|anademelo|sumar|sumame|sumalo|sumamelo|anotar|anotame|anotalo|anotamelo|ponme|ponmelo|dame|damelo|sirveme|sirvemelo|traeme|traemelo|mandame|mandamelo|incluyeme|apuntame|apuntamelo|echale|echame)\b/i.test(normMsg);
+        const hasReferentialPhrase = /\b(?:dame|quiero|ponme|agregame|anotame|apuntame|traeme|sirveme|mandame|echale)?\s*(?:uno|una|un|ese|esa|esos|esas|esto|estos|estas|de\s+esos|de\s+esas|de\s+este|de\s+esta|de\s+ese|de\s+esa|el\s+mismo|lo\s+mismo|uno\s+de\s+esos|uno\s+de\s+esas)\b/i.test(normMsg)
+          || /^(?:si\s*,?\s*)?(?:anotad[oa]|anotamelo|agregamelo|apuntamelo|damelo|dale|de\s+una|venga|va)\b/i.test(normMsg);
+
+        const hasExplicitOrderIntent = !isInformationalInquiry && (
+          /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|uno|dos|tres|\d+|el|la|este|esta|ese|esa|esos|esas|de\s+esos|de\s+esas|de\s+este|de\s+esta)\b/i.test(normMsg) ||
+          hasReferentialPhrase
+        );
+        const startsWithAdd = /^(?:agregar|agregame|agregale|agregamelo|agregalo|anotar|anotame|anotamelo|sumar|dame|ponme)\b/i.test(normMsg);
         const isAddingItemAction = !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
         if (isAddingItemAction) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
@@ -3008,38 +3014,69 @@ export async function onRequest(context) {
           }
 
           let itemName = cleanProductQueryName(
-            message.replace(/^(?:agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|quiero|ponme|dame|sirveme|traeme|apuntame)\s+/i, '')
+            message.replace(/^(?:si\s+)?(?:agregar|agregame|agregale|agregamelo|agregalo|anadir|anademe|sumar|sumame|anotar|anotame|anotamelo|quiero|ponme|dame|damelo|sirveme|traeme|apuntame|mandame)\s+/i, '')
               .replace(/\([^)]*\)/g, '')
           );
+
+          // Si el nombre resultante es un pronombre referencial ("uno de esos", "ese", "uno", etc.), anularlo para buscar en el contexto
+          const isReferentialPronoun = !itemName || /^(?:uno|una|un|ese|esa|esos|esas|esto|estos|estas|de\s+esos|de\s+esas|de\s+ese|de\s+esa|uno\s+de\s+esos|uno\s+de\s+esas|el\s+mismo|lo\s+mismo)$/i.test(itemName.toLowerCase().trim());
+          if (isReferentialPronoun) {
+            itemName = '';
+          }
 
           if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && matchedProducts.length > 0) {
             addedPrice = parsePriceNumber(matchedProducts[0].price, isCRC);
             if (!itemName) itemName = matchedProducts[0].name;
           }
 
-          // Rescate inteligente de precio y producto desde el último mensaje del asistente si venía sin precio
-          if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && sessionHistory && sessionHistory.length > 0) {
-            const lastBotMsg = sessionHistory.filter(h => h.role === 'assistant' || h.sender === 'assistant').pop();
-            if (lastBotMsg) {
-              const botText = lastBotMsg.content || lastBotMsg.message || '';
-              const histPrice = extractPriceFromText(botText, isCRC);
-              if (histPrice && histPrice > 0) {
-                addedPrice = histPrice;
+          // Rescate inteligente de precio y producto desde el historial reciente (mensajes previos del bot)
+          if ((!itemName || !addedPrice || isNaN(addedPrice) || addedPrice === 0) && sessionHistory && sessionHistory.length > 0) {
+            const botMessages = sessionHistory.filter(h => h.role === 'assistant' || h.sender === 'assistant');
+            for (let i = botMessages.length - 1; i >= 0; i--) {
+              const bMsg = botMessages[i];
+              const bText = bMsg.content || bMsg.message || '';
+
+              if (!itemName) {
+                const boldMatch = bText.match(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,50})\*\*/);
+                if (boldMatch && !/^(?:total|precio|valor|horario|nota|importante|atenci[oó]n)$/i.test(boldMatch[1].trim())) {
+                  itemName = boldMatch[1].trim();
+                } else {
+                  for (const p of products) {
+                    if (p.name && bText.toLowerCase().includes(p.name.toLowerCase())) {
+                      itemName = p.name;
+                      if (!addedPrice) addedPrice = p.price;
+                      break;
+                    }
+                  }
+                  if (!itemName) {
+                    for (const c of chunksToInclude) {
+                      if (c.title && bText.toLowerCase().includes(c.title.toLowerCase()) && c.title.length > 4) {
+                        itemName = c.title;
+                        break;
+                      }
+                    }
+                  }
+                }
               }
-              if (!itemName || itemName.length < 3) {
-                const boldMatch = botText.match(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,45})\*\*/);
-                if (boldMatch) itemName = boldMatch[1].trim();
+
+              if (!addedPrice || isNaN(addedPrice) || addedPrice === 0) {
+                const histPrice = extractPriceFromText(bText, isCRC);
+                if (histPrice && histPrice > 0) {
+                  addedPrice = histPrice;
+                }
               }
+
+              if (itemName && addedPrice && addedPrice > 0) break;
             }
           }
 
-          // Rescate secundario: buscar precio del producto en los chunks RAG si aún no se determinó
+          // Rescate secundario: buscar precio del producto en los chunks RAG y documentos cargados
           if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && itemName && chunksToInclude && chunksToInclude.length > 0) {
             const normItem = itemName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             for (const c of chunksToInclude) {
               const cText = `${c.title} ${c.content}`;
               const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-              if (cNorm.includes(normItem)) {
+              if (cNorm.includes(normItem) || (normItem.length > 4 && cNorm.split(/\s+/).some(w => w.length > 4 && normItem.includes(w)))) {
                 const chunkPrice = extractPriceFromText(cText, isCRC);
                 if (chunkPrice && chunkPrice > 0) {
                   addedPrice = chunkPrice;
@@ -3049,13 +3086,41 @@ export async function onRequest(context) {
             }
           }
 
+          // Rescate terciario: buscar en catálogo D1 si todavía no hay precio
+          if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && itemName && products.length > 0) {
+            const normItem = itemName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const pMatch = products.find(p => p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normItem));
+            if (pMatch && pMatch.price > 0) {
+              addedPrice = pMatch.price;
+            }
+          }
+
           if (!itemName || itemName.length < 2) {
-            itemName = 'Producto de Catálogo';
+            itemName = 'Producto del Menú';
           }
 
           if (addedPrice && !isNaN(addedPrice) && addedPrice > 0) {
             draftItems.push({ name: itemName, price: addedPrice, quantity: 1 });
             draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+
+            const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+            const fItemPrice = isCRC ? Math.round(addedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(addedPrice).toFixed(2);
+            const fDraftTotal = isCRC ? Math.round(draftTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(draftTotal).toFixed(2);
+
+            quickActions = [
+              {
+                id: 'confirm_item',
+                label: `➕ Confirmar ${itemName} (${sym}${fItemPrice})`,
+                actionText: `Agregar ${itemName} (${sym}${fItemPrice})`,
+                variant: 'gastronomic'
+              },
+              {
+                id: 'view_total',
+                label: `🧾 Ver Comanda / Total (${sym}${fDraftTotal})`,
+                actionText: '¿Cuánto es el total?',
+                variant: 'primary'
+              }
+            ];
 
             try {
               if (draftOrder && draftOrder.status === 'draft') {
@@ -3302,7 +3367,96 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         } catch (e) {}
 
         const isRestaurant = targetTenant.business_type === 'restaurante';
-        const isCRC = activeCurrency.toUpperCase() === 'CRC';
+        const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
+
+        // RESCATE POST-LLM: Si la IA confirmó que anotó un producto (ej: "Tu Queque de chocolate... ya está anotado")
+        // pero draftItems no lo había capturado, extraerlo directamente de la respuesta del LLM
+        if (isRestaurant && draftItems.length === 0) {
+          const llmAnoteMatch = llmResult.text.match(/(?:tu|el|la)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,50}?)\s+(?:ya\s+est[aá]\s+(?:anotad[oa]|agregad[oa]|list[oa])|(?:ha\s+sido|queda)\s+(?:anotad[oa]|agregad[oa]))/i)
+            || llmResult.text.match(/(?:anotad[oa]|agregad[oa]|sumad[oa])\s+(?:el|la|tu)?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,50}?)(?:[.,!\n]|$)/i);
+
+          if (llmAnoteMatch) {
+            const detectedBotItem = llmAnoteMatch[1].trim();
+            const normBotItem = detectedBotItem.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            let botItemPrice = null;
+
+            // 1. Buscar precio en chunks RAG
+            for (const c of chunksToInclude) {
+              const cText = `${c.title} ${c.content}`;
+              const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (cNorm.includes(normBotItem) || normBotItem.split(/\s+/).filter(w => w.length > 4).some(w => cNorm.includes(w))) {
+                const cp = extractPriceFromText(cText, isCRC);
+                if (cp && cp > 0) {
+                  botItemPrice = cp;
+                  break;
+                }
+              }
+            }
+
+            // 2. Buscar precio en catálogo D1
+            if (!botItemPrice && products.length > 0) {
+              const pMatch = products.find(p => p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normBotItem));
+              if (pMatch && pMatch.price > 0) botItemPrice = pMatch.price;
+            }
+
+            // 3. Buscar precio en el historial de chat
+            if (!botItemPrice && sessionHistory && sessionHistory.length > 0) {
+              for (let i = sessionHistory.length - 1; i >= 0; i--) {
+                const hp = extractPriceFromText(sessionHistory[i].message || sessionHistory[i].content || '', isCRC);
+                if (hp && hp > 0) {
+                  botItemPrice = hp;
+                  break;
+                }
+              }
+            }
+
+            // 4. Si aún no se encontró, precio del propio texto de respuesta
+            if (!botItemPrice || botItemPrice === 0) {
+              const priceInBotText = extractPriceFromText(llmResult.text, isCRC);
+              if (priceInBotText && priceInBotText > 0) botItemPrice = priceInBotText;
+            }
+
+            if (botItemPrice && botItemPrice > 0) {
+              draftItems.push({ name: detectedBotItem, price: botItemPrice, quantity: 1 });
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+
+              try {
+                if (draftOrder && draftOrder.status === 'draft') {
+                  await executeD1(
+                    "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
+                    [JSON.stringify(draftItems), draftTotal, draftOrder.id]
+                  );
+                } else {
+                  const newDraftId = 'ord_' + Math.random().toString(36).substring(2, 7);
+                  await executeD1(
+                    "INSERT INTO orders (id, tenant_id, session_id, order_items, total_amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'draft')",
+                    [newDraftId, actualTenantId, currentSessionId, JSON.stringify(draftItems), draftTotal, activeCurrency]
+                  );
+                }
+              } catch (e) {}
+
+              const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+              const fPrice = isCRC ? Math.round(botItemPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(botItemPrice).toFixed(2);
+              const fDraftTotal = isCRC ? Math.round(draftTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(draftTotal).toFixed(2);
+
+              quickActions = [
+                {
+                  id: 'confirm_item',
+                  label: `➕ Confirmar ${detectedBotItem} (${sym}${fPrice})`,
+                  actionText: `Agregar ${detectedBotItem} (${sym}${fPrice})`,
+                  variant: 'gastronomic'
+                },
+                {
+                  id: 'view_total',
+                  label: `🧾 Ver Comanda / Total (${sym}${fDraftTotal})`,
+                  actionText: '¿Cuánto es el total?',
+                  variant: 'primary'
+                }
+              ];
+            }
+          }
+        }
+
         let orderTotal = draftTotal > 0 ? draftTotal : null;
         if (isRestaurant && !orderTotal) {
           const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡¢€]*[*_]*[\$₡¢€]?[*_]*\s*([\d,.]+)/i)

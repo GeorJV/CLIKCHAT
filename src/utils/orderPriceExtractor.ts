@@ -153,18 +153,28 @@ export function cleanProductQueryName(rawMsg: string): string {
   }).join(' ');
 }
 
+export function isReferentialItemPhrase(text: string): boolean {
+  if (!text) return true;
+  const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return /^(?:(?:si|ok|bueno|dale|claro|porfa|por\s*favor)\s*,?\s*)*(?:(?:dame|quiero|ponme|agregame|anotame|apuntame|traeme|sirveme|mandame|echale)?\s*(?:uno|una|un|ese|esa|esos|esas|esto|estos|estas|de\s+esos|de\s+esas|de\s+este|de\s+esta|de\s+ese|de\s+esa|el\s+mismo|lo\s+mismo|uno\s+de\s+esos|uno\s+de\s+esas)|(?:anotad[oa]|anotamelo|agregamelo|apuntamelo|damelo|dale|de\s+una|venga|va))$/i.test(lower)
+    || /^(?:uno|una|un|ese|esa|esos|esas|de\s+esos|de\s+esas|de\s+ese|de\s+esa|uno\s+de\s+esos|uno\s+de\s+esas|esto|estos|estas|el\s+mismo|lo\s+mismo)$/i.test(lower);
+}
+
 export function isAddOrderAction(text: string): boolean {
   if (!text) return false;
-  const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-  const startsWithAdd = /^(?:agregar|agregame|agregale|anadir|sumar|anotar|ponme)\b/i.test(lower);
+  const startsWithAdd = /^(?:agregar|agregame|agregale|agregamelo|agregalo|anadir|sumar|anotar|anotame|anotamelo|anotalo|ponme|ponmelo|dame|damelo)\b/i.test(lower);
   if (!startsWithAdd) {
     const isInformational = /\b(que\s*(trae|incluye|contiene|lleva|viene|es)|cuales\s*son|ingredientes|cuanto\s*(vale|cuesta|sale|es)|precio|costo|saber|conocer|ver|consultar|informacion|info|horario|ubicacion|menu|carta)\b/i.test(lower);
     if (isInformational) return false;
   }
 
-  const hasAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(lower);
-  const hasOrderIntent = /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(lower);
+  const hasAddVerb = /\b(agregar|agregame|agregale|agregamelo|agregalo|anadir|anademe|anadelo|anademelo|sumar|sumame|sumalo|sumamelo|anotar|anotame|anotalo|anotamelo|ponme|ponmelo|dame|damelo|sirveme|sirvemelo|traeme|traemelo|mandame|mandamelo|incluyeme|apuntame|apuntamelo|echale|echame)\b/i.test(lower);
+  const hasOrderIntent = /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|uno|dos|tres|\d+|el|la|este|esta|ese|esa|esos|esas|de\s+esos|de\s+esas|de\s+este|de\s+esta)\b/i.test(lower)
+    || isReferentialItemPhrase(lower);
+
   return hasAddVerb || hasOrderIntent || startsWithAdd;
 }
+
 

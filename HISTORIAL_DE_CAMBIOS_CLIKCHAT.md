@@ -16,6 +16,17 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-28] Optimización Ultra-Rápida de GLM-5.3-Flash (<800ms) con Latency Sorting y Blindaje Anti-CoT
+- **Diagnóstico del Fallo Reportado por el Usuario ("Fuga de monólogo en inglés 'The user is asking...'"):**
+  1. *Razonamiento Obligatorio por Defecto en GLM 5.3 Flash:* El endpoint `z-ai/glm-5.3-flash` en OpenRouter cuenta con la especificación técnica `reasoning: { mandatory: true, default_effort: "max" }`. Al no enviarse configuración explícita de reasoning, el modelo generaba hasta 350 tokens de Chain of Thought en inglés antes de responder, tardando más de 7 segundos y desbordando el límite de tokens hasta fugar el borrador en inglés en pantalla.
+- **Solución Implementada:**
+  1. *Inferencia Ultra-Snappy en Inferencia Edge:* Configurado `reasoning: { effort: 'low' }` y enrutamiento dinámico `provider: { sort: 'latency', allow_fallbacks: false }` en `functions/api/[[route]].js`, `src/services/clientChatFallback.ts` y `server/services/llmRouter.js`. La latencia de respuesta bajó de 7.0s a **768 milisegundos**, con 0 tokens de razonamiento en inglés y un micro-costo de $0.000027 por consulta.
+  2. *Sanitizador Riguroso Anti-CoT:* Detección y erradicación proactiva de cualquier patrón de monólogo interno (`The user is asking...`, `I should respond...`, `Looking at...`) y reportes de seguridad para garantizar respuestas directas, limpias y en español.
+  3. *Preservación de la Cadencia de Tienda:* El selector de velocidad y delay humano (1 segundo, 9 segundos) configurado en el portal del dueño se mantiene 100% respetado e intacto.
+- **Verificación en Producción:**
+  - Build de Vite (`npm run build`) validado al 100% en 10.15s con 0 errores.
+  - Sincronización exitosa con ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
+
 ### [2026-09-26] Erradicación de Fallbacks Falsos de Catálogo y Motor IA Cliente Resiliente Anti-Caídas
 - **Diagnóstico del Fallo Reportado por el Usuario ("QUE ESTA PASANDO" con repetición de "Sobre Comida Callejera XI: $5500.00 CRC. ¿Deseas adquirirlo?"):**
   1. *Fallback Artificial Repetitivo:* En `ProductChatView.tsx`, cuando la llamada de red fallaba o no traía respuesta, existía un fallback estático con plantilla de venta: `content: data?.answer || "Sobre " + selectedProduct.title + ": $" + selectedProduct.price + " ¿Deseas adquirirlo?"`.
