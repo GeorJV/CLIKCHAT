@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 14:32 GMT-6
-- **Versión Actual:** 1.33.0 (Blindaje Estricto de Verificación de 3 Filtros & Hash Match en Producción)
+- **Última Actualización:** 2026-09-28 14:40 GMT-6
+- **Versión Actual:** 1.34.0 (Definición Global de Límites de Modelos IA para Todas las Cuentas)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: f058b4a)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 0a01642)
 - **Estado Actual del Sistema:**
-  - Filtro 3 Blindado: `verify-deploy.js` ahora compara hash local vs hash del CDN en vivo antes de auditar rutas.
-  - Producción Verificada: Bundle `index-DSo_iEfD.js` verificado y activo al 100% en `clikchat.pages.dev`.
-  - Panel Cliente Limpio: Cero exposición de claves; botón único para modelos propios desplegado y operativo.
-  - Motor Gastronómico de Ventas: Activo por defecto con 4 habilidades de hospitalidad, upselling y comanda.
-  - Build Verificado: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
+  - Control de IA Super Admin: Definición de límites para cada modelo aplicable a todas las cuentas en 1 clic.
+  - Visible en Dashboard Financiero y Directorio: Botón directo y banner interactivo de topes por modelo.
+  - Actualización Masiva en D1: Casilla para propagar instantáneamente montos a todos los comercios.
+  - Modelo Opcional Adicional: Selector de motor adicional (ej. DeepSeek V3/R1) con límite propio.
+  - Build Verificado: 0 errores en compilación Vite y despliegue Cloudflare Pages.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
