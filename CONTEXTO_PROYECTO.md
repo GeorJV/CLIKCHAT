@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 14:25 GMT-6
-- **Versión Actual:** 1.32.0 (Límites de IA Editables por Negocio, Presupuestos Globales & Modelo Opcional)
+- **Última Actualización:** 2026-09-28 14:32 GMT-6
+- **Versión Actual:** 1.33.0 (Blindaje Estricto de Verificación de 3 Filtros & Hash Match en Producción)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 6e5eaf2)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: f058b4a)
 - **Estado Actual del Sistema:**
-  - Control de IA Super Admin: Límites GLM y GPT editables ($3, $5, $10...) por negocio en Cloudflare D1.
-  - Presupuestos Globales: Configuración día/semana/mes persistida en `platform_settings`.
-  - Modelo Opcional Adicional: Selector de motor adicional (ej. DeepSeek V3/R1, Claude) con límite propio.
-  - ARQMODULAR Cumplido: Componentes atómicos (<175 líneas) y 0 errores en build y despliegue.
+  - Filtro 3 Blindado: `verify-deploy.js` ahora compara hash local vs hash del CDN en vivo antes de auditar rutas.
+  - Producción Verificada: Bundle `index-DSo_iEfD.js` verificado y activo al 100% en `clikchat.pages.dev`.
+  - Panel Cliente Limpio: Cero exposición de claves; botón único para modelos propios desplegado y operativo.
+  - Motor Gastronómico de Ventas: Activo por defecto con 4 habilidades de hospitalidad, upselling y comanda.
+  - Build Verificado: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
