@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 10:24 GMT-6
-- **Versión Actual:** 1.29.0 (Directorio de Negocios & Dashboard Financiero en Super Admin)
+- **Última Actualización:** 2026-09-28 12:15 GMT-6
+- **Versión Actual:** 1.29.1 (Datos 100% Reales D1 y OpenRouter API en Super Admin)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
   - Super Admin QChatt Standard: Pestañas "Dashboard Financiero", "Directorio de Negocios" y "Consola & IA".
-  - Directorio de Negocios Real: Comercios y usuarios reales de Cloudflare D1 con telemetría individual de IA.
-  - Modelos IA Oficiales: GLM 5.3 Flash (Titular $5 max) y GPT-4o Mini (Razonamiento $2 max) con OpenRouter en vivo.
-  - Dashboard Financiero: Proyector de Flujo de Caja (Hoy, Mañana, Semana), MRR/ARR y desglose por industrias.
+  - Métricas 100% Reales: Eliminada toda simulación o estimación artificial.
+  - Telemetría IA Real: OpenRouter API en vivo ($1.5864 mes / 86 msgs en Comida Callejera XL, 0 msgs en Admin = $0.00).
+  - Finanzas Reales: Flujo de caja e ingresos históricos calculados directo sobre la tabla `orders` de Cloudflare D1.
   - Gestión D1: Modal de detalle para actualización en caliente de suscripciones, moneda y estado.
-  - Build Verificado: Vite compilado al 100% con 0 errores y endpoints probados con éxito.
+  - Build Verificado: Vite compilado al 100% con 0 errores y desplegado en Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
