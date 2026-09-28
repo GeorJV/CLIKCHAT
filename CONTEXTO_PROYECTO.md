@@ -2,14 +2,14 @@
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
 - **Última Actualización:** 2026-09-28 09:55 GMT-6
-- **Versión Actual:** 1.26.0 (Saludos Cortos y Rol de Mesera Restaurados en Vivo)
+- **Versión Actual:** 1.27.0 (Persistencia Híbrida Local-First Anti-F5 en Chat Móvil, Tienda y Servicios)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Saludos Cortos y Naturales: "Hola", "Buenas" responden en 1 sola línea como mesera (Valeria).
-  - Rol de Mesera Preservado 100%: Venta cruzada, recomendaciones gastronómicas y toma de pedidos activa.
-  - Cero Volcado de Contexto: Corregido el motor LLM en Cloudflare D1 evitando el volcado del menú completo.
-  - Verificación en Vivo: 100% verificado y respondiendo en tiempo real en producción.
+  - Persistencia Local-First (0ms): Mensajes, comanda y sesión respaldados en `localStorage` anti-F5 y anti-recargas móviles.
+  - Sincronización Nube Cloudflare D1: Registro continuo de conversaciones en segundo plano para el panel del dueño.
+  - Rol de Mesera Preservado 100%: Saludos cortos y naturales, venta cruzada y acumulación dinámica de comanda intactos.
+  - Suite de Producción Verificada: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
