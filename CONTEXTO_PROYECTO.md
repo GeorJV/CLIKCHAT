@@ -4,7 +4,7 @@
 - **Última Actualización:** 2026-09-28 14:25 GMT-6
 - **Versión Actual:** 1.32.0 (Límites de IA Editables por Negocio, Presupuestos Globales & Modelo Opcional)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 9b500ea)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 6e5eaf2)
 - **Estado Actual del Sistema:**
   - Control de IA Super Admin: Límites GLM y GPT editables ($3, $5, $10...) por negocio en Cloudflare D1.
   - Presupuestos Globales: Configuración día/semana/mes persistida en `platform_settings`.
