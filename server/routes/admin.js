@@ -280,7 +280,10 @@ router.get('/ai-spending-metrics', async (req, res) => {
         weekBudget: globalBudgets.weekBudget || 5.0,
         monthBudget: globalBudgets.monthBudget || 15.0
       },
-      limits: { glm_monthly_limit: 5.00, gpt_monthly_limit: 2.00 },
+      limits: {
+        glm_monthly_limit: parseFloat(globalBudgets.glmLimitPerAccount) || 5.00,
+        gpt_monthly_limit: parseFloat(globalBudgets.gptLimitPerAccount) || 2.00
+      },
       models: {
         glm: {
           name: 'GLM-5.3-Flash (Z.ai)',
@@ -288,7 +291,7 @@ router.get('/ai-spending-metrics', async (req, res) => {
           day: glmCostDay,
           week: glmCostWeek,
           month: glmCostMonth,
-          monthlyLimitPerAccount: 5.00,
+          monthlyLimitPerAccount: parseFloat(globalBudgets.glmLimitPerAccount) || 5.00,
           freeRequestsToday: freeRequestsUsed
         },
         gpt: {
@@ -297,7 +300,7 @@ router.get('/ai-spending-metrics', async (req, res) => {
           day: 0,
           week: 0,
           month: 0,
-          monthlyLimitPerAccount: 2.00
+          monthlyLimitPerAccount: parseFloat(globalBudgets.gptLimitPerAccount) || 2.00
         },
         ...(optConfig?.enabled ? {
           optional: {
@@ -328,11 +331,13 @@ router.get('/ai-spending-metrics', async (req, res) => {
 // Update AI Global Budgets & Optional Model
 router.post('/ai-budget-settings', async (req, res) => {
   try {
-    const { dayBudget, weekBudget, monthBudget, optionalModel } = req.body;
+    const { dayBudget, weekBudget, monthBudget, optionalModel, glmLimitPerAccount, gptLimitPerAccount, applyToAllAccounts } = req.body;
     const configData = {
       dayBudget: parseFloat(dayBudget) || 1.0,
       weekBudget: parseFloat(weekBudget) || 5.0,
       monthBudget: parseFloat(monthBudget) || 15.0,
+      glmLimitPerAccount: parseFloat(glmLimitPerAccount) || 5.0,
+      gptLimitPerAccount: parseFloat(gptLimitPerAccount) || 2.0,
       optionalModel: {
         enabled: !!optionalModel?.enabled,
         modelId: optionalModel?.modelId || 'deepseek/deepseek-chat',
@@ -346,7 +351,20 @@ router.post('/ai-budget-settings', async (req, res) => {
       [JSON.stringify(configData)]
     );
 
-    return res.json({ success: true, message: 'Presupuestos de IA y modelo opcional actualizados', settings: configData });
+    if (applyToAllAccounts) {
+      await query(
+        "UPDATE tenants SET glm_limit = $1, gpt_limit = $2",
+        [configData.glmLimitPerAccount, configData.gptLimitPerAccount]
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: applyToAllAccounts
+        ? 'Presupuestos y límites aplicados a todas las cuentas de comercios'
+        : 'Presupuestos de IA y modelo opcional actualizados',
+      settings: configData
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

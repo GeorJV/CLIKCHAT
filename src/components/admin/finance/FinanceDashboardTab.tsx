@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TrendingUp, RefreshCw } from 'lucide-react';
 import { useAdminFinance } from '../../../hooks/useAdminFinance';
 import { CashFlowProjections } from './CashFlowProjections';
 import { SaasKpiCards } from './SaasKpiCards';
 import { CategoryBreakdownTable } from './CategoryBreakdownTable';
 import { AiSpendingCard } from '../directory/AiSpendingCard';
+import { AiBudgetModal } from '../directory/AiBudgetModal';
 
 export const FinanceDashboardTab: React.FC = () => {
   const { financeMetrics, aiMetrics, isLoading, refreshAll } = useAdminFinance();
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -44,10 +46,30 @@ export const FinanceDashboardTab: React.FC = () => {
       <SaasKpiCards saasMetrics={financeMetrics?.saasMetrics} />
 
       {/* Telemetría Real de IA (GLM 5.3 Flash + GPT-4o) */}
-      <AiSpendingCard metrics={aiMetrics} />
+      <AiSpendingCard metrics={aiMetrics} onOpenBudgetModal={() => setIsBudgetModalOpen(true)} />
 
       {/* Desglose por Industrias */}
       <CategoryBreakdownTable categories={financeMetrics?.categories} />
+
+      {/* Modal de Límites y Presupuestos */}
+      <AiBudgetModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        currentSettings={aiMetrics ? {
+          dayBudget: aiMetrics.budgets?.dayBudget ?? 1.0,
+          weekBudget: aiMetrics.budgets?.weekBudget ?? 5.0,
+          monthBudget: aiMetrics.budgets?.monthBudget ?? 15.0,
+          glmLimitPerAccount: aiMetrics.limits?.glm_monthly_limit ?? 5.0,
+          gptLimitPerAccount: aiMetrics.limits?.gpt_monthly_limit ?? 2.0,
+          optionalModel: aiMetrics.models?.optional ? {
+            enabled: aiMetrics.models.optional.enabled,
+            modelId: aiMetrics.models.optional.modelId,
+            name: aiMetrics.models.optional.name,
+            monthlyLimit: aiMetrics.models.optional.monthlyLimitPerAccount
+          } : { enabled: false, modelId: 'deepseek/deepseek-chat', name: 'DeepSeek V3', monthlyLimit: 5.0 }
+        } : null}
+        onSaved={refreshAll}
+      />
     </div>
   );
 };

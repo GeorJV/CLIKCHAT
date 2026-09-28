@@ -1517,8 +1517,8 @@ export async function onRequest(context) {
             monthBudget: globalBudgets.monthBudget || 15.0
           },
           limits: {
-            glm_monthly_limit: 5.00,
-            gpt_monthly_limit: 2.00
+            glm_monthly_limit: parseFloat(globalBudgets.glmLimitPerAccount) || 5.00,
+            gpt_monthly_limit: parseFloat(globalBudgets.gptLimitPerAccount) || 2.00
           },
           models: {
             glm: {
@@ -1527,7 +1527,7 @@ export async function onRequest(context) {
               day: glmCostDay,
               week: glmCostWeek,
               month: glmCostMonth,
-              monthlyLimitPerAccount: 5.00,
+              monthlyLimitPerAccount: parseFloat(globalBudgets.glmLimitPerAccount) || 5.00,
               freeRequestsToday: freeRequestsUsed
             },
             gpt: {
@@ -1536,7 +1536,7 @@ export async function onRequest(context) {
               day: 0,
               week: 0,
               month: 0,
-              monthlyLimitPerAccount: 2.00
+              monthlyLimitPerAccount: parseFloat(globalBudgets.gptLimitPerAccount) || 2.00
             },
             ...(optConfig?.enabled ? {
               optional: {
@@ -1578,11 +1578,13 @@ export async function onRequest(context) {
       try {
         let body = {};
         try { body = await request.json(); } catch (e) {}
-        const { dayBudget, weekBudget, monthBudget, optionalModel } = body;
+        const { dayBudget, weekBudget, monthBudget, optionalModel, glmLimitPerAccount, gptLimitPerAccount, applyToAllAccounts } = body;
         const configData = {
           dayBudget: parseFloat(dayBudget) || 1.0,
           weekBudget: parseFloat(weekBudget) || 5.0,
           monthBudget: parseFloat(monthBudget) || 15.0,
+          glmLimitPerAccount: parseFloat(glmLimitPerAccount) || 5.0,
+          gptLimitPerAccount: parseFloat(gptLimitPerAccount) || 2.0,
           optionalModel: {
             enabled: !!optionalModel?.enabled,
             modelId: optionalModel?.modelId || 'deepseek/deepseek-chat',
@@ -1594,7 +1596,21 @@ export async function onRequest(context) {
           "INSERT OR REPLACE INTO platform_settings (key, value, updated_at) VALUES ('ai_global_budgets', $1, datetime('now'))",
           [JSON.stringify(configData)]
         );
-        return jsonResponse({ success: true, message: 'Presupuestos de IA y modelo opcional actualizados', settings: configData });
+
+        if (applyToAllAccounts) {
+          await executeD1(
+            "UPDATE tenants SET glm_limit = $1, gpt_limit = $2",
+            [configData.glmLimitPerAccount, configData.gptLimitPerAccount]
+          );
+        }
+
+        return jsonResponse({
+          success: true,
+          message: applyToAllAccounts 
+            ? 'Presupuestos y límites aplicados a todas las cuentas de comercios'
+            : 'Presupuestos de IA y modelo opcional actualizados',
+          settings: configData
+        });
       } catch (err) {
         return jsonResponse({ success: false, error: err?.message }, 500);
       }

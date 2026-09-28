@@ -22,7 +22,6 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
   );
 
   const optModel = metrics?.models?.optional;
-
   return (
     <div className="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm space-y-4">
       {/* Header */}
@@ -44,10 +43,10 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
           {onOpenBudgetModal && (
             <button
               onClick={onOpenBudgetModal}
-              className="px-2.5 py-1 bg-purple-900/60 hover:bg-purple-800/80 text-purple-200 text-xs font-bold rounded-lg border border-purple-700 flex items-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer"
+              className="px-2.5 py-1.5 bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-black rounded-xl border border-purple-500/60 flex items-center gap-1.5 transition shadow-lg shadow-purple-900/30 active:scale-95 cursor-pointer"
             >
-              <Sliders size={13} className="text-purple-300" />
-              <span>Presupuestos & Modelo Opcional</span>
+              <Sliders size={13} className="text-amber-300" />
+              <span>Definir Límites a Todas las Cuentas</span>
             </button>
           )}
           <span className="px-2.5 py-1 bg-slate-800 text-slate-300 font-mono text-[11px] rounded-lg border border-slate-700">
@@ -57,6 +56,21 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
             Saldo Restante: <span className="text-emerald-400 font-black">{formatUsd(metrics?.openrouter?.limit_remaining ?? 0)} USD</span>
           </span>
         </div>
+      </div>
+      {/* Banner de Límites por Cuenta para Todos los Modelos */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-800/40 text-xs">
+        <div className="flex items-center gap-2">
+          <Bot size={15} className="text-purple-400 shrink-0" />
+          <span className="text-slate-300 font-medium text-[11px]">
+            Límites por cuenta fijados: <strong className="text-teal-400 font-mono">GLM (${metrics?.limits?.glm_monthly_limit || metrics?.models?.glm?.monthlyLimitPerAccount || 5}/mes)</strong> • <strong className="text-purple-400 font-mono">GPT (${metrics?.limits?.gpt_monthly_limit || metrics?.models?.gpt?.monthlyLimitPerAccount || 2}/mes)</strong>
+            {optModel?.enabled && <> • <strong className="text-indigo-400 font-mono">{optModel.name} (${optModel.monthlyLimitPerAccount}/mes)</strong></>}
+          </span>
+        </div>
+        {onOpenBudgetModal && (
+          <button onClick={onOpenBudgetModal} className="text-amber-300 hover:text-white font-bold text-[11px] underline cursor-pointer self-start sm:self-auto shrink-0">
+            Modificar montos para todas las cuentas &rarr;
+          </button>
+        )}
       </div>
 
       {/* Models Grid */}
@@ -71,9 +85,13 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
                 <span className="text-[10px] text-teal-400 font-mono">z-ai/glm-5.3-flash</span>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-teal-900/60 text-teal-300">
-              Límite: ${metrics?.models?.glm?.monthlyLimitPerAccount || 5}/mes
-            </span>
+            <button
+              onClick={onOpenBudgetModal}
+              className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-teal-900/60 text-teal-300 hover:bg-teal-800 transition cursor-pointer"
+              title="Clic para editar monto de este modelo a todas las cuentas"
+            >
+              Límite: ${metrics?.limits?.glm_monthly_limit || metrics?.models?.glm?.monthlyLimitPerAccount || 5}/mes
+            </button>
           </div>
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             <StatBox label="Hoy" val={metrics?.models?.glm?.day ?? 0} color="text-teal-400" />
@@ -92,9 +110,13 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
                 <span className="text-[10px] text-purple-400 font-mono">openai/gpt-4o-mini</span>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-900/60 text-purple-300">
-              Límite: ${metrics?.models?.gpt?.monthlyLimitPerAccount || 2}/mes
-            </span>
+            <button
+              onClick={onOpenBudgetModal}
+              className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-900/60 text-purple-300 hover:bg-purple-800 transition cursor-pointer"
+              title="Clic para editar monto de este modelo a todas las cuentas"
+            >
+              Límite: ${metrics?.limits?.gpt_monthly_limit || metrics?.models?.gpt?.monthlyLimitPerAccount || 2}/mes
+            </button>
           </div>
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             <StatBox label="Hoy" val={metrics?.models?.gpt?.day ?? 0} color="text-purple-400" />
@@ -114,9 +136,13 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
                   <span className="text-[10px] text-indigo-400 font-mono truncate max-w-[110px] block">{optModel.modelId}</span>
                 </div>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-900/60 text-indigo-300">
+              <button
+                onClick={onOpenBudgetModal}
+                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-900/60 text-indigo-300 hover:bg-indigo-800 transition cursor-pointer"
+                title="Clic para editar monto de este modelo a todas las cuentas"
+              >
                 Límite: ${optModel.monthlyLimitPerAccount}/mes
-              </span>
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-1.5 pt-1">
               <StatBox label="Hoy" val={optModel.day ?? 0} color="text-indigo-400" />

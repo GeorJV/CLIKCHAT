@@ -41,6 +41,9 @@ export interface GlobalAiBudgetSettings {
   dayBudget: number;
   weekBudget: number;
   monthBudget: number;
+  glmLimitPerAccount?: number;
+  gptLimitPerAccount?: number;
+  applyToAllAccounts?: boolean;
   optionalModel: OptionalModelConfig;
 }
 
