@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-28 09:38 GMT-6
-- **Versión Actual:** 1.24.0 (Erradicación Total de Cuentas Demo, Negocio Real COMIDA CALLEJERA XL)
+- **Última Actualización:** 2026-09-28 09:50 GMT-6
+- **Versión Actual:** 1.25.0 (Independencia Total de Cuentas: Super Admin y Comercios 100% Aislados)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Erradicación Total de Demo: Eliminado "Restaurante ClikChat" y "Acceso Demo Rápido" en D1, Edge y frontend.
-  - Cuentas 100% Reales: Autenticación privada con `ccxl@gmail.com` y administración con `admin@clikchat.com`.
-  - Migración Íntegra de Catálogo: Todos los productos y FAQs consolidados en `comida-callejera-xl`.
+  - Cuentas 100% Independientes: `admin@clikchat.com` asignado a su propio inquilino de plataforma `ten_clikchat_admin` (`clikchat-admin`).
+  - Comercio Cliente Aislado: `ccxl@gmail.com` es el único propietario de `ten_1790438865714_53ytu` (`comida-callejera-xl`).
+  - Cero Colisión: Desacople total verificado en Cloudflare D1, Edge memory y enrutamiento `/super-admin`.
   - Verificación 3 Filtros: 11/11 rutas certificadas con Chrome Headless en producción.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
