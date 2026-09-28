@@ -83,8 +83,24 @@ ${productContext}
 REGLA CRÍTICA: NUNCA pienses en voz alta ni redactes razonamientos internos ("El usuario quiere...", "Debo..."). Responde DIRECTAMENTE al cliente como en WhatsApp.
 Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. Si el usuario pregunta algo general, guíalo amablemente sin inventar datos no disponibles.`;
 
-      for (const mId of ['deepseek/deepseek-v3.2', 'deepseek/deepseek-chat', 'z-ai/glm-5.3-flash']) {
+      for (const mId of ['z-ai/glm-5.3-flash', 'deepseek/deepseek-chat', 'deepseek/deepseek-v3.2']) {
         try {
+          const reqPayload: Record<string, any> = {
+            model: mId,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: cleanMsg }
+            ],
+            max_tokens: 500,
+            temperature: 0.35,
+            provider: {
+              sort: 'latency',
+              allow_fallbacks: false
+            }
+          };
+          if (mId.includes('glm')) {
+            reqPayload.reasoning = { effort: 'low' };
+          }
           const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -93,16 +109,7 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
               'HTTP-Referer': 'https://clikchat.pages.dev',
               'X-Title': 'ClikChat Client Resilient AI'
             },
-            body: JSON.stringify({
-              model: mId,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: cleanMsg }
-              ],
-              max_tokens: 650,
-              temperature: 0.4,
-              include_reasoning: false
-            }),
+            body: JSON.stringify(reqPayload),
             signal: controller.signal
           });
           if (res.ok) {
@@ -122,7 +129,7 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
                   level: 'level_3_catalog',
                   levelLabel: 'Nivel 3: Asesoría IA Resiliente',
                   confidence: 0.95,
-                  provider: mId.includes('deepseek') ? 'OpenRouter DeepSeek (Principal)' : 'OpenRouter GLM (Respaldo)'
+                  provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
                 };
               }
             }

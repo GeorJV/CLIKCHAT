@@ -29,8 +29,13 @@ async function callOpenRouter(messages, options = {}) {
     body: JSON.stringify({
       model,
       messages,
-      temperature: options.temperature || 0.4,
-      max_tokens: options.max_tokens || 800
+      temperature: options.temperature || 0.35,
+      max_tokens: options.max_tokens || 500,
+      reasoning: model.includes('glm') ? { effort: 'low' } : undefined,
+      provider: {
+        sort: 'latency',
+        allow_fallbacks: false
+      }
     })
   });
 
@@ -170,14 +175,14 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Modelo Principal: DeepSeek V3.2 (Directo, micro-costo, cero CoT)
+    // 1. Modelo Principal: GLM-5.3-Flash (Ultra-rápido, micro-costo, sort: latency)
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
-    const activeModel = model || 'deepseek/deepseek-v3.2';
+    const activeModel = model || 'z-ai/glm-5.3-flash';
     const response = await callOpenRouter(messages, {
       apiKey,
       model: activeModel,
       temperature: 0.35,
-      max_tokens: 800
+      max_tokens: 500
     });
     const clean = sanitizeAiResponse(response);
     if (!clean) throw new Error('Respuesta corrupta (guardrail o CoT leak)');

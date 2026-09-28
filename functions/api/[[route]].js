@@ -659,11 +659,14 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
 
-  // Orden estricto de micro-costo sin razonamiento: 1° DeepSeek v3.2 (Directo, comercial, cero CoT), 2° DeepSeek Chat, 3° GLM-5.3-Flash
+  // Orden estricto de ultra-velocidad y micro-costo:
+  // 1° GLM-5.3-Flash (Titular ultra-rápido: reasoning low + sort latency ~700ms)
+  // 2° DeepSeek Chat (Respaldo directo conversacional)
+  // 3° DeepSeek v3.2 (Respaldo secundario)
   const modelPool = [
-    'deepseek/deepseek-v3.2',
+    'z-ai/glm-5.3-flash',
     'deepseek/deepseek-chat',
-    'z-ai/glm-5.3-flash'
+    'deepseek/deepseek-v3.2'
   ];
 
   for (const dsModel of modelPool) {
@@ -672,6 +675,19 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       continue;
     }
     try {
+      const openRouterPayload = {
+        model: dsModel,
+        messages,
+        temperature: 0.35,
+        max_tokens: 500,
+        provider: {
+          sort: 'latency',
+          allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude
+        }
+      };
+      if (dsModel.includes('glm')) {
+        openRouterPayload.reasoning = { effort: 'low' };
+      }
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -680,16 +696,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'HTTP-Referer': 'https://clikchat.pages.dev',
           'X-Title': 'ClikChat Edge AI'
         },
-        body: JSON.stringify({
-          model: dsModel,
-          messages,
-          temperature: 0.5,
-          max_tokens: 800,
-          include_reasoning: false,
-          provider: {
-            allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude
-          }
-        })
+        body: JSON.stringify(openRouterPayload)
       });
       if (resp.ok) {
         const data = await resp.json();
@@ -721,9 +728,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       body: JSON.stringify({
         model: 'openai/gpt-4o-mini',
         messages,
-        temperature: 0.45,
-        max_tokens: 650,
+        temperature: 0.35,
+        max_tokens: 450,
         provider: {
+          sort: 'latency',
           allow_fallbacks: false
         }
       })
