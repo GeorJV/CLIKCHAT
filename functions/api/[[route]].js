@@ -660,11 +660,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
 
   // Orden estricto de ultra-velocidad y micro-costo:
-  // 1° GPT-4o-mini (Titular ultra-rápido: ~1.2s-2.5s, micro-costo $0.15/1M, 0 CoT)
-  // 2° DeepSeek Chat (Respaldo conversacional nativo)
+  // 1° GLM-5.3-Flash (Titular ultra-rápido: reasoning low + sort latency ~700ms)
+  // 2° DeepSeek Chat (Respaldo directo conversacional)
   // 3° DeepSeek v3.2 (Respaldo secundario)
   const modelPool = [
-    'openai/gpt-4o-mini',
+    'z-ai/glm-5.3-flash',
     'deepseek/deepseek-chat',
     'deepseek/deepseek-v3.2'
   ];
@@ -674,8 +674,6 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       console.warn(`[BLINDAJE COSTOS] Modelo ${dsModel} estrictamente bloqueado en la clave del sistema.`);
       continue;
     }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8500);
     try {
       const openRouterPayload = {
         model: dsModel,
@@ -698,10 +696,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'HTTP-Referer': 'https://clikchat.pages.dev',
           'X-Title': 'ClikChat Edge AI'
         },
-        body: JSON.stringify(openRouterPayload),
-        signal: controller.signal
+        body: JSON.stringify(openRouterPayload)
       });
-      clearTimeout(timeoutId);
       if (resp.ok) {
         const data = await resp.json();
         const choice = data.choices?.[0];
@@ -713,14 +709,42 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         if (isCutOff) {
           console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
         }
-      } else {
-        const errText = await resp.text().catch(() => '');
-        console.warn(`[LLM] ${dsModel} respondió status ${resp.status}: ${errText.slice(0, 150)}`);
       }
     } catch (e) {
-      clearTimeout(timeoutId);
       console.warn(`Intento con ${dsModel} falló:`, e.message);
     }
+  }
+
+  // 2. Respaldo de Emergencia GPT-4o-mini (Cero fallbacks a Claude)
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages,
+        temperature: 0.35,
+        max_tokens: 450,
+        provider: {
+          sort: 'latency',
+          allow_fallbacks: false
+        }
+      })
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const choice = data.choices?.[0];
+      const isCutOff = choice?.finish_reason === 'length';
+      const clean = sanitizeAiResponse(choice?.message?.content);
+      if (clean && !isCutOff) return { text: clean, provider: 'openai/gpt-4o-mini' };
+    }
+  } catch (e) {
+    console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
   }
 
   // 3. Respaldo: Cloudflare Workers AI Llama 3 (Con filtro estricto anti-guardrail)
@@ -898,7 +922,7 @@ export async function onRequest(context) {
   try {
     // Health check
     if (segments[0] === 'health') {
-      return jsonResponse({ status: 'ok', version: '1.48.0', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
+      return jsonResponse({ status: 'ok', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
     }
 
     // ==============================================================================

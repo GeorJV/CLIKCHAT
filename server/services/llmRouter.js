@@ -175,9 +175,9 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Modelo Principal: OpenAI GPT-4o Mini (Ultra-rápido ~1s, micro-costo, 0 CoT)
+    // 1. Modelo Principal: GLM-5.3-Flash (Ultra-rápido, micro-costo, sort: latency)
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
-    const activeModel = model || 'openai/gpt-4o-mini';
+    const activeModel = model || 'z-ai/glm-5.3-flash';
     const response = await callOpenRouter(messages, {
       apiKey,
       model: activeModel,
@@ -188,33 +188,31 @@ async function generateCompletion({
     if (!clean) throw new Error('Respuesta corrupta (guardrail o CoT leak)');
     return { success: true, text: clean, provider: activeModel };
   } catch (err) {
-    console.warn('⚠️ Fallo en modelo principal GPT-4o-mini, ejecutando respaldo con DeepSeek Chat:', err.message);
+    console.warn('⚠️ Fallo en modelo principal, ejecutando respaldo con DeepSeek Chat:', err.message);
     try {
-      // 2. Modelo de Respaldo: DeepSeek Chat
+      // 2. Modelo de Respaldo: DeepSeek V3
       const apiKey = DEFAULT_OPENROUTER_KEY;
       const response = await callOpenRouter(messages, {
         apiKey,
         model: 'deepseek/deepseek-chat',
-        temperature: 0.35,
-        max_tokens: 500
+        temperature: 0.35
       });
       const clean = sanitizeAiResponse(response);
       if (!clean) throw new Error('Respuesta corrupta de DeepSeek (guardrail o CoT leak)');
       return { success: true, text: clean, provider: 'deepseek/deepseek-chat' };
     } catch (dsErr) {
-      console.warn('⚠️ Fallo en DeepSeek Chat, ejecutando respaldo secundario DeepSeek v3.2:', dsErr.message);
+      console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo final con GPT-4o Mini:', dsErr.message);
       try {
-        // 3. Respaldo Secundario: DeepSeek v3.2
+        // 3. Respaldo Final: OpenAI GPT-4o Mini
         const apiKey = DEFAULT_OPENROUTER_KEY;
         const response = await callOpenRouter(messages, {
           apiKey,
-          model: 'deepseek/deepseek-v3.2',
-          temperature: 0.35,
-          max_tokens: 500
+          model: 'openai/gpt-4o-mini',
+          temperature: 0.25
         });
         const clean = sanitizeAiResponse(response);
-        if (!clean) throw new Error('Respuesta corrupta de DeepSeek v3.2');
-        return { success: true, text: clean, provider: 'deepseek/deepseek-v3.2' };
+        if (!clean) throw new Error('Respuesta corrupta de GPT-4o Mini');
+        return { success: true, text: clean, provider: 'openai/gpt-4o-mini' };
       } catch (gErr) {
         console.error('❌ Fallaron todos los modelos de la plataforma:', gErr.message);
         // 4. Fallback contextual si todo lo demás falla

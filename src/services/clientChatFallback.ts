@@ -83,7 +83,7 @@ ${productContext}
 REGLA CRÍTICA: NUNCA pienses en voz alta ni redactes razonamientos internos ("El usuario quiere...", "Debo..."). Responde DIRECTAMENTE al cliente como en WhatsApp.
 Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. Si el usuario pregunta algo general, guíalo amablemente sin inventar datos no disponibles.`;
 
-      for (const mId of ['openai/gpt-4o-mini', 'deepseek/deepseek-chat']) {
+      for (const mId of ['z-ai/glm-5.3-flash', 'deepseek/deepseek-chat', 'deepseek/deepseek-v3.2']) {
         try {
           const reqPayload: Record<string, any> = {
             model: mId,
@@ -129,7 +129,7 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
                   level: 'level_3_catalog',
                   levelLabel: 'Nivel 3: Asesoría IA Resiliente',
                   confidence: 0.95,
-                  provider: mId.includes('gpt-4o-mini') ? 'OpenRouter GPT-4o-mini (Titular)' : 'OpenRouter DeepSeek (Respaldo)'
+                  provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
                 };
               }
             }

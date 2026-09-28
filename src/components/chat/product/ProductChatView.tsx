@@ -44,7 +44,7 @@ export const ProductChatView: React.FC<Props> = ({
   });
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
-    debounceMs: Math.min(Math.max((responseDelaySec ?? 0.25) * 1000, 150), 350), deliveryDelayMs: 0, onSetLoading: setIsLoading,
+    debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400), deliveryDelayMs: 0, onSetLoading: setIsLoading,
     onDeliverUserMessage: (userMsg) => setMessages((prev) => [...prev, userMsg]),
     onTriggerBotReply: async (batch) => {
       const userText = batch.join('\n').trim();
@@ -131,7 +131,7 @@ export const ProductChatView: React.FC<Props> = ({
         registerAddedItem(rawName, addedPrice);
       }
     }
-    if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text, Boolean(customText)); } else { sendVoiceQuery(text); }
+    if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); } else { sendVoiceQuery(text); }
   };
 
   return (
