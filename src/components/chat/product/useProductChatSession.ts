@@ -97,7 +97,7 @@ export function useProductChatSession({
               id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
               content: dynamicGreeting,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida comanda' },
+              ragTrace: { levelUsed: 1, confidence: 0.99, executionTimeMs: 8, modelUsed: 'Bienvenida D1', reasoning: 'Saludo inicial configurado' },
             }];
           });
         }

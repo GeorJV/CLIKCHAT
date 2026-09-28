@@ -5,6 +5,7 @@ export interface FallbackChatParams {
   storeName?: string;
   agentName?: string;
   businessType?: string;
+  welcomeMessage?: string;
   userMessage: string;
   selectedProduct?: ProductItem;
   products?: ProductItem[];
@@ -28,16 +29,19 @@ const getOpenRouterKey = (): string => {
 };
 
 export async function generateClientChatFallback(params: FallbackChatParams): Promise<FallbackChatResult> {
-  const { storeName = 'Tienda Oficial', agentName = 'Asesor Virtual', businessType = 'tienda', userMessage, selectedProduct, products = [] } = params;
+  const { storeName = 'Tienda Oficial', agentName = 'Asesor Virtual', businessType = 'tienda', welcomeMessage, userMessage, selectedProduct, products = [] } = params;
   const cleanMsg = (userMessage || '').trim();
   const lowerMsg = cleanMsg.toLowerCase();
+  const cleanGreeting = lowerMsg.replace(/^[¡!¿?\s\.,;:()\-]+|[¡!¿?\s\.,;:()\-]+$/g, '').trim();
 
   // 1. Saludos iniciales universales
-  const isGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello)\b/i.test(cleanMsg) && cleanMsg.split(/\s+/).length <= 4;
+  const isGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting) && cleanMsg.split(/\s+/).length <= 4;
   if (isGreeting) {
-    const greetingText = businessType === 'restaurante'
-      ? `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu mesera virtual. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
-      : `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu asesora virtual. ¿En qué te puedo colaborar el día de hoy?`;
+    const greetingText = welcomeMessage && welcomeMessage.trim()
+      ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName)
+      : (businessType === 'restaurante'
+          ? `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu mesera virtual. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
+          : `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu asesora virtual. ¿En qué te puedo colaborar el día de hoy?`);
 
     return {
       answer: greetingText,

@@ -104,7 +104,7 @@ export const ProductChatView: React.FC<Props> = ({
         try {
           const fb = await generateClientChatFallback({
             tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl',
-            storeName, agentName, businessType, userMessage: userText,
+            storeName, agentName, businessType, welcomeMessage, userMessage: userText,
             selectedProduct, products, sessionId: sessId
           });
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };

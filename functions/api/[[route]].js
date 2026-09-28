@@ -2133,7 +2133,8 @@ export async function onRequest(context) {
 
       // 6. Normalización y Extracción de Palabras Clave
       const cleanUserQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const queryWords = cleanUserQuery.split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
+      const cleanGreeting = cleanUserQuery.replace(/^[¡!¿?\s\.,;:()\-]+|[¡!¿?\s\.,;:()\-]+$/g, '').trim();
+      const queryWords = cleanGreeting.split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
 
       // Consultas que NUNCA deben detenerse en seco en Nivel 2 (deben ir a Nivel 3 RAG para buscar en documentos y LLM)
       const requiresDeepRAG = /\b(descuento|descuentos|cupon|cupones|promo|promocion|rebaja|oferta|vip|pro|codigo|porcentaje|cuanto cuesta|precio exacto|especial|manual|manuales|documento|documentos|politica|politicas|terminos|condicion|condiciones|requisito|requisitos|pasos|como funciona|garantia especifica)\b/i.test(message);
@@ -2160,7 +2161,7 @@ export async function onRequest(context) {
       const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
 
       // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (CORTESÍA INMEDIATA CON ROL DE MESERA)
-      const isSimpleGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal)\b/i.test(cleanUserQuery)
+      const isSimpleGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
         && queryWords.length <= 4
         && !hasDirectProductMatch
         && !isCheckoutOrOrderQuery
@@ -2172,12 +2173,10 @@ export async function onRequest(context) {
         const storeName = targetTenant.name || 'nuestro negocio';
 
         let greetingReply = targetTenant.welcome_message && targetTenant.welcome_message.trim()
-          ? adaptTemporalGreetings(
-              targetTenant.welcome_message
-                .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
-                .replace(/\{asesor\}|\{bot\}/gi, botName),
-              timePeriod
-            )
+          ? targetTenant.welcome_message
+              .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
+              .replace(/\{asesor\}|\{bot\}/gi, botName)
+              .trim()
           : (isRestaurant
               ? `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
               : `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. ¿En qué te puedo colaborar hoy?`);
@@ -2297,6 +2296,9 @@ export async function onRequest(context) {
         // 1. Información General del Negocio
         contextBlock += `--- INFORMACIÓN GENERAL DEL NEGOCIO ---\n`;
         contextBlock += `NOMBRE DE LA EMPRESA: ${targetTenant.name || 'ClikChat Store'}\n`;
+        if (targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
+          contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
+        }
         contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
         contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;
         if (targetTenant.cta_url) {

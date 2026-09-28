@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ProductItem } from '../types/productChat';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT } from '../components/chat/product/productChatMock';
-import { getCachedTenant } from '../utils/fallbackTenant';
+import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
 
 export function toProductItem(p: Partial<Product> & { id: string; name: string; price: number }): ProductItem {
   const images = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
@@ -19,10 +19,7 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
     images,
     stock: 25,
     inStock: true,
-    benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : [
-      'Disponibilidad inmediata y atención personalizada 24/7.',
-      'Garantía de calidad y satisfacción asegurada.'
-    ],
+    benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : ['Atención personalizada 24/7.', 'Garantía y calidad asegurada.'],
     description: p.full_description || p.short_description || '',
     specifications: p.details || {}
   };
@@ -35,16 +32,9 @@ function synthesizeFallbackProduct(idOrSlug: string, isRestaurant: boolean, curr
   const price = isCRC ? (isRestaurant ? 5500 : 15000) : (isRestaurant ? 9.99 : 24.99);
 
   return {
-    id: idOrSlug,
-    title,
-    slug: isId ? 'especialidad' : idOrSlug,
-    category: isRestaurant ? 'Plato Principal' : 'Catálogo Oficial',
-    price,
-    currency,
-    image: '',
-    images: [],
-    stock: 50,
-    inStock: true,
+    id: idOrSlug, title, slug: isId ? 'especialidad' : idOrSlug,
+    category: isRestaurant ? 'Plato Principal' : 'Catálogo Oficial', price, currency,
+    image: '', images: [], stock: 50, inStock: true,
     benefits: isRestaurant ? ['Ingredientes frescos del día.', 'Preparación artesanal al momento.', 'Guarnición o bebida opcional.'] : ['Garantía oficial y entrega inmediata.', 'Atención personalizada 24/7.'],
     description: isRestaurant ? `Disfruta de ${title}, preparado con ingredientes frescos y auténtico sabor.` : `${title} con las mejores especificaciones de la tienda.`,
     specifications: {}
@@ -85,7 +75,15 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
           const ct = tRes.headers.get('content-type') || '';
           if (tRes.ok && ct.includes('application/json')) {
             const tData = await tRes.json();
-            if (tData.tenant?.name && isMounted) setStoreName(tData.tenant.name);
+            if (tData.tenant && isMounted) {
+              const t = tData.tenant;
+              if (t.name) setStoreName(t.name);
+              if (t.bot_name) setAgentName(t.bot_name);
+              if (t.avatar_url) setAgentAvatar(t.avatar_url);
+              if (t.welcome_message) setWelcomeMessage(t.welcome_message);
+              if (t.business_type) setBusinessType(t.business_type);
+              saveCachedTenant(t);
+            }
             if (tData.products && tData.products.length > 0) {
               defaultItem = toProductItem(tData.products[0]);
             }
@@ -150,6 +148,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
           if (t.avatar_url) setAgentAvatar(t.avatar_url);
           if (t.welcome_message) setWelcomeMessage(t.welcome_message);
           if (t.business_type) setBusinessType(t.business_type);
+          saveCachedTenant(t);
         }
 
         if (!resolvedItem && tenantData?.products && Array.isArray(tenantData.products)) {
