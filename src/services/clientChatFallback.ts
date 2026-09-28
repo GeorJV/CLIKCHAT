@@ -82,40 +82,45 @@ Tu tono es amable, profesional, empático y orientado a ayudar al cliente a toma
 ${productContext}
 Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. Si el usuario pregunta algo general, guíalo amablemente sin inventar datos no disponibles.`;
 
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://clikchat.pages.dev',
-          'X-Title': 'ClikChat Client Resilient AI'
-        },
-        body: JSON.stringify({
-          model: 'deepseek/deepseek-chat',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: cleanMsg }
-          ],
-          max_tokens: 300,
-          temperature: 0.4
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        const aiReply = data.choices?.[0]?.message?.content?.trim();
-        if (aiReply) {
-          return {
-            answer: aiReply,
-            level: 'level_3_catalog',
-            levelLabel: 'Nivel 3: Asesoría IA Resiliente',
-            confidence: 0.95,
-            provider: 'OpenRouter DeepSeek (Multi-Edge)'
-          };
-        }
+      for (const mId of ['z-ai/glm-5.3-flash', 'deepseek/deepseek-chat']) {
+        try {
+          const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+              'HTTP-Referer': 'https://clikchat.pages.dev',
+              'X-Title': 'ClikChat Client Resilient AI'
+            },
+            body: JSON.stringify({
+              model: mId,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: cleanMsg }
+              ],
+              max_tokens: 350,
+              temperature: 0.4,
+              include_reasoning: false
+            }),
+            signal: controller.signal
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const aiReply = data.choices?.[0]?.message?.content?.trim();
+            if (aiReply) {
+              clearTimeout(timeoutId);
+              return {
+                answer: aiReply,
+                level: 'level_3_catalog',
+                levelLabel: 'Nivel 3: Asesoría IA Resiliente',
+                confidence: 0.95,
+                provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
+              };
+            }
+          }
+        } catch {}
       }
+      clearTimeout(timeoutId);
     }
   } catch {
     // Si la llamada externa también falla o hace timeout, continuar con respuesta determinista de cortesía

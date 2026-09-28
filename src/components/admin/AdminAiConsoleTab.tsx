@@ -89,9 +89,9 @@ export const AdminAiConsoleTab: React.FC<Props> = ({ onTenantCreated }) => {
             onChange={(e) => setPlaygroundModel(e.target.value)}
             className="text-xs bg-slate-800 text-indigo-300 border border-slate-700 rounded-xl px-3 py-1.5 focus:outline-none"
           >
-            <option value="z-ai/glm-5.3-flash">GLM-5.3-Flash (Titular 80%)</option>
-            <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Razonamiento 20%)</option>
+            <option value="z-ai/glm-5.3-flash">GLM-5.3-Flash (Principal)</option>
             <option value="deepseek/deepseek-chat">DeepSeek V3 (Respaldo)</option>
+            <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Respaldo Final)</option>
           </select>
         </div>
 

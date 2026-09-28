@@ -563,7 +563,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     }
   }
 
-  // CASO B: Motor Inteligente del Sistema (Gobernado por Super Admin: 90% DeepSeek / 10% GPT-4o-mini)
+  // CASO B: Motor Inteligente del Sistema (Orden Estricto: 1° GLM-5.3-Flash / 2° DeepSeek / 3° GPT-4o-mini)
   const openRouterKey = env?.OPENROUTER_API_KEY || (() => {
     try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
   })();
@@ -576,9 +576,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
   const isGuardrailLeak = (t) => !t || /user safety:\s*safe/i.test(t) || /response safety:\s*safe/i.test(t) || /^safety:\s*safe/i.test(t);
 
+  // Orden estricto: 1° GLM-5.3-Flash (Principal), 2° DeepSeek (Respaldo), 3° GPT-4o-mini (Respaldo Final)
   const modelPool = [
-    'deepseek/deepseek-chat',
     'z-ai/glm-5.3-flash',
+    'deepseek/deepseek-chat',
     'deepseek/deepseek-v3.2'
   ];
 
@@ -1825,9 +1826,10 @@ export async function onRequest(context) {
     // ADMIN: GET /api/admin/ai-config
     if (segments[0] === 'admin' && segments[1] === 'ai-config' && request.method === 'GET') {
       let config = {
-        primaryModel: 'deepseek/deepseek-chat',
+        primaryModel: 'z-ai/glm-5.3-flash',
+        backupModel: 'deepseek/deepseek-chat',
         reasoningModel: 'openai/gpt-4o-mini',
-        splitRatio: '90/10',
+        splitRatio: '80/20',
         fallbackProvider: 'google_ai_studio'
       };
       try {
@@ -1858,7 +1860,7 @@ export async function onRequest(context) {
     if (segments[0] === 'admin' && segments[1] === 'playground' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { prompt, systemPrompt, model = 'deepseek/deepseek-chat' } = body;
+      const { prompt, systemPrompt, model = 'z-ai/glm-5.3-flash' } = body;
       if (!prompt) return jsonResponse({ error: 'Prompt requerido' }, 400);
 
       const openRouterKey = env?.OPENROUTER_API_KEY || (() => {

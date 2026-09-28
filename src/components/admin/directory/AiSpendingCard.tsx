@@ -100,39 +100,14 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
           </div>
         </div>
 
-        {/* Modelo 2: GPT-4o Mini */}
-        <div className="p-3.5 rounded-xl border border-purple-800/50 bg-purple-950/20 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-purple-400" />
-              <div>
-                <h4 className="font-bold text-xs text-white">GPT-4o Mini (OpenAI)</h4>
-                <span className="text-[10px] text-purple-400 font-mono">openai/gpt-4o-mini</span>
-              </div>
-            </div>
-            <button
-              onClick={onOpenBudgetModal}
-              className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-900/60 text-purple-300 hover:bg-purple-800 transition cursor-pointer"
-              title="Clic para editar monto de este modelo a todas las cuentas"
-            >
-              Límite: ${metrics?.limits?.gpt_monthly_limit || metrics?.models?.gpt?.monthlyLimitPerAccount || 2}/mes
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 pt-1">
-            <StatBox label="Hoy" val={metrics?.models?.gpt?.day ?? 0} color="text-purple-400" />
-            <StatBox label="Semana" val={metrics?.models?.gpt?.week ?? 0} color="text-purple-400" />
-            <StatBox label="Mes" val={metrics?.models?.gpt?.month ?? 0} color="text-purple-400" />
-          </div>
-        </div>
-
-        {/* Modelo 3 Opcional */}
+        {/* Modelo 2: DeepSeek V3 (Respaldo) */}
         {optModel?.enabled && (
           <div className="p-3.5 rounded-xl border border-indigo-800/50 bg-indigo-950/20 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-indigo-400" />
                 <div>
-                  <h4 className="font-bold text-xs text-white truncate max-w-[110px]">{optModel.name}</h4>
+                  <h4 className="font-bold text-xs text-white truncate max-w-[110px]">{optModel.name} (Respaldo)</h4>
                   <span className="text-[10px] text-indigo-400 font-mono truncate max-w-[110px] block">{optModel.modelId}</span>
                 </div>
               </div>
@@ -151,6 +126,31 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
             </div>
           </div>
         )}
+
+        {/* Modelo 3: GPT-4o Mini (Respaldo Final) */}
+        <div className="p-3.5 rounded-xl border border-purple-800/50 bg-purple-950/20 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-purple-400" />
+              <div>
+                <h4 className="font-bold text-xs text-white">GPT-4o Mini (Respaldo Final)</h4>
+                <span className="text-[10px] text-purple-400 font-mono">openai/gpt-4o-mini</span>
+              </div>
+            </div>
+            <button
+              onClick={onOpenBudgetModal}
+              className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-900/60 text-purple-300 hover:bg-purple-800 transition cursor-pointer"
+              title="Clic para editar monto de este modelo a todas las cuentas"
+            >
+              Límite: ${metrics?.limits?.gpt_monthly_limit || metrics?.models?.gpt?.monthlyLimitPerAccount || 2}/mes
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 pt-1">
+            <StatBox label="Hoy" val={metrics?.models?.gpt?.day ?? 0} color="text-purple-400" />
+            <StatBox label="Semana" val={metrics?.models?.gpt?.week ?? 0} color="text-purple-400" />
+            <StatBox label="Mes" val={metrics?.models?.gpt?.month ?? 0} color="text-purple-400" />
+          </div>
+        </div>
 
         {/* Consumo Global & Presupuestos */}
         <div className="p-3.5 rounded-xl border border-emerald-800/50 bg-emerald-950/20 space-y-2.5">

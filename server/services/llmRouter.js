@@ -101,7 +101,7 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Modelo Principal: GLM-5.3-Flash / DeepSeek V3 (Ultra bajo costo)
+    // 1. Modelo Principal: GLM-5.3-Flash
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
     const activeModel = model || 'z-ai/glm-5.3-flash';
     const response = await callOpenRouter(messages, {
@@ -111,27 +111,39 @@ async function generateCompletion({
     });
     return { success: true, text: response, provider: activeModel };
   } catch (err) {
-    console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo cruzado con GPT-4o Mini:', err.message);
+    console.warn('⚠️ Fallo en GLM 5.3, ejecutando respaldo con DeepSeek V3:', err.message);
     try {
-      // 2. Modelo Auxiliar / Respaldo: OpenAI GPT-4o Mini (10% razonamiento y failover)
+      // 2. Modelo de Respaldo: DeepSeek V3
       const apiKey = DEFAULT_OPENROUTER_KEY;
       const response = await callOpenRouter(messages, {
         apiKey,
-        model: 'openai/gpt-4o-mini',
-        temperature: 0.25
+        model: 'deepseek/deepseek-chat',
+        temperature: 0.35
       });
-      return { success: true, text: response, provider: 'openai/gpt-4o-mini' };
-    } catch (gErr) {
-      console.error('❌ Fallaron ambos modelos de la plataforma:', gErr.message);
-      // 3. Fallback to context-based template response so the user never gets an empty error
-      if (context && context.trim().length > 0) {
-        return {
-          success: true,
-          text: `Con gusto te informo:\n\n${context.replace(/\[.*?\]/g, '').trim()}\n\n¿Deseas que te ayude a procesar tu pedido o tienes alguna otra pregunta?`,
-          provider: 'context_template'
-        };
+      return { success: true, text: response, provider: 'deepseek/deepseek-chat' };
+    } catch (dsErr) {
+      console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo final con GPT-4o Mini:', dsErr.message);
+      try {
+        // 3. Respaldo Final: OpenAI GPT-4o Mini
+        const apiKey = DEFAULT_OPENROUTER_KEY;
+        const response = await callOpenRouter(messages, {
+          apiKey,
+          model: 'openai/gpt-4o-mini',
+          temperature: 0.25
+        });
+        return { success: true, text: response, provider: 'openai/gpt-4o-mini' };
+      } catch (gErr) {
+        console.error('❌ Fallaron todos los modelos de la plataforma:', gErr.message);
+        // 4. Fallback contextual si todo lo demás falla
+        if (context && context.trim().length > 0) {
+          return {
+            success: true,
+            text: `Con gusto te informo:\n\n${context.replace(/\[.*?\]/g, '').trim()}\n\n¿Deseas que te ayude a procesar tu pedido o tienes alguna otra pregunta?`,
+            provider: 'context_template'
+          };
+        }
+        throw gErr;
       }
-      throw gErr;
     }
   }
 }
