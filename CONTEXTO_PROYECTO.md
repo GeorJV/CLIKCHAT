@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-28 09:14 GMT-6
-- **Versión Actual:** 1.23.0 (Saludos Cortos y Naturales con Rol de Mesera Activo y Corte Rápido Nivel 1)
+- **Última Actualización:** 2026-09-28 09:38 GMT-6
+- **Versión Actual:** 1.24.0 (Erradicación Total de Cuentas Demo, Negocio Real COMIDA CALLEJERA XL)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Saludos Naturales y Breves: Nivel 1 en Edge intercepta "Hola", "Buenas", etc., con respuesta cálida de mesera (<30ms, $0 tokens).
-  - Rol de Mesera Preservado 100%: Toma de comanda, ingredientes, upselling proactivo al consultar platillos y cálculo de cuenta intactos.
-  - Saneamiento de Fallbacks: Erradicado el volcado masivo de contexto en `context_template` para evitar biblias de texto ante intermitencias.
-  - Verificación de Build: Compilación limpia en Vite (`npm run build`) y validación de sintaxis Node en Cloudflare Functions.
+  - Erradicación Total de Demo: Eliminado "Restaurante ClikChat" y "Acceso Demo Rápido" en D1, Edge y frontend.
+  - Cuentas 100% Reales: Autenticación privada con `ccxl@gmail.com` y administración con `admin@clikchat.com`.
+  - Migración Íntegra de Catálogo: Todos los productos y FAQs consolidados en `comida-callejera-xl`.
+  - Verificación 3 Filtros: 11/11 rutas certificadas con Chrome Headless en producción.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
