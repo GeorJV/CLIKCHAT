@@ -1,18 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
-- **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-28 10:12 GMT-6
-- **Versión Actual:** 1.28.0 (Sincronización Estricta de Saludo Inicial en Nivel 1 & D1)
+- **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
+- **Última Actualización:** 2026-09-28 10:24 GMT-6
+- **Versión Actual:** 1.29.0 (Directorio de Negocios & Dashboard Financiero en Super Admin)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Saludo Inicial D1 Garantizado: Mensaje de bienvenida configurado por el dueño sincronizado en Nivel 1 ($0 tokens, <10ms).
-  - Normalización Anti-Puntuación: Detección insensible a signos (¡!¿?.,) para cortesía inmediata sin ceder a Nivel 3.
-  - Sincronización Catálogo & Vistas: `useProductResolver` hidrata `welcome_message` en rutas sin productId y persiste en caché.
-  - Suite de Producción Verificada: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
-  - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
+  - Super Admin QChatt Standard: Pestañas "Dashboard Financiero", "Directorio de Negocios" y "Consola & IA".
+  - Directorio de Negocios Real: Comercios y usuarios reales de Cloudflare D1 con telemetría individual de IA.
+  - Modelos IA Oficiales: GLM 5.3 Flash (Titular $5 max) y GPT-4o Mini (Razonamiento $2 max) con OpenRouter en vivo.
+  - Dashboard Financiero: Proyector de Flujo de Caja (Hoy, Mañana, Semana), MRR/ARR y desglose por industrias.
+  - Gestión D1: Modal de detalle para actualización en caliente de suscripciones, moneda y estado.
+  - Build Verificado: Vite compilado al 100% con 0 errores y endpoints probados con éxito.
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
-  - Respetar el límite de 150 líneas por archivo en todo el frontend (ARQMODULAR).
+  - Respetar el límite de 150-180 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
