@@ -1,4 +1,4 @@
-﻿import { ProductItem } from '../types/productChat';
+import { ProductItem } from '../types/productChat';
 
 export interface FallbackChatParams {
   tenantSlug: string;
@@ -36,8 +36,8 @@ export async function generateClientChatFallback(params: FallbackChatParams): Pr
   const isGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello)\b/i.test(cleanMsg) && cleanMsg.split(/\s+/).length <= 4;
   if (isGreeting) {
     const greetingText = businessType === 'restaurante'
-      ? `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu mesero y asesor virtual. ¿En qué te puedo consentir hoy? ¿Te gustaría ver nuestro menú o tienes algún antojo especial?`
-      : `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu asesor virtual. ¿En qué te puedo colaborar hoy? ¿Te gustaría conocer nuestros productos o recomendaciones destacadas?`;
+      ? `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu mesera virtual. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
+      : `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu asesora virtual. ¿En qué te puedo colaborar el día de hoy?`;
 
     return {
       answer: greetingText,

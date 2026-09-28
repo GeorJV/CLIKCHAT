@@ -2136,6 +2136,48 @@ export async function onRequest(context) {
       // Si es consulta de cuenta/total o confirmación de orden, tampoco interceptar con FAQ estática
       const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
 
+      // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (CORTESÍA INMEDIATA CON ROL DE MESERA)
+      const isSimpleGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal)\b/i.test(cleanUserQuery)
+        && queryWords.length <= 4
+        && !hasDirectProductMatch
+        && !isCheckoutOrOrderQuery
+        && !requiresDeepRAG;
+
+      if (isSimpleGreeting) {
+        const isRestaurant = targetTenant.business_type === 'restaurante';
+        const botName = targetTenant.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
+        const storeName = targetTenant.name || 'nuestro negocio';
+
+        let greetingReply = targetTenant.welcome_message && targetTenant.welcome_message.trim()
+          ? adaptTemporalGreetings(
+              targetTenant.welcome_message
+                .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
+                .replace(/\{asesor\}|\{bot\}/gi, botName),
+              timePeriod
+            )
+          : (isRestaurant
+              ? `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
+              : `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. ¿En qué te puedo colaborar hoy?`);
+
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', greetingReply, 'level_1']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_1',
+          levelLabel: 'Nivel 1: Saludo & Cortesía Inmediata',
+          confidence: 0.99,
+          answer: greetingReply,
+          orderTotal: null,
+          isRestaurant
+        });
+      }
+
       // 7. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
       // Si hay documentos cargados en RAG con coincidencia o producto específico, ceder paso a Nivel 3.
       // Si NO hay documentos cargados en RAG, permitir que las FAQs oficiales respondan directamente.
@@ -2508,9 +2550,8 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
           contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA (MÁXIMA PRIORIDAD)]:\n${targetTenant.sales_flow_rules.trim()}`;
         } else if (targetTenant.business_type === 'restaurante') {
           contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL - RESTAURANTE]:
-1. ROL DE MESERO PROFESIONAL: Atiende con calidez, apetito y dinamismo como el mejor mesero del restaurante.
-2. VENTA CRUZADA ACTIVA (OBLIGATORIO): Al consultar o pedir un platillo principal (ej. hamburguesa, pizza, corte, plato fuerte), sugiere proactivamente acompañamientos y bebidas con opciones atractivas.
-   - Ejemplo de estilo: "¿Te gustaría acompañar tu pedido con papas rústicas o ensalada fresca? ¿Deseas agregar bebida por un pequeño adicional?"
+1. ROL DE MESERO PROFESIONAL: Atiende con calidez, apetito y dinamismo como la mejor mesera del restaurante.
+2. VENTA CRUZADA ACTIVA: Al consultar, elegir o pedir un platillo principal (ej. hamburguesa, pizza, corte, plato fuerte), sugiere proactivamente acompañamientos y bebidas con opciones atractivas (ej: "¿Te gustaría acompañar tu pedido con papas rústicas o ensalada fresca? ¿Deseas agregar bebida por un pequeño adicional?"). En saludos simples responde con brevedad y amabilidad sin saturar.
 3. OPCIONES DE PREPARACIÓN Y EXTRAS: Pregunta por término de carne, salsas o adicionales si el plato lo amerita.
 4. AVANCE Y CIERRE: Pregunta si es para comer en el restaurante o para entrega a domicilio / express, y recuérdale que puede pedir el total con "¿cuánto es?" para confirmar su comanda.`;
         } else if (targetTenant.business_type === 'tienda') {

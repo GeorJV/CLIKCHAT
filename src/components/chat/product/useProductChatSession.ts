@@ -61,9 +61,10 @@ export function useProductChatSession({
           if (typeof data?.activeOrder?.totalAmount === 'number' && data.activeOrder.totalAmount > 0) {
             onRestoreOrderTotal?.(data.activeOrder.totalAmount);
           }
+        } else if (isMounted) {
           const defaultGreeting = isRestaurant
-            ? `¡Hola! 👋 Te saluda **${agentName}** de **${storeName}**.\n\nVeo que se te antoja nuestro delicioso **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Te gustaría que te preparemos uno? ¿Te gustaría acompañarlo con papas rústicas o ensalada? ¿Deseas agregar bebida por un pequeño adicional?`
-            : `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}).\n\n¿Tienes alguna duda sobre los beneficios o deseas apartar tu pedido?`;
+            ? `¡Hola! 👋 Te saluda **${agentName}**, tu mesera en **${storeName}**.\n\nVeo que te interesa nuestro delicioso **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Te gustaría ordenar uno o tienes alguna consulta?`
+            : `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Tienes alguna duda o deseas apartar tu pedido?`;
           const dynamicGreeting = welcomeMessage
             ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
             : defaultGreeting;
