@@ -675,7 +675,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       continue;
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6500);
+    const timeoutId = setTimeout(() => controller.abort(), 8500);
     try {
       const openRouterPayload = {
         model: dsModel,
@@ -713,6 +713,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         if (isCutOff) {
           console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
         }
+      } else {
+        const errText = await resp.text().catch(() => '');
+        console.warn(`[LLM] ${dsModel} respondió status ${resp.status}: ${errText.slice(0, 150)}`);
       }
     } catch (e) {
       clearTimeout(timeoutId);
@@ -895,7 +898,7 @@ export async function onRequest(context) {
   try {
     // Health check
     if (segments[0] === 'health') {
-      return jsonResponse({ status: 'ok', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
+      return jsonResponse({ status: 'ok', version: '1.48.0', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
     }
 
     // ==============================================================================
