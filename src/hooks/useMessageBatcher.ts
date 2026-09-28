@@ -10,7 +10,7 @@ interface UseMessageBatcherOptions {
 }
 
 export function useMessageBatcher({
-  debounceMs = 800,
+  debounceMs = 250,
   deliveryDelayMs = 0,
   onDeliverUserMessage,
   onTriggerBotReply,
@@ -19,7 +19,7 @@ export function useMessageBatcher({
   const pendingBatchRef = useRef<string[]>([]);
   const botDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const sendMessage = useCallback((text: string) => {
+  const sendMessage = useCallback((text: string, immediate: boolean = false) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -48,6 +48,7 @@ export function useMessageBatcher({
     // Mostrar feedback de carga/escritura inmediatamente al usuario
     onSetLoading?.(true);
 
+    const fireDelay = immediate ? 0 : Math.max(debounceMs, 150);
     botDebounceTimerRef.current = setTimeout(async () => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
@@ -61,7 +62,7 @@ export function useMessageBatcher({
       } else {
         onSetLoading?.(false);
       }
-    }, Math.max(debounceMs, 300));
+    }, fireDelay);
   }, [debounceMs, deliveryDelayMs, onDeliverUserMessage, onTriggerBotReply, onSetLoading]);
 
   // Procesa consulta de voz en el bot sin agregar mensaje de texto duplicado del usuario

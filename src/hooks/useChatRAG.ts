@@ -19,6 +19,9 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
         }
       } catch (e) {}
     }
+    if (tenant?.welcome_message) {
+      return [{ id: 'welcome-msg', sender: 'assistant', message: adaptTemporalText(tenant.welcome_message), levelLabel: 'Saludo Oficial', created_at: new Date().toISOString() }];
+    }
     return [];
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -141,15 +144,12 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
     if (botDebounceTimerRef.current) clearTimeout(botDebounceTimerRef.current);
-    const delaySec = tenant?.response_delay_sec !== undefined && tenant?.response_delay_sec !== null
-      ? Number(tenant.response_delay_sec)
-      : 1;
-    const debounceMs = Math.max(delaySec * 1000, 400);
+    const delaySec = tenant?.response_delay_sec !== undefined && tenant?.response_delay_sec !== null ? Number(tenant.response_delay_sec) : 1;
     botDebounceTimerRef.current = setTimeout(() => {
       const batchToProcess = [...pendingBatchRef.current];
       pendingBatchRef.current = [];
       if (batchToProcess.length > 0) processBatchReply(batchToProcess);
-    }, debounceMs);
+    }, Math.max(delaySec * 1000, 400));
   }, [tenant, processBatchReply]);
 
   const resetChat = useCallback(() => {

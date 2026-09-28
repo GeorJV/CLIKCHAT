@@ -78,6 +78,8 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
         <ChatQuickPills
           onSelectPrompt={(text) => sendMessage(text)}
           disabled={isLoading}
+          tenant={tenant}
+          products={products}
         />
 
         {/* Sticky CTA móvil sobre el input */}

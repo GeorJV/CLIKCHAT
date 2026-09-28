@@ -61,8 +61,12 @@ export function useTenantData(tenantSlug: string = 'comida-callejera-xl'): UseTe
             if (prods.length > 0) {
               setProducts(prods);
               setSelectedProduct(prev => prev || prods[0]);
+              try { localStorage.setItem(`clikchat_products_${tenantSlug}`, JSON.stringify(prods)); } catch (e) {}
             }
-            if (data.faqs) setFaqs(data.faqs);
+            if (data.faqs) {
+              setFaqs(data.faqs);
+              try { localStorage.setItem(`clikchat_faqs_${tenantSlug}`, JSON.stringify(data.faqs)); } catch (e) {}
+            }
           }
         }
       } catch (err: unknown) {

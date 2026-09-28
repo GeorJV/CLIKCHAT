@@ -7,7 +7,7 @@ export const REAL_DEFAULT_TENANT: Tenant = {
   name: 'COMIDA CALLEJERA XL',
   owner_name: 'GEORGE',
   owner_email: 'ccxl@gmail.com',
-  bot_name: 'Asesor Comercial',
+  bot_name: 'Valeria (Mesera Virtual)',
   avatar_url: '',
   plan: 'pro',
   monthly_price: 79,
@@ -85,27 +85,25 @@ export const ADMIN_PLATFORM_TENANT: Tenant = {
 export const DEFAULT_FALLBACK_TENANT: Tenant = REAL_DEFAULT_TENANT;
 
 export function getCachedTenant(slug: string = ''): Tenant {
-  if (slug === 'clikchat-admin' || slug === 'ten_clikchat_admin') return ADMIN_PLATFORM_TENANT;
-  if (slug === 'comida-callejera-xl') return REAL_DEFAULT_TENANT;
-  if (!slug) {
-    if (typeof window !== 'undefined') {
-      const activeSlug = localStorage.getItem('clikchat_active_tenant_slug');
-      if (activeSlug) return getCachedTenant(activeSlug);
-    }
-    return { ...REAL_DEFAULT_TENANT };
-  }
-  if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug };
-  try {
-    const saved = localStorage.getItem(`clikchat_tenant_${slug}`);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object' && (parsed.name || parsed.id)) {
-        return { ...CLEAN_EMPTY_TENANT, ...parsed, slug: parsed.slug || slug };
+  const targetSlug = slug || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl';
+  if (targetSlug === 'clikchat-admin' || targetSlug === 'ten_clikchat_admin') return ADMIN_PLATFORM_TENANT;
+
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(`clikchat_tenant_${targetSlug}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && (parsed.name || parsed.id || parsed.bot_name)) {
+          return { ...CLEAN_EMPTY_TENANT, ...parsed, slug: parsed.slug || targetSlug };
+        }
       }
+    } catch (e) {
+      console.warn('Error reading cached tenant:', e);
     }
-  } catch (e) {
-    console.warn('Error reading cached tenant:', e);
   }
+
+  if (targetSlug === 'comida-callejera-xl') return REAL_DEFAULT_TENANT;
+  if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug: targetSlug };
   const isRestaurant = /restaurante|comida|burger|pizza|deli|tacos|cafe|bar|sushi|bistr|parrilla|asador/i.test(slug);
   const humanName = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   return {
