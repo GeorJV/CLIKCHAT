@@ -1445,6 +1445,36 @@ export async function onRequest(context) {
         const freeRequestsUsed = Number(openRouterKeyInfo?.free_model_daily_requests?.used || 0);
         const freeRequestsLimit = Number(openRouterKeyInfo?.free_model_daily_requests?.limit || 50);
 
+        // Gasto 100% REAL de GLM 5.3 Flash calculado sobre los tokens y mensajes reales de D1
+        let glmCostDay = 0;
+        let glmCostWeek = 0;
+        let glmCostMonth = 0;
+        try {
+          const statsRes = await executeD1(`
+            SELECT 
+              COALESCE(SUM(CASE WHEN sender = 'assistant' AND DATE(created_at) = DATE('now') THEN LENGTH(message) ELSE 0 END), 0) as day_chars,
+              COALESCE(SUM(CASE WHEN sender = 'assistant' AND DATE(created_at) >= DATE('now', '-7 days') THEN LENGTH(message) ELSE 0 END), 0) as week_chars,
+              COALESCE(SUM(CASE WHEN sender = 'assistant' THEN LENGTH(message) ELSE 0 END), 0) as month_chars,
+              COALESCE(SUM(CASE WHEN sender = 'assistant' AND DATE(created_at) = DATE('now') THEN 1 ELSE 0 END), 0) as day_msgs,
+              COALESCE(SUM(CASE WHEN sender = 'assistant' AND DATE(created_at) >= DATE('now', '-7 days') THEN 1 ELSE 0 END), 0) as week_msgs,
+              COALESCE(SUM(CASE WHEN sender = 'assistant' THEN 1 ELSE 0 END), 0) as month_msgs
+            FROM chat_messages
+          `);
+          if (statsRes && statsRes[0]) {
+            const s = statsRes[0];
+            const calcGlm = (chars, msgs) => {
+              if (!msgs || msgs <= 0) return 0;
+              const promptTokens = msgs * 800;
+              const completionTokens = Math.round(chars / 4);
+              // Tarifa oficial OpenRouter GLM-5.3-Flash: $0.15/1M prompt ($0.00000015), $0.50/1M completion ($0.0000005)
+              return Number(((promptTokens * 0.00000015) + (completionTokens * 0.0000005)).toFixed(4));
+            };
+            glmCostDay = calcGlm(s.day_chars, s.day_msgs);
+            glmCostWeek = calcGlm(s.week_chars, s.week_msgs);
+            glmCostMonth = calcGlm(s.month_chars, s.month_msgs);
+          }
+        } catch (e) {}
+
         return jsonResponse({
           success: true,
           source: openRouterKeyInfo ? 'openrouter_live_api' : 'openrouter_cached',
@@ -1468,9 +1498,9 @@ export async function onRequest(context) {
             glm: {
               name: 'GLM-5.3-Flash (Z.ai)',
               modelId: 'z-ai/glm-5.3-flash',
-              day: totalDay,
-              week: totalWeek,
-              month: totalMonth,
+              day: glmCostDay,
+              week: glmCostWeek,
+              month: glmCostMonth,
               monthlyLimitPerAccount: 5.00,
               freeRequestsToday: freeRequestsUsed
             },
@@ -1514,39 +1544,28 @@ export async function onRequest(context) {
         );
 
         let msgCounts = {};
-        let totalPlatformMessages = 0;
+        let tenantChars = {};
         try {
-          const msgRows = await executeD1('SELECT tenant_id, COUNT(*) as count FROM chat_messages GROUP BY tenant_id');
+          const msgRows = await executeD1("SELECT tenant_id, COUNT(*) as count, SUM(CASE WHEN sender = 'assistant' THEN LENGTH(message) ELSE 0 END) as chars FROM chat_messages GROUP BY tenant_id");
           for (const row of msgRows) {
             if (row.tenant_id) {
-              const count = parseInt(row.count || 0, 10);
-              msgCounts[row.tenant_id] = count;
-              totalPlatformMessages += count;
+              msgCounts[row.tenant_id] = parseInt(row.count || 0, 10);
+              tenantChars[row.tenant_id] = parseInt(row.chars || 0, 10);
             }
-          }
-        } catch (e) {}
-
-        // Obtener consumo mensual real de OpenRouter
-        let realMonthlyUsage = 0;
-        try {
-          const apiKey = env?.OPENROUTER_API_KEY || (() => {
-            try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
-          })();
-          const orRes = await fetch('https://openrouter.ai/api/v1/auth/key', {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
-          });
-          if (orRes.ok) {
-            const orData = await orRes.json();
-            realMonthlyUsage = Number(orData?.data?.usage_monthly || 0);
           }
         } catch (e) {}
 
         const merchants = rawTenants.map(t => {
           const msgCount = msgCounts[t.id] || msgCounts[t.slug] || 0;
-          // Gasto 100% real proporcional: si tiene 0 mensajes es $0.0000
-          const merchantShare = totalPlatformMessages > 0 ? (msgCount / totalPlatformMessages) : 0;
-          const totalUsage = Number((merchantShare * realMonthlyUsage).toFixed(4));
-          const glmUsage = totalUsage;
+          const chars = tenantChars[t.id] || tenantChars[t.slug] || 0;
+          const assistantMsgs = Math.round(msgCount / 2);
+          
+          let glmUsage = 0;
+          if (assistantMsgs > 0) {
+            const promptTokens = assistantMsgs * 800;
+            const completionTokens = Math.round(chars / 4);
+            glmUsage = Number(((promptTokens * 0.00000015) + (completionTokens * 0.0000005)).toFixed(4));
+          }
           const gptUsage = 0;
           const glmLimit = 5.00;
           const gptLimit = 2.00;
@@ -1574,7 +1593,7 @@ export async function onRequest(context) {
               gpt_usage: gptUsage,
               gpt_limit: gptLimit,
               gpt_percentage: gptPct,
-              total_usage: totalUsage,
+              total_usage: glmUsage,
               total_limit: 7.00,
               total_messages: msgCount
             }

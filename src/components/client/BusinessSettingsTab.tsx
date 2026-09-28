@@ -77,11 +77,11 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           <button
             type="button" onClick={() => handleSelectSubTab('ai')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeSubTab === 'ai' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+              activeSubTab === 'ai' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Motor IA</span>
+            <span>Motor de Ventas</span>
           </button>
 
           <button
