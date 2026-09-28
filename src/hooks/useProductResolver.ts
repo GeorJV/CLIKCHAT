@@ -51,11 +51,10 @@ function synthesizeFallbackProduct(idOrSlug: string, isRestaurant: boolean, curr
   };
 }
 
-export function useProductResolver(productId: string | null, tenantSlug: string = 'geosoft') {
+export function useProductResolver(productId: string | null, tenantSlug: string = 'comida-callejera-xl') {
   const cached = getCachedTenant(tenantSlug);
-  const isDemo = tenantSlug === 'geosoft';
   const isRestaurant = cached.business_type === 'restaurante';
-  const initialStoreName = cached.name || (isDemo ? 'Restaurante ClikChat' : 'Tienda Oficial');
+  const initialStoreName = cached.name || 'Tienda Oficial';
 
   const [productItem, setProductItem] = useState<ProductItem | null>(null);
   const [storeName, setStoreName] = useState<string>(initialStoreName);

@@ -12,14 +12,14 @@ interface UseTenantDataResult {
   tenantError: string | null;
 }
 
-export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResult {
+export function useTenantData(tenantSlug: string = 'comida-callejera-xl'): UseTenantDataResult {
   const [tenant, setTenant] = useState<Tenant>(() => getCachedTenant(tenantSlug));
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(`clikchat_products_${tenantSlug}`);
         if (saved) return JSON.parse(saved);
-        if (tenantSlug === 'geosoft') {
+        if (tenantSlug === 'comida-callejera-xl') {
           const oldGlobal = localStorage.getItem('clikchat_products');
           if (oldGlobal) return JSON.parse(oldGlobal);
         }
@@ -32,7 +32,7 @@ export function useTenantData(tenantSlug: string = 'geosoft'): UseTenantDataResu
       try {
         const saved = localStorage.getItem(`clikchat_faqs_${tenantSlug}`);
         if (saved) return JSON.parse(saved);
-        if (tenantSlug === 'geosoft') {
+        if (tenantSlug === 'comida-callejera-xl') {
           const oldGlobal = localStorage.getItem('clikchat_faqs');
           if (oldGlobal) return JSON.parse(oldGlobal);
         }

@@ -10,14 +10,14 @@ const BASE_URL = process.env.BASE_URL || 'https://clikchat.pages.dev';
 
 const ROUTES = [
   { path: '/', label: 'Web Oficial / Landing' },
-  { path: '/chat/geosoft', label: 'Chat Negocio (Ruta Limpia)' },
-  { path: '/chat/geosoft/demo-producto', label: 'Chat Producto (Ruta Limpia)' },
+  { path: '/chat/comida-callejera-xl', label: 'Chat Negocio (Ruta Limpia)' },
+  { path: '/chat/comida-callejera-xl/prod_1789447247688', label: 'Chat Producto (Ruta Limpia)' },
   { path: '/producto', label: 'Chat de Catálogo Producto' },
   { path: '/servicio', label: 'Chat de Reserva de Servicio' },
-  { path: '/user/mi-negocio/geosoft/mi-negocio', label: 'Panel: Mi Negocio' },
-  { path: '/user/mi-negocio/geosoft/productos', label: 'Panel: Productos' },
-  { path: '/user/mi-negocio/geosoft/conversaciones', label: 'Panel: Conversaciones' },
-  { path: '/user/mi-negocio/geosoft/mi-cuenta', label: 'Panel: Mi Cuenta' },
+  { path: '/user/mi-negocio/comida-callejera-xl/mi-negocio', label: 'Panel: Mi Negocio' },
+  { path: '/user/mi-negocio/comida-callejera-xl/productos', label: 'Panel: Productos' },
+  { path: '/user/mi-negocio/comida-callejera-xl/conversaciones', label: 'Panel: Conversaciones' },
+  { path: '/user/mi-negocio/comida-callejera-xl/mi-cuenta', label: 'Panel: Mi Cuenta' },
   { path: '/super-admin', label: 'Panel: Super Admin' },
   { path: '/dashboard', label: 'Redirección Canónica /dashboard' }
 ];

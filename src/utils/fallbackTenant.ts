@@ -1,31 +1,31 @@
 import { Tenant } from '../types';
 
-// Tenant de demostración reservado EXCLUSIVAMENTE para la tienda demo 'geosoft'
-export const DEMO_GEOSOFT_TENANT: Tenant = {
-  id: 'a0000000-0000-0000-0000-000000000001',
-  slug: 'geosoft',
-  name: 'Restaurante ClikChat',
-  owner_name: 'George Anders',
-  owner_email: 'Georgeandersmail@gmail.com',
-  bot_name: 'Asesora Virtual',
+// Configuración oficial por defecto: COMIDA CALLEJERA XL
+export const REAL_DEFAULT_TENANT: Tenant = {
+  id: 'ten_1790438865714_53ytu',
+  slug: 'comida-callejera-xl',
+  name: 'COMIDA CALLEJERA XL',
+  owner_name: 'GEORGE',
+  owner_email: 'ccxl@gmail.com',
+  bot_name: 'Asesor Comercial',
   avatar_url: '',
-  plan: 'enterprise',
-  monthly_price: 49,
+  plan: 'pro',
+  monthly_price: 79,
   status: 'active',
   primary_color: '#10b981',
   business_type: 'restaurante',
   currency: 'CRC',
-  business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
-  cta_text: 'Pedir por WhatsApp',
-  cta_url: 'https://wa.me/50688888888',
-  welcome_message: '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿Qué se te antoja ordenar hoy?',
-  system_prompt: 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, sugiere acompañamientos y bebidas (ej: "¿Te gustaría acompañar tu hamburguesa con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?"), y ayuda al cliente a armar su pedido.',
-  sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal (ej: papas rústicas, ensalada, bebida por $1.50 más). 2. Preguntar si es para llevar o express. 3. Guiar al total.',
+  business_hours: 'Lunes a Sabado de 8:00 AM a 7:00 PM',
+  cta_text: 'Realizar Compra',
+  cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar',
+  welcome_message: '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?',
+  system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, recomendar bebidas y acompañamientos, y guiarlo a completar su orden.',
+  sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
   order_ticket_format: '',
-  tone_of_voice: 'Profesional y Cortés',
+  tone_of_voice: 'Amigable y Enérgico',
   response_delay_sec: 1,
   phone: '+506 8888-8888',
-  created_at: '2026-01-15T00:00:00Z'
+  created_at: '2026-09-26T16:07:45Z'
 };
 
 // Plantilla 100% limpia y vacía para TODAS las cuentas nuevas
@@ -54,16 +54,16 @@ export const CLEAN_EMPTY_TENANT: Tenant = {
   response_delay_sec: 1
 };
 
-export const DEFAULT_FALLBACK_TENANT: Tenant = CLEAN_EMPTY_TENANT;
+export const DEFAULT_FALLBACK_TENANT: Tenant = REAL_DEFAULT_TENANT;
 
 export function getCachedTenant(slug: string = ''): Tenant {
-  if (slug === 'geosoft') return DEMO_GEOSOFT_TENANT;
+  if (slug === 'comida-callejera-xl') return REAL_DEFAULT_TENANT;
   if (!slug) {
     if (typeof window !== 'undefined') {
       const activeSlug = localStorage.getItem('clikchat_active_tenant_slug');
-      if (activeSlug && activeSlug !== 'geosoft') return getCachedTenant(activeSlug);
+      if (activeSlug) return getCachedTenant(activeSlug);
     }
-    return { ...CLEAN_EMPTY_TENANT };
+    return { ...REAL_DEFAULT_TENANT };
   }
   if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug };
   try {
@@ -100,7 +100,7 @@ export function getCachedTenant(slug: string = ''): Tenant {
 export function saveCachedTenant(tenant: Tenant): void {
   if (typeof window === 'undefined' || !tenant) return;
   // Blindaje anti-vaciado: nunca sobreescribir con un esqueleto vacío
-  if (!tenant.name && !tenant.id && !tenant.bot_name && tenant.slug !== 'geosoft') {
+  if (!tenant.name && !tenant.id && !tenant.bot_name) {
     return;
   }
   try {

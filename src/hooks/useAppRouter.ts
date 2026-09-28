@@ -35,7 +35,7 @@ export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
 };
 
 export function getTenantTabPath(slug?: string, tab: ClientTab = 'business'): string {
-  const activeSlug = slug || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+  const activeSlug = slug || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl';
   const tabPath = TAB_ROUTE_MAP[tab] || '/mi-negocio';
   return `/user/mi-negocio/${encodeURIComponent(activeSlug)}${tabPath}`;
 }
@@ -98,7 +98,7 @@ export function useAppRouter() {
         window.history.replaceState(null, '', canonical);
       }
     } else if (parts[0] === 'dashboard') {
-      const activeSlug = (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+      const activeSlug = (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl';
       routeTenantSlug = activeSlug;
       panelTabFromRoute = 'business';
       if (typeof window !== 'undefined') {

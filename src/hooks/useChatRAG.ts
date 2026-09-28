@@ -7,7 +7,7 @@ import { generateClientChatFallback } from '../services/clientChatFallback';
 export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallback }: UseChatRAGOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const storageKey = `clik_sess_${tenantSlug || 'geosoft'}`;
+  const storageKey = `clik_sess_${tenantSlug || 'comida-callejera-xl'}`;
   const [sessionId, setSessionId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem(storageKey);
@@ -84,7 +84,7 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
       console.warn('Fallback a motor IA cliente por intermitencia de Edge:', err);
       try {
         const fb = await generateClientChatFallback({
-          tenantSlug: tenant?.slug || tenantSlug || 'geosoft',
+          tenantSlug: tenant?.slug || tenantSlug || 'comida-callejera-xl',
           storeName: tenant?.name, agentName: tenant?.bot_name,
           businessType: tenant?.business_type, userMessage: batchedText, sessionId
         });

@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const ServiceChatView: React.FC<Props> = ({
-  storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'geosoft',
+  storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
   services = [], initialService, responseDelaySec, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || {
@@ -80,7 +80,7 @@ export const ServiceChatView: React.FC<Props> = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: tenantSlug || 'geosoft',
+            tenantSlug: tenantSlug || 'comida-callejera-xl',
             tenantId: (selectedService as any).tenant_id,
             sessionId: sessId,
             message: userText,
@@ -106,7 +106,7 @@ export const ServiceChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({
-            tenantSlug: tenantSlug || 'geosoft', storeName, agentName,
+            tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName,
             businessType: 'servicio', userMessage: userText, sessionId: sessId
           });
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };

@@ -35,7 +35,7 @@ export function App() {
   );
 
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => (
-    routeTenantSlug || params?.get('t') || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft'
+    routeTenantSlug || params?.get('t') || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl'
   ));
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export function App() {
           <div className="h-full w-full overflow-y-auto bg-[#0a0a0c]">
             <LandingPage
               onGoToDashboard={(targetSlug) => {
-                const active = targetSlug || localStorage.getItem('clikchat_active_tenant_slug') || selectedTenantSlug || 'geosoft';
+                const active = targetSlug || localStorage.getItem('clikchat_active_tenant_slug') || selectedTenantSlug || 'comida-callejera-xl';
                 setSelectedTenantSlug(active);
                 navigate(getTenantTabPath(active, 'business'));
               }}

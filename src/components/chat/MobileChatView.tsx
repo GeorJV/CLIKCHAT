@@ -18,7 +18,7 @@ interface MobileChatViewProps {
 }
 
 export const MobileChatView: React.FC<MobileChatViewProps> = ({
-  tenantSlug = 'geosoft',
+  tenantSlug = 'comida-callejera-xl',
   onNavigateToPanel
 }) => {
   const [isCarouselCollapsed, setIsCarouselCollapsed] = useState(false);

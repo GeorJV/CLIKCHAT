@@ -11,7 +11,7 @@ interface ProductMetricsDetailProps {
 
 export const ProductMetricsDetail: React.FC<ProductMetricsDetailProps> = ({
   product,
-  tenantSlug = 'geosoft'
+  tenantSlug = 'comida-callejera-xl'
 }) => {
   return (
     <div className="mt-3 pt-3 border-t border-[#282626] bg-[#111010] rounded-xl p-3.5 space-y-3.5 font-sans animate-fade-in">

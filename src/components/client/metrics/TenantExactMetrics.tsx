@@ -15,7 +15,7 @@ export const TenantExactMetrics: React.FC<TenantExactMetricsProps> = ({ tenantId
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
-  const publicChatUrl = `https://clikchat.pages.dev/chat/${tenantSlug || 'geosoft'}`;
+  const publicChatUrl = `https://clikchat.pages.dev/chat/${tenantSlug || 'comida-callejera-xl'}`;
 
   const fetchMetrics = useCallback(async () => {
     if (!tenantId) return;

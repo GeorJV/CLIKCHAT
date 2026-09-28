@@ -214,24 +214,24 @@ function parsePriceNumber(raw, isCRC = false) {
 }
 
 function getFallbackTenant(slug = '') {
-  if (slug === 'geosoft') {
+  if (slug === 'comida-callejera-xl') {
     return {
-      id: 'a0000000-0000-0000-0000-000000000001',
-      slug: 'geosoft',
-      name: 'Restaurante ClikChat',
-      owner_name: 'George Anders',
-      owner_email: 'Georgeandersmail@gmail.com',
-      bot_name: 'Asesora Virtual',
+      id: 'ten_1790438865714_53ytu',
+      slug: 'comida-callejera-xl',
+      name: 'COMIDA CALLEJERA XL',
+      owner_name: 'GEORGE',
+      owner_email: 'ccxl@gmail.com',
+      bot_name: 'Asesor Comercial',
       avatar_url: '',
-      plan: 'enterprise',
+      plan: 'pro',
       status: 'active',
       business_type: 'restaurante',
       currency: 'CRC',
-      business_hours: 'Lunes a Domingo de 11:00 AM a 10:00 PM',
-      cta_text: 'Pedir por WhatsApp',
-      cta_url: 'https://wa.me/50688888888',
-      welcome_message: '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿En qué podemos deleitarte hoy?',
-      system_prompt: 'Eres el asesor comercial oficial del restaurante. Guía al usuario con amabilidad, muestra apetito en las descripciones y ayúdalo a cerrar su comanda.',
+      business_hours: 'Lunes a Sabado de 8:00 AM a 7:00 PM',
+      cta_text: 'Realizar Compra',
+      cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar',
+      welcome_message: '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?',
+      system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, recomendar bebidas y acompañamientos, y guiarlo a completar su orden.',
       sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
       order_ticket_format: '',
       phone: '+506 8888-8888'
@@ -671,17 +671,17 @@ async function getAuthUser(request, env) {
   return await verifyJWT(token, secret);
 }
 
-// In-memory fallback user store (for demo credentials & resilience against D1 quotas)
+// In-memory fallback user store (for high-availability & resilience against transient D1 quotas)
 const memoryUsers = new Map([
   [
-    'demo@clikchat.com',
+    'ccxl@gmail.com',
     {
-      id: 'usr_demo_001',
-      tenant_id: 'a0000000-0000-0000-0000-000000000001',
-      email: 'demo@clikchat.com',
+      id: 'usr_ccxl_001',
+      tenant_id: 'ten_1790438865714_53ytu',
+      email: 'ccxl@gmail.com',
       password_hash: '4e8194514be58da502a06485c04e87c8e91a8a468cb60c9ed11598af7a7ac097', // demo1234
       salt: '7a8b9c0d1e2f3a4b',
-      name: 'Carlos Mendoza (Demo)',
+      name: 'COMIDA CALLEJERA XL',
       role: 'tenant_owner'
     }
   ],
@@ -689,7 +689,7 @@ const memoryUsers = new Map([
     'admin@clikchat.com',
     {
       id: 'usr_admin_001',
-      tenant_id: 'a0000000-0000-0000-0000-000000000001',
+      tenant_id: 'ten_1790438865714_53ytu',
       email: 'admin@clikchat.com',
       password_hash: '4e8194514be58da502a06485c04e87c8e91a8a468cb60c9ed11598af7a7ac097', // demo1234
       salt: '7a8b9c0d1e2f3a4b',
@@ -1009,8 +1009,8 @@ export async function onRequest(context) {
         return jsonResponse({ error: 'No se pudo identificar la cuenta a eliminar' }, 400);
       }
 
-      if (targetEmail === 'demo@clikchat.com' || targetEmail === 'superadmin@clikchat.com') {
-        return jsonResponse({ error: 'La cuenta de demostración o del sistema está protegida y no puede ser eliminada.' }, 403);
+      if (targetEmail === 'admin@clikchat.com' || targetEmail === 'superadmin@clikchat.com') {
+        return jsonResponse({ error: 'La cuenta de administración del sistema está protegida y no puede ser eliminada.' }, 403);
       }
 
       try {

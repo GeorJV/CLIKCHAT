@@ -9,7 +9,7 @@ interface ProductExactKpisProps {
 
 export const ProductExactKpis: React.FC<ProductExactKpisProps> = ({
   product,
-  tenantSlug = 'geosoft'
+  tenantSlug = 'comida-callejera-xl'
 }) => {
   const [copied, setCopied] = useState(false);
 

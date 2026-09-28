@@ -36,7 +36,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const activeTab: ClientTab = currentTab;
 
   const storedSlug = typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null;
-  const activeSlug = routeTenantSlug || user?.tenantSlug || (storedSlug && storedSlug !== 'acme-store' ? storedSlug : '') || (tenantSlug && tenantSlug !== 'acme-store' ? tenantSlug : '') || 'geosoft';
+  const activeSlug = routeTenantSlug || user?.tenantSlug || (storedSlug && storedSlug !== 'acme-store' ? storedSlug : '') || (tenantSlug && tenantSlug !== 'acme-store' ? tenantSlug : '') || 'comida-callejera-xl';
 
   const {
     tenantSlug: currentSlug, setTenantSlug, tenant, products, faqs, unresolved,

@@ -18,7 +18,7 @@ interface Props {
 
 export const ProductChatView: React.FC<Props> = ({
   storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar,
-  welcomeMessage, businessType = 'tienda', tenantSlug = 'geosoft',
+  welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl',
   products = [], initialProduct, responseDelaySec, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
@@ -56,7 +56,7 @@ export const ProductChatView: React.FC<Props> = ({
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'geosoft',
+            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl',
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
             sessionId: sessId, message: userText, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -94,7 +94,7 @@ export const ProductChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({
-            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'geosoft',
+            tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl',
             storeName, agentName, businessType, userMessage: userText,
             selectedProduct, products, sessionId: sessId
           });

@@ -5,25 +5,6 @@ import { saveCachedTenant } from '../utils/fallbackTenant';
 const TOKEN_KEY = 'clikchat_auth_token';
 const USERS_KEY = 'clikchat_local_users';
 
-const DEMO_USER: AuthUser = {
-  id: 'usr_demo_techstore',
-  email: 'demo@clikchat.com',
-  name: 'TechStore Demo',
-  role: 'tenant_owner',
-  tenantId: 'tnt_demo_techstore',
-  tenantSlug: 'geosoft'
-};
-
-const DEMO_TENANT: AuthTenant = {
-  id: 'tnt_demo_techstore',
-  slug: 'geosoft',
-  name: 'TechStore Demo',
-  owner_email: 'demo@clikchat.com',
-  owner_name: 'TechStore Demo',
-  business_type: 'tienda',
-  currency: 'USD'
-};
-
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [tenant, setTenant] = useState<AuthTenant | null>(null);
@@ -33,14 +14,6 @@ export function useAuth() {
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (token === 'demo-token-active') {
-      const activeSlug = localStorage.getItem('clikchat_active_tenant_slug') || 'geosoft';
-      setUser({ ...DEMO_USER, tenantSlug: activeSlug });
-      setTenant({ ...DEMO_TENANT, slug: activeSlug });
       setIsLoading(false);
       return;
     }
@@ -80,13 +53,13 @@ export function useAuth() {
           localStorage.setItem('clikchat_role', data.user.role);
           if (data.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', data.user.tenantSlug);
           if (data.tenant) setTenant(data.tenant);
-        } else if (!token.startsWith('local-') && token !== 'demo-token-active') {
+        } else if (!token.startsWith('local-')) {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem('clikchat_role');
         }
       })
       .catch(() => {
-        if (!token.startsWith('local-') && token !== 'demo-token-active') {
+        if (!token.startsWith('local-')) {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem('clikchat_role');
         }
@@ -97,13 +70,16 @@ export function useAuth() {
   const login = useCallback(async (data: LoginFormData): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    const isDemo = data.email.toLowerCase() === 'demo@clikchat.com' && data.password === 'demo1234';
+    const cleanData = {
+      email: data.email.trim().toLowerCase(),
+      password: data.password
+    };
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(cleanData)
       });
       const ct = res.headers.get('content-type') || '';
       if (res.ok && ct.includes('application/json')) {
@@ -123,7 +99,7 @@ export function useAuth() {
           return true;
         }
       }
-      if (!res.ok && ct.includes('application/json') && !isDemo) {
+      if (!res.ok && ct.includes('application/json')) {
         const resData = (await res.json()) as AuthResponse;
         if (resData.error) {
           setError(resData.error);
@@ -135,7 +111,7 @@ export function useAuth() {
 
     try {
       const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-      const matched = localUsers.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase() && u.password === data.password);
+      const matched = localUsers.find((u: any) => u.email.toLowerCase() === cleanData.email && u.password === cleanData.password);
       if (matched) {
         const u: AuthUser = {
           id: matched.id,
@@ -153,16 +129,6 @@ export function useAuth() {
         return true;
       }
     } catch (e) {}
-
-    if (isDemo) {
-      localStorage.setItem(TOKEN_KEY, 'demo-token-active');
-      localStorage.setItem('clikchat_role', DEMO_USER.role);
-      localStorage.setItem('clikchat_active_tenant_slug', 'geosoft');
-      setUser(DEMO_USER);
-      setTenant(DEMO_TENANT);
-      setIsLoading(false);
-      return true;
-    }
 
     setError('Credenciales inválidas o cuenta no encontrada');
     setIsLoading(false);

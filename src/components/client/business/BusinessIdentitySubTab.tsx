@@ -19,12 +19,11 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
     try { const s = localStorage.getItem(draftKey); return s ? JSON.parse(s) : null; } catch { return null; }
   };
   const draft = getDraft();
-  const isDemo = (tenant?.slug === 'geosoft') || (tenantSlug === 'geosoft');
-  const [bizType, setBizType] = useState(draft?.bizType || tenant?.business_type || (isDemo ? 'restaurante' : 'tienda'));
+  const [bizType, setBizType] = useState(draft?.bizType || tenant?.business_type || 'tienda');
   const [currency, setCurrency] = useState(draft?.currency || tenant?.currency || 'CRC');
-  const [name, setName] = useState(draft?.name || tenant?.name || (isDemo ? 'Restaurante ClikChat' : ''));
-  const [slug, setSlug] = useState(draft?.slug || tenant?.slug || (isDemo ? 'geosoft' : (tenantSlug && tenantSlug !== 'geosoft' ? tenantSlug : '')));
-  const [botName, setBotName] = useState(draft?.botName || tenant?.bot_name || (isDemo ? 'Asesora Virtual' : ''));
+  const [name, setName] = useState(draft?.name || tenant?.name || '');
+  const [slug, setSlug] = useState(draft?.slug || tenant?.slug || tenantSlug || '');
+  const [botName, setBotName] = useState(draft?.botName || tenant?.bot_name || '');
   const [welcomeMessage, setWelcomeMessage] = useState(draft?.welcomeMessage !== undefined ? draft.welcomeMessage : (tenant?.welcome_message || ''));
   const [tone, setTone] = useState(draft?.tone || tenant?.tone_of_voice || 'Profesional y Cortés');
   const [systemPrompt, setSystemPrompt] = useState(draft?.systemPrompt !== undefined ? draft.systemPrompt : (tenant?.system_prompt || ''));
@@ -45,16 +44,15 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
   useEffect(() => {
     if (tenant && !isDirtyRef.current) {
       if (getDraft()) return;
-      const isDemoStore = tenant.slug === 'geosoft' || tenantSlug === 'geosoft';
-      if (tenant.name || isDemoStore) setName(tenant.name || (isDemoStore ? 'Restaurante ClikChat' : ''));
-      if (tenant.slug || isDemoStore) setSlug(tenant.slug || (isDemoStore ? 'geosoft' : (tenantSlug && tenantSlug !== 'geosoft' ? tenantSlug : '')));
-      if (tenant.bot_name || isDemoStore) setBotName(tenant.bot_name || (isDemoStore ? 'Asesora Virtual' : ''));
+      if (tenant.name) setName(tenant.name);
+      if (tenant.slug) setSlug(tenant.slug);
+      if (tenant.bot_name) setBotName(tenant.bot_name);
       if (tenant.welcome_message !== undefined) setWelcomeMessage(tenant.welcome_message || '');
       if (tenant.tone_of_voice) setTone(tenant.tone_of_voice || 'Profesional y Cortés');
       if (tenant.logo_url !== undefined) setLogoUrl(tenant.logo_url || '');
       if (tenant.avatar_url !== undefined) setAvatarUrl(tenant.avatar_url || '');
       if (tenant.system_prompt !== undefined) setSystemPrompt(tenant.system_prompt || '');
-      if (tenant.business_type) setBizType(tenant.business_type || (isDemoStore ? 'restaurante' : 'tienda'));
+      if (tenant.business_type) setBizType(tenant.business_type || 'tienda');
       if (tenant.currency) setCurrency(tenant.currency || 'CRC');
     }
   }, [tenant, tenantSlug]);

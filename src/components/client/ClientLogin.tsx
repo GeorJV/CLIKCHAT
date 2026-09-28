@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LoginFormData } from '../../types/auth';
-import { Store, ShieldCheck, ArrowRight, UserPlus, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { Store, ShieldCheck, ArrowRight, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 
 interface ClientLoginProps {
   onLogin: (data: LoginFormData) => Promise<boolean>;
@@ -21,15 +21,7 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
-    await onLogin({ email, password });
-    setIsSubmitting(false);
-  };
-
-  const handleDemoAccess = async () => {
-    setEmail('demo@clikchat.com');
-    setPassword('demo1234');
-    setIsSubmitting(true);
-    await onLogin({ email: 'demo@clikchat.com', password: 'demo1234' });
+    await onLogin({ email: email.trim(), password });
     setIsSubmitting(false);
   };
 
@@ -111,15 +103,6 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
           >
             <UserPlus className="w-4 h-4" />
             <span>¿Eres nuevo? Crea tu cuenta y tienda aquí</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDemoAccess}
-            className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition cursor-pointer mt-1"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Acceso rápido demo: <strong>TechStore (demo@clikchat.com)</strong></span>
           </button>
         </div>
       </div>
