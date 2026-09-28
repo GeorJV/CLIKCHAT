@@ -565,7 +565,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 
   // 5. Plantilla de contingencia
   return {
-    text: `Hola, con gusto te oriento sobre nuestro catálogo disponible:\n\n${context.replace(/\[.*?\]/g, '').trim()}\n\n¿Deseas que te ayude a coordinar la compra o tienes alguna consulta puntual?`,
+    text: `¡Hola! Con mucho gusto te asesoro. ¿Tienes alguna consulta sobre nuestros productos o te gustaría ordenar algo en particular?`,
     provider: 'context_template'
   };
 }
