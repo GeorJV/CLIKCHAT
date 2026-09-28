@@ -34,11 +34,11 @@ export const BusinessDirectoryTable: React.FC<Props> = ({ merchants, onOpenDetai
             </tr>
           ) : (
             merchants.map((m) => {
-              const glmUsage = m.ai_usage?.glm_usage ?? 0.08;
+              const glmUsage = m.ai_usage?.glm_usage ?? 0;
               const glmLimit = m.ai_usage?.glm_limit ?? 5.00;
               const glmPct = m.ai_usage?.glm_percentage ?? Math.min(100, Math.round((glmUsage / glmLimit) * 100));
 
-              const gptUsage = m.ai_usage?.gpt_usage ?? 0.03;
+              const gptUsage = m.ai_usage?.gpt_usage ?? 0;
               const gptLimit = m.ai_usage?.gpt_limit ?? 2.00;
               const gptPct = m.ai_usage?.gpt_percentage ?? Math.min(100, Math.round((gptUsage / gptLimit) * 100));
 

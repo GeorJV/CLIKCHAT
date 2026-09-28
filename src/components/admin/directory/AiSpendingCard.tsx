@@ -40,7 +40,7 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics }) => {
           </span>
           <span className="px-2.5 py-1 bg-emerald-950/80 text-emerald-300 font-mono font-bold text-[11px] rounded-lg border border-emerald-800 flex items-center gap-1.5 shadow-sm">
             <span>Saldo Restante:</span>
-            <span className="text-emerald-400 font-black">{formatUsd(metrics?.openrouter?.limit_remaining ?? 1.4637)} USD</span>
+            <span className="text-emerald-400 font-black">{formatUsd(metrics?.openrouter?.limit_remaining ?? 0)} USD</span>
           </span>
         </div>
       </div>
@@ -64,15 +64,15 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics }) => {
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Hoy</span>
-              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.day ?? 0.0031)}</span>
+              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.day ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Semana</span>
-              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.week ?? 0.0035)}</span>
+              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.week ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Mes</span>
-              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.month ?? 0.0031)}</span>
+              <span className="text-xs font-mono font-black text-teal-400">{formatUsd(metrics?.models?.glm?.month ?? 0)}</span>
             </div>
           </div>
         </div>
@@ -94,15 +94,15 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics }) => {
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Hoy</span>
-              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.day ?? 0.0010)}</span>
+              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.day ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Semana</span>
-              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.week ?? 0.0012)}</span>
+              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.week ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Mes</span>
-              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.month ?? 0.0010)}</span>
+              <span className="text-xs font-mono font-black text-purple-400">{formatUsd(metrics?.models?.gpt?.month ?? 0)}</span>
             </div>
           </div>
         </div>
@@ -118,21 +118,21 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics }) => {
               </div>
             </div>
             <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-900/60 text-emerald-300">
-              Total: {formatUsd(metrics?.summary?.totalAllTime ?? 0.5363)}
+              Total: {formatUsd(metrics?.summary?.totalAllTime ?? 0)}
             </span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Total Hoy</span>
-              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalDay ?? 0.0041)}</span>
+              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalDay ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Total Semana</span>
-              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalWeek ?? 0.0047)}</span>
+              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalWeek ?? 0)}</span>
             </div>
             <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">Total Mes</span>
-              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalMonth ?? 0.0041)}</span>
+              <span className="text-xs font-mono font-black text-emerald-400">{formatUsd(metrics?.summary?.totalMonth ?? 0)}</span>
             </div>
           </div>
         </div>
