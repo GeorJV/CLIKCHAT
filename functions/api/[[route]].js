@@ -214,7 +214,30 @@ function parsePriceNumber(raw, isCRC = false) {
 }
 
 function getFallbackTenant(slug = '') {
-  if (slug === 'comida-callejera-xl') {
+  if (slug === 'clikchat-admin' || slug === 'ten_clikchat_admin') {
+    return {
+      id: 'ten_clikchat_admin',
+      slug: 'clikchat-admin',
+      name: 'Administración Central ClikChat',
+      owner_name: 'Super Administrador',
+      owner_email: 'admin@clikchat.com',
+      bot_name: 'Concierge Central',
+      avatar_url: '',
+      plan: 'enterprise',
+      status: 'active',
+      business_type: 'servicios',
+      currency: 'USD',
+      business_hours: '24/7 Soporte Global',
+      cta_text: 'Soporte Plataforma',
+      cta_url: 'https://wa.me/50688888888',
+      welcome_message: 'Panel administrativo central de la plataforma ClikChat.',
+      system_prompt: 'Eres el asistente administrativo de la plataforma ClikChat.',
+      sales_flow_rules: '',
+      order_ticket_format: '',
+      phone: '+506 8888-8888'
+    };
+  }
+  if (slug === 'comida-callejera-xl' || slug === 'ten_1790438865714_53ytu') {
     return {
       id: 'ten_1790438865714_53ytu',
       slug: 'comida-callejera-xl',
@@ -689,7 +712,7 @@ const memoryUsers = new Map([
     'admin@clikchat.com',
     {
       id: 'usr_admin_001',
-      tenant_id: 'ten_1790438865714_53ytu',
+      tenant_id: 'ten_clikchat_admin',
       email: 'admin@clikchat.com',
       password_hash: '4e8194514be58da502a06485c04e87c8e91a8a468cb60c9ed11598af7a7ac097', // demo1234
       salt: '7a8b9c0d1e2f3a4b',
@@ -1392,9 +1415,9 @@ export async function onRequest(context) {
     if (segments[0] === 'tenants' && segments.length === 1 && request.method === 'GET') {
       try {
         const rows = await executeD1('SELECT id, slug, name, owner_name, bot_name, avatar_url, plan, status, business_type, currency FROM tenants ORDER BY created_at DESC');
-        return jsonResponse({ tenants: rows.length ? rows : [getFallbackTenant('geosoft')] });
+        return jsonResponse({ tenants: rows.length ? rows : [getFallbackTenant('comida-callejera-xl'), getFallbackTenant('clikchat-admin')] });
       } catch (e) {
-        return jsonResponse({ tenants: [getFallbackTenant('geosoft')] });
+        return jsonResponse({ tenants: [getFallbackTenant('comida-callejera-xl'), getFallbackTenant('clikchat-admin')] });
       }
     }
 
@@ -1404,7 +1427,7 @@ export async function onRequest(context) {
       try {
         let tRows = await executeD1('SELECT * FROM tenants WHERE slug = ?1', [slug]);
         if (!tRows.length) tRows = await executeD1('SELECT * FROM tenants WHERE id = ?1', [slug]);
-        if (!tRows.length && slug === 'geosoft') tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
+        if (!tRows.length && slug === 'comida-callejera-xl') tRows = await executeD1('SELECT * FROM tenants LIMIT 1');
         
         let tenant = tRows.length ? tRows[0] : (memoryTenants.get(slug) || getFallbackTenant(slug));
         if (tenant && tenant.id) {
@@ -1421,9 +1444,9 @@ export async function onRequest(context) {
             );
           }
         } catch (e) {
-          products = slug === 'geosoft' ? getFallbackProducts() : [];
+          products = slug === 'comida-callejera-xl' ? getFallbackProducts() : [];
         }
-        if (!products.length && slug === 'geosoft') products = getFallbackProducts();
+        if (!products.length && slug === 'comida-callejera-xl') products = getFallbackProducts();
 
         let faqs = [];
         try {
@@ -1434,9 +1457,9 @@ export async function onRequest(context) {
             );
           }
         } catch (e) {
-          faqs = slug === 'geosoft' ? getFallbackFaqs() : [];
+          faqs = slug === 'comida-callejera-xl' ? getFallbackFaqs() : [];
         }
-        if (!faqs.length && slug === 'geosoft') faqs = getFallbackFaqs();
+        if (!faqs.length && slug === 'comida-callejera-xl') faqs = getFallbackFaqs();
 
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
         return jsonResponse({
@@ -1459,8 +1482,8 @@ export async function onRequest(context) {
         console.warn('D1 error in GET tenant, serving fallback:', err.message);
         const tenant = memoryTenants.get(slug) || getFallbackTenant(slug);
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
-        const fallbackProds = slug === 'geosoft' ? getFallbackProducts() : [];
-        const fallbackFaqs = slug === 'geosoft' ? getFallbackFaqs() : [];
+        const fallbackProds = slug === 'comida-callejera-xl' ? getFallbackProducts() : [];
+        const fallbackFaqs = slug === 'comida-callejera-xl' ? getFallbackFaqs() : [];
         return jsonResponse({
           tenant,
           products: fallbackProds.map(p => ({

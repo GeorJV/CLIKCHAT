@@ -53,9 +53,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   useEffect(() => {
     if (isAuthenticated && activeSlug && (!isPanelUrl || pathname === '/dashboard' || pathname.startsWith('/panel/'))) {
+      if (user?.role === 'superadmin' && pathname === '/dashboard') {
+        navigate('/super-admin', { replace: true });
+        return;
+      }
       navigate(getTenantTabPath(activeSlug, activeTab), { replace: true });
     }
-  }, [isAuthenticated, activeSlug, isPanelUrl, pathname, activeTab, navigate]);
+  }, [isAuthenticated, activeSlug, isPanelUrl, pathname, activeTab, navigate, user?.role]);
 
   if (isAuthLoading) {
     return (

@@ -11,37 +11,46 @@ import { useProductChatSession } from './useProductChatSession';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 
 interface Props {
-  storeName?: string; agentName?: string; agentAvatar?: string;
-  welcomeMessage?: string; businessType?: string; tenantSlug?: string;
-  products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
+  storeName?: string; agentName?: string; agentAvatar?: string; welcomeMessage?: string;
+  businessType?: string; tenantSlug?: string; products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
-  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar,
-  welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl',
-  products = [], initialProduct, responseDelaySec, onExit,
+  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar, welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl', products = [], initialProduct, responseDelaySec, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const isRestaurant = businessType === 'restaurante';
-  const [orderTotal, setOrderTotal] = useState<number | null>(() => (isRestaurant ? 0 : (selectedProduct?.price || null)));
+  const orderTotalKey = `clik_ordertotal_${tenantSlug || 'default'}`;
+  const [orderTotal, setOrderTotal] = useState<number | null>(() => {
+    if (typeof window !== 'undefined' && isRestaurant) {
+      const saved = localStorage.getItem(orderTotalKey);
+      if (saved !== null && !isNaN(Number(saved))) return Number(saved);
+    }
+    return isRestaurant ? 0 : (selectedProduct?.price || null);
+  });
   const [isTotalPulsing, setIsTotalPulsing] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { if (isRestaurant && orderTotal === null) setOrderTotal(0); }, [isRestaurant]);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isRestaurant && typeof orderTotal === 'number') localStorage.setItem(orderTotalKey, orderTotal.toString());
+  }, [orderTotal, isRestaurant, orderTotalKey]);
   useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
   useEffect(() => { if (initialProduct) setSelectedProduct(initialProduct); }, [initialProduct]);
 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'benefits' | 'specs' | null>(null);
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false); const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [theme, setTheme] = useState<ProductChatTheme>('linear_dark');
   const themeStyles = PRODUCT_THEMES[theme];
 
   const { messages, setMessages, sessId, handleResetChat, trackEvent, handleConfirmCheckout } = useProductChatSession({
     selectedProduct, storeName, agentName, welcomeMessage, isRestaurant,
-    onResetOrderTotal: () => setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null)),
+    onResetOrderTotal: () => {
+      if (typeof window !== 'undefined') localStorage.removeItem(orderTotalKey);
+      setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null));
+    },
     onRestoreOrderTotal: (total) => setOrderTotal(total)
   });
 
@@ -157,15 +166,13 @@ export const ProductChatView: React.FC<Props> = ({
         <ProductShowcase
           product={selectedProduct} themeStyles={themeStyles} orderTotal={orderTotal} isTotalPulsing={isTotalPulsing} isRestaurant={isRestaurant}
           onOpenBenefits={() => { setDetailModal('benefits'); trackEvent('benefit_view'); }} onOpenSpecs={() => { setDetailModal('specs'); trackEvent('detail_view'); }}
-          onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }} onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }}
-        />
+          onOpenFullscreen={() => { setFullscreenOpen(true); trackEvent('fullscreen_view'); }} onBuyNow={() => { setCheckoutOpen(true); trackEvent('buy_click'); }} />
       </div>
       <ProductModalsContainer
         product={selectedProduct} storeName={storeName} detailModal={detailModal} fullscreenOpen={fullscreenOpen} checkoutOpen={checkoutOpen}
         onCloseDetail={() => setDetailModal(null)} onProceedBuyDetail={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
         onCloseFullscreen={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
-        onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }}
-        onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout}
+        onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout}
       />
     </div>
   );

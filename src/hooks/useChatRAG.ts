@@ -5,24 +5,46 @@ import { adaptTemporalText } from '../utils/temporalGreeting';
 import { generateClientChatFallback } from '../services/clientChatFallback';
 
 export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallback }: UseChatRAGOptions) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const slug = tenantSlug || tenant?.slug || 'comida-callejera-xl';
+  const storageKey = `clik_sess_${slug}`;
+  const msgStorageKey = `clik_msgs_${slug}`;
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(msgStorageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const storageKey = `clik_sess_${tenantSlug || 'comida-callejera-xl'}`;
   const [sessionId, setSessionId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(storageKey);
+      const saved = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (saved) return saved;
       const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-      sessionStorage.setItem(storageKey, created);
+      localStorage.setItem(storageKey, created);
       return created;
     }
     return 'sess_' + Date.now().toString(36);
   });
-
   const pendingBatchRef = useRef<string[]>([]);
   const botDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga el historial previo desde Cloudflare D1 si la sesión ya existía
+  // Auto-guarda mensajes en almacenamiento local
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      try {
+        localStorage.setItem(msgStorageKey, JSON.stringify(messages));
+      } catch (e) {}
+    }
+  }, [messages, msgStorageKey]);
+
+  // Sincroniza en segundo plano con Cloudflare D1 preservando el caché local
   useEffect(() => {
     let isMounted = true;
     async function loadSessionHistory() {
@@ -37,12 +59,15 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
         }
       } catch (e) {}
 
-      if (isMounted && tenant && messages.length === 0) {
-        setMessages([{
-          id: 'welcome-msg', sender: 'assistant',
-          message: adaptTemporalText(tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.'),
-          levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
-        }]);
+      if (isMounted && tenant) {
+        setMessages((prev) => {
+          if (prev.length > 0) return prev;
+          return [{
+            id: 'welcome-msg', sender: 'assistant',
+            message: adaptTemporalText(tenant.welcome_message || '¡Hola! Bienvenido a nuestra tienda.'),
+            levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
+          }];
+        });
       }
     }
 
@@ -131,16 +156,21 @@ export function useChatRAG({ tenant, tenantSlug, onSelectProduct, onTriggerFallb
     if (botDebounceTimerRef.current) clearTimeout(botDebounceTimerRef.current);
     pendingBatchRef.current = [];
     const newSessionId = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-    if (typeof window !== 'undefined') sessionStorage.setItem(storageKey, newSessionId);
-    setSessionId(newSessionId);
-    if (tenant) {
-      setMessages([{
-        id: 'welcome-' + Date.now(), sender: 'assistant',
-        message: tenant.welcome_message || '¡Hola! ¿En qué puedo asesorarte hoy?',
-        levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
-      }]);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, newSessionId);
+      localStorage.removeItem(msgStorageKey);
     }
-  }, [storageKey, tenant]);
+    setSessionId(newSessionId);
+    const welcome = [{
+      id: 'welcome-' + Date.now(), sender: 'assistant' as const,
+      message: adaptTemporalText(tenant?.welcome_message || '¡Hola! ¿En qué puedo asesorarte hoy?'),
+      levelLabel: 'Saludo Oficial', created_at: new Date().toISOString()
+    }];
+    setMessages(welcome);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(msgStorageKey, JSON.stringify(welcome)); } catch (e) {}
+    }
+  }, [storageKey, msgStorageKey, tenant]);
 
   return { messages, isLoading, sessionId, sendMessage, resetChat };
 }

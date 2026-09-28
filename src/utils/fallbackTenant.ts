@@ -54,9 +54,38 @@ export const CLEAN_EMPTY_TENANT: Tenant = {
   response_delay_sec: 1
 };
 
+// Configuración oficial por defecto: Administración Central ClikChat (100% independiente)
+export const ADMIN_PLATFORM_TENANT: Tenant = {
+  id: 'ten_clikchat_admin',
+  slug: 'clikchat-admin',
+  name: 'Administración Central ClikChat',
+  owner_name: 'Super Administrador',
+  owner_email: 'admin@clikchat.com',
+  bot_name: 'Concierge Central',
+  avatar_url: '',
+  plan: 'enterprise',
+  monthly_price: 0,
+  status: 'active',
+  primary_color: '#6366f1',
+  business_type: 'servicios',
+  currency: 'USD',
+  business_hours: '24/7 Soporte Global',
+  cta_text: 'Soporte Plataforma',
+  cta_url: 'https://wa.me/50688888888',
+  welcome_message: 'Panel administrativo central de la plataforma ClikChat.',
+  system_prompt: 'Eres el asistente administrativo de la plataforma ClikChat.',
+  sales_flow_rules: '',
+  order_ticket_format: '',
+  tone_of_voice: 'Ejecutivo y Conciso',
+  response_delay_sec: 1,
+  phone: '+506 8888-8888',
+  created_at: '2026-09-24T00:00:00Z'
+};
+
 export const DEFAULT_FALLBACK_TENANT: Tenant = REAL_DEFAULT_TENANT;
 
 export function getCachedTenant(slug: string = ''): Tenant {
+  if (slug === 'clikchat-admin' || slug === 'ten_clikchat_admin') return ADMIN_PLATFORM_TENANT;
   if (slug === 'comida-callejera-xl') return REAL_DEFAULT_TENANT;
   if (!slug) {
     if (typeof window !== 'undefined') {

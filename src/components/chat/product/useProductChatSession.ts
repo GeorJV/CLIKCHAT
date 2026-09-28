@@ -16,39 +16,62 @@ interface UseProductChatSessionOptions {
 export function useProductChatSession({
   selectedProduct, storeName, agentName, welcomeMessage, isRestaurant, onResetOrderTotal, onRestoreOrderTotal
 }: UseProductChatSessionOptions) {
-  const [messages, setMessages] = useState<ProductChatMessage[]>([]);
+  const prodId = selectedProduct?.slug || selectedProduct?.id || 'default';
+  const storageKey = `clik_sess_prod_${prodId}`;
+  const msgStorageKey = `clik_msgs_prod_${storeName || 'store'}_${prodId}`;
+
+  const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(msgStorageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
 
   const [sessId, setSessId] = useState<string>(() => {
     if (typeof window === 'undefined') return 'sess_' + Date.now().toString(36);
-    const key = `clik_sess_prod_${selectedProduct.id || 'default'}`;
-    const saved = sessionStorage.getItem(key);
+    const saved = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
     if (saved) return saved;
     const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-    sessionStorage.setItem(key, created);
+    localStorage.setItem(storageKey, created);
     return created;
   });
 
+  // Auto-guardado de mensajes en localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      try {
+        localStorage.setItem(msgStorageKey, JSON.stringify(messages));
+      } catch (e) {}
+    }
+  }, [messages, msgStorageKey]);
+
   const handleResetChat = useCallback(() => {
-    if (typeof window !== 'undefined' && selectedProduct.id) {
-      sessionStorage.removeItem(`clik_sess_prod_${selectedProduct.id}`);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(msgStorageKey);
+      sessionStorage.removeItem(storageKey);
       const newSess = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-      sessionStorage.setItem(`clik_sess_prod_${selectedProduct.id}`, newSess);
+      localStorage.setItem(storageKey, newSess);
       setSessId(newSess);
       onResetOrderTotal();
     }
-  }, [selectedProduct.id, onResetOrderTotal]);
+  }, [msgStorageKey, storageKey, onResetOrderTotal]);
 
   useEffect(() => {
     if (selectedProduct.id && typeof window !== 'undefined') {
-      const storageKey = `clik_sess_prod_${selectedProduct.id}`;
-      let cur = sessionStorage.getItem(storageKey);
+      let cur = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (!cur) {
         cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-        sessionStorage.setItem(storageKey, cur);
+        localStorage.setItem(storageKey, cur);
       }
       setSessId(cur);
     }
-  }, [selectedProduct.id]);
+  }, [selectedProduct.id, storageKey]);
 
   useEffect(() => {
     if (!selectedProduct?.title || !storeName) return;
@@ -62,18 +85,21 @@ export function useProductChatSession({
             onRestoreOrderTotal?.(data.activeOrder.totalAmount);
           }
         } else if (isMounted) {
-          const defaultGreeting = isRestaurant
-            ? `¡Hola! 👋 Te saluda **${agentName}**, tu mesera en **${storeName}**.\n\nVeo que te interesa nuestro delicioso **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Te gustaría ordenar uno o tienes alguna consulta?`
-            : `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Tienes alguna duda o deseas apartar tu pedido?`;
-          const dynamicGreeting = welcomeMessage
-            ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
-            : defaultGreeting;
-          setMessages([{
-            id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
-            content: dynamicGreeting,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida comanda' },
-          }]);
+          setMessages((prev) => {
+            if (prev.length > 0) return prev;
+            const defaultGreeting = isRestaurant
+              ? `¡Hola! 👋 Te saluda **${agentName}**, tu mesera en **${storeName}**.\n\nVeo que te interesa nuestro delicioso **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Te gustaría ordenar uno o tienes alguna consulta?`
+              : `¡Hola! 👋 Soy **${agentName}**, asesora de **${storeName}**.\n\nVeo que estás mirando **${selectedProduct.title}** (${formatPriceWithCurrency(selectedProduct.price, selectedProduct.currency)}). ¿Tienes alguna duda o deseas apartar tu pedido?`;
+            const dynamicGreeting = welcomeMessage
+              ? adaptTemporalText(welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName).replace(/\{producto\}/gi, selectedProduct.title))
+              : defaultGreeting;
+            return [{
+              id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-demo', sender: 'assistant',
+              content: dynamicGreeting,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              ragTrace: { levelUsed: 3, confidence: 0.95, executionTimeMs: 14, modelUsed: 'RAG Edge', reasoning: 'Bienvenida comanda' },
+            }];
+          });
         }
       }).catch(() => {});
     return () => { isMounted = false; };

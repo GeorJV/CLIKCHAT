@@ -19,13 +19,23 @@ export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
   services = [], initialService, responseDelaySec, onExit,
 }) => {
-  const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || {
-    ...DEFAULT_SERVICE,
-    title: 'Servicio Especializado',
-    image: '',
-    images: []
+  const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || { ...DEFAULT_SERVICE, title: 'Servicio Especializado', image: '', images: [] });
+  const servKey = selectedService?.id || initialService?.id || services[0]?.id || 'default';
+  const storageKey = `clik_sess_serv_${servKey}`;
+  const msgStorageKey = `clik_msgs_serv_${tenantSlug || 'default'}_${servKey}`;
+
+  const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(msgStorageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return [];
   });
-  const [messages, setMessages] = useState<ProductChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
@@ -34,37 +44,43 @@ export const ServiceChatView: React.FC<Props> = ({
 
   const [sessId, setSessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const storageKey = `clik_sess_serv_${initialService?.id || services[0]?.id || 'default'}`;
-      const saved = sessionStorage.getItem(storageKey);
+      const saved = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (saved) return saved;
       const created = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-      sessionStorage.setItem(storageKey, created);
+      localStorage.setItem(storageKey, created);
       return created;
     }
     return 'sess_' + Date.now().toString(36);
   });
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      try { localStorage.setItem(msgStorageKey, JSON.stringify(messages)); } catch (e) {}
+    }
+  }, [messages, msgStorageKey]);
+
+  useEffect(() => {
     if (selectedService.id && typeof window !== 'undefined') {
-      const storageKey = `clik_sess_serv_${selectedService.id}`;
-      let cur = sessionStorage.getItem(storageKey);
+      let cur = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (!cur) {
         cur = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-        sessionStorage.setItem(storageKey, cur);
+        localStorage.setItem(storageKey, cur);
       }
       setSessId(cur);
     }
-  }, [selectedService.id]);
+  }, [selectedService.id, storageKey]);
 
   useEffect(() => {
-    const welcomeMsg: ProductChatMessage = {
-      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
-      content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa agendar **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
-    };
-    setMessages([welcomeMsg]);
-  }, [selectedService.id, sessId]);
+    setMessages((prev) => {
+      if (prev.length > 0) return prev;
+      return [{
+        id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
+        content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa agendar **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
+      }];
+    });
+  }, [selectedService.id, sessId, agentName, storeName, selectedService.title, selectedService.duration]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400),
@@ -77,14 +93,10 @@ export const ServiceChatView: React.FC<Props> = ({
       setIsLoading(true);
       try {
         const res = await fetch('/api/chat/message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantSlug: tenantSlug || 'comida-callejera-xl',
-            tenantId: (selectedService as any).tenant_id,
-            sessionId: sessId,
-            message: userText,
-            clientHour: new Date().getHours(),
+            tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId,
+            message: userText, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
           })
         });
@@ -139,11 +151,7 @@ export const ServiceChatView: React.FC<Props> = ({
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
-    if (!fromVoice) {
-      sendBatchedMessage(text);
-    } else {
-      sendVoiceQuery(text);
-    }
+    if (!fromVoice) { sendBatchedMessage(text); } else { sendVoiceQuery(text); }
   };
 
   const handleConfirmBooking = (data: ServiceBookingData) => {
@@ -163,8 +171,7 @@ export const ServiceChatView: React.FC<Props> = ({
           onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit}
         />
         <ServiceShowcase
-          service={selectedService}
-          onOpenIncludes={() => setDetailModal('includes')} onOpenRequirements={() => setDetailModal('requirements')}
+          service={selectedService} onOpenIncludes={() => setDetailModal('includes')} onOpenRequirements={() => setDetailModal('requirements')}
           onOpenFullscreen={() => setFullscreenOpen(true)} onBookNow={() => setBookingOpen(true)}
         />
       </div>

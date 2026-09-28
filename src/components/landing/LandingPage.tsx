@@ -48,6 +48,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const success = await login(data);
     if (success) {
       setShowAuthModal(false);
+      const role = localStorage.getItem('clikchat_role');
+      if (role === 'superadmin') {
+        onGoToAdmin();
+        return success;
+      }
       const active = localStorage.getItem('clikchat_active_tenant_slug') || undefined;
       onGoToDashboard(active);
     }

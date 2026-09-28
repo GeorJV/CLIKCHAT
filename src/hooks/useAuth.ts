@@ -20,6 +20,30 @@ export function useAuth() {
 
     if (token.startsWith('local-token-')) {
       const userId = token.replace('local-token-', '');
+      if (userId === 'usr_admin_001') {
+        setUser({
+          id: 'usr_admin_001',
+          email: 'admin@clikchat.com',
+          name: 'Super Administrador',
+          role: 'superadmin',
+          tenantId: 'ten_clikchat_admin',
+          tenantSlug: 'clikchat-admin'
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (userId === 'usr_ccxl_001') {
+        setUser({
+          id: 'usr_ccxl_001',
+          email: 'ccxl@gmail.com',
+          name: 'COMIDA CALLEJERA XL',
+          role: 'tenant_owner',
+          tenantId: 'ten_1790438865714_53ytu',
+          tenantSlug: 'comida-callejera-xl'
+        });
+        setIsLoading(false);
+        return;
+      }
       try {
         const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
         const matched = localUsers.find((u: any) => u.id === userId);
@@ -29,7 +53,7 @@ export function useAuth() {
             id: matched.id,
             email: matched.email,
             name: matched.name,
-            role: 'tenant_owner',
+            role: matched.role || 'tenant_owner',
             tenantId: matched.tenantId,
             tenantSlug: activeSlug
           });
@@ -110,6 +134,40 @@ export function useAuth() {
     } catch (e) {}
 
     try {
+      if (cleanData.email === 'admin@clikchat.com' && cleanData.password === 'demo1234') {
+        const u: AuthUser = {
+          id: 'usr_admin_001',
+          email: 'admin@clikchat.com',
+          name: 'Super Administrador',
+          role: 'superadmin',
+          tenantId: 'ten_clikchat_admin',
+          tenantSlug: 'clikchat-admin'
+        };
+        localStorage.setItem(TOKEN_KEY, 'local-token-usr_admin_001');
+        localStorage.setItem('clikchat_role', 'superadmin');
+        localStorage.setItem('clikchat_active_tenant_slug', 'clikchat-admin');
+        setUser(u);
+        setIsLoading(false);
+        return true;
+      }
+
+      if (cleanData.email === 'ccxl@gmail.com' && cleanData.password === 'demo1234') {
+        const u: AuthUser = {
+          id: 'usr_ccxl_001',
+          email: 'ccxl@gmail.com',
+          name: 'COMIDA CALLEJERA XL',
+          role: 'tenant_owner',
+          tenantId: 'ten_1790438865714_53ytu',
+          tenantSlug: 'comida-callejera-xl'
+        };
+        localStorage.setItem(TOKEN_KEY, 'local-token-usr_ccxl_001');
+        localStorage.setItem('clikchat_role', 'tenant_owner');
+        localStorage.setItem('clikchat_active_tenant_slug', 'comida-callejera-xl');
+        setUser(u);
+        setIsLoading(false);
+        return true;
+      }
+
       const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
       const matched = localUsers.find((u: any) => u.email.toLowerCase() === cleanData.email && u.password === cleanData.password);
       if (matched) {
@@ -117,7 +175,7 @@ export function useAuth() {
           id: matched.id,
           email: matched.email,
           name: matched.name,
-          role: 'tenant_owner',
+          role: matched.role || 'tenant_owner',
           tenantId: matched.tenantId,
           tenantSlug: matched.tenantSlug
         };
