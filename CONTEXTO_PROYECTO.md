@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 14:40 GMT-6
-- **Versión Actual:** 1.34.0 (Definición Global de Límites de Modelos IA para Todas las Cuentas)
+- **Última Actualización:** 2026-09-28 14:53 GMT-6
+- **Versión Actual:** 1.35.0 (Cero Simulación: Métricas Financieras y Flujo de Caja 100% Reales)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 0a01642)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 53f5b8b)
 - **Estado Actual del Sistema:**
-  - Control de IA Super Admin: Definición de límites para cada modelo aplicable a todas las cuentas en 1 clic.
-  - Visible en Dashboard Financiero y Directorio: Botón directo y banner interactivo de topes por modelo.
-  - Actualización Masiva en D1: Casilla para propagar instantáneamente montos a todos los comercios.
-  - Modelo Opcional Adicional: Selector de motor adicional (ej. DeepSeek V3/R1) con límite propio.
+  - Finanzas SaaS 100% Reales: Eliminada contaminación de pedidos de comida y fórmulas simuladas.
+  - Flujo de Caja Real: Pagos Hoy, Mañana y Semana calculados estrictamente por `next_billing_date`.
+  - Ingresos Históricos: Refleja $0 reales al no existir aún facturas de suscripciones pagadas.
+  - Telemetría de IA: GLM $0.0175 USD real, clave OpenRouter en vivo y topes configurables.
   - Build Verificado: 0 errores en compilación Vite y despliegue Cloudflare Pages.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
