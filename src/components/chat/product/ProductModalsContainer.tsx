@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { ProductItem, ProductCheckoutData } from '../../../types/productChat';
+import React from 'react';
+import { ProductItem, ProductCheckoutData, OrderItem } from '../../../types/productChat';
 import { ProductDetailModal } from './ProductDetailModal';
 import { ProductFullscreenModal } from './ProductFullscreenModal';
 import { ProductCheckoutModal } from './ProductCheckoutModal';
@@ -10,6 +10,9 @@ interface Props {
   detailModal: 'benefits' | 'specs' | null;
   fullscreenOpen: boolean;
   checkoutOpen: boolean;
+  orderItems?: OrderItem[];
+  orderTotal?: number | null;
+  isRestaurant?: boolean;
   onCloseDetail: () => void;
   onProceedBuyDetail: () => void;
   onCloseFullscreen: () => void;
@@ -21,6 +24,7 @@ interface Props {
 
 export const ProductModalsContainer: React.FC<Props> = ({
   product, storeName, detailModal, fullscreenOpen, checkoutOpen,
+  orderItems = [], orderTotal = null, isRestaurant = false,
   onCloseDetail, onProceedBuyDetail, onCloseFullscreen,
   onAskAboutProduct, onDirectCheckout, onCloseCheckout, onConfirmCheckout
 }) => {
@@ -30,6 +34,10 @@ export const ProductModalsContainer: React.FC<Props> = ({
         <ProductDetailModal
           product={product}
           mode={detailModal}
+          storeName={storeName}
+          orderItems={orderItems}
+          orderTotal={orderTotal}
+          isRestaurant={isRestaurant}
           onClose={onCloseDetail}
           onProceedBuy={onProceedBuyDetail}
         />

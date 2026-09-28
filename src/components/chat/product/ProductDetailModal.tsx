@@ -1,12 +1,17 @@
 import React from 'react';
-import { X, Sparkles, FileText, Check, CreditCard } from 'lucide-react';
-import { ProductItem } from '../../../types/productChat';
+import { X, Sparkles, FileText, Check, CreditCard, Receipt } from 'lucide-react';
+import { ProductItem, OrderItem } from '../../../types/productChat';
+import { OrderTicketModalContent } from './OrderTicketModalContent';
 
 interface Props {
   product: ProductItem | null;
   mode: 'benefits' | 'specs';
   onClose: () => void;
   onProceedBuy: (p: ProductItem) => void;
+  orderItems?: OrderItem[];
+  orderTotal?: number | null;
+  isRestaurant?: boolean;
+  storeName?: string;
 }
 
 export const ProductDetailModal: React.FC<Props> = ({
@@ -14,8 +19,14 @@ export const ProductDetailModal: React.FC<Props> = ({
   mode,
   onClose,
   onProceedBuy,
+  orderItems = [],
+  orderTotal = null,
+  isRestaurant = false,
+  storeName = 'Restaurante'
 }) => {
   if (!product) return null;
+
+  const isOrderTicket = mode === 'specs' && (isRestaurant || orderItems.length > 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -23,14 +34,16 @@ export const ProductDetailModal: React.FC<Props> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#282626] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-              {mode === 'benefits' ? <Sparkles className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+            <div className={`p-2 rounded-xl border ${isOrderTicket ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
+              {mode === 'benefits' ? <Sparkles className="w-4 h-4" /> : isOrderTicket ? <Receipt className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">
-                {mode === 'benefits' ? 'Beneficios Principales' : 'Detalle del Producto'}
+                {mode === 'benefits' ? 'Beneficios Principales' : isOrderTicket ? 'Detalle de la Orden / Comanda' : 'Detalle del Producto'}
               </h3>
-              <p className="text-[11px] text-zinc-400 truncate max-w-[240px] sm:max-w-md">{product.title}</p>
+              <p className="text-[11px] text-zinc-400 truncate max-w-[240px] sm:max-w-md">
+                {isOrderTicket ? `${storeName} • En vivo` : product.title}
+              </p>
             </div>
           </div>
           <button
@@ -59,6 +72,13 @@ export const ProductDetailModal: React.FC<Props> = ({
                 </div>
               ))}
             </div>
+          ) : isOrderTicket ? (
+            <OrderTicketModalContent
+              orderItems={orderItems}
+              orderTotal={orderTotal}
+              currency={product.currency}
+              storeName={storeName}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="p-3.5 rounded-xl bg-[#141313] border border-[#242222] space-y-2 flex flex-col justify-start">
@@ -113,13 +133,13 @@ export const ProductDetailModal: React.FC<Props> = ({
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-10 group-hover:opacity-0 relative z-10">
               <span className="text-[#16120C] font-black text-sm tracking-wide drop-shadow-sm">
-                ${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}
+                {isOrderTicket && orderTotal ? `${product.currency === 'CRC' ? '₡' : '$'}${Math.round(orderTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}` : `$${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}`}
               </span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ease-out transform translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 z-10">
               <CreditCard className="w-3.5 h-3.5 text-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] shrink-0" />
               <span className="font-['Cinzel',serif] text-xs font-bold tracking-[0.14em] uppercase bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-                Comprar Ahora
+                {isOrderTicket ? 'Confirmar Pedido' : 'Comprar Ahora'}
               </span>
             </div>
           </button>

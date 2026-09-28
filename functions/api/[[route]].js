@@ -3539,6 +3539,7 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           provider: llmResult.provider,
           quickActions,
           orderTotal,
+          orderItems: draftItems,
           currency: activeCurrency,
           isRestaurant,
           isAskingTotal: isAskingBillTotal

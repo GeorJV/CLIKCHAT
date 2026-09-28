@@ -10,6 +10,7 @@ interface Props {
   orderTotal?: number | null;
   isTotalPulsing?: boolean;
   isRestaurant?: boolean;
+  orderItemsCount?: number;
   onOpenBenefits: () => void;
   onOpenSpecs: () => void;
   onOpenFullscreen: () => void;
@@ -18,7 +19,7 @@ interface Props {
 
 export const ProductShowcase: React.FC<Props> = ({
   product, themeStyles, orderTotal, isTotalPulsing = false, isRestaurant = false,
-  onOpenBenefits, onOpenSpecs, onOpenFullscreen, onBuyNow,
+  orderItemsCount = 0, onOpenBenefits, onOpenSpecs, onOpenFullscreen, onBuyNow,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = (product.images && product.images.length > 0 ? product.images : [product.image]).filter(Boolean);
@@ -110,9 +111,16 @@ export const ProductShowcase: React.FC<Props> = ({
             <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors duration-300 shrink-0 relative z-10" />
             <span className="text-zinc-300 group-hover:text-white transition-colors duration-300 relative z-10 drop-shadow-sm">Beneficios</span>
           </button>
-          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>
+          <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-1.5 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>
             <FileText className="w-3.5 h-3.5 text-zinc-400 group-hover:text-teal-300 transition-colors duration-300 shrink-0 relative z-10" />
-            <span className="text-zinc-300 group-hover:text-white transition-colors duration-300 relative z-10 drop-shadow-sm">Detalle del Producto</span>
+            <span className="text-zinc-300 group-hover:text-white transition-colors duration-300 relative z-10 drop-shadow-sm flex items-center gap-1">
+              {isRestaurant ? 'Detalle de la Orden' : 'Detalle del Producto'}
+              {orderItemsCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-zinc-950 font-black text-[10px] leading-tight shadow-sm animate-pulse">
+                  {orderItemsCount}
+                </span>
+              )}
+            </span>
           </button>
         </div>
 
@@ -152,16 +160,10 @@ export const ProductShowcase: React.FC<Props> = ({
               </span>
             </div>
 
-            {/* Estado Hover: Sube de abajo hacia arriba con icono de tarjeta y texto */}
+            {/* Estado Hover */}
             <div className="absolute inset-0 flex items-center justify-center gap-2 transition-all duration-300 ease-out transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 z-10">
-              <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
-                isRestaurant ? 'text-zinc-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]' : 'text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]'
-              }`} />
-              <span className={`font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase ${
-                isRestaurant
-                  ? 'text-zinc-950 font-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]'
-                  : 'bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-              }`}>
+              <CreditCard className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${isRestaurant ? 'text-zinc-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]' : 'text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]'}`} />
+              <span className={`font-['Cinzel',serif] text-sm sm:text-base font-bold tracking-[0.14em] uppercase ${isRestaurant ? 'text-zinc-950 font-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]' : 'bg-gradient-to-r from-[#FFF2B2] via-[#FFD700] to-[#E5A823] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'}`}>
                 {isRestaurant ? 'Cerrar Orden' : 'Comprar Ahora'}
               </span>
             </div>

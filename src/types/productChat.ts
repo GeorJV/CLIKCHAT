@@ -56,3 +56,10 @@ export interface ProductCheckoutData {
   shippingAddress: string;
   totalAmount: number;
 }
+
+export interface OrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+  notes?: string;
+}
