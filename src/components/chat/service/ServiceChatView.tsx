@@ -3,11 +3,9 @@ import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceChatColumn } from './ServiceChatColumn';
 import { ServiceShowcase } from './ServiceShowcase';
-import { ServiceDetailModal } from './ServiceDetailModal';
-import { ServiceBookingModal } from './ServiceBookingModal';
+import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal';
 import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
-import { DEFAULT_SERVICE } from './serviceChatMock';
-import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 
 interface Props {
@@ -39,8 +37,7 @@ export const ServiceChatView: React.FC<Props> = ({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false); const [bookingOpen, setBookingOpen] = useState(false);
 
   const [sessId, setSessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -142,8 +139,7 @@ export const ServiceChatView: React.FC<Props> = ({
   const handleAudioRecorded = (audioData: { audioUrl: string; duration: number }) => {
     setMessages((prev) => [...prev, {
       id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '',
-      isAudio: true, audioDuration: audioData.duration, audioUrl: audioData.audioUrl,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isAudio: true, audioDuration: audioData.duration, audioUrl: audioData.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }]);
   };
 
