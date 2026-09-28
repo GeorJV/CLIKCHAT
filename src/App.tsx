@@ -169,7 +169,9 @@ export function App() {
 
         {currentView === 'admin' && (
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
-            <SuperAdminDashboard />
+            <ErrorBoundary fallbackTitle="Super Admin Panel">
+              <SuperAdminDashboard />
+            </ErrorBoundary>
           </div>
         )}
       </main>

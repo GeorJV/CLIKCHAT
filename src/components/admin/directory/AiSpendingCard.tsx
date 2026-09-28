@@ -21,6 +21,8 @@ export const AiSpendingCard: React.FC<Props> = ({ metrics, onOpenBudgetModal }) 
     </div>
   );
 
+  const optModel = metrics?.models?.optional;
+
   return (
     <div className="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm space-y-4">
       {/* Header */}
