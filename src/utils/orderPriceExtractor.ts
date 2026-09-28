@@ -6,7 +6,7 @@
 export function isCRCContext(text?: string, currency?: string): boolean {
   if (currency && currency.trim().toUpperCase() === 'CRC') return true;
   if (!text) return false;
-  return /₡|CRC|colones|colón/i.test(text);
+  return /[₡¢]|CRC|colones|colón/i.test(text);
 }
 
 export function parsePriceNumber(raw: string | number | null | undefined, isCRC: boolean = false): number {
@@ -17,7 +17,7 @@ export function parsePriceNumber(raw: string | number | null | undefined, isCRC:
     return isCRC ? Math.round(raw) : raw;
   }
 
-  let clean = String(raw).trim();
+  let clean = String(raw).replace(/[*_]/g, '').trim().replace(/[.,;:\s]+$/, '');
   if (!clean) return 0;
 
   // 1. Separador de miles con punto y decimales con coma: "6.950,00" o "12.500,50"
@@ -75,26 +75,34 @@ export function extractPriceFromText(text: string, currencyHint?: string): numbe
   if (!text) return null;
   const isCRC = isCRCContext(text, currencyHint);
 
-  // 1. Extraer número dentro de paréntesis: ($12.50), (₡6.950), (₡6,950), (CRC 5000), (6.950)
-  const parenMatch = text.match(/\(\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*\)/i);
+  // 1. Extraer número dentro de paréntesis: ($12.50), (₡6.950), (¢12.400), (CRC 5000), (6.950)
+  const parenMatch = text.match(/\(\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*[*_]*([\d,.]+)[*_]*\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*\)/i);
   if (parenMatch) {
-    const raw = parenMatch[1].replace(/[.,;:\s]+$/, '');
+    const raw = parenMatch[1].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
-  // 2. Extraer monto precedido o seguido de símbolo monetario
-  const symbolMatch = text.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)/i);
+  // 2. Extraer monto precedido o seguido de símbolo monetario (soporta markdown **): **¢12.400**, ¢12.400, $2.500
+  const symbolMatch = text.match(/[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)[*_]*\s*[*_]*([\d,.]+)[*_]*|[*_]*([\d,.]+)[*_]*\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)[*_]*/i);
   if (symbolMatch) {
-    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[.,;:\s]+$/, '');
+    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
-  // 3. Fallback: buscar cualquier número con formato de miles o decimales
+  // 3. Extraer monto después de palabras clave de precio: "precio oficial es de **¢12.400**", "precio de $2.500"
+  const pricePhraseMatch = text.match(/(?:precio|valor|cuesta|vale|costo)\s*(?:oficial)?\s*(?:es\s*de|de|es)?\s*[:*]*\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)?[*_]*\s*[*_]*([\d,.]+)/i);
+  if (pricePhraseMatch) {
+    const raw = pricePhraseMatch[1].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
+    if (parsed > 0) return parsed;
+  }
+
+  // 4. Fallback: buscar cualquier número con formato de miles o decimales
   const numMatch = text.match(/\b\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?\b|\b\d+(?:[.,]\d{1,2})?\b/);
   if (numMatch) {
-    const raw = numMatch[0].replace(/[.,;:\s]+$/, '');
+    const raw = numMatch[0].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }

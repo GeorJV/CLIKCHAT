@@ -47,10 +47,7 @@ export const ProductChatView: React.FC<Props> = ({
 
   const { messages, setMessages, sessId, handleResetChat, trackEvent, handleConfirmCheckout } = useProductChatSession({
     selectedProduct, storeName, agentName, welcomeMessage, isRestaurant,
-    onResetOrderTotal: () => {
-      if (typeof window !== 'undefined') localStorage.removeItem(orderTotalKey);
-      setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null));
-    },
+    onResetOrderTotal: () => { if (typeof window !== 'undefined') localStorage.removeItem(orderTotalKey); setOrderTotal(isRestaurant ? 0 : (selectedProduct?.price || null)); },
     onRestoreOrderTotal: (total) => setOrderTotal(total)
   });
 
@@ -74,13 +71,11 @@ export const ProductChatView: React.FC<Props> = ({
         if (!res.ok) throw new Error('Error en el servidor de chat');
         const data = await res.json();
         if (data?.isRestaurant || isRestaurant) {
-          if (typeof data?.orderTotal === 'number') {
+          if (typeof data?.orderTotal === 'number' && data.orderTotal > 0) {
             setOrderTotal(data.orderTotal);
-            if (data.orderTotal > 0) {
-              if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-              setIsTotalPulsing(true);
-              pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
-            }
+            if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+            setIsTotalPulsing(true);
+            pulseTimerRef.current = setTimeout(() => setIsTotalPulsing(false), 10000);
           }
           const askedTotal = data?.isAskingTotal || /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido)\b/i.test(userText);
           if (askedTotal) {
@@ -139,8 +134,13 @@ export const ProductChatView: React.FC<Props> = ({
           const pName = p.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           return norm.includes(pName) || pName.includes(norm.replace(/agregar|quiero|sumar|anotar/g, '').trim());
         });
-        if (matched && matched.price > 0) {
-          addedPrice = parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC');
+        if (matched && matched.price > 0) addedPrice = parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC');
+      }
+      if ((addedPrice === null || addedPrice <= 0) && messages.length > 0) {
+        const lastBot = [...messages].reverse().find(m => m.sender === 'assistant' && m.content);
+        if (lastBot?.content) {
+          const priceFromLastBot = extractPriceFromText(lastBot.content, selectedProduct?.currency);
+          if (priceFromLastBot && priceFromLastBot > 0) addedPrice = priceFromLastBot;
         }
       }
       if (addedPrice !== null && addedPrice > 0) {

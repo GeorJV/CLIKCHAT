@@ -113,10 +113,37 @@ function sanitizeAiResponse(rawText) {
     cleanParagraphs.push(trimmed);
   }
 
+  // 4. Detección y erradicación de párrafos u oraciones truncadas a la mitad
+  function isParagraphTruncated(p) {
+    if (!p || typeof p !== 'string') return true;
+    const t = p.trim();
+    if (t.length < 5) return true;
+    if (/\b(?:de|del|la|el|los|las|con|en|y|o|para|por|a|que|como|su|mi|un|una|unos|unas|al|es|son)\s*[*_]*$/i.test(t)) return true;
+    if (/[,:;\-\(\[\{]\s*[*_]*$/.test(t)) return true;
+    const bCount = (t.match(/\*\*/g) || []).length;
+    if (bCount % 2 !== 0) return true;
+    const op = (t.match(/\(/g) || []).length;
+    const cp = (t.match(/\)/g) || []).length;
+    if (op > cp) return true;
+    return false;
+  }
+
+  while (cleanParagraphs.length > 0) {
+    const lastP = cleanParagraphs[cleanParagraphs.length - 1];
+    if (isParagraphTruncated(lastP)) {
+      cleanParagraphs.pop();
+    } else {
+      break;
+    }
+  }
+
   text = cleanParagraphs.join('\n\n').trim();
 
-  // 4. Verificación de sanidad final
-  if (!text || text.length < 5 || cotRegex.test(text)) {
+  const totalBolds = (text.match(/\*\*/g) || []).length;
+  if (totalBolds % 2 !== 0) text += '**';
+
+  // 5. Verificación de sanidad final
+  if (!text || text.length < 10 || cotRegex.test(text)) {
     return null;
   }
 
@@ -150,7 +177,7 @@ async function generateCompletion({
       apiKey,
       model: activeModel,
       temperature: 0.35,
-      max_tokens: 650
+      max_tokens: 800
     });
     const clean = sanitizeAiResponse(response);
     if (!clean) throw new Error('Respuesta corrupta (guardrail o CoT leak)');

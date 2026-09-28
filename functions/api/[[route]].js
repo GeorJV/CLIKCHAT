@@ -159,7 +159,7 @@ function parsePriceNumber(raw, isCRC = false) {
     if (isCRC && raw > 0 && raw < 50) return Math.round(raw * 1000);
     return isCRC ? Math.round(raw) : raw;
   }
-  let clean = String(raw).trim().replace(/[.,;:\s]+$/, '');
+  let clean = String(raw).replace(/[*_]/g, '').trim().replace(/[.,;:\s]+$/, '');
   if (!clean) return 0;
 
   // 1. Separador de miles con punto y decimales con coma: "6.950,00" o "12.500,50"
@@ -216,26 +216,34 @@ function parsePriceNumber(raw, isCRC = false) {
 function extractPriceFromText(text, isCRC = false) {
   if (!text || typeof text !== 'string') return null;
 
-  // 1. Número entre paréntesis: ($12.50), (₡6.950), (₡6,950), ($2.500)
-  const parenMatch = text.match(/\(\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*\)/i);
+  // 1. Número entre paréntesis: ($12.50), (₡6.950), (¢12.400), ($2.500)
+  const parenMatch = text.match(/\(\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*[*_]*([\d,.]+)[*_]*\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*\)/i);
   if (parenMatch) {
-    const raw = parenMatch[1].replace(/[.,;:\s]+$/, '');
+    const raw = parenMatch[1].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
-  // 2. Extraer monto precedido o seguido de símbolo monetario: $2.500, ₡2.500, $2500
-  const symbolMatch = text.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)/i);
+  // 2. Extraer monto precedido o seguido de símbolo monetario (soporta markdown **): **¢12.400**, ¢12.400, $2.500
+  const symbolMatch = text.match(/[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)[*_]*\s*[*_]*([\d,.]+)[*_]*|[*_]*([\d,.]+)[*_]*\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)[*_]*/i);
   if (symbolMatch) {
-    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[.,;:\s]+$/, '');
+    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
-  // 3. Extraer monto después de palabras clave de precio: "precio de $2.500", "cuesta 2.500"
-  const pricePhraseMatch = text.match(/(?:precio|valor|cuesta|vale|costo)\s*(?:de|es)?\s*[:*]*\s*[\$₡€£]?\s*([\d,.]+)/i);
+  // 3. Extraer monto después de palabras clave de precio: "precio oficial es de **¢12.400**", "precio de $2.500"
+  const pricePhraseMatch = text.match(/(?:precio|valor|cuesta|vale|costo)\s*(?:oficial)?\s*(?:es\s*de|de|es)?\s*[:*]*\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)?[*_]*\s*[*_]*([\d,.]+)/i);
   if (pricePhraseMatch) {
-    const raw = pricePhraseMatch[1].replace(/[.,;:\s]+$/, '');
+    const raw = pricePhraseMatch[1].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
+    if (parsed > 0) return parsed;
+  }
+
+  // 4. Fallback: buscar cualquier número con formato de miles
+  const thousandsMatch = text.match(/\b\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?\b/);
+  if (thousandsMatch) {
+    const raw = thousandsMatch[0].replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
@@ -449,10 +457,41 @@ function sanitizeAiResponse(rawText) {
     cleanParagraphs.push(trimmed);
   }
 
+  // 4. Detección y erradicación de párrafos u oraciones truncadas a la mitad
+  function isParagraphTruncated(p) {
+    if (!p || typeof p !== 'string') return true;
+    const t = p.trim();
+    if (t.length < 5) return true;
+    if (/\b(?:de|del|la|el|los|las|con|en|y|o|para|por|a|que|como|su|mi|un|una|unos|unas|al|es|son)\s*[*_]*$/i.test(t)) return true;
+    if (/[,:;\-\(\[\{]\s*[*_]*$/.test(t)) return true;
+    const bCount = (t.match(/\*\*/g) || []).length;
+    if (bCount % 2 !== 0) return true;
+    const op = (t.match(/\(/g) || []).length;
+    const cp = (t.match(/\)/g) || []).length;
+    if (op > cp) return true;
+    return false;
+  }
+
+  // Si el último párrafo quedó cortado a medias (ej: "doble torta de"), retirarlo si hay párrafos previos completos
+  while (cleanParagraphs.length > 0) {
+    const lastP = cleanParagraphs[cleanParagraphs.length - 1];
+    if (isParagraphTruncated(lastP)) {
+      cleanParagraphs.pop();
+    } else {
+      break;
+    }
+  }
+
   text = cleanParagraphs.join('\n\n').trim();
 
-  // 4. Verificación de sanidad final: no debe quedar vacío ni contener remanentes de CoT
-  if (!text || text.length < 5 || cotRegex.test(text)) {
+  // Cerrar cualquier asterisco markdown que haya quedado desbalanceado
+  const totalBolds = (text.match(/\*\*/g) || []).length;
+  if (totalBolds % 2 !== 0) {
+    text += '**';
+  }
+
+  // 5. Verificación de sanidad final: no debe quedar vacío ni contener remanentes de CoT
+  if (!text || text.length < 10 || cotRegex.test(text)) {
     return null;
   }
 
@@ -645,7 +684,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           model: dsModel,
           messages,
           temperature: 0.5,
-          max_tokens: 650,
+          max_tokens: 800,
           include_reasoning: false,
           provider: {
             allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude
@@ -654,10 +693,14 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       });
       if (resp.ok) {
         const data = await resp.json();
-        const choice = data.choices?.[0]?.message;
-        const clean = sanitizeAiResponse(choice?.content);
-        if (clean) {
+        const choice = data.choices?.[0];
+        const isCutOff = choice?.finish_reason === 'length';
+        const clean = sanitizeAiResponse(choice?.message?.content);
+        if (clean && !isCutOff) {
           return { text: clean, provider: dsModel };
+        }
+        if (isCutOff) {
+          console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
         }
       }
     } catch (e) {
@@ -679,7 +722,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         model: 'openai/gpt-4o-mini',
         messages,
         temperature: 0.45,
-        max_tokens: 380,
+        max_tokens: 650,
         provider: {
           allow_fallbacks: false
         }
@@ -687,8 +730,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     });
     if (resp.ok) {
       const data = await resp.json();
-      const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
-      if (clean) return { text: clean, provider: 'openai/gpt-4o-mini' };
+      const choice = data.choices?.[0];
+      const isCutOff = choice?.finish_reason === 'length';
+      const clean = sanitizeAiResponse(choice?.message?.content);
+      if (clean && !isCutOff) return { text: clean, provider: 'openai/gpt-4o-mini' };
     }
   } catch (e) {
     console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
@@ -2946,11 +2991,11 @@ export async function onRequest(context) {
         const startsWithAdd = /^agregar\b/i.test(normMsg);
         const isAddingItemAction = !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
         if (isAddingItemAction) {
-          const isCRC = activeCurrency.toUpperCase() === 'CRC' || /₡|CRC|colones/i.test(message);
+          const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
           let addedPrice = null;
-          const matchPrice = message.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)|\((?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*\)/i);
+          const matchPrice = message.match(/(?:[\$₡¢€£]|CRC|USD|EUR)\s*[*_]*([\d,.]+)|([\d,.]+)\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)|\(\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*[*_]*([\d,.]+)[*_]*\s*\)/i);
           if (matchPrice) {
-            const raw = (matchPrice[1] || matchPrice[2] || matchPrice[3]).replace(/[.,;:\s]+$/, '');
+            const raw = (matchPrice[1] || matchPrice[2] || matchPrice[3]).replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
             addedPrice = parsePriceNumber(raw, isCRC);
           }
 
@@ -2976,6 +3021,22 @@ export async function onRequest(context) {
               if (!itemName || itemName.length < 3) {
                 const boldMatch = botText.match(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,45})\*\*/);
                 if (boldMatch) itemName = boldMatch[1].trim();
+              }
+            }
+          }
+
+          // Rescate secundario: buscar precio del producto en los chunks RAG si aún no se determinó
+          if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && itemName && chunksToInclude && chunksToInclude.length > 0) {
+            const normItem = itemName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            for (const c of chunksToInclude) {
+              const cText = `${c.title} ${c.content}`;
+              const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (cNorm.includes(normItem)) {
+                const chunkPrice = extractPriceFromText(cText, isCRC);
+                if (chunkPrice && chunkPrice > 0) {
+                  addedPrice = chunkPrice;
+                  break;
+                }
               }
             }
           }
@@ -3236,8 +3297,8 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         const isCRC = activeCurrency.toUpperCase() === 'CRC';
         let orderTotal = draftTotal > 0 ? draftTotal : null;
         if (isRestaurant && !orderTotal) {
-          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡€]*[\$₡€]?\s*([\d,.]+)/i)
-            || llmResult.text.match(/[\$₡€]?\s*([\d,.]+)\s*(?:en\s*total|total)/i);
+          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡¢€]*[*_]*[\$₡¢€]?[*_]*\s*([\d,.]+)/i)
+            || llmResult.text.match(/[*_]*[\$₡¢€]?[*_]*\s*([\d,.]+)\s*(?:en\s*total|total)/i);
           if (totalMatch) {
             const rawVal = parsePriceNumber(totalMatch[1], isCRC);
             if (!isNaN(rawVal) && rawVal > 0) {

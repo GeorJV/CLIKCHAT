@@ -99,7 +99,7 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: cleanMsg }
               ],
-              max_tokens: 500,
+              max_tokens: 650,
               temperature: 0.4,
               include_reasoning: false
             }),
@@ -107,12 +107,15 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
           });
           if (res.ok) {
             const data = await res.json();
-            let aiReply = data.choices?.[0]?.message?.content?.trim();
-            if (aiReply) {
+            const choice = data.choices?.[0];
+            const isCutOff = choice?.finish_reason === 'length';
+            let aiReply = choice?.message?.content?.trim();
+            if (aiReply && !isCutOff) {
               aiReply = aiReply.replace(/<(?:think|thought|reasoning|co_thought)>[\s\S]*?(?:<\/(?:think|thought|reasoning|co_thought)>|$)/gi, '').trim();
               const isBad = /user safety|response safety|safety:\s*safe/i.test(aiReply) || aiReply.toLowerCase() === 'safe';
               const cotRegex = /^(?:el\s+usuario\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita)|el\s+cliente\s+(?:quiere|dice|pregunta)|seg[uú]n\s+(?:las\s+reglas|el\s+contexto)|debo\s+(?:recomendar|responder|saludar|seguir|tener|hacer)|necesito\s+(?:mostrar|verificar|responder)|voy\s+a\s+(?:estructurar|responder|recomendar)|the\s+user\s+(?:is\s+asking|says|wants|is)|i\s+(?:need\s+to|should|will|must)\s+check|looking\s+at\s+the|based\s+on\s+the)\b/i;
-              if (!isBad && !cotRegex.test(aiReply) && !/\b(?:Debo responder|Voy a estructurar)\b/i.test(aiReply) && aiReply.length >= 5) {
+              const isTruncated = /\b(?:de|del|la|el|los|las|con|en|y|o|para|por|a)\s*[*_]*$/i.test(aiReply);
+              if (!isBad && !isTruncated && !cotRegex.test(aiReply) && !/\b(?:Debo responder|Voy a estructurar)\b/i.test(aiReply) && aiReply.length >= 10) {
                 clearTimeout(timeoutId);
                 return {
                   answer: aiReply,
