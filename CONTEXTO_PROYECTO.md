@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-28 09:50 GMT-6
-- **Versión Actual:** 1.25.0 (Independencia Total de Cuentas: Super Admin y Comercios 100% Aislados)
+- **Última Actualización:** 2026-09-28 09:55 GMT-6
+- **Versión Actual:** 1.26.0 (Saludos Cortos y Rol de Mesera Restaurados en Vivo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Cuentas 100% Independientes: `admin@clikchat.com` asignado a su propio inquilino de plataforma `ten_clikchat_admin` (`clikchat-admin`).
-  - Comercio Cliente Aislado: `ccxl@gmail.com` es el único propietario de `ten_1790438865714_53ytu` (`comida-callejera-xl`).
-  - Cero Colisión: Desacople total verificado en Cloudflare D1, Edge memory y enrutamiento `/super-admin`.
-  - Verificación 3 Filtros: 11/11 rutas certificadas con Chrome Headless en producción.
+  - Saludos Cortos y Naturales: "Hola", "Buenas" responden en 1 sola línea como mesera (Valeria).
+  - Rol de Mesera Preservado 100%: Venta cruzada, recomendaciones gastronómicas y toma de pedidos activa.
+  - Cero Volcado de Contexto: Corregido el motor LLM en Cloudflare D1 evitando el volcado del menú completo.
+  - Verificación en Vivo: 100% verificado y respondiendo en tiempo real en producción.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
