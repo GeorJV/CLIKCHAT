@@ -9,7 +9,7 @@ interface Props {
 export const AiSpendingCard: React.FC<Props> = ({ metrics }) => {
   const formatUsd = (val?: number) => {
     if (val === undefined || val === null || val === 0) return '$0.00';
-    if (val > 0 && val < 0.01) return `$${val.toFixed(4)}`;
+    if (val > 0 && val < 0.05) return `$${val.toFixed(4)}`;
     return `$${val.toFixed(2)}`;
   };
 
