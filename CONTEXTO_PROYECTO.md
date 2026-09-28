@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 14:05 GMT-6
-- **Versión Actual:** 1.31.0 (Despliegue Atómico de Modelos de IA Propios & Cero Exposición de Claves)
+- **Última Actualización:** 2026-09-28 14:25 GMT-6
+- **Versión Actual:** 1.32.0 (Límites de IA Editables por Negocio, Presupuestos Globales & Modelo Opcional)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: ff1a8a5)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 9b500ea)
 - **Estado Actual del Sistema:**
-  - Panel Cliente Limpio: Cero exposición de claves o jerga técnica; botón único colapsable para modelos propios.
-  - Selector Multi-Proveedor: Soporte de OpenRouter, OpenAI, Google AI Studio y Groq + escritura manual.
-  - Motor Gastronómico de Ventas: Activo por defecto con 4 habilidades de hospitalidad, upselling y comanda.
-  - ARQMODULAR Cumplido: Archivos <155 líneas con separación de configs en `customAIConfigs.ts`.
-  - Build Verificado: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
+  - Control de IA Super Admin: Límites GLM y GPT editables ($3, $5, $10...) por negocio en Cloudflare D1.
+  - Presupuestos Globales: Configuración día/semana/mes persistida en `platform_settings`.
+  - Modelo Opcional Adicional: Selector de motor adicional (ej. DeepSeek V3/R1, Claude) con límite propio.
+  - ARQMODULAR Cumplido: Componentes atómicos (<175 líneas) y 0 errores en build y despliegue.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md.
