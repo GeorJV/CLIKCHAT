@@ -4,7 +4,8 @@ import { ClientTab } from '../types/client';
 export type AppView = 'landing' | 'chat' | 'product' | 'service' | 'client' | 'admin';
 
 export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
-  '/dashboard': 'business',
+  '/dashboard': 'chatbot',
+  '/chatbot': 'chatbot',
   '/mi-negocio': 'business',
   '/productos': 'products',
   '/conversaciones': 'conversations',
@@ -18,7 +19,7 @@ export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
 };
 
 export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
-  chatbot: '/mi-negocio',
+  chatbot: '/dashboard',
   business: '/mi-negocio',
   products: '/productos',
   faqs: '/mi-negocio',
@@ -100,9 +101,9 @@ export function useAppRouter() {
     } else if (parts[0] === 'dashboard') {
       const activeSlug = (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl';
       routeTenantSlug = activeSlug;
-      panelTabFromRoute = 'business';
+      panelTabFromRoute = 'chatbot';
       if (typeof window !== 'undefined') {
-        window.history.replaceState(null, '', `/user/mi-negocio/${encodeURIComponent(activeSlug)}/mi-negocio`);
+        window.history.replaceState(null, '', `/user/mi-negocio/${encodeURIComponent(activeSlug)}/dashboard`);
       }
     }
   }

@@ -17,6 +17,7 @@ const ROUTES = [
   { path: '/chat/comida-callejera-xl/prod_1789447247688', label: 'Chat Producto (Ruta Limpia)' },
   { path: '/producto', label: 'Chat de Catálogo Producto' },
   { path: '/servicio', label: 'Chat de Reserva de Servicio' },
+  { path: '/user/mi-negocio/comida-callejera-xl/dashboard', label: 'Panel: Dashboard Principal' },
   { path: '/user/mi-negocio/comida-callejera-xl/mi-negocio', label: 'Panel: Mi Negocio' },
   { path: '/user/mi-negocio/comida-callejera-xl/productos', label: 'Panel: Productos' },
   { path: '/user/mi-negocio/comida-callejera-xl/conversaciones', label: 'Panel: Conversaciones' },
