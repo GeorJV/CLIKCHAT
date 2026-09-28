@@ -14,7 +14,7 @@ const BASE_URL = process.env.BASE_URL || 'https://clikchat.pages.dev';
 const ROUTES = [
   { path: '/', label: 'Web Oficial / Landing' },
   { path: '/chat/comida-callejera-xl', label: 'Chat Negocio (Ruta Limpia)' },
-  { path: '/chat/comida-callejera-xl/prod_1789447247688', label: 'Chat Producto (Ruta Limpia)' },
+  { path: '/chat/comida-callejera-xl/comida-cajera-xl', label: 'Chat Producto (Ruta Limpia)' },
   { path: '/producto', label: 'Chat de Catálogo Producto' },
   { path: '/servicio', label: 'Chat de Reserva de Servicio' },
   { path: '/user/mi-negocio/comida-callejera-xl/dashboard', label: 'Panel: Dashboard Principal' },

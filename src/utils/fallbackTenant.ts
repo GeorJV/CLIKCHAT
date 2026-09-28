@@ -90,10 +90,24 @@ export function getCachedTenant(slug: string = ''): Tenant {
 
   if (typeof window !== 'undefined') {
     try {
+      const keys = ['clikchat_products_comida-callejera-xl', 'clikchat_products'];
+      for (const k of keys) {
+        const s = localStorage.getItem(k);
+        if (s && (s.includes('prod_1789447247688') || s.includes('cornell.edu') || s.includes('vendedor-online'))) {
+          const l = JSON.parse(s);
+          if (Array.isArray(l)) {
+            localStorage.setItem(k, JSON.stringify(l.filter((p: any) => p.id !== 'prod_1789447247688' && p.slug !== 'vendedor-online' && !p.images?.[0]?.includes('cornell.edu'))));
+          }
+        }
+      }
       const saved = localStorage.getItem(`clikchat_tenant_${targetSlug}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object' && (parsed.name || parsed.id || parsed.bot_name)) {
+          if (targetSlug === 'comida-callejera-xl') {
+            if (!parsed.bot_name || parsed.bot_name === 'Asesor Comercial') parsed.bot_name = 'Valeria (Mesera Virtual)';
+            if (!parsed.business_type || parsed.business_type === 'tienda') parsed.business_type = 'restaurante';
+          }
           return { ...CLEAN_EMPTY_TENANT, ...parsed, slug: parsed.slug || targetSlug };
         }
       }
@@ -133,11 +147,16 @@ export function saveCachedTenant(tenant: Tenant): void {
   try {
     const slug = tenant.slug || '';
     if (slug) {
+      if (slug === 'comida-callejera-xl') {
+        if (!tenant.bot_name || tenant.bot_name === 'Asesor Comercial') tenant.bot_name = 'Valeria (Mesera Virtual)';
+        tenant.business_type = 'restaurante';
+      }
       const existing = localStorage.getItem(`clikchat_tenant_${slug}`);
       if (existing) {
         try {
           const parsed = JSON.parse(existing);
           const merged = { ...parsed, ...tenant };
+          if (slug === 'comida-callejera-xl') merged.bot_name = 'Valeria (Mesera Virtual)';
           localStorage.setItem(`clikchat_tenant_${slug}`, JSON.stringify(merged));
           localStorage.setItem('clikchat_active_tenant_slug', slug);
           return;

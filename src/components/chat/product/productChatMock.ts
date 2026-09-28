@@ -1,26 +1,25 @@
 import { ProductItem } from '../../../types/productChat';
 
 export const DEFAULT_PRODUCT: ProductItem = {
-  id: 'prod_1789447247688',
-  title: 'Vendedor Online',
-  slug: 'vendedor-online',
+  id: 'prod_default_catalog',
+  title: 'Catálogo Oficial',
+  slug: 'catalogo-oficial',
   category: 'General',
-  price: 49.00,
-  currency: 'USD',
-  stock: 25,
+  price: 0,
+  currency: 'CRC',
+  stock: 50,
   inStock: true,
   image: '',
   images: [],
   benefits: [
     'Atención al cliente inmediata y disponible 24/7',
-    'Reducción de hasta un 80% en los tiempos de respuesta',
-    'Captación y calificación de clientes potenciales en piloto automático'
+    'Calidad garantizada y entregas directas',
+    'Asesoría personalizada en tus pedidos'
   ],
-  description: 'Automatiza la atención al cliente, califica leads y aumenta las ventas de tu negocio con un asistente virtual impulsado por Inteligencia Artificial. Respuestas precisas, naturales y disponibles 24/7.',
+  description: 'Explora nuestro catálogo oficial con asesoría virtual en tiempo real.',
   specifications: {
-    sku: 'SKU-093089',
-    category: 'General',
-    tecnologia: 'IA Generativa Avanzada & NLP',
-    canales: 'Sitio Web, WhatsApp, Instagram'
+    sku: 'SKU-001',
+    category: 'Catálogo General',
+    atencion: 'Asesoría Virtual 24/7'
   }
 };

@@ -325,7 +325,7 @@ function getFallbackTenant(slug = '') {
       name: 'COMIDA CALLEJERA XL',
       owner_name: 'GEORGE',
       owner_email: 'ccxl@gmail.com',
-      bot_name: 'Asesor Comercial',
+      bot_name: 'Valeria (Mesera Virtual)',
       avatar_url: '',
       plan: 'pro',
       status: 'active',
@@ -335,7 +335,7 @@ function getFallbackTenant(slug = '') {
       cta_text: 'Realizar Compra',
       cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar',
       welcome_message: '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?',
-      system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, guiarlo a completar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.',
+      system_prompt: 'Eres Valeria, la mesera virtual de Comida Callejera XL. Tu objetivo es tentar el apetito del cliente, guiarlo a completar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.',
       sales_flow_rules: '1. Sugerir acompañamiento o bebida (como bebida o más papas) únicamente tras agregar o solicitar agregar un plato a la compra. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
       order_ticket_format: '',
       phone: '+506 8888-8888'

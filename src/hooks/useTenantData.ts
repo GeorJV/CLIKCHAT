@@ -17,11 +17,14 @@ export function useTenantData(tenantSlug: string = 'comida-callejera-xl'): UseTe
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(`clikchat_products_${tenantSlug}`);
-        if (saved) return JSON.parse(saved);
-        if (tenantSlug === 'comida-callejera-xl') {
-          const oldGlobal = localStorage.getItem('clikchat_products');
-          if (oldGlobal) return JSON.parse(oldGlobal);
+        const localKeys = [`clikchat_products_${tenantSlug}`, 'clikchat_products'];
+        for (const k of localKeys) {
+          const saved = localStorage.getItem(k);
+          if (saved) {
+            const list: Product[] = JSON.parse(saved);
+            const clean = list.filter(p => p.id !== 'prod_1789447247688' && p.slug !== 'vendedor-online' && !p.images?.[0]?.includes('cornell.edu'));
+            if (clean.length > 0) return clean;
+          }
         }
       } catch (e) {}
     }
@@ -55,9 +58,15 @@ export function useTenantData(tenantSlug: string = 'comida-callejera-xl'): UseTe
         if (res.ok && ct.includes('application/json')) {
           const data = await res.json();
           if (isMounted && data.tenant) {
+            if (tenantSlug === 'comida-callejera-xl') {
+              if (!data.tenant.bot_name || data.tenant.bot_name === 'Asesor Comercial') data.tenant.bot_name = 'Valeria (Mesera Virtual)';
+              data.tenant.business_type = 'restaurante';
+            }
             setTenant(data.tenant);
             saveCachedTenant(data.tenant);
-            const prods: Product[] = data.products || [];
+            const prods: Product[] = (data.products || []).filter(
+              (p: Product) => p.id !== 'prod_1789447247688' && p.slug !== 'vendedor-online' && !p.images?.[0]?.includes('cornell.edu')
+            );
             if (prods.length > 0) {
               setProducts(prods);
               setSelectedProduct(prev => prev || prods[0]);

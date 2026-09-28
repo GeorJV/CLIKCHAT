@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 17:38 GMT-6
-- **Versión Actual:** 1.47.0 (Erradicación Total de Parpadeo Anti-Flash de Bot y Píldoras Falsas)
+- **Última Actualización:** 2026-09-28 18:00 GMT-6
+- **Versión Actual:** 1.49.0 (Erradicación Definitiva de Parpadeo de Identidad y Producto Robot en Recarga)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit: 326e9b2)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Erradicación de Parpadeo en Recarga: Cache de `localStorage` priorizado en `fallbackTenant.ts` y sincronizado en `useTenantData.ts`. El bot conserva su nombre e identidad (`Valeria (Mesera Virtual)`) desde el frame 1 de carga sin saltos.
-  - Píldoras Contextuales: Erradicado el texto falso de "Smartwatch Titan Pro" y "Fallback Marte" de `ChatQuickPills.tsx`, reemplazado por prompts reales adaptados al tipo de negocio (Ver Menú, Especialidades, Pedir a Domicilio).
-  - Precios CTA Reales: Erradicado el falso "$249 USD" de `PersistentCTA.tsx`, sustituido por el precio real del catálogo o llamada a la acción gastronómica.
-  - Verificado en Chrome Headless CDP (Zero Flash confirmado en 50/50 pasos).
+  - Erradicación Definitiva de Producto Zombi Robot: Eliminado de D1 el producto duplicado `prod_1789447247688` con imagen de robot de Cornell AI.
+  - Sincronización Inmediata en Frame 0: `useProductResolver.ts` hidratado sincrónicamente desde caché local con prioridad estricta de ID y Slug (evitando colisiones por nombre suelto).
+  - Identidad Blindada: `Valeria (Mesera Virtual)` asegurada desde el milisegundo 0 en `useProductResolver`, `useTenantData`, `fallbackTenant` y `functions/api/[[route]].js`.
+  - Auto-Purga de Caché Local: `fallbackTenant.ts` purga automáticamente cualquier registro zombi de `localStorage` en cada visita.
+  - Verificado en Chrome Headless CDP (Zero Flash confirmado frame a frame en carga y recarga con 0 errores).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
