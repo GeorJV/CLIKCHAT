@@ -15,7 +15,3 @@ Este repositorio cuenta con el estándar **ARQMODULAR**, la Skill **arqai-setup*
      - **Estado Obligatorio:** Pasar tareas a `status: "ready_for_review"`. **PROHIBIDO** marcar como `"completed"` o `"done"`.
      - **Notificación en Pantalla Obligatoria:** Invocar `POST https://arqaistudio.pages.dev/api/agent/notify-user` con `{ title, message, agentName, type: "task_completed", projectId }`.
      - Entregar obligatoriamente las dos URLs: `gitUrl` (Git commit/repo) y `workUrl` (URL del proyecto web en vivo).
-8. **Blindaje de Presupuesto y Prohibición de Modelos Caros (Claude / Anthropic)**:
-   - Queda estrictamente PROHIBIDO configurar, llamar, sugerir o permitir el uso de modelos costosos como Anthropic Claude (todas sus variantes), OpenAI o1 o modelos no autorizados.
-   - El sistema opera EXCLUSIVAMENTE con modelos autorizados de micro-costo (`deepseek/deepseek-chat`, `z-ai/glm-5.3-flash` o modelos `:free`).
-   - `allow_fallbacks` en llamadas a OpenRouter DEBE permanecer permanentemente en `false` para evitar desvíos no autorizados.
