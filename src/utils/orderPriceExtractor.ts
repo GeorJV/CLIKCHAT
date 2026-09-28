@@ -78,14 +78,15 @@ export function extractPriceFromText(text: string, currencyHint?: string): numbe
   // 1. Extraer número dentro de paréntesis: ($12.50), (₡6.950), (₡6,950), (CRC 5000), (6.950)
   const parenMatch = text.match(/\(\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*\)/i);
   if (parenMatch) {
-    const parsed = parsePriceNumber(parenMatch[1], isCRC);
+    const raw = parenMatch[1].replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
   // 2. Extraer monto precedido o seguido de símbolo monetario
   const symbolMatch = text.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)/i);
   if (symbolMatch) {
-    const raw = symbolMatch[1] || symbolMatch[2];
+    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[.,;:\s]+$/, '');
     const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
@@ -93,23 +94,69 @@ export function extractPriceFromText(text: string, currencyHint?: string): numbe
   // 3. Fallback: buscar cualquier número con formato de miles o decimales
   const numMatch = text.match(/\b\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?\b|\b\d+(?:[.,]\d{1,2})?\b/);
   if (numMatch) {
-    const parsed = parsePriceNumber(numMatch[0], isCRC);
+    const raw = numMatch[0].replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
     if (parsed > 0) return parsed;
   }
 
   return null;
 }
 
+export function cleanProductQueryName(rawMsg: string): string {
+  if (!rawMsg || typeof rawMsg !== 'string') return '';
+  let text = rawMsg.replace(/[¿¡]+/g, ' ').replace(/[?¿!¡]/g, '').trim();
+
+  // 1. Quitar saludos compuestos y cortesías al inicio
+  text = text.replace(/^(?:(?:hola|buenas(?:\s*tardes|\s*noches|\s*d[ií]as)?|buenos\s*d[ií]as|hey|hi|saludos|disculpa|disculpe|oye|ey|por\s*favor|porfa|por\s*fa)\b[\s,]*)+/i, '');
+  text = text.replace(/[\s,]*(?:por\s*favor|porfa|por\s*fa|gracias|muchas\s*gracias)\s*$/i, '');
+
+  // 2. Quitar verbos de agregación iniciales
+  text = text.replace(/^(?:agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|apuntame)\s+/i, '');
+
+  // 3. Quitar verbos y preguntas introductorias
+  text = text.replace(/^(?:me\s*gustar[ií]a\s*saber|quisiera\s*saber|me\s*puedes\s*(?:decir|indicar)|me\s*dices|dime|sabes|deseo\s*saber|quiero\s*saber|consulto|consultar|averiguar)\s+(?:sobre\s+)?/i, '');
+
+  // 4. Quitar preguntas de precio/ingredientes al inicio
+  text = text.replace(/^(?:cu[aá]nto\s*(?:vale|cuesta|sale|es|ser[ií]a)|qu[eé]\s*precio\s*(?:tiene)?|precio\s*(?:del?|de\s*la|de\s*los|de\s*las)?|costo\s*(?:del?|de\s*la)?|a\s*c[oó]mo\s*(?:est[aá]|sale)|qu[eé]\s*(?:trae|incluye|contiene|lleva|es|son)|c[oó]mo\s*viene|cu[aá]les\s*son\s*(?:los\s*ingredientes|las\s*opciones))\s+(?:de\s+|del\s+)?/i, '');
+
+  // 5. Quitar preguntas de precio/ingredientes al final (ej: "la carlota de melocoton cuanto vale?")
+  text = text.replace(/\s+(?:cu[aá]nto\s*(?:vale|cuesta|sale|es|ser[ií]a)|qu[eé]\s*precio\s*(?:tiene)?|a\s*c[oó]mo\s*(?:est[aá]|sale)|precio|costo|qu[eé]\s*(?:trae|incluye|contiene|lleva|es)|c[oó]mo\s*viene|qu[eé]\s*ingredientes\s*(?:trae|tiene|lleva|son)|ingredientes)\s*$/i, '');
+
+  // 6. Quitar remanentes de preguntas en el medio o verbos finales residuales
+  text = text.replace(/\b(?:cu[aá]nto\s*(?:vale|cuesta|sale)|qu[eé]\s*precio\s*tiene|a\s*c[oó]mo\s*(?:est[aá]|sale))\b/gi, '');
+  text = text.replace(/\s+(?:vale|cuesta|sale|es|tiene|trae)$/i, '');
+
+  // 7. Quitar sufijos de acción de comanda/pedido ("al pedido", "a la orden")
+  text = text.replace(/\s+(?:al\s*pedido|a\s*la\s*(?:comanda|orden|cuenta)|al\s*carrito|para\s*llevar|para\s*comer\s*aqu[ií])$/i, '');
+
+  // 8. Quitar artículos o preposiciones iniciales ("el", "la", "los", "las", "un", "una", "del", "de la")
+  text = text.replace(/^(?:el|la|los|las|un|una|unos|unas|del?|de\s*la|de\s*los|de\s*las)\s+/i, '');
+
+  // 9. Limpieza final de signos de puntuación y espacios
+  text = text.replace(/[.,;:()\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!text || text.length < 2) return '';
+
+  const minorWords = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'con', 'y', 'en', 'a', 'al', 'sin', 'por', 'para']);
+  const words = text.split(/\s+/);
+  return words.map((w, idx) => {
+    const lower = w.toLowerCase();
+    if (idx > 0 && minorWords.has(lower)) return lower;
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }).join(' ');
+}
+
 export function isAddOrderAction(text: string): boolean {
   if (!text) return false;
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  // Consultas de información, detalles, ingredientes, precio o catálogo NO son acción de agregar
-  const isInformational = /\b(que\s*(trae|incluye|contiene|lleva|viene|es)|cuales\s*son|ingredientes|cuanto\s*(vale|cuesta|sale|es)|precio|costo|saber|conocer|ver|consultar|informacion|info|horario|ubicacion|menu|carta)\b/i.test(lower);
-  if (isInformational) return false;
+  const startsWithAdd = /^(?:agregar|agregame|agregale|anadir|sumar|anotar|ponme)\b/i.test(lower);
+  if (!startsWithAdd) {
+    const isInformational = /\b(que\s*(trae|incluye|contiene|lleva|viene|es)|cuales\s*son|ingredientes|cuanto\s*(vale|cuesta|sale|es)|precio|costo|saber|conocer|ver|consultar|informacion|info|horario|ubicacion|menu|carta)\b/i.test(lower);
+    if (isInformational) return false;
+  }
 
   const hasAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(lower);
   const hasOrderIntent = /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(lower);
-  return hasAddVerb || hasOrderIntent || /^agregar\b/i.test(lower);
+  return hasAddVerb || hasOrderIntent || startsWithAdd;
 }
 

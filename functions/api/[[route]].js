@@ -159,7 +159,7 @@ function parsePriceNumber(raw, isCRC = false) {
     if (isCRC && raw > 0 && raw < 50) return Math.round(raw * 1000);
     return isCRC ? Math.round(raw) : raw;
   }
-  let clean = String(raw).trim();
+  let clean = String(raw).trim().replace(/[.,;:\s]+$/, '');
   if (!clean) return 0;
 
   // 1. Separador de miles con punto y decimales con coma: "6.950,00" o "12.500,50"
@@ -211,6 +211,79 @@ function parsePriceNumber(raw, isCRC = false) {
     finalVal = Math.round(finalVal * 1000);
   }
   return isCRC ? Math.round(finalVal) : finalVal;
+}
+
+function extractPriceFromText(text, isCRC = false) {
+  if (!text || typeof text !== 'string') return null;
+
+  // 1. Número entre paréntesis: ($12.50), (₡6.950), (₡6,950), ($2.500)
+  const parenMatch = text.match(/\(\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)?\s*\)/i);
+  if (parenMatch) {
+    const raw = parenMatch[1].replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
+    if (parsed > 0) return parsed;
+  }
+
+  // 2. Extraer monto precedido o seguido de símbolo monetario: $2.500, ₡2.500, $2500
+  const symbolMatch = text.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)/i);
+  if (symbolMatch) {
+    const raw = (symbolMatch[1] || symbolMatch[2]).replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
+    if (parsed > 0) return parsed;
+  }
+
+  // 3. Extraer monto después de palabras clave de precio: "precio de $2.500", "cuesta 2.500"
+  const pricePhraseMatch = text.match(/(?:precio|valor|cuesta|vale|costo)\s*(?:de|es)?\s*[:*]*\s*[\$₡€£]?\s*([\d,.]+)/i);
+  if (pricePhraseMatch) {
+    const raw = pricePhraseMatch[1].replace(/[.,;:\s]+$/, '');
+    const parsed = parsePriceNumber(raw, isCRC);
+    if (parsed > 0) return parsed;
+  }
+
+  return null;
+}
+
+function cleanProductQueryName(rawMsg) {
+  if (!rawMsg || typeof rawMsg !== 'string') return '';
+  let text = rawMsg.replace(/[¿¡]+/g, ' ').replace(/[?¿!¡]/g, '').trim();
+
+  // 1. Quitar saludos compuestos y fórmulas de cortesía al inicio
+  text = text.replace(/^(?:(?:hola|buenas(?:\s*tardes|\s*noches|\s*d[ií]as)?|buenos\s*d[ií]as|hey|hi|saludos|disculpa|disculpe|oye|ey|por\s*favor|porfa|por\s*fa)\b[\s,]*)+/i, '');
+  text = text.replace(/[\s,]*(?:por\s*favor|porfa|por\s*fa|gracias|muchas\s*gracias)\s*$/i, '');
+
+  // 2. Quitar verbos de agregación iniciales si provienen de acciones previas
+  text = text.replace(/^(?:agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|apuntame)\s+/i, '');
+
+  // 3. Quitar verbos y preguntas introductorias
+  text = text.replace(/^(?:me\s*gustar[ií]a\s*saber|quisiera\s*saber|me\s*puedes\s*(?:decir|indicar)|me\s*dices|dime|sabes|deseo\s*saber|quiero\s*saber|consulto|consultar|averiguar)\s+(?:sobre\s+)?/i, '');
+
+  // 4. Quitar preguntas de precio/ingredientes al inicio
+  text = text.replace(/^(?:cu[aá]nto\s*(?:vale|cuesta|sale|es|ser[ií]a)|qu[eé]\s*precio\s*(?:tiene)?|precio\s*(?:del?|de\s*la|de\s*los|de\s*las)?|costo\s*(?:del?|de\s*la)?|a\s*c[oó]mo\s*(?:est[aá]|sale)|qu[eé]\s*(?:trae|incluye|contiene|lleva|es|son)|c[oó]mo\s*viene|cu[aá]les\s*son\s*(?:los\s*ingredientes|las\s*opciones))\s+(?:de\s+|del\s+)?/i, '');
+
+  // 5. Quitar preguntas de precio/ingredientes al final (ej: "la carlota de melocoton cuanto vale?")
+  text = text.replace(/\s+(?:cu[aá]nto\s*(?:vale|cuesta|sale|es|ser[ií]a)|qu[eé]\s*precio\s*(?:tiene)?|a\s*c[oó]mo\s*(?:est[aá]|sale)|precio|costo|qu[eé]\s*(?:trae|incluye|contiene|lleva|es)|c[oó]mo\s*viene|qu[eé]\s*ingredientes\s*(?:trae|tiene|lleva|son)|ingredientes)\s*$/i, '');
+
+  // 6. Quitar remanentes de preguntas en el medio o verbos finales residuales
+  text = text.replace(/\b(?:cu[aá]nto\s*(?:vale|cuesta|sale)|qu[eé]\s*precio\s*tiene|a\s*c[oó]mo\s*(?:est[aá]|sale))\b/gi, '');
+  text = text.replace(/\s+(?:vale|cuesta|sale|es|tiene|trae)$/i, '');
+
+  // 7. Quitar sufijos de acción de comanda/pedido ("al pedido", "a la orden")
+  text = text.replace(/\s+(?:al\s*pedido|a\s*la\s*(?:comanda|orden|cuenta)|al\s*carrito|para\s*llevar|para\s*comer\s*aqu[ií])$/i, '');
+
+  // 8. Quitar artículos o preposiciones iniciales ("el", "la", "los", "las", "un", "una", "del", "de la")
+  text = text.replace(/^(?:el|la|los|las|un|una|unos|unas|del?|de\s*la|de\s*los|de\s*las)\s+/i, '');
+
+  // 9. Limpieza final de signos de puntuación y espacios
+  text = text.replace(/[.,;:()\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!text || text.length < 2) return '';
+
+  const minorWords = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'con', 'y', 'en', 'a', 'al', 'sin', 'por', 'para']);
+  const words = text.split(/\s+/);
+  return words.map((w, idx) => {
+    const lower = w.toLowerCase();
+    if (idx > 0 && minorWords.has(lower)) return lower;
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }).join(' ');
 }
 
 function getFallbackTenant(slug = '') {
@@ -2780,6 +2853,8 @@ export async function onRequest(context) {
         // 5. Pre-Cierre y Confirmación Tentativa de Órdenes (Botones Automáticos)
         const normMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         let quickActions = [];
+        let detectedItemName = '';
+        let detectedItemPrice = 0;
         const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
         
         // Detectar si pregunta específicamente por un ítem/platillo (ej: "cuanto es la hamburguesa", "cuanto vale el mini cheese", "precio del combo")
@@ -2825,24 +2900,49 @@ export async function onRequest(context) {
 
         const hasExplicitAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(normMsg);
         const hasExplicitOrderIntent = !isInformationalInquiry && /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(normMsg);
-        const isAddingItemAction = !isConfirmingOrder && !isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent || /^agregar\b/i.test(normMsg));
+        const startsWithAdd = /^agregar\b/i.test(normMsg);
+        const isAddingItemAction = !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
         if (isAddingItemAction) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC' || /₡|CRC|colones/i.test(message);
           let addedPrice = null;
           const matchPrice = message.match(/(?:[\$₡€£]|CRC|USD|EUR)\s*([\d,.]+)|([\d,.]+)\s*(?:[\$₡€£]|CRC|USD|EUR)|\((?:[\$₡€£]|CRC|USD|EUR)?\s*([\d,.]+)\s*\)/i);
           if (matchPrice) {
-            const raw = matchPrice[1] || matchPrice[2] || matchPrice[3];
+            const raw = (matchPrice[1] || matchPrice[2] || matchPrice[3]).replace(/[.,;:\s]+$/, '');
             addedPrice = parsePriceNumber(raw, isCRC);
           }
 
-          let itemName = message.replace(/^(?:agregar|agregame|sumar|sumame|anotar|anotame|quiero|ponme|dame)\s+/i, '').replace(/\([^)]*\)/g, '').trim();
-          if ((!addedPrice || isNaN(addedPrice)) && matchedProducts.length > 0) {
+          let itemName = cleanProductQueryName(
+            message.replace(/^(?:agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|quiero|ponme|dame|sirveme|traeme|apuntame)\s+/i, '')
+              .replace(/\([^)]*\)/g, '')
+          );
+
+          if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && matchedProducts.length > 0) {
             addedPrice = parsePriceNumber(matchedProducts[0].price, isCRC);
             if (!itemName) itemName = matchedProducts[0].name;
           }
 
+          // Rescate inteligente de precio y producto desde el último mensaje del asistente si venía sin precio
+          if ((!addedPrice || isNaN(addedPrice) || addedPrice === 0) && sessionHistory && sessionHistory.length > 0) {
+            const lastBotMsg = sessionHistory.filter(h => h.role === 'assistant' || h.sender === 'assistant').pop();
+            if (lastBotMsg) {
+              const botText = lastBotMsg.content || lastBotMsg.message || '';
+              const histPrice = extractPriceFromText(botText, isCRC);
+              if (histPrice && histPrice > 0) {
+                addedPrice = histPrice;
+              }
+              if (!itemName || itemName.length < 3) {
+                const boldMatch = botText.match(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,45})\*\*/);
+                if (boldMatch) itemName = boldMatch[1].trim();
+              }
+            }
+          }
+
+          if (!itemName || itemName.length < 2) {
+            itemName = 'Producto de Catálogo';
+          }
+
           if (addedPrice && !isNaN(addedPrice) && addedPrice > 0) {
-            draftItems.push({ name: itemName || 'Producto de Catálogo', price: addedPrice, quantity: 1 });
+            draftItems.push({ name: itemName, price: addedPrice, quantity: 1 });
             draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
 
             try {
@@ -2974,28 +3074,46 @@ ${renderedTicket}
           let itemAction = 'Agregar al pedido';
           let prodName = '';
           let prodPrice = 0;
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
 
           if (matchedProducts.length > 0) {
             const mp = matchedProducts[0];
-            const isCRC = (mp.currency || activeCurrency).toUpperCase() === 'CRC';
-            const sym = isCRC ? '₡' : '$';
             prodName = mp.name;
             prodPrice = parsePriceNumber(mp.price, isCRC);
-            const formattedPrice = isCRC ? Math.round(prodPrice).toLocaleString('es-CR') : prodPrice.toFixed(2);
-            itemLabel = `➕ Sí, quiero agregar ${mp.name}`;
-            itemAction = `Agregar ${mp.name} (${sym}${formattedPrice})`;
           } else {
-            const cleanQuery = message
-              .replace(/^[¿¡\s]+/, '')
-              .replace(/^(?:hola|buenas|por\s*fa|disculpa)?\s*(?:qu[eé]\s*(?:trae|incluye|contiene|lleva|es)|cu[aá]nto\s*(?:vale|cuesta|sale|es)|precio\s*(?:del?|de\s*la)?|c[oó]mo\s*viene)\s*(?:el|la|los|las|un|una)?\s*/i, '')
-              .replace(/[?¿!¡]/g, '')
-              .trim();
-            if (cleanQuery.length > 2) {
-              const formattedName = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
-              prodName = formattedName;
-              itemLabel = `➕ Sí, quiero agregar ${formattedName}`;
-              itemAction = `Agregar ${formattedName} al pedido`;
+            const cleanQueryName = cleanProductQueryName(message);
+            if (cleanQueryName.length > 2) {
+              prodName = cleanQueryName;
             }
+
+            // Buscar coincidencia en chunks de documentos o catálogo D1 para nombre y precio
+            const normClean = (prodName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            for (const c of chunksToInclude) {
+              const cText = `${c.title} ${c.content}`;
+              const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (normClean && cNorm.includes(normClean)) {
+                const priceInChunk = extractPriceFromText(cText, isCRC);
+                if (priceInChunk && priceInChunk > 0) {
+                  prodPrice = priceInChunk;
+                  break;
+                }
+              }
+            }
+          }
+
+          detectedItemName = prodName;
+          detectedItemPrice = prodPrice;
+
+          const formattedPrice = prodPrice > 0
+            ? (isCRC ? Math.round(prodPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : (Number.isInteger(prodPrice) ? prodPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : prodPrice.toFixed(2)))
+            : '';
+
+          if (prodName) {
+            itemLabel = `➕ Sí, quiero agregar ${prodName}`;
+            itemAction = formattedPrice
+              ? `Agregar ${prodName} (${sym}${formattedPrice})`
+              : `Agregar ${prodName} al pedido`;
           }
 
           if (isAskingItemDetails) {
@@ -3091,6 +3209,52 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
 
         if (isConfirmingOrder && renderedTicket && !llmResult.text.includes('╔═')) {
           llmResult.text += '\n\n' + renderedTicket;
+        }
+
+        // Refinamiento inteligente de Quick Actions post-respuesta del LLM
+        if (quickActions && quickActions.length > 0 && quickActions[0].id === 'add_item') {
+          let refinedName = detectedItemName;
+          let refinedPrice = detectedItemPrice;
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+
+          // 1. Extraer nombre destacado en negritas de la respuesta del LLM (ej: "**Carlota de Melocotón**")
+          const boldMatches = [...llmResult.text.matchAll(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,45})\*\*/g)]
+            .map(m => m[1].trim())
+            .filter(b => !/^(?:total|precio|valor|atenci[oó]n|nota|importante|horario|postres?\s*cl[aá]sicos?|bebidas?|combo|men[uú])$/i.test(b));
+
+          if (boldMatches.length > 0) {
+            const normQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const candidate = boldMatches.find(b => {
+              const bNorm = b.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              const bWords = bNorm.split(/\s+/).filter(w => w.length > 2);
+              return bWords.some(bw => normQuery.includes(bw));
+            });
+            if (candidate) {
+              refinedName = candidate;
+            } else if (!refinedName && boldMatches[0]) {
+              refinedName = boldMatches[0];
+            }
+          }
+
+          // 2. Extraer precio del texto del LLM si no se tenía o era 0
+          if (!refinedPrice || refinedPrice === 0) {
+            const priceFromLLM = extractPriceFromText(llmResult.text, isCRC);
+            if (priceFromLLM && priceFromLLM > 0) {
+              refinedPrice = priceFromLLM;
+            }
+          }
+
+          if (refinedName) {
+            const formattedPrice = refinedPrice > 0
+              ? (isCRC ? Math.round(refinedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : (Number.isInteger(refinedPrice) ? refinedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : refinedPrice.toFixed(2)))
+              : '';
+
+            quickActions[0].label = `➕ Sí, quiero agregar ${refinedName}`;
+            quickActions[0].actionText = formattedPrice
+              ? `Agregar ${refinedName} (${sym}${formattedPrice})`
+              : `Agregar ${refinedName} al pedido`;
+          }
         }
 
         return jsonResponse({
