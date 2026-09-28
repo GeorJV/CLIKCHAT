@@ -19,8 +19,8 @@ export const REAL_DEFAULT_TENANT: Tenant = {
   cta_text: 'Realizar Compra',
   cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar',
   welcome_message: '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?',
-  system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, recomendar bebidas y acompañamientos, y guiarlo a completar su orden.',
-  sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
+  system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, guiarlo a completar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.',
+  sales_flow_rules: '1. Sugerir acompañamiento o bebida (como bebida o más papas) únicamente tras agregar o solicitar agregar un plato a la compra. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
   order_ticket_format: '',
   tone_of_voice: 'Amigable y Enérgico',
   response_delay_sec: 1,
@@ -118,7 +118,7 @@ export function getCachedTenant(slug: string = ''): Tenant {
       ? `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿Qué se te antoja ordenar hoy?`
       : `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿En qué podemos asesorarte hoy?`,
     system_prompt: isRestaurant
-      ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, sugiere acompañamientos y bebidas (ej: "¿Te gustaría acompañar tu plato con papas rústicas o ensalada? ¿Deseas agregar bebida por $1.50 más?"), y ayuda al cliente a armar su pedido.'
+      ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, ayuda al cliente a armar su pedido, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugiere acompañamientos o bebidas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?").'
       : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar.',
     business_type: isRestaurant ? 'restaurante' : 'tienda',
     currency: 'CRC',

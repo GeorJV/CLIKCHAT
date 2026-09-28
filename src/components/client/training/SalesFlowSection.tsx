@@ -112,7 +112,7 @@ export const SalesFlowSection: React.FC<Props> = ({ tenant, onUpdateSettings }) 
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-[#222020]">
           <p className="text-[11px] text-zinc-400">
-            💡 <strong className="text-zinc-300">Tip de Venta:</strong> Al pedir un plato, el bot sugerirá siempre bebidas o papas para elevar tu ticket promedio.
+            💡 <strong className="text-zinc-300">Tip de Venta:</strong> Al agregar un plato a la compra, el bot sugerirá bebidas o más papas para elevar tu ticket promedio.
           </p>
 
           <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">

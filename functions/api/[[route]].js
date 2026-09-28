@@ -254,8 +254,8 @@ function getFallbackTenant(slug = '') {
       cta_text: 'Realizar Compra',
       cta_url: 'https://wa.me/50688888888?text=Hola,%20deseo%20comprar',
       welcome_message: '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?',
-      system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, recomendar bebidas y acompañamientos, y guiarlo a completar su orden.',
-      sales_flow_rules: '1. Sugerir acompañamiento o bebida ante plato principal. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
+      system_prompt: 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, guiarlo a completar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.',
+      sales_flow_rules: '1. Sugerir acompañamiento o bebida (como bebida o más papas) únicamente tras agregar o solicitar agregar un plato a la compra. 2. Preguntar si es para llevar o express. 3. Guiar al total.',
       order_ticket_format: '',
       phone: '+506 8888-8888'
     };
@@ -816,7 +816,7 @@ export async function onRequest(context) {
         ? '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?'
         : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?';
       const defaultPrompt = isRestaurant
-        ? 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, recomendar bebidas y acompañamientos, y guiarlo a completar su orden.'
+        ? 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, guiarlo a armar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.'
         : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar sin inventar información no verificada.';
 
       const newTenant = {
@@ -2820,7 +2820,12 @@ export async function onRequest(context) {
           }
         } catch (e) {}
 
-        const isAddingItemAction = !isConfirmingOrder && /\b(agregar|sumar|anotar|anotame|agregame|sumame|quiero|ponme|dame|ordenar|pedir)\b/i.test(normMsg);
+        // Detección de consultas informativas (NO son acciones de agregar a la compra)
+        const isInformationalInquiry = isAskingItemDetails || isAskingItemPrice || isAskingDiscount || /\b(saber|conocer|ver|preguntar|consultar|averiguar|informacion|info|horario|horarios|abren|cierran|ubicacion|donde|cuando|como vienen|que trae|que lleva|que incluye|tienen|hacen|menu|carta|catalogo|promocion|promociones|descuento|descuentos)\b/i.test(normMsg);
+
+        const hasExplicitAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(normMsg);
+        const hasExplicitOrderIntent = !isInformationalInquiry && /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(normMsg);
+        const isAddingItemAction = !isConfirmingOrder && !isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent || /^agregar\b/i.test(normMsg));
         if (isAddingItemAction) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC' || /₡|CRC|colones/i.test(message);
           let addedPrice = null;
@@ -2830,7 +2835,7 @@ export async function onRequest(context) {
             addedPrice = parsePriceNumber(raw, isCRC);
           }
 
-          let itemName = message.replace(/^(?:agregar|sumar|anotar|quiero|ponme|dame)\s+/i, '').replace(/\([^)]*\)/g, '').trim();
+          let itemName = message.replace(/^(?:agregar|agregame|sumar|sumame|anotar|anotame|quiero|ponme|dame)\s+/i, '').replace(/\([^)]*\)/g, '').trim();
           if ((!addedPrice || isNaN(addedPrice)) && matchedProducts.length > 0) {
             addedPrice = parsePriceNumber(matchedProducts[0].price, isCRC);
             if (!itemName) itemName = matchedProducts[0].name;
@@ -2868,13 +2873,15 @@ export async function onRequest(context) {
             : draftTotal.toFixed(2);
           contextBlock += `\n\n[COMANDA ACTIVA EN CURSO DEL CLIENTE]:
 Total acumulado actual: ${currencySymbol}${formattedDraftTotal} ${activeCurrency}
-Ítems registrados:
+Ítems registrados en la comanda:
 ${draftItems.map(it => {
   const pFormatted = isCRC ? Math.round(Number(it.price)).toLocaleString('es-CR') : Number(it.price).toFixed(2);
   return `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${pFormatted})`;
-}).join('\n')}
-Instrucción obligatoria de respuesta:
-1) Si el cliente agregó un ítem o consulta el estado de su orden, responde OBLIGATORIAMENTE con esta frase de apertura:
+}).join('\n')}`;
+
+          if (isAddingItemAction) {
+            contextBlock += `\nInstrucción obligatoria de respuesta (EL CLIENTE ACABA DE AGREGAR O SOLICITAR AGREGAR ALGO):
+1) Responde OBLIGATORIAMENTE con esta frase de apertura:
 "¡Perfecto! 😊 Entonces tu pedido queda así:"
 2) A continuación, presenta de forma OBLIGATORIA el resumen de los ítems que lleva la orden hasta el momento en formato de lista clara:
 ${draftItems.map(it => {
@@ -2882,7 +2889,13 @@ ${draftItems.map(it => {
   return `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${pFormatted})`;
 }).join('\n')}
 💰 Total acumulado: ${currencySymbol}${formattedDraftTotal} ${activeCurrency}
-3) Luego sugiere con entusiasmo y amabilidad si desea agregar una bebida, acompañamiento o postre, o si desea pedir la cuenta diciendo "¿cuánto es?".`;
+3) SOLO AHORA QUE EL CLIENTE YA AGREGÓ O SOLICITÓ AGREGAR ALGO A SU COMPRA: Pregúntale amablemente: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?", o si prefiere pedir la cuenta diciendo "¿cuánto es?".`;
+          }
+        } else {
+          contextBlock += `\n\n[REGLA DE ORO DE VENTA CRUZADA / UPSELLING (ESTRICTA)]:
+El cliente AÚN NO ha agregado ni solicitado agregar nada a su compra/orden.
+Queda TERMINANTEMENTE PROHIBIDO preguntar "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" ni sugerir bebidas, papas o acompañamientos extras.
+Esa pregunta/sugerencia SOLO DEBE SALIR cuando el usuario YA agregó o solicitó agregar algo a su compra. En este momento, únicamente responde su consulta o saludo con amabilidad.`;
         }
 
         let renderedTicket = '';
@@ -2993,10 +3006,12 @@ El cliente está preguntando qué trae, qué incluye o cuáles son los ingredien
 Instrucciones obligatorias:
 1) Explica con amabilidad, entusiasmo y apetitosidad qué ingredientes, componentes o porciones trae según la información del catálogo.
 2) Menciona claramente su precio oficial (${activeSym}${formattedPrice || '[Precio]'}).
-3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"`;
+3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"
+4) REGLA DE ORO DE VENTA CRUZADA: El cliente NO ha agregado este producto todavía a su orden. Queda TERMINANTEMENTE PROHIBIDO preguntar "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" ni ofrecer bebidas o adicionales en este momento. Limítate a responder la duda y preguntar amablemente si desea agregar este platillo a su pedido.`;
           } else if (isAskingItemPrice) {
             contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
-Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda.`;
+Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda.
+REGLA DE ORO: NO sugerir bebidas ni más papas. Solo después de que el usuario decida agregarlo a su compra se le pueden sugerir adicionales.`;
           }
 
           quickActions = [
@@ -3012,14 +3027,20 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarl
         } else if (targetTenant.business_type === 'restaurante') {
           contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL - RESTAURANTE]:
 1. ROL DE MESERO PROFESIONAL: Atiende con calidez, apetito y dinamismo como la mejor mesera del restaurante.
-2. VENTA CRUZADA ACTIVA: Al consultar, elegir o pedir un platillo principal (ej. hamburguesa, pizza, corte, plato fuerte), sugiere proactivamente acompañamientos y bebidas con opciones atractivas (ej: "¿Te gustaría acompañar tu pedido con papas rústicas o ensalada fresca? ¿Deseas agregar bebida por un pequeño adicional?"). En saludos simples responde con brevedad y amabilidad sin saturar.
-3. OPCIONES DE PREPARACIÓN Y EXTRAS: Pregunta por término de carne, salsas o adicionales si el plato lo amerita.
+2. VENTA CRUZADA CONDICIONAL: La recomendación de bebidas o más papas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?") SOLO DEBE SALIR DESPUÉS de que el cliente haya agregado o solicitado agregar un ítem a su compra. En consultas de menú, preguntas sobre platillos o saludos, responde con amabilidad y ofrece agregar ese plato a su orden, SIN sugerir adicionales antes de tiempo.
+3. OPCIONES DE PREPARACIÓN Y EXTRAS: Pregunta por término de carne o salsas solo cuando el plato esté siendo agregado.
 4. AVANCE Y CIERRE: Pregunta si es para comer en el restaurante o para entrega a domicilio / express, y recuérdale que puede pedir el total con "¿cuánto es?" para confirmar su comanda.`;
         } else if (targetTenant.business_type === 'tienda') {
           contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - TIENDA]:
 1. Resalta los beneficios clave del producto consultado.
 2. Sugiere alternativas o complementos compatibles del catálogo.
 3. Pregunta si desea proceder con el envío a su domicilio.`;
+        }
+
+        // Blindaje Universal de Venta Cruzada para Restaurantes
+        if (targetTenant.business_type === 'restaurante') {
+          contextBlock += `\n\n[REGLA DE ORO DE VENTA CRUZADA - RESTAURANTE (MÁXIMA PRIORIDAD)]:
+La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" SOLO DEBE SALIR cuando el usuario YA agregó o solicitó agregar algo a su compra. Si el usuario no ha agregado nada aún (solo saluda, pregunta precios, ingredientes o consulta opciones), queda TERMINANTEMENTE PROHIBIDO sugerir bebidas o más papas. Solo después de que el usuario ya agregó o solicitó agregar algo a su orden sale esa sugerencia.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';

@@ -103,5 +103,13 @@ export function extractPriceFromText(text: string, currencyHint?: string): numbe
 export function isAddOrderAction(text: string): boolean {
   if (!text) return false;
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return /\b(agregar|sumar|anotar|anotame|agregame|sumame|quiero|ponme|dame|ordenar|pedir)\b/i.test(lower);
+
+  // Consultas de información, detalles, ingredientes, precio o catálogo NO son acción de agregar
+  const isInformational = /\b(que\s*(trae|incluye|contiene|lleva|viene|es)|cuales\s*son|ingredientes|cuanto\s*(vale|cuesta|sale|es)|precio|costo|saber|conocer|ver|consultar|informacion|info|horario|ubicacion|menu|carta)\b/i.test(lower);
+  if (isInformational) return false;
+
+  const hasAddVerb = /\b(agregar|agregame|agregale|anadir|anademe|sumar|sumame|anotar|anotame|ponme|dame|sirveme|traeme|incluyeme|apuntame)\b/i.test(lower);
+  const hasOrderIntent = /\b(quiero|deseo|voy\s*a|me\s*gustaria)\s+(ordenar|pedir|llevar|comprar|un|una|dos|tres|\d+|el|la|este|esta)\b/i.test(lower);
+  return hasAddVerb || hasOrderIntent || /^agregar\b/i.test(lower);
 }
+
