@@ -422,8 +422,8 @@ function sanitizeAiResponse(rawText) {
   if (!rawText || typeof rawText !== 'string') return null;
   let text = rawText.trim();
 
-  // 1. Quitar etiquetas de pensamiento <think>...</think>
-  text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  // 1. Quitar etiquetas de pensamiento cerradas o truncadas (<think>, <thought>, <reasoning>, <co_thought>)
+  text = text.replace(/<(?:think|thought|reasoning|co_thought)>[\s\S]*?(?:<\/(?:think|thought|reasoning|co_thought)>|$)/gi, '').trim();
 
   // 2. Erradicar fugas de evaluación de seguridad / guardrails de cualquier proveedor
   const isSafetyLeak = (
@@ -435,18 +435,28 @@ function sanitizeAiResponse(rawText) {
   );
   if (isSafetyLeak) return null;
 
-  // 3. Erradicar fugas de cadena de pensamiento en inglés (CoT leaks)
-  if (/^(?:the user (?:is asking|says|wants|is)|i (?:need to|should|will|must) check|looking at the|based on the context)\b/i.test(text)) {
-    const parts = text.split(/\n\s*\n/);
-    const validPart = parts.find(p => !/^(?:the user|i need to|i should|looking at|based on)/i.test(p.trim()) && /[áéíóúñ¿¡]|\b(?:hola|buenas|con gusto|tenemos|nuestro|nuestra)\b/i.test(p));
-    if (validPart && validPart.trim().length > 10) {
-      text = validPart.trim();
-    } else {
-      return null;
-    }
+  // 3. Patrones de monólogo interno / razonamiento (Chain-of-Thought) en español e inglés
+  const cotRegex = /^(?:el\s+usuario\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita|necesita|menciona|acaba)|el\s+cliente\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita|necesita)|seg[uú]n\s+(?:las\s+reglas|el\s+contexto|la\s+informaci[oó]n|mis\s+instrucciones)|debo\s+(?:recomendar|responder|saludar|seguir|tener|hacer|mostrar|actuar|estructurar|enfocar|cumplir|ofrecer|evitar)|necesito\s+(?:mostrar|verificar|responder|preguntar|analizar|ofrecer)|voy\s+a\s+(?:estructurar|responder|recomendar|saludar|preguntar|ofrecer|mencionar)|como\s+(?:mesera|asesor|bot|asistente)\s+virtual|mi\s+rol\s+es|analizando\s+la\s+consulta|pensando\s*:|the\s+user\s+(?:is\s+asking|says|wants|is|needs|mentioned)|i\s+(?:need\s+to|should|will|must|have\s+to)\s+(?:check|respond|answer|provide|recommend)|looking\s+at\s+the|based\s+on\s+the\s+(?:context|rules|prompt)|in\s+this\s+scenario|let\s+me\s+(?:check|see|think))\b/i;
+
+  const paragraphs = text.split(/\n+/);
+  const cleanParagraphs = [];
+
+  for (const p of paragraphs) {
+    const trimmed = p.trim();
+    if (!trimmed) continue;
+    if (cotRegex.test(trimmed)) continue;
+    if (/\b(?:Debo responder|Voy a estructurar|Debo tener en cuenta|Debo seguir el protocolo)\b/i.test(trimmed)) continue;
+    cleanParagraphs.push(trimmed);
   }
 
-  return text.length > 0 ? text : null;
+  text = cleanParagraphs.join('\n\n').trim();
+
+  // 4. Verificación de sanidad final: no debe quedar vacío ni contener remanentes de CoT
+  if (!text || text.length < 5 || cotRegex.test(text)) {
+    return null;
+  }
+
+  return text;
 }
 
 async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo }) {
@@ -480,6 +490,9 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
 ${context}
 
 NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
+0. BLINDAJE DE COMUNICACIÓN (PROHIBIDO RAZONAR INTERNAMENTE O PENSAR EN VOZ ALTA):
+   - Queda TERMINANTEMENTE PROHIBIDO pensar en voz alta, analizar tu propio rol o redactar reflexiones/monólogos previos (como "El usuario quiere...", "Debo recomendar...", "Voy a estructurar...", "Según las reglas...", "Como mesera virtual...", "The user is asking...").
+   - Tu respuesta debe ser DIRECTAMENTE el mensaje final para el cliente, exactamente como un mensaje de WhatsApp.
 1. PERSONALIDAD Y TONO (HUMANO, INTELIGENTE, CÁLIDO):
    - Eres una asesora comercial VIP de alto nivel: carismática, sumamente inteligente, empática, persuasiva y natural.
    - Habla como una persona real en WhatsApp, cercana, fluida y con excelente vibra. Cero respuestas secas, frías, tiesas o robóticas.
@@ -579,7 +592,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'X-Title': 'ClikChat Edge AI'
         },
         body: JSON.stringify({
-          model: cModel || 'z-ai/glm-5.3-flash',
+          model: cModel || 'deepseek/deepseek-v3.2',
           messages,
           temperature: 0.35,
           max_tokens: 650
@@ -607,11 +620,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
 
-  // Orden estricto: 1° GLM-5.3-Flash (Principal), 2° DeepSeek (Respaldo), 3° GPT-4o-mini (Respaldo Final)
+  // Orden estricto de micro-costo sin razonamiento: 1° DeepSeek v3.2 (Directo, comercial, cero CoT), 2° DeepSeek Chat, 3° GLM-5.3-Flash
   const modelPool = [
-    'z-ai/glm-5.3-flash',
+    'deepseek/deepseek-v3.2',
     'deepseek/deepseek-chat',
-    'deepseek/deepseek-v3.2'
+    'z-ai/glm-5.3-flash'
   ];
 
   for (const dsModel of modelPool) {
@@ -632,7 +645,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           model: dsModel,
           messages,
           temperature: 0.5,
-          max_tokens: 450,
+          max_tokens: 650,
           include_reasoning: false,
           provider: {
             allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude

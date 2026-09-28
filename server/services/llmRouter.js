@@ -84,15 +84,43 @@ async function callGoogleAIStudio(prompt, options = {}) {
 
 function sanitizeAiResponse(rawText) {
   if (!rawText || typeof rawText !== 'string') return null;
-  let text = rawText.trim().replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-  if (/user safety:\s*safe|response safety:\s*safe|safety:\s*safe|^safety:\s*/i.test(text) || text.toLowerCase() === 'safe') return null;
-  if (/^(?:the user (?:is asking|says|wants|is)|i (?:need to|should|will|must) check|looking at the|based on the context)\b/i.test(text)) {
-    const parts = text.split(/\n\s*\n/);
-    const validPart = parts.find(p => !/^(?:the user|i need to|i should|looking at|based on)/i.test(p.trim()) && /[áéíóúñ¿¡]|\b(?:hola|buenas|con gusto|tenemos|nuestro|nuestra)\b/i.test(p));
-    if (validPart && validPart.trim().length > 10) text = validPart.trim();
-    else return null;
+  let text = rawText.trim();
+
+  // 1. Quitar etiquetas de pensamiento cerradas o truncadas (<think>, <thought>, <reasoning>, <co_thought>)
+  text = text.replace(/<(?:think|thought|reasoning|co_thought)>[\s\S]*?(?:<\/(?:think|thought|reasoning|co_thought)>|$)/gi, '').trim();
+
+  // 2. Erradicar fugas de evaluación de seguridad / guardrails
+  const isSafetyLeak = (
+    /user safety:\s*safe/i.test(text) ||
+    /response safety:\s*safe/i.test(text) ||
+    /safety:\s*safe/i.test(text) ||
+    /^safety:\s*/i.test(text) ||
+    text.toLowerCase() === 'safe'
+  );
+  if (isSafetyLeak) return null;
+
+  // 3. Patrones de monólogo interno / razonamiento (Chain-of-Thought) en español e inglés
+  const cotRegex = /^(?:el\s+usuario\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita|necesita|menciona|acaba)|el\s+cliente\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita|necesita)|seg[uú]n\s+(?:las\s+reglas|el\s+contexto|la\s+informaci[oó]n|mis\s+instrucciones)|debo\s+(?:recomendar|responder|saludar|seguir|tener|hacer|mostrar|actuar|estructurar|enfocar|cumplir|ofrecer|evitar)|necesito\s+(?:mostrar|verificar|responder|preguntar|analizar|ofrecer)|voy\s+a\s+(?:estructurar|responder|recomendar|saludar|preguntar|ofrecer|mencionar)|como\s+(?:mesera|asesor|bot|asistente)\s+virtual|mi\s+rol\s+es|analizando\s+la\s+consulta|pensando\s*:|the\s+user\s+(?:is\s+asking|says|wants|is|needs|mentioned)|i\s+(?:need\s+to|should|will|must|have\s+to)\s+(?:check|respond|answer|provide|recommend)|looking\s+at\s+the|based\s+on\s+the\s+(?:context|rules|prompt)|in\s+this\s+scenario|let\s+me\s+(?:check|see|think))\b/i;
+
+  const paragraphs = text.split(/\n+/);
+  const cleanParagraphs = [];
+
+  for (const p of paragraphs) {
+    const trimmed = p.trim();
+    if (!trimmed) continue;
+    if (cotRegex.test(trimmed)) continue;
+    if (/\b(?:Debo responder|Voy a estructurar|Debo tener en cuenta|Debo seguir el protocolo)\b/i.test(trimmed)) continue;
+    cleanParagraphs.push(trimmed);
   }
-  return text.length > 0 ? text : null;
+
+  text = cleanParagraphs.join('\n\n').trim();
+
+  // 4. Verificación de sanidad final
+  if (!text || text.length < 5 || cotRegex.test(text)) {
+    return null;
+  }
+
+  return text;
 }
 
 // Unified LLM Generator with Tenant Key routing and graceful fallback
@@ -104,8 +132,9 @@ async function generateCompletion({
   tenantCustomKey = null,
   model = null
 }) {
+  const antiCotDirective = '\n\n[BLINDAJE]: NUNCA pienses en voz alta ni expongas razonamientos internos ("El usuario quiere...", "Debo..."). Responde DIRECTAMENTE al cliente como en WhatsApp.';
   const messages = [
-    { role: 'system', content: `${systemPrompt}\n\n[CONTEXTO VERIFICADO DE LA TIENDA]:\n${context}` },
+    { role: 'system', content: `${systemPrompt}${antiCotDirective}\n\n[CONTEXTO VERIFICADO DE LA TIENDA]:\n${context}` },
     ...history.map(h => ({
       role: h.sender === 'user' ? 'user' : 'assistant',
       content: h.message
@@ -114,19 +143,20 @@ async function generateCompletion({
   ];
 
   try {
-    // 1. Modelo Principal: GLM-5.3-Flash
+    // 1. Modelo Principal: DeepSeek V3.2 (Directo, micro-costo, cero CoT)
     const apiKey = tenantCustomKey || DEFAULT_OPENROUTER_KEY;
-    const activeModel = model || 'z-ai/glm-5.3-flash';
+    const activeModel = model || 'deepseek/deepseek-v3.2';
     const response = await callOpenRouter(messages, {
       apiKey,
       model: activeModel,
-      temperature: 0.35
+      temperature: 0.35,
+      max_tokens: 650
     });
     const clean = sanitizeAiResponse(response);
-    if (!clean) throw new Error('Respuesta corrupta de GLM (guardrail o CoT leak)');
+    if (!clean) throw new Error('Respuesta corrupta (guardrail o CoT leak)');
     return { success: true, text: clean, provider: activeModel };
   } catch (err) {
-    console.warn('⚠️ Fallo en GLM 5.3, ejecutando respaldo con DeepSeek V3:', err.message);
+    console.warn('⚠️ Fallo en modelo principal, ejecutando respaldo con DeepSeek Chat:', err.message);
     try {
       // 2. Modelo de Respaldo: DeepSeek V3
       const apiKey = DEFAULT_OPENROUTER_KEY;

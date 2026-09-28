@@ -80,9 +80,10 @@ export async function generateClientChatFallback(params: FallbackChatParams): Pr
       const systemPrompt = `Eres ${agentName}, el asesor comercial y de atención al cliente de "${storeName}" (Tipo: ${businessType}).
 Tu tono es amable, profesional, empático y orientado a ayudar al cliente a tomar la mejor decisión de compra.
 ${productContext}
+REGLA CRÍTICA: NUNCA pienses en voz alta ni redactes razonamientos internos ("El usuario quiere...", "Debo..."). Responde DIRECTAMENTE al cliente como en WhatsApp.
 Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. Si el usuario pregunta algo general, guíalo amablemente sin inventar datos no disponibles.`;
 
-      for (const mId of ['z-ai/glm-5.3-flash', 'deepseek/deepseek-chat']) {
+      for (const mId of ['deepseek/deepseek-v3.2', 'deepseek/deepseek-chat', 'z-ai/glm-5.3-flash']) {
         try {
           const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
@@ -98,7 +99,7 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: cleanMsg }
               ],
-              max_tokens: 350,
+              max_tokens: 500,
               temperature: 0.4,
               include_reasoning: false
             }),
@@ -108,16 +109,17 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
             const data = await res.json();
             let aiReply = data.choices?.[0]?.message?.content?.trim();
             if (aiReply) {
-              aiReply = aiReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-              const isBad = /user safety|response safety|safety:\s*safe/i.test(aiReply) || /^(the user|i need to check)/i.test(aiReply);
-              if (!isBad && aiReply.length > 0) {
+              aiReply = aiReply.replace(/<(?:think|thought|reasoning|co_thought)>[\s\S]*?(?:<\/(?:think|thought|reasoning|co_thought)>|$)/gi, '').trim();
+              const isBad = /user safety|response safety|safety:\s*safe/i.test(aiReply) || aiReply.toLowerCase() === 'safe';
+              const cotRegex = /^(?:el\s+usuario\s+(?:quiere|dice|pregunta|busca|est[aá]|solicita)|el\s+cliente\s+(?:quiere|dice|pregunta)|seg[uú]n\s+(?:las\s+reglas|el\s+contexto)|debo\s+(?:recomendar|responder|saludar|seguir|tener|hacer)|necesito\s+(?:mostrar|verificar|responder)|voy\s+a\s+(?:estructurar|responder|recomendar)|the\s+user\s+(?:is\s+asking|says|wants|is)|i\s+(?:need\s+to|should|will|must)\s+check|looking\s+at\s+the|based\s+on\s+the)\b/i;
+              if (!isBad && !cotRegex.test(aiReply) && !/\b(?:Debo responder|Voy a estructurar)\b/i.test(aiReply) && aiReply.length >= 5) {
                 clearTimeout(timeoutId);
                 return {
                   answer: aiReply,
                   level: 'level_3_catalog',
                   levelLabel: 'Nivel 3: Asesoría IA Resiliente',
                   confidence: 0.95,
-                  provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
+                  provider: mId.includes('deepseek') ? 'OpenRouter DeepSeek (Principal)' : 'OpenRouter GLM (Respaldo)'
                 };
               }
             }
