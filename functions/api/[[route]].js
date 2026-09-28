@@ -1475,6 +1475,27 @@ export async function onRequest(context) {
           }
         } catch (e) {}
 
+        // Cargar presupuestos globales de IA y modelo opcional desde platform_settings
+        let globalBudgets = {
+          dayBudget: 1.0,
+          weekBudget: 5.0,
+          monthBudget: 15.0,
+          optionalModel: {
+            enabled: false,
+            modelId: 'deepseek/deepseek-chat',
+            name: 'DeepSeek V3',
+            monthlyLimit: 5.0
+          }
+        };
+        try {
+          const budgetRows = await executeD1("SELECT value FROM platform_settings WHERE key = 'ai_global_budgets'");
+          if (budgetRows && budgetRows[0]?.value) {
+            try { globalBudgets = JSON.parse(budgetRows[0].value); } catch(e) {}
+          }
+        } catch (e) {}
+
+        const optConfig = globalBudgets.optionalModel;
+
         return jsonResponse({
           success: true,
           source: openRouterKeyInfo ? 'openrouter_live_api' : 'openrouter_cached',
@@ -1489,6 +1510,11 @@ export async function onRequest(context) {
             free_requests_used: freeRequestsUsed,
             free_requests_limit: freeRequestsLimit,
             is_live: !!openRouterKeyInfo
+          },
+          budgets: {
+            dayBudget: globalBudgets.dayBudget || 1.0,
+            weekBudget: globalBudgets.weekBudget || 5.0,
+            monthBudget: globalBudgets.monthBudget || 15.0
           },
           limits: {
             glm_monthly_limit: 5.00,
@@ -1511,7 +1537,18 @@ export async function onRequest(context) {
               week: 0,
               month: 0,
               monthlyLimitPerAccount: 2.00
-            }
+            },
+            ...(optConfig?.enabled ? {
+              optional: {
+                name: optConfig.name || 'DeepSeek V3',
+                modelId: optConfig.modelId || 'deepseek/deepseek-chat',
+                day: 0,
+                week: 0,
+                month: 0,
+                monthlyLimitPerAccount: optConfig.monthlyLimit || 5.00,
+                enabled: true
+              }
+            } : {})
           },
           summary: {
             totalDay: Number(totalDay.toFixed(6)),
@@ -1536,11 +1573,38 @@ export async function onRequest(context) {
       }
     }
 
+    // ADMIN: POST /api/admin/ai-budget-settings
+    if (segments[0] === 'admin' && segments[1] === 'ai-budget-settings' && request.method === 'POST') {
+      try {
+        let body = {};
+        try { body = await request.json(); } catch (e) {}
+        const { dayBudget, weekBudget, monthBudget, optionalModel } = body;
+        const configData = {
+          dayBudget: parseFloat(dayBudget) || 1.0,
+          weekBudget: parseFloat(weekBudget) || 5.0,
+          monthBudget: parseFloat(monthBudget) || 15.0,
+          optionalModel: {
+            enabled: !!optionalModel?.enabled,
+            modelId: optionalModel?.modelId || 'deepseek/deepseek-chat',
+            name: optionalModel?.name || 'DeepSeek V3',
+            monthlyLimit: parseFloat(optionalModel?.monthlyLimit) || 5.0
+          }
+        };
+        await executeD1(
+          "INSERT OR REPLACE INTO platform_settings (key, value, updated_at) VALUES ('ai_global_budgets', $1, datetime('now'))",
+          [JSON.stringify(configData)]
+        );
+        return jsonResponse({ success: true, message: 'Presupuestos de IA y modelo opcional actualizados', settings: configData });
+      } catch (err) {
+        return jsonResponse({ success: false, error: err?.message }, 500);
+      }
+    }
+
     // ADMIN: GET /api/admin/merchants (100% REAL D1 & OPENROUTER USAGE)
     if (segments[0] === 'admin' && segments[1] === 'merchants' && request.method === 'GET') {
       try {
         const rawTenants = await executeD1(
-          'SELECT id, slug, name, owner_email, owner_name, plan, monthly_price, status, business_type, currency, created_at FROM tenants ORDER BY created_at DESC'
+          'SELECT id, slug, name, owner_email, owner_name, plan, monthly_price, status, business_type, currency, glm_limit, gpt_limit, created_at FROM tenants ORDER BY created_at DESC'
         );
 
         let msgCounts = {};
@@ -1567,8 +1631,8 @@ export async function onRequest(context) {
             glmUsage = Number(((promptTokens * 0.00000015) + (completionTokens * 0.0000005)).toFixed(4));
           }
           const gptUsage = 0;
-          const glmLimit = 5.00;
-          const gptLimit = 2.00;
+          const glmLimit = parseFloat(t.glm_limit) || 5.00;
+          const gptLimit = parseFloat(t.gpt_limit) || 2.00;
           const glmPct = Math.min(100, Math.round((glmUsage / glmLimit) * 100));
           const gptPct = Math.min(100, Math.round((gptUsage / gptLimit) * 100));
 
@@ -1586,6 +1650,8 @@ export async function onRequest(context) {
             status: t.status || 'active',
             created_at: t.created_at,
             total_messages: msgCount,
+            glm_limit: glmLimit,
+            gpt_limit: gptLimit,
             ai_usage: {
               glm_usage: glmUsage,
               glm_limit: glmLimit,
@@ -1594,7 +1660,7 @@ export async function onRequest(context) {
               gpt_limit: gptLimit,
               gpt_percentage: gptPct,
               total_usage: glmUsage,
-              total_limit: 7.00,
+              total_limit: Number((glmLimit + gptLimit).toFixed(2)),
               total_messages: msgCount
             }
           };
@@ -1612,7 +1678,7 @@ export async function onRequest(context) {
         const tenantId = segments[2];
         let body = {};
         try { body = await request.json(); } catch (e) {}
-        const { plan, monthlyPrice, currency, businessType, status } = body;
+        const { plan, monthlyPrice, currency, businessType, status, glmLimit, gptLimit } = body;
 
         await executeD1(
           `UPDATE tenants SET 
@@ -1621,12 +1687,24 @@ export async function onRequest(context) {
             status = COALESCE($3, status),
             business_type = COALESCE($4, business_type),
             currency = COALESCE($5, currency),
+            glm_limit = COALESCE($6, glm_limit),
+            gpt_limit = COALESCE($7, gpt_limit),
             updated_at = datetime('now')
-          WHERE id = $6 OR slug = $7`,
-          [plan || null, monthlyPrice !== undefined && monthlyPrice !== null ? parseFloat(monthlyPrice) : null, status || null, businessType || null, currency || null, tenantId, tenantId]
+          WHERE id = $8 OR slug = $9`,
+          [
+            plan || null,
+            monthlyPrice !== undefined && monthlyPrice !== null ? parseFloat(monthlyPrice) : null,
+            status || null,
+            businessType || null,
+            currency || null,
+            glmLimit !== undefined && glmLimit !== null ? parseFloat(glmLimit) : null,
+            gptLimit !== undefined && gptLimit !== null ? parseFloat(gptLimit) : null,
+            tenantId,
+            tenantId
+          ]
         );
 
-        return jsonResponse({ success: true, message: 'Suscripción del negocio actualizada con éxito' });
+        return jsonResponse({ success: true, message: 'Suscripción y límites de IA del negocio actualizados con éxito' });
       } catch (err) {
         return jsonResponse({ success: false, error: err?.message }, 500);
       }

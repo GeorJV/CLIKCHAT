@@ -64,15 +64,10 @@ export const BusinessDetailModal: React.FC<Props> = ({
 
           <form onSubmit={onSave} className="space-y-2.5 text-xs" id="sub-form">
             <p className="font-bold text-slate-400 uppercase text-[9px] tracking-wider">Plan & Facturación D1</p>
-
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Nivel de Plan</label>
-                <select
-                  value={form.plan}
-                  onChange={e => setForm({ ...form, plan: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs"
-                >
+                <select value={form.plan} onChange={e => setForm({ ...form, plan: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs">
                   <option value="free">Free ($0)</option>
                   <option value="basic">Básico ($29/mes)</option>
                   <option value="pro">Pro ($79/mes)</option>
@@ -81,11 +76,7 @@ export const BusinessDetailModal: React.FC<Props> = ({
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Ciclo</label>
-                <select
-                  value={form.billingCycle}
-                  onChange={e => setForm({ ...form, billingCycle: e.target.value as any })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs"
-                >
+                <select value={form.billingCycle} onChange={e => setForm({ ...form, billingCycle: e.target.value as any })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs">
                   <option value="monthly">Mensual</option>
                   <option value="yearly">Anual</option>
                 </select>
@@ -95,21 +86,11 @@ export const BusinessDetailModal: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Monto Mensual</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.monthlyPrice}
-                  onChange={e => setForm({ ...form, monthlyPrice: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-mono text-xs"
-                />
+                <input type="number" step="0.01" value={form.monthlyPrice} onChange={e => setForm({ ...form, monthlyPrice: parseFloat(e.target.value) || 0 })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-mono text-xs" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Moneda Oficial</label>
-                <select
-                  value={form.currency}
-                  onChange={e => setForm({ ...form, currency: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-emerald-400 font-bold text-xs"
-                >
+                <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-emerald-400 font-bold text-xs">
                   <option value="CRC">₡ Colones (CRC)</option>
                   <option value="USD">$ Dólares (USD)</option>
                 </select>
@@ -119,11 +100,7 @@ export const BusinessDetailModal: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Tipo de Negocio</label>
-                <select
-                  value={form.businessType}
-                  onChange={e => setForm({ ...form, businessType: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white text-xs"
-                >
+                <select value={form.businessType} onChange={e => setForm({ ...form, businessType: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white text-xs">
                   <option value="restaurante">🍔 Restaurante</option>
                   <option value="tienda">🛍️ Tienda</option>
                   <option value="servicios">📅 Servicios</option>
@@ -131,16 +108,24 @@ export const BusinessDetailModal: React.FC<Props> = ({
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-300">Estado</label>
-                <select
-                  value={form.status}
-                  onChange={e => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs"
-                >
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-white font-semibold text-xs">
                   <option value="active">Activo</option>
                   <option value="past_due">En Mora</option>
                   <option value="cancelled">Cancelado</option>
                   <option value="suspended">Suspendido</option>
                 </select>
+              </div>
+            </div>
+
+            <p className="font-bold text-slate-400 uppercase text-[9px] tracking-wider pt-1">Límites de IA Asignados ($ USD/mes)</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-teal-400">GLM-5.3-Flash ($/mes)</label>
+                <input type="number" step="0.5" min="0" value={form.glmLimit} onChange={e => setForm({ ...form, glmLimit: parseFloat(e.target.value) || 0 })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-teal-300 font-mono font-bold text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-purple-400">GPT-4o Mini ($/mes)</label>
+                <input type="number" step="0.5" min="0" value={form.gptLimit} onChange={e => setForm({ ...form, gptLimit: parseFloat(e.target.value) || 0 })} className="w-full px-2.5 py-1.5 rounded-lg border bg-slate-950 border-slate-700 text-purple-300 font-mono font-bold text-xs" />
               </div>
             </div>
           </form>

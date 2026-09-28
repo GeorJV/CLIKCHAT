@@ -4,6 +4,7 @@ import { useAdminDirectory } from '../../../hooks/useAdminDirectory';
 import { AiSpendingCard } from './AiSpendingCard';
 import { BusinessDirectoryTable } from './BusinessDirectoryTable';
 import { BusinessDetailModal } from './BusinessDetailModal';
+import { AiBudgetModal } from './AiBudgetModal';
 
 export const BusinessDirectoryTab: React.FC = () => {
   const {
@@ -16,6 +17,8 @@ export const BusinessDirectoryTab: React.FC = () => {
     fetchMerchants,
     isSubModalOpen,
     setIsSubModalOpen,
+    isBudgetModalOpen,
+    setIsBudgetModalOpen,
     selectedMerchant,
     editSubForm,
     setEditSubForm,
@@ -77,7 +80,7 @@ export const BusinessDirectoryTab: React.FC = () => {
       </div>
 
       {/* AI Telemetry Card */}
-      <AiSpendingCard metrics={aiMetrics} />
+      <AiSpendingCard metrics={aiMetrics} onOpenBudgetModal={() => setIsBudgetModalOpen(true)} />
 
       {/* Directory Table */}
       <BusinessDirectoryTable merchants={merchants} onOpenDetail={handleOpenSubModal} />
@@ -91,6 +94,24 @@ export const BusinessDirectoryTab: React.FC = () => {
         onClose={() => setIsSubModalOpen(false)}
         onSave={handleSaveSub}
         isSaving={isSavingSub}
+      />
+
+      {/* AI Budgets & Optional Model Modal */}
+      <AiBudgetModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        currentSettings={aiMetrics?.budgets ? {
+          dayBudget: aiMetrics.budgets.dayBudget,
+          weekBudget: aiMetrics.budgets.weekBudget,
+          monthBudget: aiMetrics.budgets.monthBudget,
+          optionalModel: aiMetrics.models?.optional ? {
+            enabled: aiMetrics.models.optional.enabled,
+            modelId: aiMetrics.models.optional.modelId,
+            name: aiMetrics.models.optional.name,
+            monthlyLimit: aiMetrics.models.optional.monthlyLimitPerAccount
+          } : undefined
+        } : null}
+        onSaved={fetchMerchants}
       />
     </div>
   );

@@ -7,6 +7,7 @@ export function useAdminDirectory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantAdminItem | null>(null);
   const [isSavingSub, setIsSavingSub] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -18,7 +19,9 @@ export function useAdminDirectory() {
     currency: 'CRC',
     businessType: 'restaurante',
     nextBillingDate: new Date().toISOString().split('T')[0],
-    status: 'active'
+    status: 'active',
+    glmLimit: 5,
+    gptLimit: 2
   });
 
   const showToast = (msg: string) => {
@@ -61,7 +64,9 @@ export function useAdminDirectory() {
       currency: m.currency || 'CRC',
       businessType: m.business_type || 'restaurante',
       nextBillingDate: m.next_billing_date || new Date().toISOString().split('T')[0],
-      status: m.status || 'active'
+      status: m.status || 'active',
+      glmLimit: m.glm_limit ?? 5,
+      gptLimit: m.gpt_limit ?? 2
     });
     setIsSubModalOpen(true);
   };
@@ -77,7 +82,7 @@ export function useAdminDirectory() {
         body: JSON.stringify(editSubForm)
       });
       if (res.ok) {
-        showToast('¡Suscripción actualizada exitosamente en Cloudflare D1!');
+        showToast('¡Suscripción y límites de IA actualizados en D1!');
         setIsSubModalOpen(false);
         fetchMerchants();
       } else {
@@ -110,6 +115,8 @@ export function useAdminDirectory() {
     fetchMerchants,
     isSubModalOpen,
     setIsSubModalOpen,
+    isBudgetModalOpen,
+    setIsBudgetModalOpen,
     selectedMerchant,
     editSubForm,
     setEditSubForm,

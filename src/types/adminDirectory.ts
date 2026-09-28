@@ -25,7 +25,23 @@ export interface MerchantAdminItem {
   created_at: string;
   next_billing_date?: string;
   total_messages?: number;
+  glm_limit?: number;
+  gpt_limit?: number;
   ai_usage?: AiUsageDetail;
+}
+
+export interface OptionalModelConfig {
+  enabled: boolean;
+  modelId: string;
+  name: string;
+  monthlyLimit: number;
+}
+
+export interface GlobalAiBudgetSettings {
+  dayBudget: number;
+  weekBudget: number;
+  monthBudget: number;
+  optionalModel: OptionalModelConfig;
 }
 
 export interface AiSpendingMetrics {
@@ -38,7 +54,14 @@ export interface AiSpendingMetrics {
     usage_total: number;
     limit_remaining: number;
     limit_total: number;
+    free_requests_used?: number;
+    free_requests_limit?: number;
     is_live: boolean;
+  };
+  budgets?: {
+    dayBudget: number;
+    weekBudget: number;
+    monthBudget: number;
   };
   limits: {
     glm_monthly_limit: number;
@@ -52,6 +75,7 @@ export interface AiSpendingMetrics {
       week: number;
       month: number;
       monthlyLimitPerAccount: number;
+      freeRequestsToday?: number;
     };
     gpt: {
       name: string;
@@ -60,6 +84,15 @@ export interface AiSpendingMetrics {
       week: number;
       month: number;
       monthlyLimitPerAccount: number;
+    };
+    optional?: {
+      name: string;
+      modelId: string;
+      day: number;
+      week: number;
+      month: number;
+      monthlyLimitPerAccount: number;
+      enabled: boolean;
     };
   };
   summary: {
@@ -80,4 +113,6 @@ export interface EditSubFormData {
   businessType: string;
   nextBillingDate: string;
   status: string;
+  glmLimit: number;
+  gptLimit: number;
 }
