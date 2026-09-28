@@ -106,16 +106,20 @@ Responde de manera concisa (máximo 2 párrafos), clara y cordial en español. S
           });
           if (res.ok) {
             const data = await res.json();
-            const aiReply = data.choices?.[0]?.message?.content?.trim();
+            let aiReply = data.choices?.[0]?.message?.content?.trim();
             if (aiReply) {
-              clearTimeout(timeoutId);
-              return {
-                answer: aiReply,
-                level: 'level_3_catalog',
-                levelLabel: 'Nivel 3: Asesoría IA Resiliente',
-                confidence: 0.95,
-                provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
-              };
+              aiReply = aiReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+              const isBad = /user safety|response safety|safety:\s*safe/i.test(aiReply) || /^(the user|i need to check)/i.test(aiReply);
+              if (!isBad && aiReply.length > 0) {
+                clearTimeout(timeoutId);
+                return {
+                  answer: aiReply,
+                  level: 'level_3_catalog',
+                  levelLabel: 'Nivel 3: Asesoría IA Resiliente',
+                  confidence: 0.95,
+                  provider: mId.includes('glm') ? 'OpenRouter GLM-5.3-Flash (Principal)' : 'OpenRouter DeepSeek (Respaldo)'
+                };
+              }
             }
           }
         } catch {}

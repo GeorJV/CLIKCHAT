@@ -82,6 +82,19 @@ async function callGoogleAIStudio(prompt, options = {}) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
+function sanitizeAiResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+  let text = rawText.trim().replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  if (/user safety:\s*safe|response safety:\s*safe|safety:\s*safe|^safety:\s*/i.test(text) || text.toLowerCase() === 'safe') return null;
+  if (/^(?:the user (?:is asking|says|wants|is)|i (?:need to|should|will|must) check|looking at the|based on the context)\b/i.test(text)) {
+    const parts = text.split(/\n\s*\n/);
+    const validPart = parts.find(p => !/^(?:the user|i need to|i should|looking at|based on)/i.test(p.trim()) && /[áéíóúñ¿¡]|\b(?:hola|buenas|con gusto|tenemos|nuestro|nuestra)\b/i.test(p));
+    if (validPart && validPart.trim().length > 10) text = validPart.trim();
+    else return null;
+  }
+  return text.length > 0 ? text : null;
+}
+
 // Unified LLM Generator with Tenant Key routing and graceful fallback
 async function generateCompletion({
   systemPrompt,
@@ -109,7 +122,9 @@ async function generateCompletion({
       model: activeModel,
       temperature: 0.35
     });
-    return { success: true, text: response, provider: activeModel };
+    const clean = sanitizeAiResponse(response);
+    if (!clean) throw new Error('Respuesta corrupta de GLM (guardrail o CoT leak)');
+    return { success: true, text: clean, provider: activeModel };
   } catch (err) {
     console.warn('⚠️ Fallo en GLM 5.3, ejecutando respaldo con DeepSeek V3:', err.message);
     try {
@@ -120,7 +135,9 @@ async function generateCompletion({
         model: 'deepseek/deepseek-chat',
         temperature: 0.35
       });
-      return { success: true, text: response, provider: 'deepseek/deepseek-chat' };
+      const clean = sanitizeAiResponse(response);
+      if (!clean) throw new Error('Respuesta corrupta de DeepSeek (guardrail o CoT leak)');
+      return { success: true, text: clean, provider: 'deepseek/deepseek-chat' };
     } catch (dsErr) {
       console.warn('⚠️ Fallo en DeepSeek, ejecutando respaldo final con GPT-4o Mini:', dsErr.message);
       try {
@@ -131,7 +148,9 @@ async function generateCompletion({
           model: 'openai/gpt-4o-mini',
           temperature: 0.25
         });
-        return { success: true, text: response, provider: 'openai/gpt-4o-mini' };
+        const clean = sanitizeAiResponse(response);
+        if (!clean) throw new Error('Respuesta corrupta de GPT-4o Mini');
+        return { success: true, text: clean, provider: 'openai/gpt-4o-mini' };
       } catch (gErr) {
         console.error('❌ Fallaron todos los modelos de la plataforma:', gErr.message);
         // 4. Fallback contextual si todo lo demás falla

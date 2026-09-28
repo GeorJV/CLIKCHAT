@@ -418,6 +418,37 @@ function getFallbackFaqs() {
   ];
 }
 
+function sanitizeAiResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+  let text = rawText.trim();
+
+  // 1. Quitar etiquetas de pensamiento <think>...</think>
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // 2. Erradicar fugas de evaluación de seguridad / guardrails de cualquier proveedor
+  const isSafetyLeak = (
+    /user safety:\s*safe/i.test(text) ||
+    /response safety:\s*safe/i.test(text) ||
+    /safety:\s*safe/i.test(text) ||
+    /^safety:\s*/i.test(text) ||
+    text.toLowerCase() === 'safe'
+  );
+  if (isSafetyLeak) return null;
+
+  // 3. Erradicar fugas de cadena de pensamiento en inglés (CoT leaks)
+  if (/^(?:the user (?:is asking|says|wants|is)|i (?:need to|should|will|must) check|looking at the|based on the context)\b/i.test(text)) {
+    const parts = text.split(/\n\s*\n/);
+    const validPart = parts.find(p => !/^(?:the user|i need to|i should|looking at|based on)/i.test(p.trim()) && /[áéíóúñ¿¡]|\b(?:hola|buenas|con gusto|tenemos|nuestro|nuestra)\b/i.test(p));
+    if (validPart && validPart.trim().length > 10) {
+      text = validPart.trim();
+    } else {
+      return null;
+    }
+  }
+
+  return text.length > 0 ? text : null;
+}
+
 async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo }) {
   let userCustomConfig = null;
   if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
@@ -503,7 +534,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         if (gResp.ok) {
           const gData = await gResp.json();
           const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (gText && gText.trim().length > 0) return { text: gText.trim(), provider: 'custom_google_ai' };
+          const clean = sanitizeAiResponse(gText);
+          if (clean) return { text: clean, provider: 'custom_google_ai' };
         }
       } catch (e) {
         console.warn('Custom Google AI falló:', e.message);
@@ -528,8 +560,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         });
         if (resp.ok) {
           const data = await resp.json();
-          const text = data.choices?.[0]?.message?.content;
-          if (text && text.trim().length > 0) return { text: text.trim(), provider: 'custom_openai' };
+          const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+          if (clean) return { text: clean, provider: 'custom_openai' };
         }
       } catch (e) {
         console.warn('Custom OpenAI falló:', e.message);
@@ -547,7 +579,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'X-Title': 'ClikChat Edge AI'
         },
         body: JSON.stringify({
-          model: cModel || 'deepseek/deepseek-chat',
+          model: cModel || 'z-ai/glm-5.3-flash',
           messages,
           temperature: 0.35,
           max_tokens: 650
@@ -555,8 +587,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       });
       if (resp.ok) {
         const data = await resp.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text && text.trim().length > 0) return { text: text.trim(), provider: 'custom_openrouter' };
+        const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+        if (clean) return { text: clean, provider: 'custom_openrouter' };
       }
     } catch (e) {
       console.warn('Custom OpenRouter falló:', e.message);
@@ -574,7 +606,6 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // 1. Cadena de Alta Disponibilidad & Ultra Bajo Costo:
   // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
-  const isGuardrailLeak = (t) => !t || /user safety:\s*safe/i.test(t) || /response safety:\s*safe/i.test(t) || /^safety:\s*safe/i.test(t);
 
   // Orden estricto: 1° GLM-5.3-Flash (Principal), 2° DeepSeek (Respaldo), 3° GPT-4o-mini (Respaldo Final)
   const modelPool = [
@@ -611,12 +642,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       if (resp.ok) {
         const data = await resp.json();
         const choice = data.choices?.[0]?.message;
-        let text = choice?.content;
-        if (text) {
-          text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-        }
-        if (text && !isGuardrailLeak(text) && text.length > 0) {
-          return { text, provider: dsModel };
+        const clean = sanitizeAiResponse(choice?.content);
+        if (clean) {
+          return { text: clean, provider: dsModel };
         }
       }
     } catch (e) {
@@ -646,8 +674,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     });
     if (resp.ok) {
       const data = await resp.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (text && !isGuardrailLeak(text) && text.trim().length > 0) return { text: text.trim(), provider: 'openai/gpt-4o-mini' };
+      const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+      if (clean) return { text: clean, provider: 'openai/gpt-4o-mini' };
     }
   } catch (e) {
     console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
@@ -664,11 +692,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         ]
       });
       if (cfResp?.response) {
-        const clean = cfResp.response.trim();
-        if (!isGuardrailLeak(clean) && clean.length > 0) {
+        const clean = sanitizeAiResponse(cfResp.response);
+        if (clean) {
           return { text: clean, provider: 'cloudflare_workers_ai' };
         }
-        console.warn('Workers AI devolvió reporte de seguridad en vez de respuesta comercial, descartando.');
+        console.warn('Workers AI devolvió reporte de seguridad o CoT leak, descartando.');
       }
     } catch (e) {
       console.warn('Workers AI Llama falló en Edge:', e.message);
@@ -3175,6 +3203,12 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           customKey: targetTenant.custom_llm_key,
           userTimeInfo
         });
+        const cleanReply = sanitizeAiResponse(llmResult?.text);
+        llmResult.text = cleanReply || (
+          targetTenant.business_type === 'restaurante'
+            ? '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?'
+            : '¡Hola! Con mucho gusto te atiendo. ¿En qué te puedo asesorar o qué producto estás buscando el día de hoy?'
+        );
         llmResult.text = adaptTemporalGreetings(llmResult.text, timePeriod);
 
         const botMsgId = 'msg_' + Date.now() + '_b';

@@ -90,9 +90,11 @@ export const ProductChatView: React.FC<Props> = ({
           }
         }
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
+        const rawAns = data?.answer || '';
+        const safeAns = (!rawAns || /user safety|response safety/i.test(rawAns) || /^(the user|i need to)/i.test(rawAns)) ? '¡Hola! Con gusto te atiendo. ¿En qué te puedo colaborar?' : rawAns;
         setMessages((prev) => [...prev, {
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-          content: data?.answer || `¡Hola! Con gusto te asesoro. ¿En qué te puedo colaborar hoy?`,
+          content: safeAns,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           quickActions: data?.quickActions,
           ragTrace: {
@@ -110,12 +112,8 @@ export const ProductChatView: React.FC<Props> = ({
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           setMessages((prev) => [...prev, {
             id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-            content: fb.answer,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: {
-              levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 120,
-              modelUsed: fb.provider, reasoning: fb.levelLabel
-            }
+            content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 120, modelUsed: fb.provider, reasoning: fb.levelLabel }
           }]);
         } catch {
           setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te puedo asesorar el día de hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
