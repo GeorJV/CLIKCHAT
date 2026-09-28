@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150 líneas por archivo).
-- **Última Actualización:** 2026-09-28 09:55 GMT-6
-- **Versión Actual:** 1.27.0 (Persistencia Híbrida Local-First Anti-F5 en Chat Móvil, Tienda y Servicios)
+- **Última Actualización:** 2026-09-28 10:12 GMT-6
+- **Versión Actual:** 1.28.0 (Sincronización Estricta de Saludo Inicial en Nivel 1 & D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev (24/7 Permanente en Cloudflare CDN)
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Persistencia Local-First (0ms): Mensajes, comanda y sesión respaldados en `localStorage` anti-F5 y anti-recargas móviles.
-  - Sincronización Nube Cloudflare D1: Registro continuo de conversaciones en segundo plano para el panel del dueño.
-  - Rol de Mesera Preservado 100%: Saludos cortos y naturales, venta cruzada y acumulación dinámica de comanda intactos.
+  - Saludo Inicial D1 Garantizado: Mensaje de bienvenida configurado por el dueño sincronizado en Nivel 1 ($0 tokens, <10ms).
+  - Normalización Anti-Puntuación: Detección insensible a signos (¡!¿?.,) para cortesía inmediata sin ceder a Nivel 3.
+  - Sincronización Catálogo & Vistas: `useProductResolver` hidrata `welcome_message` en rutas sin productId y persiste en caché.
   - Suite de Producción Verificada: 11/11 rutas operativas en vivo en Cloudflare Pages (`npm run verify`).
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
