@@ -4,7 +4,7 @@
 - **Última Actualización:** 2026-09-28 19:05 GMT-6
 - **Versión Actual:** 1.50.0 (Despliegue En Vivo y Verificación CDN 100% Exitosa - Cero Parpadeo)
 - **Deploy en Vivo:** https://clikchat.pages.dev (index-CPg2U2jR.js activo en CDN, 12/12 rutas OK)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit ebf0be6)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit a92342e)
 - **Estado Actual del Sistema:**
   - Erradicación Definitiva de Producto Zombi Robot: Eliminado de D1 el producto duplicado `prod_1789447247688` con imagen de robot de Cornell AI.
   - Sincronización Inmediata en Frame 0: `useProductResolver.ts` hidratado sincrónicamente desde caché local con prioridad estricta de ID y Slug (evitando colisiones por nombre suelto).
