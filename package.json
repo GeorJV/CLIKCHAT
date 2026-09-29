@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "verify": "node scripts/verify-deploy.js",
+    "deploy": "node scripts/deploy-pages.cjs",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "tunnel": "node scripts/start-tunnel.js"
   },

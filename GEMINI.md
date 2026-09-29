@@ -15,3 +15,4 @@ Este repositorio cuenta con el estándar **ARQMODULAR**, la Skill **arqai-setup*
      - **Estado Obligatorio:** Pasar tareas a `status: "ready_for_review"`. **PROHIBIDO** marcar como `"completed"` o `"done"`.
      - **Notificación en Pantalla Obligatoria:** Invocar `POST https://arqaistudio.pages.dev/api/agent/notify-user` con `{ title, message, agentName, type: "task_completed", projectId }`.
      - Entregar obligatoriamente las dos URLs: `gitUrl` (Git commit/repo) y `workUrl` (URL del proyecto web en vivo).
+8. **Máxima Eficiencia y Minimalismo Quirúrgico (Skill `codigo-eficiente`)**: Priorizar siempre la solución más rápida, directa y con la menor cantidad de código posible (KISS/YAGNI). Reutilizar componentes y utilidades existentes antes de crear código nuevo, con edición estrictamente quirúrgica y cero sobreingeniería.
