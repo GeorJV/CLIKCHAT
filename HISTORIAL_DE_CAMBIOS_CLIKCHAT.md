@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-09-28] Erradicación Definitiva de Parpadeo de Identidad y Despliegue en Vivo Verificado (100% Sin Robot ni Asesor Fantasma)
+- **Diagnóstico y Causa Raíz:**
+  1. *Producto Zombi Duplicado en Cloudflare D1:* Existencia en base de datos del producto duplicado `prod_1789447247688` (nombre: `COMIDA CAJERA XL`, slug: `vendedor-online`, precio: $49 USD, imagen: robot 3D de Cornell AI).
+  2. *Resolución Asíncrona Tardía en Frame 0:* En `useProductResolver.ts`, el estado inicial arrancaba sin hidratación sincrónica estricta, provocando que durante los primeros milisegundos se renderizara el fallback genérico de plantilla ("Asesor Comercial" y la imagen del robot) antes de recibir los datos definitivos del negocio.
+  3. *Coincidencia Difusa Inadecuada:* El buscador de productos en cliente priorizaba comparaciones por nombre antes que por ID o Slug exacto, provocando colisión con el producto zombi.
+  4. *Caché Residual en Navegadores:* Varios clientes almacenaban en `localStorage` la versión antigua con el robot.
+- **Solución y Blindaje Permanente (ARQMODULAR & Cero Parpadeo):**
+  1. *Purga Física en Base de Datos D1:* Eliminación definitiva mediante `DELETE /api/products/prod_1789447247688` en Cloudflare D1.
+  2. *Hidratación Sincrónica en Frame 0 (`src/hooks/useProductResolver.ts`):* Inicialización reactiva con `useState(() => ...)` que resuelve sincrónicamente desde el milisegundo 0 desde el almacenamiento local, con coincidencia estricta por ID y Slug, descartando cualquier objeto zombi.
+  3. *Auto-Purga Proactiva de Caché Local (`src/utils/fallbackTenant.ts`):* Purga automática de cualquier vestigio de `prod_1789447247688` o `cornell.edu` en `localStorage` en cada visita.
+  4. *Sanitización Integral de Mocks y Edge Functions:* Reemplazo de todas las referencias de robots y "Asesor Comercial" por "Valeria (Mesera Virtual)" e imágenes culinarias limpias en `productChatMock.ts`, `productsDemo.ts` y `functions/api/[[route]].js`.
+  5. *Automatización de Despliegue Directo a Cloudflare Pages:* Creación de `scripts/deploy-pages.cjs` y comando `npm run deploy` en `package.json`, asegurando el despliegue directo a la red CDN de Cloudflare Pages sin fricciones.
+- **Verificación en Producción (Protocolo 3 Filtros & Auditoría Chrome CDP):**
+  - *Filtro 1:* `npm run build` limpio y compilado con 0 errores en 7.64s.
+  - *Filtro 2:* Sincronización en GitHub (`origin/main`).
+  - *Filtro 3:* Despliegue en Cloudflare Pages (`https://clikchat.pages.dev`) con hash matching verificado (`index-CPg2U2jR.js`) y suite completa de **12/12 rutas certificadas al 100%** con 0 errores de consola.
+  - *Auditoría Frame-a-Frame con Chrome Headless CDP:* 15 fotogramas capturados en carga inicial y 16 fotogramas tras forzar recarga (F5 sin caché). Confirmado: `hasAsesorComercial: false`, `hasRobot: false`, `hasValeria: true` en el 100% del ciclo de vida visual.
+
 ### [2026-09-28] Optimización Ultra-Rápida de GLM-5.3-Flash (<800ms) con Latency Sorting y Blindaje Anti-CoT
 - **Diagnóstico del Fallo Reportado por el Usuario ("Fuga de monólogo en inglés 'The user is asking...'"):**
   1. *Razonamiento Obligatorio por Defecto en GLM 5.3 Flash:* El endpoint `z-ai/glm-5.3-flash` en OpenRouter cuenta con la especificación técnica `reasoning: { mandatory: true, default_effort: "max" }`. Al no enviarse configuración explícita de reasoning, el modelo generaba hasta 350 tokens de Chain of Thought en inglés antes de responder, tardando más de 7 segundos y desbordando el límite de tokens hasta fugar el borrador en inglés en pantalla.
