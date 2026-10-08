@@ -13,6 +13,8 @@ interface Props {
   orderItems?: OrderItem[];
   orderTotal?: number | null;
   isRestaurant?: boolean;
+  onUpdateQuantity?: (index: number, newQty: number) => void;
+  onRemoveItem?: (index: number) => void;
   onCloseDetail: () => void;
   onProceedBuyDetail: () => void;
   onCloseFullscreen: () => void;
@@ -25,6 +27,7 @@ interface Props {
 export const ProductModalsContainer: React.FC<Props> = ({
   product, storeName, detailModal, fullscreenOpen, checkoutOpen,
   orderItems = [], orderTotal = null, isRestaurant = false,
+  onUpdateQuantity, onRemoveItem,
   onCloseDetail, onProceedBuyDetail, onCloseFullscreen,
   onAskAboutProduct, onDirectCheckout, onCloseCheckout, onConfirmCheckout
 }) => {
@@ -38,6 +41,8 @@ export const ProductModalsContainer: React.FC<Props> = ({
           orderItems={orderItems}
           orderTotal={orderTotal}
           isRestaurant={isRestaurant}
+          onUpdateQuantity={onUpdateQuantity}
+          onRemoveItem={onRemoveItem}
           onClose={onCloseDetail}
           onProceedBuy={onProceedBuyDetail}
         />

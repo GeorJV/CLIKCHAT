@@ -96,6 +96,30 @@ export function useProductChatOrder({
     }
   };
 
+  const updateItemQuantity = (index: number, newQty: number) => {
+    setOrderItems((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const target = prev[index];
+      const oldQty = Number(target.quantity) || 1;
+      const price = Number(target.price) || 0;
+      if (newQty <= 0) {
+        const next = prev.filter((_, i) => i !== index);
+        setOrderTotal((t) => Math.max(0, (t ?? 0) - (price * oldQty)));
+        return next;
+      }
+      const diff = newQty - oldQty;
+      const next = [...prev];
+      next[index] = { ...target, quantity: newQty };
+      setOrderTotal((t) => Math.max(0, (t ?? 0) + (diff * price)));
+      return next;
+    });
+    triggerPulse();
+  };
+
+  const removeOrderItem = (index: number) => {
+    updateItemQuantity(index, 0);
+  };
+
   const resetOrder = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(orderTotalKey);
@@ -116,6 +140,8 @@ export function useProductChatOrder({
     setOrderItems,
     triggerPulse,
     registerAddedItem,
+    updateItemQuantity,
+    removeOrderItem,
     syncFromBotReply,
     resetOrder
   };

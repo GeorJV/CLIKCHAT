@@ -23,7 +23,7 @@ export const ProductChatView: React.FC<Props> = ({
   const isRestaurant = businessType === 'restaurante';
   const {
     orderTotal, orderItems, isTotalPulsing, orderItemsCount,
-    setOrderTotal, registerAddedItem, syncFromBotReply, resetOrder, triggerPulse
+    setOrderTotal, registerAddedItem, updateItemQuantity, removeOrderItem, syncFromBotReply, resetOrder, triggerPulse
   } = useProductChatOrder({
     tenantSlug, isRestaurant, defaultPrice: selectedProduct?.price || null
   });
@@ -151,6 +151,7 @@ export const ProductChatView: React.FC<Props> = ({
       <ProductModalsContainer
         product={selectedProduct} storeName={storeName} detailModal={detailModal} fullscreenOpen={fullscreenOpen} checkoutOpen={checkoutOpen}
         orderItems={orderItems} orderTotal={orderTotal} isRestaurant={isRestaurant}
+        onUpdateQuantity={updateItemQuantity} onRemoveItem={removeOrderItem}
         onCloseDetail={() => setDetailModal(null)} onProceedBuyDetail={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
         onCloseFullscreen={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
         onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout}

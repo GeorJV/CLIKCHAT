@@ -12,6 +12,8 @@ interface Props {
   orderTotal?: number | null;
   isRestaurant?: boolean;
   storeName?: string;
+  onUpdateQuantity?: (index: number, newQty: number) => void;
+  onRemoveItem?: (index: number) => void;
 }
 
 export const ProductDetailModal: React.FC<Props> = ({
@@ -22,7 +24,9 @@ export const ProductDetailModal: React.FC<Props> = ({
   orderItems = [],
   orderTotal = null,
   isRestaurant = false,
-  storeName = 'Restaurante'
+  storeName = 'Restaurante',
+  onUpdateQuantity,
+  onRemoveItem
 }) => {
   if (!product) return null;
 
@@ -78,6 +82,8 @@ export const ProductDetailModal: React.FC<Props> = ({
               orderTotal={orderTotal}
               currency={product.currency}
               storeName={storeName}
+              onUpdateQuantity={onUpdateQuantity}
+              onRemoveItem={onRemoveItem}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -133,7 +139,7 @@ export const ProductDetailModal: React.FC<Props> = ({
           >
             <div className="flex items-center justify-center transition-all duration-300 ease-out transform group-hover:-translate-y-10 group-hover:opacity-0 relative z-10">
               <span className="text-[#16120C] font-black text-sm tracking-wide drop-shadow-sm">
-                {isOrderTicket && orderTotal ? `${product.currency === 'CRC' ? '₡' : '$'}${Math.round(orderTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}` : `$${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}`}
+                {isOrderTicket && orderTotal !== null && orderTotal !== undefined ? `${product.currency === 'CRC' ? '₡' : '$'}${Math.round(orderTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}` : `$${product.price % 1 === 0 ? product.price : product.price.toFixed(2)}`}
               </span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ease-out transform translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 z-10">

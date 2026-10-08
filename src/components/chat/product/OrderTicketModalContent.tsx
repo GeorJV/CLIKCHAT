@@ -1,5 +1,5 @@
 import React from 'react';
-import { Receipt, UtensilsCrossed, ShoppingBag, Clock } from 'lucide-react';
+import { Receipt, UtensilsCrossed, ShoppingBag, Clock, Plus, Minus, Trash2 } from 'lucide-react';
 import { OrderItem } from '../../../types/productChat';
 
 interface Props {
@@ -7,13 +7,17 @@ interface Props {
   orderTotal: number | null;
   currency?: string;
   storeName?: string;
+  onUpdateQuantity?: (index: number, newQty: number) => void;
+  onRemoveItem?: (index: number) => void;
 }
 
 export const OrderTicketModalContent: React.FC<Props> = ({
   orderItems,
   orderTotal,
   currency = 'CRC',
-  storeName = 'Restaurante'
+  storeName = 'Restaurante',
+  onUpdateQuantity,
+  onRemoveItem
 }) => {
   const isCRC = currency.toUpperCase() === 'CRC';
   const sym = isCRC ? '₡' : (currency.toUpperCase() === 'EUR' ? '€' : '$');
@@ -74,26 +78,55 @@ export const OrderTicketModalContent: React.FC<Props> = ({
           return (
             <div
               key={`order-it-${idx}`}
-              className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-[#141313] border border-zinc-800/90 hover:border-amber-500/30 transition group"
+              className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-[#141313] border border-zinc-800/90 hover:border-amber-500/30 transition group"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="shrink-0 px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black text-xs">
-                  {qty}x
+              <div className="min-w-0 flex-1">
+                <h5 className="font-semibold text-zinc-100 text-xs truncate max-w-[170px] sm:max-w-xs">
+                  {item.name}
+                </h5>
+                <span className="text-[11px] text-zinc-400">
+                  Unitario: {sym}{formatPrice(unitPrice)}
                 </span>
-                <div className="min-w-0">
-                  <h5 className="font-semibold text-zinc-100 text-xs truncate max-w-[200px] sm:max-w-xs">
-                    {item.name}
-                  </h5>
-                  <span className="text-[11px] text-zinc-400">
-                    Unitario: {sym}{formatPrice(unitPrice)}
-                  </span>
-                </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="text-xs font-black text-amber-300 font-mono">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Stepper [-] qty [+] */}
+                <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onUpdateQuantity ? onUpdateQuantity(idx, qty - 1) : null}
+                    className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                    title={qty === 1 ? 'Eliminar ítem' : 'Restar una unidad'}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="w-5 text-center text-xs font-bold text-emerald-300 font-mono">
+                    {qty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateQuantity ? onUpdateQuantity(idx, qty + 1) : null}
+                    className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                    title="Sumar una unidad"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Subtotal */}
+                <span className="text-xs font-black text-amber-300 font-mono min-w-[50px] text-right">
                   {sym}{formatPrice(lineSubtotal)}
                 </span>
+
+                {/* Eliminar ítem completo */}
+                <button
+                  type="button"
+                  onClick={() => onRemoveItem ? onRemoveItem(idx) : null}
+                  className="p-1 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition active:scale-95 cursor-pointer"
+                  title="Eliminar de la orden"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           );
