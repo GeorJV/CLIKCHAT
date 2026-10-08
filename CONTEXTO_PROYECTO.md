@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-09-28 19:05 GMT-6
-- **Versión Actual:** 1.50.0 (Despliegue En Vivo y Verificación CDN 100% Exitosa - Cero Parpadeo)
-- **Deploy en Vivo:** https://clikchat.pages.dev (index-CPg2U2jR.js activo en CDN, 12/12 rutas OK)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit a92342e)
+- **Última Actualización:** 2026-10-07 20:07 GMT-6
+- **Versión Actual:** 1.51.0 (Gestión Interactiva de Agregados: Sumar, Restar, Eliminar y Recálculo Dinámico)
+- **Deploy en Vivo:** https://clikchat.pages.dev (index-CWjvdLTe.js activo en CDN, 12/12 rutas OK)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit 8553226)
 - **Estado Actual del Sistema:**
-  - Erradicación Definitiva de Producto Zombi Robot: Eliminado de D1 el producto duplicado `prod_1789447247688` con imagen de robot de Cornell AI.
-  - Sincronización Inmediata en Frame 0: `useProductResolver.ts` hidratado sincrónicamente desde caché local con prioridad estricta de ID y Slug (evitando colisiones por nombre suelto).
-  - Identidad Blindada: `Valeria (Mesera Virtual)` asegurada desde el milisegundo 0 en `useProductResolver`, `useTenantData`, `fallbackTenant` y `functions/api/[[route]].js`.
-  - Auto-Purga de Caché Local: `fallbackTenant.ts` purga automáticamente cualquier registro zombi de `localStorage` en cada visita.
-  - Verificado en Chrome Headless CDP (Zero Flash confirmado frame a frame en carga y recarga con 0 errores).
+  - Detalle de la Orden Interactivo: Añadidos controles stepper `[-] [qty] [+]` y botón de papelera `🗑️` por ítem en `OrderTicketModalContent.tsx`.
+  - Recálculo Inmediato del Total: `useProductChatOrder.ts` recalcula `orderTotal` y lo sincroniza al instante en el ticket, en el botón de comanda y en `localStorage`.
+  - Estado Vacío Limpio: Si la comanda llega a 0 ítems, muestra el mensaje de bienvenida y resetea el total matemáticamente sin romper la UI.
+  - Verificado en Producción: Build limpio en 14.89s, CDN global activo y 12/12 rutas auditadas en Chrome Headless con 0 errores.
   - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
