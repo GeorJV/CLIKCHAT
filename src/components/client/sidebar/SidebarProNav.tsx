@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   ChevronDown, ChevronRight, LayoutDashboard, Users,
-  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy, UserCheck
+  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy, UserCheck, MessageCircle
 } from 'lucide-react';
 
 interface SidebarProNavProps {
@@ -114,6 +114,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         {openCats.ventas && (
           <nav className="space-y-0.5">
             {renderItem('products', isService ? 'Mis Servicios' : 'Mis Productos', ShoppingBag)}
+            {renderItem('whatsapp', 'WhatsApp Oficial', MessageCircle)}
           </nav>
         )}
       </div>

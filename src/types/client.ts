@@ -12,6 +12,7 @@ export type ClientTab =
   | 'clientes'
   | 'agenda'
   | 'training'
+  | 'whatsapp'
   | 'soporte'
   | 'user'
   | 'account';

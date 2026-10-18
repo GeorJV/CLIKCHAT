@@ -926,6 +926,275 @@ export async function onRequest(context) {
     }
 
     // ==============================================================================
+    // WHATSAPP BUSINESS CLOUD API INTEGRATION & WEBHOOKS
+    // ==============================================================================
+
+    // GET /api/whatsapp/webhook -> Meta Webhook Verification Handshake
+    if (segments[0] === 'whatsapp' && segments[1] === 'webhook' && request.method === 'GET') {
+      const mode = url.searchParams.get('hub.mode');
+      const token = url.searchParams.get('hub.verify_token');
+      const challenge = url.searchParams.get('hub.challenge');
+      const tenantParam = url.searchParams.get('tenant') || url.searchParams.get('tenantSlug');
+
+      if (mode === 'subscribe' && token) {
+        const expectedToken = tenantParam ? ('clikchat_wa_' + tenantParam) : 'clikchat_wa';
+        if (token === expectedToken || token.startsWith('clikchat_wa')) {
+          return new Response(challenge, {
+            status: 200,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+          });
+        }
+        try {
+          const rows = await executeD1('SELECT verify_token FROM whatsapp_integrations WHERE verify_token = ?1 LIMIT 1', [token]);
+          if (rows.length > 0) {
+            return new Response(challenge, {
+              status: 200,
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            });
+          }
+        } catch (e) {}
+        return new Response(challenge, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+      return jsonResponse({ error: 'Verificación fallida de webhook' }, 403);
+    }
+
+    // POST /api/whatsapp/webhook -> Incoming WhatsApp Message from Customer
+    if (segments[0] === 'whatsapp' && segments[1] === 'webhook' && request.method === 'POST') {
+      let payload = {};
+      try { payload = await request.json(); } catch (e) {}
+
+      const entry = payload?.entry?.[0];
+      const change = entry?.changes?.[0];
+      const val = change?.value;
+      const msg = val?.messages?.[0];
+
+      if (!msg) {
+        return jsonResponse({ status: 'ignored_or_ack' });
+      }
+
+      const fromPhone = msg.from;
+      const incomingText = msg.text?.body || (msg.button?.text) || '';
+      const phoneNumberId = val?.metadata?.phone_number_id;
+
+      if (!incomingText || !fromPhone) {
+        return jsonResponse({ status: 'no_text_content' });
+      }
+
+      // 1. Identify Tenant
+      let tenantRow = null;
+      let integrationRow = null;
+      try {
+        if (phoneNumberId) {
+          const rows = await executeD1('SELECT * FROM whatsapp_integrations WHERE phone_number_id = ?1 LIMIT 1', [phoneNumberId]);
+          if (rows.length > 0) integrationRow = rows[0];
+        }
+      } catch (e) {}
+
+      const tenantParam = url.searchParams.get('tenant') || url.searchParams.get('tenantSlug');
+      try {
+        if (integrationRow?.tenant_id) {
+          const t = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [integrationRow.tenant_id]);
+          if (t.length > 0) tenantRow = t[0];
+        } else if (tenantParam) {
+          const t = await executeD1('SELECT * FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]);
+          if (t.length > 0) tenantRow = t[0];
+        }
+        if (!tenantRow) {
+          const defT = await executeD1('SELECT * FROM tenants LIMIT 1');
+          if (defT.length > 0) tenantRow = defT[0];
+        }
+      } catch (e) {}
+
+      if (!tenantRow) {
+        tenantRow = getFallbackTenant('comida-callejera-xl');
+      }
+
+      const actualTenantId = tenantRow.id;
+      const targetSlug = tenantRow.slug || 'comida-callejera-xl';
+      const sessionId = 'wa_' + fromPhone;
+
+      // 2. Log incoming customer message to D1
+      const userMsgId = 'msg_' + Date.now() + '_wa_u';
+      try {
+        await executeD1(
+          'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [userMsgId, sessionId, actualTenantId, 'user', incomingText, 'user_whatsapp']
+        );
+      } catch (e) {}
+
+      // 3. Process with RAG Engine
+      let botAnswer = '¡Hola! Con mucho gusto te atiendo por WhatsApp.';
+      try {
+        const chatReq = new Request(url.origin + '/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantSlug: targetSlug,
+            tenantId: actualTenantId,
+            sessionId,
+            message: incomingText
+          })
+        });
+        const chatRes = await onRequest({ request: chatReq, env });
+        const chatData = await chatRes.json();
+        if (chatData?.answer) {
+          botAnswer = chatData.answer;
+        }
+      } catch (ragErr) {
+        console.warn('RAG internal processing error:', ragErr.message);
+      }
+
+      // 4. Send reply via Meta Cloud API if token is configured
+      const accessToken = integrationRow?.access_token || env?.WHATSAPP_ACCESS_TOKEN;
+      if (accessToken && phoneNumberId) {
+        try {
+          await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: fromPhone,
+              type: 'text',
+              text: { body: botAnswer }
+            })
+          });
+        } catch (waErr) {
+          console.warn('WhatsApp Graph API send error:', waErr.message);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        session: sessionId,
+        replied: Boolean(accessToken && phoneNumberId),
+        answer: botAnswer
+      });
+    }
+
+    // GET /api/whatsapp/config
+    if (segments[0] === 'whatsapp' && segments[1] === 'config' && request.method === 'GET') {
+      const slug = url.searchParams.get('tenantSlug') || url.searchParams.get('tenant');
+      let tenantId = slug;
+      try {
+        if (slug) {
+          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [slug]);
+          if (tRows.length > 0) tenantId = tRows[0].id;
+        }
+        const rows = await executeD1('SELECT * FROM whatsapp_integrations WHERE tenant_id = ?1 LIMIT 1', [tenantId]);
+        if (rows.length > 0) {
+          return jsonResponse({ success: true, config: rows[0] });
+        }
+      } catch (e) {}
+
+      return jsonResponse({
+        success: true,
+        config: {
+          phone_number_id: '',
+          business_phone: '',
+          verify_token: 'clikchat_wa_' + (slug || 'token'),
+          access_token: '',
+          status: 'disconnected',
+          webhook_url: `${url.origin}/api/whatsapp/webhook?tenant=${slug || 'default'}`
+        }
+      });
+    }
+
+    // POST /api/whatsapp/config
+    if (segments[0] === 'whatsapp' && segments[1] === 'config' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantSlug, phone_number_id, business_phone, access_token, verify_token, status = 'connected' } = body;
+
+      let tenantId = tenantSlug;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantSlug]);
+        if (tRows.length > 0) tenantId = tRows[0].id;
+
+        const existing = await executeD1('SELECT id FROM whatsapp_integrations WHERE tenant_id = ?1 LIMIT 1', [tenantId]);
+        if (existing.length > 0) {
+          await executeD1(
+            'UPDATE whatsapp_integrations SET phone_number_id = ?1, business_phone = ?2, access_token = ?3, verify_token = ?4, status = ?5, updated_at = datetime(\'now\') WHERE tenant_id = ?6',
+            [phone_number_id || '', business_phone || '', access_token || '', verify_token || ('clikchat_wa_' + tenantSlug), status, tenantId]
+          );
+        } else {
+          const newId = 'wa_cfg_' + Date.now();
+          await executeD1(
+            'INSERT INTO whatsapp_integrations (id, tenant_id, phone_number_id, business_phone, access_token, verify_token, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+            [newId, tenantId, phone_number_id || '', business_phone || '', access_token || '', verify_token || ('clikchat_wa_' + tenantSlug), status]
+          );
+        }
+        return jsonResponse({ success: true, message: 'Configuración de WhatsApp guardada con éxito' });
+      } catch (err) {
+        return jsonResponse({ error: 'Error al guardar en base de datos: ' + err.message }, 500);
+      }
+    }
+
+    // POST /api/whatsapp/test
+    if (segments[0] === 'whatsapp' && segments[1] === 'test' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantSlug, recipientPhone, testMessage } = body;
+
+      if (!recipientPhone) {
+        return jsonResponse({ error: 'Número de teléfono destinatario requerido' }, 400);
+      }
+
+      let integration = null;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantSlug]);
+        const tenantId = tRows[0]?.id || tenantSlug;
+        const rows = await executeD1('SELECT * FROM whatsapp_integrations WHERE tenant_id = ?1 LIMIT 1', [tenantId]);
+        if (rows.length > 0) integration = rows[0];
+      } catch (e) {}
+
+      const accessToken = integration?.access_token || env?.WHATSAPP_ACCESS_TOKEN;
+      const phoneNumberId = integration?.phone_number_id || env?.WHATSAPP_PHONE_NUMBER_ID;
+
+      if (!accessToken || !phoneNumberId) {
+        return jsonResponse({
+          error: 'No se encontraron Phone Number ID o Token de Acceso configurados para esta tienda.'
+        }, 400);
+      }
+
+      const cleanPhone = recipientPhone.replace(/[^0-9]/g, '');
+      const textToSend = testMessage || '¡Hola! 👋 Este es un mensaje de prueba de tu bot ClikChat conectado a WhatsApp.';
+
+      try {
+        const metaRes = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: cleanPhone,
+            type: 'text',
+            text: { body: textToSend }
+          })
+        });
+
+        const metaData = await metaRes.json();
+        if (!metaRes.ok) {
+          return jsonResponse({
+            error: metaData?.error?.message || 'Error retornado por Meta WhatsApp Cloud API'
+          }, 400);
+        }
+
+        return jsonResponse({
+          success: true,
+          message: '¡Mensaje de prueba enviado con éxito a WhatsApp!',
+          metaMessageId: metaData?.messages?.[0]?.id
+        });
+      } catch (fetchErr) {
+        return jsonResponse({ error: 'Fallo al conectar con Meta Graph API: ' + fetchErr.message }, 500);
+      }
+    }
+
+    // ==============================================================================
     // AUTHENTICATION & MULTI-TENANT ONBOARDING ROUTES
     // ==============================================================================
 

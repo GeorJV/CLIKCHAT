@@ -16,6 +16,7 @@ import { AITrainingTab } from './training/AITrainingTab';
 import { SupportTab } from './support/SupportTab';
 import { UserProfileTab } from './UserProfileTab';
 import { MyAccountTab } from './account/MyAccountTab';
+import { WhatsAppManagerTab } from './whatsapp/WhatsAppManagerTab';
 import { SwitchTenantModal } from './modals/SwitchTenantModal';
 
 interface ClientDashboardProps {
@@ -133,17 +134,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           )}
           {activeTab === 'training' && (
             <AITrainingTab
-              tenantId={tenant?.id}
-              tenant={tenant}
-              onUpdateSettings={updateSettings}
-              unresolved={unresolved}
-              onResolve={resolveQuery}
-              faqs={faqs}
-              onCreateFaq={createFaq}
-              onUpdateFaq={updateFaq}
-              onDeleteFaq={deleteFaq}
-              tenantSlug={currentSlug}
+              tenantId={tenant?.id} tenant={tenant} onUpdateSettings={updateSettings}
+              unresolved={unresolved} onResolve={resolveQuery} faqs={faqs}
+              onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} tenantSlug={currentSlug}
             />
+          )}
+          {activeTab === 'whatsapp' && (
+            <WhatsAppManagerTab tenant={tenant} tenantSlug={currentSlug} />
           )}
           {activeTab === 'soporte' && (
             <SupportTab ownerEmail={user?.email || tenant?.owner_email} tenantName={tenant?.name} />
@@ -152,13 +149,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'clientes' && <ClientsTab tenantId={tenant?.id} />}
           {activeTab === 'agenda' && <AgendaTab tenantId={tenant?.id} />}
           {(activeTab === 'account' || activeTab === 'user') && (
-            <MyAccountTab
-              tenant={tenant}
-              user={user}
-              onUpdateSettings={updateSettings}
-            />
+            <MyAccountTab tenant={tenant} user={user} onUpdateSettings={updateSettings} />
           )}
-          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user'].includes(activeTab) && (
+          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user'].includes(activeTab) && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
               onOpenLiveChat={onOpenLiveChat} faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq}
