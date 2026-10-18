@@ -108,13 +108,15 @@ export function useAppRouter() {
     }
   }
 
+  const RESERVED_PATHS = new Set(['user', 'panel', 'dashboard', 'admin', 'super-admin', 'login', 'registro', 'producto', 'servicio', 'chat', 'api', 'inicio', 'landing']);
+  const isDirectTenantUrl = parts.length === 1 && !RESERVED_PATHS.has(parts[0]);
   const isChatProductUrl = parts[0] === 'chat' && parts.length >= 3;
-  const isChatSlugUrl = parts[0] === 'chat' && parts.length === 2;
+  const isChatSlugUrl = (parts[0] === 'chat' && parts.length === 2) || isDirectTenantUrl;
   if (isChatProductUrl) {
     routeTenantSlug = decodeURIComponent(parts[1]);
     routeProductId = decodeURIComponent(parts[2]);
   } else if (isChatSlugUrl) {
-    routeTenantSlug = decodeURIComponent(parts[1]);
+    routeTenantSlug = decodeURIComponent(parts[0] === 'chat' ? parts[1] : parts[0]);
   }
 
   // Normalización limpia de URLs anteriores con parámetros ?t= y ?p=

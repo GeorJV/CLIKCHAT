@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tenant } from '../../../types';
 import { SettingsBusinessTypeStep } from '../settings/SettingsBusinessTypeStep';
+import { BusinessLandingCard } from '../BusinessLandingCard';
 import { ImageUploadField } from '../ImageUploadField';
 import { RefreshCw, Save, CheckCircle2 } from 'lucide-react';
 
@@ -81,6 +82,7 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
 
   return (
     <div className="space-y-4 max-w-5xl">
+      <BusinessLandingCard slug={slug || effectiveSlug} />
       <SettingsBusinessTypeStep selectedBizType={bizType} onSelectBizType={(t) => { isDirtyRef.current = true; setBizType(t); }} />
       <form onSubmit={handleSubmit} className="onyx-card rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
