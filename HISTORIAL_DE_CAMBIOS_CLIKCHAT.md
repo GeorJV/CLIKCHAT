@@ -16,6 +16,21 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-17] Manejador de Objeciones Q&A Nivel 2 y Simulador en Vivo con Corrección 1-Clic (Adaptativo Productos y Servicios)
+- **Diagnóstico y Necesidad de Negocio:**
+  1. *Fricción en Entrenamiento de IA:* El dueño del negocio requiere alimentar y calibrar el comportamiento del chatbot comercial sin conocimientos técnicos de vectores o prompts complejos.
+  2. *Control Determinista de Respuestas Comerciales:* Necesidad de blindar respuestas exactas a preguntas frecuentes y objeciones de clientes (métodos de pago, envíos, citas, garantías, horarios) garantizando 0 alucinaciones, $0 costo de inferencia LLM y latencia <50ms.
+  3. *Unificación Adaptativa Productos vs Servicios:* Negocios de venta física (menús, catálogo, comandas) y negocios de citas/servicios (barberías, clínicas, tarifas, duración) deben operar sobre el mismo panel sin duplicación de código ni sobreingeniería.
+- **Solución Implementada (ARQMODULAR & Cero Sobreingeniería):**
+  1. *Manejador de Objeciones (Q&A Nivel 2 - `ObjectionsManagerSection.tsx`, `ObjectionCard.tsx`, `ObjectionModal.tsx`):* Interfaz visual tipo Gatillo ➔ Respuesta con insignias de Nivel 2, buscador, filtrado por categorías y plantillas precargadas con 1 clic para productos (+ Envíos, + Sinpe, + Garantías) y servicios (+ Agendar citas, + Parqueo/Ubicación, + Cancelaciones).
+  2. *Simulador en Vivo con Corrección 1-Clic (`LiveBotSimulator.tsx`, `SimulatorChatBubble.tsx`, `CorrectionModal.tsx`):* Consola de chat interactiva en tiempo real donde el dueño prueba a su bot. Cada respuesta del bot incluye el botón `[ ✏️ Corregir respuesta ]` que despliega un modal para introducir la respuesta deseada y guardarla al instante como Regla de Oro Nivel 2, actualizando la conversación en vivo.
+  3. *Panel Adaptativo Dinámico (`ClientSidebar.tsx`, `SidebarSimpleNav.tsx`, `SidebarProNav.tsx`):* Adaptación automática de etiquetas y navegación según `business_type`: muestra "Mis Servicios" y prioriza "Agenda de Citas" para servicios, o "Mis Productos" para comercios/restaurantes.
+  4. *Hub Stepper Onboarding (`OnboardingStepper.tsx`):* Stepper de 4 pasos para guiar al usuario desde la carga de catálogo/servicios hasta el link/QR final.
+- **Verificación en Producción:**
+  - Compilación Vite limpia en 15.52s con 0 errores (`npm run build`).
+  - Despliegue directo y verificado a la red CDN de Cloudflare Pages (`npm run deploy`) con bundle activo `index-COOeIGQn.js`.
+  - Notificación enviada a ARQ AI Studio (`task_completed`, `status: ready_for_review`).
+
 ### [2026-09-28] Erradicación Definitiva de Parpadeo de Identidad y Despliegue en Vivo Verificado (100% Sin Robot ni Asesor Fantasma)
 - **Diagnóstico y Causa Raíz:**
   1. *Producto Zombi Duplicado en Cloudflare D1:* Existencia en base de datos del producto duplicado `prod_1789447247688` (nombre: `COMIDA CAJERA XL`, slug: `vendedor-online`, precio: $49 USD, imagen: robot 3D de Cornell AI).
