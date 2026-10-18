@@ -4,7 +4,7 @@
 - **Última Actualización:** 2026-10-18 10:00 GMT-6
 - **Versión Actual:** 1.57.0 (Asistente Visual de Activación Rápida y Navegación Guiada)
 - **Deploy en Vivo:** https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 9fb8440)
 - **Estado Actual del Sistema:**
   - Asistente Visual de Activación Rápida: `AgentSetupFlowHero.tsx` en el Dashboard (`ChatbotQLinkTab.tsx`) con 4 tarjetas de avance (0% a 100%), atajos directos y modo minimizable.
   - Navegación Guiada en Barra Lateral: `SidebarSimpleNav.tsx` reorganizado en 3 secciones: `🚀 Configuración (4 Pasos)` con numeración del 1 al 4, `📊 Operación & Clientes` y `⚙️ Sistema`.
