@@ -1249,12 +1249,48 @@ export async function onRequest(context) {
       // 3. Create tenant
       const tenantId = 'ten_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
       const isRestaurant = businessType === 'restaurante';
+      const isServices = businessType === 'servicios';
+      const isSupport = businessType === 'soporte';
+
       const defaultWelcome = isRestaurant
         ? '¡Hola! 👋 Bienvenido a nuestro restaurante. ¿Deseas ver el menú o ordenar tu pedido?'
-        : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?';
+        : isServices
+          ? '¡Hola! 👋 Bienvenido. ¿En qué servicio te podemos asesorar o deseas agendar una cita?'
+          : isSupport
+            ? '¡Hola! 👋 Bienvenido a nuestro centro de atención. ¿En qué podemos colaborarte hoy?'
+            : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?';
+
       const defaultPrompt = isRestaurant
         ? 'Eres el asesor comercial de nuestro restaurante. Tu objetivo es tentar el apetito del cliente, guiarlo a armar su orden, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugerirle acompañamientos o bebidas.'
-        : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar sin inventar información no verificada.';
+        : isServices
+          ? 'Eres el asesor comercial y de agendamiento. Tu objetivo es identificar la necesidad del cliente, explicar las tarifas del servicio y coordinar día y hora para su cita.'
+          : isSupport
+            ? 'Eres el asesor de servicio al cliente y comercial. Tu objetivo es responder dudas con precisión y cordialidad, apoyándote en la base de conocimientos y canalizando a un asesor humano.'
+            : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar sin inventar información no verificada.';
+
+      const defaultSalesFlow = isRestaurant
+        ? `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (OBLIGATORIO - RESPETA ESTE ORDEN STRICTAMENTE)]:
+PASO 1 (Bienvenida & Apertura): Saluda con calidez y dinamismo como un mesero atento. Pregunta qué se le antoja degustar hoy. PROHIBIDO cobrar o pedir datos en este paso.
+PASO 2 (Asesoría del Menú & Precios): Muestra opciones del menú, platillos destacados e ingredientes con precios reales. Resuelve dudas sobre preparación o salsas.
+PASO 3 (Venta Cruzada Condicional): ÚNICAMENTE después de que el comensal elija un platillo, ofrece acompañamientos o bebidas. PROHIBIDO antes.
+PASO 4 (Cierre, Comanda & WhatsApp): Pregunta si es para comer aquí o express, resume la comanda con "¿Cuánto es?" y canaliza al WhatsApp oficial para pago y despacho.`
+        : isServices
+          ? `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (OBLIGATORIO - RESPETA ESTE ORDEN STRICTAMENTE)]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda profesionalmente y consulta brevemente la necesidad o situación específica que el cliente desea solucionar con el servicio.
+PASO 2 (Propuesta de Servicio & Tarifas): Explica el servicio o paquete más adecuado, detallando qué incluye, duración estimada y tarifa oficial.
+PASO 3 (Agendamiento Activo): Ofrece activamente 2 opciones de horario o fecha (ej: "¿Te queda más cómodo en horario de la mañana o en la tarde?").
+PASO 4 (Confirmación Provisional & WhatsApp): Solicita nombre completo y teléfono, confirma la reserva provisional y canaliza al WhatsApp oficial para registrar en agenda.`
+          : isSupport
+            ? `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (OBLIGATORIO - RESPETA ESTE ORDEN STRICTAMENTE)]:
+PASO 1 (Recepción Empática & Escucha): Saluda con cortesía y escucha activamente la consulta o duda del cliente sin emitir respuestas genéricas ni presionar a comprar.
+PASO 2 (Resolución Clara & Verificada): Responde con precisión basándote en la base de conocimientos y políticas oficiales del comercio, sin inventar información.
+PASO 3 (Verificación de Claridad): Pregunta amablemente si la explicación fue suficiente o si tiene alguna otra consulta adicional pendiente de resolver.
+PASO 4 (Canalización a Asesor Humano): Si la consulta requiere trámite especial o seguimiento personalizado, ofrece conectar al cliente con un asesor humano en WhatsApp.`
+            : `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (OBLIGATORIO - RESPETA ESTE ORDEN STRICTAMENTE)]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda amablemente y haz una pregunta abierta para entender qué producto o artículo está buscando el cliente sin apresurarlo a comprar.
+PASO 2 (Presentación & Beneficios): Muestra el artículo exacto del catálogo con su precio oficial, stock disponible y valor diferencial frente a otras opciones.
+PASO 3 (Venta Cruzada & Envío): Sugiere un accesorio o producto complementario del catálogo y consulta la provincia o cantón de entrega para coordinar el envío.
+PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, resume el pedido y canaliza al cliente al botón de WhatsApp con comprobante para despacho inmediato.`;
 
       const newTenant = {
         id: tenantId,
@@ -1270,14 +1306,15 @@ export async function onRequest(context) {
         plan: 'pro',
         business_type: businessType,
         currency: currency || 'USD',
+        sales_flow_rules: defaultSalesFlow,
         status: 'active',
         created_at: new Date().toISOString()
       };
 
       try {
         await executeD1(
-          'INSERT INTO tenants (id, slug, name, owner_email, owner_name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, plan, business_type, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)',
-          [newTenant.id, newTenant.slug, newTenant.name, newTenant.owner_email, newTenant.owner_name, newTenant.bot_name, newTenant.avatar_url, newTenant.welcome_message, newTenant.system_prompt, newTenant.primary_color, newTenant.plan, newTenant.business_type, newTenant.currency, newTenant.status]
+          'INSERT INTO tenants (id, slug, name, owner_email, owner_name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, plan, business_type, currency, sales_flow_rules, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)',
+          [newTenant.id, newTenant.slug, newTenant.name, newTenant.owner_email, newTenant.owner_name, newTenant.bot_name, newTenant.avatar_url, newTenant.welcome_message, newTenant.system_prompt, newTenant.primary_color, newTenant.plan, newTenant.business_type, newTenant.currency, newTenant.sales_flow_rules, newTenant.status]
         );
       } catch (tErr) {
         console.warn('Tenant D1 insert warning:', tErr.message);
@@ -3592,20 +3629,33 @@ REGLA DE ORO: NO sugerir bebidas ni más papas. Solo después de que el usuario 
           contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
         }
 
-        // Inyección de Estrategia y Flujo Conversacional de Venta
+        // Inyección de Estrategia y Flujo Conversacional de Venta en 4 Pasos
         if (targetTenant.sales_flow_rules && targetTenant.sales_flow_rules.trim()) {
-          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA (MÁXIMA PRIORIDAD)]:\n${targetTenant.sales_flow_rules.trim()}`;
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (MÁXIMA PRIORIDAD - RESPETA ESTE ORDEN STRICTAMENTE)]:\n${targetTenant.sales_flow_rules.trim()}`;
         } else if (targetTenant.business_type === 'restaurante') {
-          contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL - RESTAURANTE]:
-1. ROL DE MESERO PROFESIONAL: Atiende con calidez, apetito y dinamismo como la mejor mesera del restaurante.
-2. VENTA CRUZADA CONDICIONAL: La recomendación de bebidas o más papas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?") SOLO DEBE SALIR DESPUÉS de que el cliente haya agregado o solicitado agregar un ítem a su compra. En consultas de menú, preguntas sobre platillos o saludos, responde con amabilidad y ofrece agregar ese plato a su orden, SIN sugerir adicionales antes de tiempo.
-3. OPCIONES DE PREPARACIÓN Y EXTRAS: Pregunta por término de carne o salsas solo cuando el plato esté siendo agregado.
-4. AVANCE Y CIERRE: Pregunta si es para comer en el restaurante o para entrega a domicilio / express, y recuérdale que puede pedir el total con "¿cuánto es?" para confirmar su comanda.`;
-        } else if (targetTenant.business_type === 'tienda') {
-          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA - TIENDA]:
-1. Resalta los beneficios clave del producto consultado.
-2. Sugiere alternativas o complementos compatibles del catálogo.
-3. Pregunta si desea proceder con el envío a su domicilio.`;
+          contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL EN 4 PASOS - RESTAURANTE]:
+PASO 1 (Bienvenida & Apertura): Atiende con calidez y dinamismo como un mesero atento, saluda y pregunta qué se le antoja ordenar hoy. PROHIBIDO cobrar o pedir datos personales aquí.
+PASO 2 (Asesoría del Menú & Precios): Muestra opciones del menú, platillos destacados e ingredientes con precios reales. Resuelve dudas sobre preparaciones o salsas.
+PASO 3 (Venta Cruzada Condicional): ÚNICAMENTE después de que el comensal ya haya elegido o solicitado un platillo, ofrece acompañamientos o bebidas (ej: "¿Te gustaría agregar bebida o más papas a tu orden?"). PROHIBIDO antes.
+PASO 4 (Comanda y Cierre): Pregunta si es para comer en el restaurante o para entrega express, resume la comanda con "¿cuánto es?" y canaliza al WhatsApp oficial para pago y despacho.`;
+        } else if (targetTenant.business_type === 'servicios') {
+          contextBlock += `\n\n[ESTRATEGIA DE CONVERSIÓN EN 4 PASOS - SERVICIOS Y CITAS]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda profesionalmente y consulta brevemente la necesidad o situación que el cliente desea solucionar.
+PASO 2 (Propuesta de Servicio & Tarifas): Explica el servicio o paquete más adecuado, detallando qué incluye, duración estimada y tarifa oficial.
+PASO 3 (Agendamiento Activo): Ofrece activamente 2 opciones de horario o fecha (ej: "¿Te queda más cómodo en la mañana o en la tarde?").
+PASO 4 (Confirmación Provisional & WhatsApp): Solicita nombre completo y teléfono, confirma la reserva provisional y canaliza al WhatsApp oficial para registrar en agenda.`;
+        } else if (targetTenant.business_type === 'soporte') {
+          contextBlock += `\n\n[ESTRATEGIA DE ATENCIÓN EN 4 PASOS - SOPORTE Y ASESORÍA]:
+PASO 1 (Recepción Empática & Escucha): Saluda con cortesía y escucha activamente la consulta o duda del cliente sin respuestas genéricas.
+PASO 2 (Resolución Clara & Verificada): Responde con precisión basándote en la base de conocimientos y políticas oficiales, sin inventar información.
+PASO 3 (Verificación de Claridad): Pregunta si la explicación fue suficiente o si tiene alguna otra duda pendiente.
+PASO 4 (Canalización Humana): Si la consulta requiere trámite especial o seguimiento personalizado, ofrece conectar al cliente con un asesor humano en WhatsApp.`;
+        } else {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO DE VENTA EN 4 PASOS - TIENDA / CATÁLOGO]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda amablemente y haz una pregunta abierta para entender qué producto o artículo está buscando el cliente sin apresurarlo.
+PASO 2 (Presentación & Beneficios): Muestra el artículo del catálogo con su precio oficial, disponibilidad inmediata y valor diferencial.
+PASO 3 (Venta Cruzada & Envío): Sugiere un accesorio o producto complementario del catálogo y consulta la provincia o cantón de entrega para el envío.
+PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, resume el pedido con el total y canaliza al cliente a WhatsApp con comprobante para despacho.`;
         }
 
         // Blindaje Universal de Venta Cruzada para Restaurantes

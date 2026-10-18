@@ -15,7 +15,7 @@ export interface AuthTenant {
   owner_name: string;
   bot_name?: string;
   avatar_url?: string;
-  business_type?: 'tienda' | 'restaurante' | 'servicios';
+  business_type?: 'tienda' | 'restaurante' | 'servicios' | 'soporte' | string;
   currency?: string;
   plan?: string;
   status?: string;
@@ -33,7 +33,7 @@ export interface AuthResponse {
 export interface RegisterFormData {
   name: string;
   businessName: string;
-  businessType: 'tienda' | 'restaurante' | 'servicios';
+  businessType: 'tienda' | 'restaurante' | 'servicios' | 'soporte' | string;
   email: string;
   password: string;
   currency: 'CRC' | 'USD';

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RegisterFormData } from '../../types/auth';
 import { Store, ShieldCheck, ArrowRight, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { BusinessTypeSelector } from './settings/BusinessTypeSelector';
 
 interface ClientRegisterProps {
   onRegister: (data: RegisterFormData) => Promise<boolean>;
@@ -82,20 +83,29 @@ export const ClientRegister: React.FC<ClientRegisterProps> = ({
             </div>
           </div>
 
+          <div>
+            <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+              ¿Qué vas a ofrecer con tu Asistente IA? (Elige en 1 clic)
+            </label>
+            <BusinessTypeSelector
+              value={formData.businessType}
+              onChange={(type) => setFormData({ ...formData, businessType: type as any })}
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Tipo de Comercio
+                Correo Electrónico
               </label>
-              <select
-                value={formData.businessType}
-                onChange={(e) => setFormData({ ...formData, businessType: e.target.value as any })}
-                className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="tienda">Tienda / Retail</option>
-                <option value="restaurante">Restaurante / Comida</option>
-                <option value="servicios">Servicios / Citas</option>
-              </select>
+              <input
+                type="email"
+                required
+                placeholder="tu@negocio.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+              />
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
@@ -104,26 +114,12 @@ export const ClientRegister: React.FC<ClientRegisterProps> = ({
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value as any })}
-                className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-semibold"
               >
                 <option value="CRC">CRC (₡ Colones)</option>
                 <option value="USD">USD ($ Dólares)</option>
               </select>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-              Correo Electrónico
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="tu@negocio.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full bg-[#111010] border border-[#282626] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-            />
           </div>
 
           <div>
