@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { Tenant, Product } from '../../types';
+import { ClientTab } from '../../types/client';
+import { AgentSetupFlowHero } from './onboarding/AgentSetupFlowHero';
 import { TenantConsumptionSection } from './metrics/TenantConsumptionSection';
 import { TenantExactMetrics } from './metrics/TenantExactMetrics';
 import { ProductsGlobalMetrics } from './products/ProductsGlobalMetrics';
@@ -12,6 +14,7 @@ interface ChatbotQLinkTabProps {
   onRefresh?: () => void;
   onOpenLiveChat?: () => void;
   onSwitchAccount?: () => void;
+  onNavigateTab?: (tab: ClientTab) => void;
 }
 
 export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
@@ -20,7 +23,8 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
   products = [],
   onRefresh,
   onOpenLiveChat,
-  onSwitchAccount
+  onSwitchAccount,
+  onNavigateTab
 }) => {
   const globalMetrics = useMemo(() => {
     let buyClicks = 0;
@@ -46,6 +50,14 @@ export const ChatbotQLinkTab: React.FC<ChatbotQLinkTabProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Asistente Visual de Configuración Rápida en 4 Pasos */}
+      <AgentSetupFlowHero
+        tenant={tenant}
+        productCount={products.length}
+        onNavigateTab={onNavigateTab || (() => {})}
+        onOpenLiveChat={onOpenLiveChat}
+      />
+
       {/* 0. Cuotas y Consumo Real en Vivo (Esta Hora, Hoy 24h, Este Mes) */}
       <TenantConsumptionSection
         tenant={tenant}

@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-18 09:35 GMT-6
-- **Versión Actual:** 1.56.0 (Selector 1-Clic, Flujo de Ventas en 4 Pasos y Guía de Activación)
+- **Última Actualización:** 2026-10-18 10:00 GMT-6
+- **Versión Actual:** 1.57.0 (Asistente Visual de Activación Rápida y Navegación Guiada)
 - **Deploy en Vivo:** https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 39fecba)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Selector de 1-Clic en Registro y Configuración: Implementado con `BusinessTypeSelector.tsx` en `ClientRegister.tsx` y `SettingsBusinessTypeStep.tsx` con 3 macro-modalidades: Vendo Productos/Comida, Vendo Servicios/Citas y Servicio al Cliente/Asesor.
-  - Flujo Comercial en 4 Pasos Obligatorios: Configurable en `SalesFlowSection.tsx` con editor interactivo en `SalesFlowFourStepsEditor.tsx` e inyectado con máxima prioridad secuencial en `functions/api/[[route]].js`.
-  - Guía de Activación Intuitiva: `BusinessOnboardingChecklist.tsx` integrado en la configuración comercial con barra de avance porcentual y atajos directos.
-  - Verificado con los 3 Filtros: Build Vite limpio en 6.53s, commit push a rama main y HTTP 200 en CDN Cloudflare Pages.
+  - Asistente Visual de Activación Rápida: `AgentSetupFlowHero.tsx` en el Dashboard (`ChatbotQLinkTab.tsx`) con 4 tarjetas de avance (0% a 100%), atajos directos y modo minimizable.
+  - Navegación Guiada en Barra Lateral: `SidebarSimpleNav.tsx` reorganizado en 3 secciones: `🚀 Configuración (4 Pasos)` con numeración del 1 al 4, `📊 Operación & Clientes` y `⚙️ Sistema`.
+  - Selector 1-Clic de Modalidad: `BusinessTypeSelector.tsx` activo en registro y panel de identidad para 3 macro-modalidades comerciales con blindaje para restaurantes.
+  - Flujo Comercial en 4 Pasos Obligatorios: `SalesFlowSection.tsx` y `SalesFlowFourStepsEditor.tsx` inyectados con máxima prioridad secuencial en Edge API.
+  - Verificado con los 3 Filtros: Build Vite limpio en 19.53s (`index-CL2QqN0z.js`), sincronizado en GitHub rama main y HTTP 200 en CDN Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.

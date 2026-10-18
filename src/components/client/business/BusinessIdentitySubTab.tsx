@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tenant } from '../../../types';
+import { ClientTab } from '../../../types/client';
 import { SettingsBusinessTypeStep } from '../settings/SettingsBusinessTypeStep';
 import { BusinessLandingCard } from '../BusinessLandingCard';
 import { BusinessOnboardingChecklist } from './BusinessOnboardingChecklist';
@@ -10,10 +11,11 @@ interface BusinessIdentitySubTabProps {
   tenant: Tenant | null; tenantSlug: string;
   onUpdateSettings: (updates: Partial<Tenant>) => Promise<boolean>; saveSuccess: boolean;
   onOpenLiveChat?: () => void;
+  onNavigateTab?: (tab: ClientTab) => void;
 }
 
 export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
-  tenant, tenantSlug, onUpdateSettings, saveSuccess, onOpenLiveChat
+  tenant, tenantSlug, onUpdateSettings, saveSuccess, onOpenLiveChat, onNavigateTab
 }) => {
   const effectiveSlug = tenant?.slug || tenantSlug || 'active';
   const draftKey = `clikchat_draft_identity_${effectiveSlug}`;
@@ -84,7 +86,7 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
 
   return (
     <div className="space-y-4 max-w-5xl">
-      <BusinessOnboardingChecklist tenant={tenant} onOpenLiveChat={onOpenLiveChat} />
+      <BusinessOnboardingChecklist tenant={tenant} onOpenLiveChat={onOpenLiveChat} onNavigateTab={onNavigateTab} />
       <BusinessLandingCard slug={slug || effectiveSlug} />
       <SettingsBusinessTypeStep selectedBizType={bizType} onSelectBizType={(t) => { isDirtyRef.current = true; setBizType(t); }} />
       <form onSubmit={handleSubmit} className="onyx-card rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">

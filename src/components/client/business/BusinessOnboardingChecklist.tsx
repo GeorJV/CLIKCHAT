@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Tenant } from '../../../types';
+import { ClientTab } from '../../../types/client';
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, Sparkles, ArrowRight } from 'lucide-react';
 
 interface BusinessOnboardingChecklistProps {
   tenant: Tenant | null;
   onOpenLiveChat?: () => void;
+  onNavigateTab?: (tab: ClientTab) => void;
 }
 
 export const BusinessOnboardingChecklist: React.FC<BusinessOnboardingChecklistProps> = ({
   tenant,
-  onOpenLiveChat
+  onOpenLiveChat,
+  onNavigateTab
 }) => {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -29,28 +32,32 @@ export const BusinessOnboardingChecklist: React.FC<BusinessOnboardingChecklistPr
   const steps = [
     {
       id: 'step1',
-      title: '1. Tipo de Negocio & Nombre',
+      title: '1. Tipo & Nombre',
       desc: 'Define si vendes productos/comida, servicios o soporte.',
-      isDone: Boolean(tenant?.name && tenant?.business_type)
+      isDone: Boolean(tenant?.name && tenant?.business_type),
+      tab: 'business' as ClientTab
     },
     {
       id: 'step2',
-      title: '2. Mensaje de Bienvenida & Tono',
-      desc: 'Personaliza cómo saluda y habla tu asistente comercial.',
-      isDone: Boolean(tenant?.welcome_message && tenant?.tone_of_voice)
+      title: '2. Catálogo / Menú',
+      desc: 'Fotos, nombres y precios de tus productos o servicios.',
+      isDone: Boolean(tenant?.welcome_message && tenant?.tone_of_voice),
+      tab: 'products' as ClientTab
     },
     {
       id: 'step3',
-      title: '3. Flujo de Venta en 4 Pasos',
-      desc: 'Embudo secuencial para asesorar, hacer upsell y cerrar.',
-      isDone: Boolean(tenant?.sales_flow_rules && tenant?.sales_flow_rules.includes('PASO 1'))
+      title: '3. Flujo en 4 Pasos',
+      desc: 'Embudo secuencial para asesorar, hacer upsell y comanda.',
+      isDone: Boolean(tenant?.sales_flow_rules && tenant?.sales_flow_rules.includes('PASO 1')),
+      tab: 'training' as ClientTab
     },
     {
       id: 'step4',
-      title: '4. Probar en Simulador en Vivo',
-      desc: 'Chatea con tu propio bot y corrige respuestas en 1 clic.',
-      isDone: false, // Activo como llamada a la acción
-      isAction: true
+      title: '4. Probar en Vivo',
+      desc: 'Chatea con tu propio bot y comparte tu link público.',
+      isDone: Boolean(tenant?.name && tenant?.sales_flow_rules),
+      isAction: true,
+      tab: 'training' as ClientTab
     }
   ];
 
@@ -122,16 +129,34 @@ export const BusinessOnboardingChecklist: React.FC<BusinessOnboardingChecklistPr
                 </p>
               </div>
 
-              {st.isAction && onOpenLiveChat && (
-                <button
-                  type="button"
-                  onClick={onOpenLiveChat}
-                  className="mt-2 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition cursor-pointer"
-                >
-                  <span>Probar Chat en Vivo</span>
-                  <ArrowRight className="w-2.5 h-2.5" />
-                </button>
-              )}
+              <div className="mt-2.5 pt-1.5 border-t border-white/5 flex items-center justify-between">
+                <span className={`text-[9px] font-bold ${st.isDone ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                  {st.isDone ? '✓ Listo' : 'Pendiente'}
+                </span>
+                {st.isAction ? (
+                  onOpenLiveChat && (
+                    <button
+                      type="button"
+                      onClick={onOpenLiveChat}
+                      className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 transition cursor-pointer"
+                    >
+                      <span>Probar</span>
+                      <ArrowRight className="w-2.5 h-2.5" />
+                    </button>
+                  )
+                ) : (
+                  onNavigateTab && (
+                    <button
+                      type="button"
+                      onClick={() => onNavigateTab(st.tab)}
+                      className="text-[10px] font-bold text-zinc-300 hover:text-white flex items-center gap-0.5 transition cursor-pointer"
+                    >
+                      <span>Ir</span>
+                      <ArrowRight className="w-2.5 h-2.5" />
+                    </button>
+                  )
+                )}
+              </div>
             </div>
           ))}
         </div>

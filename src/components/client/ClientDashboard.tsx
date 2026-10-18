@@ -72,21 +72,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   if (!isAuthenticated) {
     if (isRegisterView) {
-      return (
-        <ClientRegister
-          onRegister={register}
-          onSwitchToLogin={() => setIsRegisterView(false)}
-          error={authError}
-        />
-      );
+      return <ClientRegister onRegister={register} onSwitchToLogin={() => setIsRegisterView(false)} error={authError} />;
     }
-    return (
-      <ClientLogin
-        onLogin={login}
-        onSwitchToRegister={() => setIsRegisterView(true)}
-        error={authError}
-      />
-    );
+    return <ClientLogin onLogin={login} onSwitchToRegister={() => setIsRegisterView(true)} error={authError} />;
   }
 
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;
@@ -116,12 +104,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               onRefresh={() => loadTenantData(currentSlug)}
               onOpenLiveChat={onOpenLiveChat}
               onSwitchAccount={() => setIsSwitchModalOpen(true)}
+              onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
             />
           )}
           {(activeTab === 'business' || activeTab === 'faqs' || activeTab === 'settings') && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
-              onOpenLiveChat={onOpenLiveChat} faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq}
+              onOpenLiveChat={onOpenLiveChat} onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
+              faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq}
               onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} initialSubTab={activeTab === 'faqs' ? 'faqs' : 'identity'}
             />
           )}
@@ -154,8 +144,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user'].includes(activeTab) && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
-              onOpenLiveChat={onOpenLiveChat} faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq}
-              onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} initialSubTab="identity"
+              onOpenLiveChat={onOpenLiveChat} onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
+              faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onCreateBulkFaqs={createBulkFaqs} initialSubTab="identity"
             />
           )}
         </div>

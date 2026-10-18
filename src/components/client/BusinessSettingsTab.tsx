@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../types';
+import { ClientTab } from '../../types/client';
 import { BusinessIdentitySubTab } from './business/BusinessIdentitySubTab';
 import { ChatCadenceSettingCard } from './business/ChatCadenceSettingCard';
 import { CustomAISettingsCard } from './business/CustomAISettingsCard';
@@ -12,6 +13,7 @@ interface BusinessSettingsTabProps {
   onUpdateSettings: (updates: Partial<Tenant>) => Promise<boolean>;
   saveSuccess: boolean;
   onOpenLiveChat?: () => void;
+  onNavigateTab?: (tab: ClientTab) => void;
   faqs?: FAQ[];
   onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
   onDeleteFaq?: (id: string) => Promise<boolean>;
@@ -26,6 +28,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   onUpdateSettings,
   saveSuccess,
   onOpenLiveChat,
+  onNavigateTab,
   faqs = [],
   onCreateFaq,
   onDeleteFaq,
@@ -116,7 +119,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
       {activeSubTab === 'identity' && (
         <BusinessIdentitySubTab
           tenant={tenant} tenantSlug={tenantSlug} onUpdateSettings={onUpdateSettings}
-          saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat}
+          saveSuccess={saveSuccess} onOpenLiveChat={onOpenLiveChat} onNavigateTab={onNavigateTab}
         />
       )}
       {activeSubTab === 'ai' && (
