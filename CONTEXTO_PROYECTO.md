@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-17 19:48 GMT-6
-- **Versión Actual:** 1.52.0 (Ocultación de Badge RAG para Clientes y Supresión de Confirmar Ítem Individual)
-- **Deploy en Vivo:** https://clikchat.pages.dev (index-BQfcxbn2.js activo en CDN, 12/12 rutas OK)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
+- **Última Actualización:** 2026-10-17 20:07 GMT-6
+- **Versión Actual:** 1.53.0 (Manejador de Objeciones Q&A Nivel 2 y Simulador en Vivo con Corrección 1-Clic)
+- **Deploy en Vivo:** https://clikchat.pages.dev
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 5f7e45b)
 - **Estado Actual del Sistema:**
-  - Badge RAG Nivel 3 Reservado a Administradores: `ProductRAGBadge` oculto para comensales/clientes normales, visible únicamente para `tenant_owner`, `superadmin` o vista admin.
-  - Supresión de "Confirmar [producto]": Al agregar un platillo/ítem, el bot no invita a reconfirmarlo; ofrece ver la comanda, agregar adicionales o confirmar el pedido completo.
-  - Filtro Sanitario Anti-Confirmación: Instrucción estricta en prompt y saneamiento regex para evitar frases del bot como "¿Deseas confirmar tu taco?".
-  - Verificado con los 3 Filtros: Build limpio Vite en 23.28s, CDN Cloudflare Pages verificado y sincronizado en ARQ AI Studio.
+  - Manejador de Objeciones (Q&A Nivel 2): Interfaz Gatillo ➔ Respuesta para blindar dudas comerciales ($0 costo, <50ms) con plantillas adaptativas para productos y servicios.
+  - Simulador en Vivo con Corrección 1-Clic: Consola de pruebas interactiva donde el dueño chatea con su bot y corrige respuestas directamente con el botón "Corregir respuesta", guardándolas como Regla de Oro Nivel 2.
+  - Panel Adaptativo (Productos vs Servicios): Menú lateral y flujos que alternan dinámicamente ("Mis Productos" vs "Mis Servicios" y "Agenda de Citas") según `business_type`.
+  - Verificado con los 3 Filtros: Build Vite limpio en 15.52s, sincronizado en GitHub rama main.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
