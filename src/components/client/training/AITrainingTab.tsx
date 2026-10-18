@@ -152,7 +152,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>Cierre</span>
+            <span>🎯 4 Pasos (Ventas)</span>
           </button>
         </div>
       </div>

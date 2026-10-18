@@ -70,7 +70,13 @@ export const BusinessTypeSelector: React.FC<BusinessTypeSelectorProps> = ({
             <button
               key={opt.id}
               type="button"
-              onClick={() => onChange(opt.id)}
+              onClick={() => {
+                if (opt.id === 'tienda' && value === 'restaurante') {
+                  onChange('restaurante');
+                } else {
+                  onChange(opt.id);
+                }
+              }}
               className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
                 isSelected
                   ? `${opt.borderColor} ${opt.activeBg} ring-1.5 ${opt.borderColor} shadow-lg shadow-black/40`

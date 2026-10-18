@@ -1248,7 +1248,7 @@ export async function onRequest(context) {
 
       // 3. Create tenant
       const tenantId = 'ten_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-      const isRestaurant = businessType === 'restaurante';
+      const isRestaurant = businessType === 'restaurante' || (businessType === 'tienda' && /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(businessName || ''));
       const isServices = businessType === 'servicios';
       const isSupport = businessType === 'soporte';
 
@@ -3079,7 +3079,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         && !requiresDeepRAG;
 
       if (isSimpleGreeting) {
-        const isRestaurant = targetTenant.business_type === 'restaurante';
+        const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
         const botName = targetTenant.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
         const storeName = targetTenant.name || 'nuestro negocio';
 
@@ -3692,7 +3692,7 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           );
         } catch (e) {}
 
-        const isRestaurant = targetTenant.business_type === 'restaurante';
+        const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
         const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
 
         // RESCATE POST-LLM: Si la IA confirmó que anotó un producto (ej: "Tu Queque de chocolate... ya está anotado")

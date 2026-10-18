@@ -245,7 +245,26 @@ export function useAuth() {
       tenantSlug: cleanSlug
     };
 
-    const isRestaurant = data.businessType === 'restaurante';
+    const isRestaurant = data.businessType === 'restaurante' || (data.businessType === 'tienda' && /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(data.businessName || ''));
+    const isServices = data.businessType === 'servicios';
+    const isSupport = data.businessType === 'soporte';
+
+    const welcomeMsg = isRestaurant
+      ? '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿Qué se te antoja ordenar hoy?'
+      : isServices
+        ? '¡Hola! 👋 Bienvenido. ¿En qué servicio te podemos asesorar o deseas agendar una cita?'
+        : isSupport
+          ? '¡Hola! 👋 Bienvenido a nuestro centro de atención. ¿En qué podemos colaborarte hoy?'
+          : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?';
+
+    const systemPromptMsg = isRestaurant
+      ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, ayuda al cliente a armar su pedido, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugiere acompañamientos o bebidas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?").'
+      : isServices
+        ? 'Eres el asesor comercial y de agendamiento. Tu objetivo es identificar la necesidad del cliente, explicar las tarifas del servicio y coordinar día y hora para su cita.'
+        : isSupport
+          ? 'Eres el asesor de servicio al cliente y comercial. Tu objetivo es responder dudas con precisión y cordialidad, apoyándote en la base de conocimientos y canalizando a un asesor humano.'
+          : 'Eres el asesor comercial oficial de la tienda. Ayuda al cliente y guía su compra a WhatsApp.';
+
     const newTenant: any = {
       id: newTenantId,
       slug: cleanSlug,
@@ -257,12 +276,8 @@ export function useAuth() {
       currency: data.currency || 'CRC',
       plan: 'pro',
       status: 'active',
-      welcome_message: isRestaurant
-        ? '¡Hola! 👋 Te damos la bienvenida a nuestro restaurante. ¿Qué se te antoja ordenar hoy?'
-        : '¡Hola! 👋 Bienvenido a nuestra tienda oficial. ¿En qué puedo asesorarte hoy?',
-      system_prompt: isRestaurant
-        ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, ayuda al cliente a armar su pedido, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugiere acompañamientos o bebidas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?").'
-        : 'Eres el asesor comercial oficial de la tienda. Ayuda al cliente y guía su compra a WhatsApp.',
+      welcome_message: welcomeMsg,
+      system_prompt: systemPromptMsg,
       response_delay_sec: 1
     };
 
