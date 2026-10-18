@@ -4,7 +4,7 @@
 - **Última Actualización:** 2026-10-18 09:35 GMT-6
 - **Versión Actual:** 1.56.0 (Selector 1-Clic, Flujo de Ventas en 4 Pasos y Guía de Activación)
 - **Deploy en Vivo:** https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 3780b0e)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 6faf08d)
 - **Estado Actual del Sistema:**
   - Selector de 1-Clic en Registro y Configuración: Implementado con `BusinessTypeSelector.tsx` en `ClientRegister.tsx` y `SettingsBusinessTypeStep.tsx` con 3 macro-modalidades: Vendo Productos/Comida, Vendo Servicios/Citas y Servicio al Cliente/Asesor.
   - Flujo Comercial en 4 Pasos Obligatorios: Configurable en `SalesFlowSection.tsx` con editor interactivo en `SalesFlowFourStepsEditor.tsx` e inyectado con máxima prioridad secuencial en `functions/api/[[route]].js`.
