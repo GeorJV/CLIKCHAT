@@ -1,21 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-07 20:07 GMT-6
-- **Versión Actual:** 1.51.0 (Gestión Interactiva de Agregados: Sumar, Restar, Eliminar y Recálculo Dinámico)
-- **Deploy en Vivo:** https://clikchat.pages.dev (index-CWjvdLTe.js activo en CDN, 12/12 rutas OK)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (Commit 8553226)
+- **Última Actualización:** 2026-10-17 19:48 GMT-6
+- **Versión Actual:** 1.52.0 (Ocultación de Badge RAG para Clientes y Supresión de Confirmar Ítem Individual)
+- **Deploy en Vivo:** https://clikchat.pages.dev (index-BQfcxbn2.js activo en CDN, 12/12 rutas OK)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT
 - **Estado Actual del Sistema:**
-  - Detalle de la Orden Interactivo: Añadidos controles stepper `[-] [qty] [+]` y botón de papelera `🗑️` por ítem en `OrderTicketModalContent.tsx`.
-  - Recálculo Inmediato del Total: `useProductChatOrder.ts` recalcula `orderTotal` y lo sincroniza al instante en el ticket, en el botón de comanda y en `localStorage`.
-  - Estado Vacío Limpio: Si la comanda llega a 0 ítems, muestra el mensaje de bienvenida y resetea el total matemáticamente sin romper la UI.
-  - Verificado en Producción: Build limpio en 14.89s, CDN global activo y 12/12 rutas auditadas en Chrome Headless con 0 errores.
-  - Supervisión en ARQ AI Studio (`proj-1789360940430`, status: `ready_for_review`).
+  - Badge RAG Nivel 3 Reservado a Administradores: `ProductRAGBadge` oculto para comensales/clientes normales, visible únicamente para `tenant_owner`, `superadmin` o vista admin.
+  - Supresión de "Confirmar [producto]": Al agregar un platillo/ítem, el bot no invita a reconfirmarlo; ofrece ver la comanda, agregar adicionales o confirmar el pedido completo.
+  - Filtro Sanitario Anti-Confirmación: Instrucción estricta en prompt y saneamiento regex para evitar frases del bot como "¿Deseas confirmar tu taco?".
+  - Verificado con los 3 Filtros: Build limpio Vite en 23.28s, CDN Cloudflare Pages verificado y sincronizado en ARQ AI Studio.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
-  - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras verificación del usuario y comando `hca`.
+  - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md (Memoria Protegida).
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-180 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
-

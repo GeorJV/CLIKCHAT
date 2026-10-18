@@ -3109,16 +3109,22 @@ export async function onRequest(context) {
 
             quickActions = [
               {
-                id: 'confirm_item',
-                label: `➕ Confirmar ${itemName} (${sym}${fItemPrice})`,
-                actionText: `Agregar ${itemName} (${sym}${fItemPrice})`,
-                variant: 'gastronomic'
-              },
-              {
                 id: 'view_total',
                 label: `🧾 Ver Comanda / Total (${sym}${fDraftTotal})`,
                 actionText: '¿Cuánto es el total?',
                 variant: 'primary'
+              },
+              {
+                id: 'add_more',
+                label: '➕ Agregar algo más',
+                actionText: '¿Qué opciones de bebidas o acompañamientos tienen?',
+                variant: 'secondary'
+              },
+              {
+                id: 'confirm_order',
+                label: '✅ Confirmar Pedido Completo',
+                actionText: 'Sí, deseo confirmar mi pedido',
+                variant: 'success'
               }
             ];
 
@@ -3166,7 +3172,8 @@ ${draftItems.map(it => {
   return `• ${it.quantity || 1}x ${it.name} (${currencySymbol}${pFormatted})`;
 }).join('\n')}
 💰 Total acumulado: ${currencySymbol}${formattedDraftTotal} ${activeCurrency}
-3) SOLO AHORA QUE EL CLIENTE YA AGREGÓ O SOLICITÓ AGREGAR ALGO A SU COMPRA: Pregúntale amablemente: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?", o si prefiere pedir la cuenta diciendo "¿cuánto es?".`;
+3) SOLO AHORA QUE EL CLIENTE YA AGREGÓ O SOLICITÓ AGREGAR ALGO A SU COMPRA: Pregúntale amablemente: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?", o si prefiere pedir la cuenta diciendo "¿cuánto es?".
+4) REGLA ESTRICTA DE CONFIRMACIÓN: El producto ${itemName || ''} YA FUE AGREGADO y anotado en la comanda. Queda TERMINANTEMENTE PROHIBIDO pedirle al cliente que vuelva a confirmar el producto (NO decir "¿Deseas confirmar tu taco/hamburguesa?", ni "Para confirmar tu taco...", ni "confirmar ${itemName || 'producto'}"). El producto ya está listo en su orden. Solo pregunta si desea agregar algo más o pedir la cuenta / confirmar su pedido completo.`;
           }
         } else {
           contextBlock += `\n\n[REGLA DE ORO DE VENTA CRUZADA / UPSELLING (ESTRICTA)]:
@@ -3441,16 +3448,22 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
 
               quickActions = [
                 {
-                  id: 'confirm_item',
-                  label: `➕ Confirmar ${detectedBotItem} (${sym}${fPrice})`,
-                  actionText: `Agregar ${detectedBotItem} (${sym}${fPrice})`,
-                  variant: 'gastronomic'
-                },
-                {
                   id: 'view_total',
                   label: `🧾 Ver Comanda / Total (${sym}${fDraftTotal})`,
                   actionText: '¿Cuánto es el total?',
                   variant: 'primary'
+                },
+                {
+                  id: 'add_more',
+                  label: '➕ Agregar algo más',
+                  actionText: '¿Qué opciones de bebidas o acompañamientos tienen?',
+                  variant: 'secondary'
+                },
+                {
+                  id: 'confirm_order',
+                  label: '✅ Confirmar Pedido Completo',
+                  actionText: 'Sí, deseo confirmar mi pedido',
+                  variant: 'success'
                 }
               ];
             }
@@ -3477,6 +3490,7 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           if (!llmResult.text.includes('¡Perfecto!') && !llmResult.text.includes('Entonces tu pedido queda así')) {
             llmResult.text = `${expectedGreeting}\n\n${llmResult.text.trim()}`;
           }
+          llmResult.text = llmResult.text.replace(/(?:¿\s*)?(?:deseas\s+|quieres\s+|para\s+)?confirmar\s+(?:tu\s+|el\s+|la\s+|este\s+)?(?:taco|hamburguesa|platillo|producto|orden\s+de|combo)[^.?!\n]*[.?!\n]?/gi, '').trim();
         }
 
         if (isConfirmingOrder && renderedTicket && !llmResult.text.includes('╔═')) {

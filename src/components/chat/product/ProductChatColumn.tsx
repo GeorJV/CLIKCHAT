@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Send, LogOut, Paperclip, RotateCcw } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from './ProductRAGBadge';
+import { isBusinessAdminViewer } from '../../../utils/adminCheck';
 import { ProductChatTheme, ThemeStyles } from './productThemes';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
@@ -86,7 +87,7 @@ export const ProductChatColumn: React.FC<Props> = ({
               } ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
                 {msg.isAudio ? (
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
-                ) : isAssistant && msg.ragTrace ? (
+                ) : isAssistant && msg.ragTrace && isBusinessAdminViewer() ? (
                   <div className="space-y-1.5 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     {msg.quickActions && msg.quickActions.length > 0 && (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, HelpCircle, Layers, UserCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProductRAGTrace } from '../../../types/productChat';
+import { isBusinessAdminViewer } from '../../../utils/adminCheck';
 
 interface Props {
   trace?: ProductRAGTrace;
@@ -8,7 +9,7 @@ interface Props {
 
 export const ProductRAGBadge: React.FC<Props> = ({ trace }) => {
   const [expanded, setExpanded] = useState(false);
-  if (!trace) return null;
+  if (!trace || !isBusinessAdminViewer()) return null;
 
   const getLevelConfig = () => {
     switch (trace.levelUsed) {

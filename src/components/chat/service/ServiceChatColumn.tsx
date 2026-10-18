@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Send, LogOut } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ProductRAGBadge } from '../product/ProductRAGBadge';
+import { isBusinessAdminViewer } from '../../../utils/adminCheck';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
@@ -87,7 +88,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
               } ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
                 {msg.isAudio ? (
                   <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
-                ) : isAssistant && msg.ragTrace ? (
+                ) : isAssistant && msg.ragTrace && isBusinessAdminViewer() ? (
                   <div className="space-y-1.5 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
