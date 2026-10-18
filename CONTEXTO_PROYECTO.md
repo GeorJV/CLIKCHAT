@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-17 22:25 GMT-6
-- **Versión Actual:** 1.54.0 (Canal Oficial WhatsApp Business Cloud API & Webhook Edge)
-- **Deploy en Vivo:** https://clikchat.pages.dev (index-mvw6oq3V.js activo)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 13f2233)
+- **Última Actualización:** 2026-10-17 22:30 GMT-6
+- **Versión Actual:** 1.55.0 (Certificación de Generador de Links & Enrutamiento Dual)
+- **Deploy en Vivo:** https://clikchat.pages.dev (index-BhTLpBQL.js activo)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 1de7e04)
 - **Estado Actual del Sistema:**
-  - WhatsApp Business Cloud API Oficial: Webhook Edge en `/api/whatsapp/webhook` con handshake Meta y procesamiento de mensajes entrantes directo contra el motor RAG de 4 niveles.
-  - Panel del Comerciante "WhatsApp Oficial": Gestión de credenciales (Phone Number ID, System User Token), URL de webhook personalizada por tenant y modal de prueba de mensajes en vivo.
-  - Tabla D1 `whatsapp_integrations`: Almacenamiento seguro de tokens y números vinculados por comercio.
-  - Verificado con los 3 Filtros: Handshake Meta verificado en producción, build limpio en 6.12s y despliegue CDN exitoso.
+  - Generador de Links Certificado: Corrección de links canónicos `/chat/{slug}` en `BusinessLandingCard.tsx` y resolución de QLinks directos de producto `/chat/{slug}/{productSlug}` en `ProductCard.tsx`.
+  - Enrutamiento Dual Resiliente: Soporte simultáneo en `useAppRouter.ts` para rutas con prefijo canónico (`/chat/{slug}`) y rutas limpias cortas directas (`/{slug}`).
+  - Tarjeta de Enlace en Mi Negocio: `BusinessLandingCard` integrada en la pestaña de Identidad Comercial para copia en 1-clic y descarga de QR en alta resolución.
+  - Verificado con los 3 Filtros: Build Vite limpio en 6.14s, sincronizado en GitHub rama main y CDN Cloudflare Pages verificado HTTP 200.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.

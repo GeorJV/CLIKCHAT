@@ -16,6 +16,16 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-17] Auditoría, Blindaje y Certificación del Generador de Links de Chat y Enrutamiento Dual
+- **Diagnóstico y Corrección de Enlaces:**
+  1. *Corrección en `BusinessLandingCard.tsx`:* La tarjeta generaba `https://clikchat.pages.dev/${slug}` omitiendo el segmento `/chat/`, lo que provocaba que en ciertos navegadores se derivara a la pantalla de login del panel en lugar del chat público del cliente.
+  2. *Enrutamiento Dual Resiliente en `useAppRouter.ts`:* Se implementó detección universal de slugs en la raíz (`/{slug}`) para que tanto los enlaces directos cortos como los canónicos (`/chat/{slug}`) abran de forma transparente el chat conversacional.
+  3. *Certificación de QLinks de Productos:* Validación de que cada tarjeta de producto en [`ProductCard.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/products/ProductCard.tsx) y [`ProductExactKpis.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/products/ProductExactKpis.tsx) genere la URL limpia canónica `/chat/{tenantSlug}/{productSlug}` con resolución sincronizada en frame 0.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 6.14s con 0 errores (`npm run build`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `1de7e04`).
+  - *Filtro 3:* Despliegue en Cloudflare Pages (`index-BhTLpBQL.js`) y prueba HTTP 200 confirmada en `/chat/comida-callejera-xl`, `/chat/comida-callejera-xl/comida-cajera-xl` y `/comida-callejera-xl`.
+
 ### [2026-10-17] Integración Oficial de WhatsApp Business Cloud API (Meta Oficial) con Webhook Edge Serverless y Panel del Comerciante
 - **Diagnóstico y Necesidad de Negocio:**
   1. *Fricción de Redirección Externa:* Hasta la versión previa, el bot cerraba ventas generando un enlace hacia WhatsApp (`wa.me`). Los comerciantes requerían que el bot respondiera y ejecutara los 4 niveles de RAG directamente dentro de su número oficial de WhatsApp Business 24/7 sin salir de la app de mensajería.
