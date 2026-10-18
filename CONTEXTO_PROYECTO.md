@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-17 22:30 GMT-6
-- **Versión Actual:** 1.55.0 (Certificación de Generador de Links & Enrutamiento Dual)
-- **Deploy en Vivo:** https://clikchat.pages.dev (index-BhTLpBQL.js activo)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 1de7e04)
+- **Última Actualización:** 2026-10-18 09:35 GMT-6
+- **Versión Actual:** 1.56.0 (Selector 1-Clic, Flujo de Ventas en 4 Pasos y Guía de Activación)
+- **Deploy en Vivo:** https://clikchat.pages.dev
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 3780b0e)
 - **Estado Actual del Sistema:**
-  - Generador de Links Certificado: Corrección de links canónicos `/chat/{slug}` en `BusinessLandingCard.tsx` y resolución de QLinks directos de producto `/chat/{slug}/{productSlug}` en `ProductCard.tsx`.
-  - Enrutamiento Dual Resiliente: Soporte simultáneo en `useAppRouter.ts` para rutas con prefijo canónico (`/chat/{slug}`) y rutas limpias cortas directas (`/{slug}`).
-  - Tarjeta de Enlace en Mi Negocio: `BusinessLandingCard` integrada en la pestaña de Identidad Comercial para copia en 1-clic y descarga de QR en alta resolución.
-  - Verificado con los 3 Filtros: Build Vite limpio en 6.14s, sincronizado en GitHub rama main y CDN Cloudflare Pages verificado HTTP 200.
+  - Selector de 1-Clic en Registro y Configuración: Implementado con `BusinessTypeSelector.tsx` en `ClientRegister.tsx` y `SettingsBusinessTypeStep.tsx` con 3 macro-modalidades: Vendo Productos/Comida, Vendo Servicios/Citas y Servicio al Cliente/Asesor.
+  - Flujo Comercial en 4 Pasos Obligatorios: Configurable en `SalesFlowSection.tsx` con editor interactivo en `SalesFlowFourStepsEditor.tsx` e inyectado con máxima prioridad secuencial en `functions/api/[[route]].js`.
+  - Guía de Activación Intuitiva: `BusinessOnboardingChecklist.tsx` integrado en la configuración comercial con barra de avance porcentual y atajos directos.
+  - Verificado con los 3 Filtros: Build Vite limpio en 6.53s, commit push a rama main y HTTP 200 en CDN Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
