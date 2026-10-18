@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-18] Selector 1-Clic de Modalidad Comercial, Flujo de Ventas en 4 Pasos Obligatorios y Guía de Activación Intuitiva
+- **Diagnóstico y Necesidad:**
+  1. *Fricción en Registro y Selección de Tipo de Negocio:* El formulario de registro utilizaba un selector desplegable tradicional (`<select>`), poco intuitivo para dueños de negocios no técnicos que buscaban definir en 1 solo clic su modalidad comercial (`Vendo productos / Comida`, `Vendo Servicios / Agendo citas`, `Servicio al cliente / Asesor comercial`).
+  2. *Falta de Secuencia Estricta en el Chatbot:* Los modelos de lenguaje tienden a desordenar etapas de venta (intentar cobrar antes de tiempo, pedir datos prematuramente o sugerir bebidas antes de que el cliente elija la comida). Se requería un embudo estructurado y obligatorio en 4 pasos secuenciales.
+  3. *Orientación Inicial para el Dueño de Negocio:* El panel de configuración contaba con múltiples pestañas sin un indicador de progreso o checklist claro que guiara los pasos indispensables para activar y probar el bot.
+- **Solución Implementada (ARQMODULAR & Cero Sobreingeniería):**
+  1. *Selector Atómico de 1-Clic (`BusinessTypeSelector.tsx`):* Componente visual e interactivo con 3 macro-modalidades comerciales (`tienda`, `servicios`, `soporte`), badges explicativos y estados activos. Integrado en el registro público ([`ClientRegister.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/ClientRegister.tsx)) y en el panel de identidad ([`SettingsBusinessTypeStep.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/settings/SettingsBusinessTypeStep.tsx)).
+  2. *Preservación Anti-Regresión y Detección Automática de Restaurantes:* Blindaje en `BusinessTypeSelector.tsx`, `useAuth.ts` y `functions/api/[[route]].js` para preservar automáticamente el tipo `'restaurante'` y auto-detectar comercios de comida/gastronomía por nombre (ej: "Pizzería"), garantizando que nunca pierdan la mesera virtual, comanda ni upselling condicional.
+  3. *Flujo Comercial en 4 Pasos Obligatorios (`salesFlowPresets.ts`, `SalesFlowFourStepsEditor.tsx`, `SalesFlowSection.tsx`):*
+     - **Paso 1 (Bienvenida & Diagnóstico):** Saludo y detección de la necesidad (prohibido cobrar o pedir datos personales).
+     - **Paso 2 (Presentación & Asesoría):** Muestra el producto/servicio ideal con precios oficiales y valor diferencial.
+     - **Paso 3 (Venta Cruzada o Agendamiento):** Upsell condicional de acompañamiento/accesorio o propuesta de 2 opciones de horario (mañana vs. tarde).
+     - **Paso 4 (Cierre & Comanda):** Resumen final de la orden o cita y canalización a WhatsApp con comprobante para pago/despacho.
+     - Editor interactivo con tarjetas por paso y acceso directo desde el botón `🎯 4 Pasos (Ventas)` en [`AITrainingTab.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/training/AITrainingTab.tsx).
+  4. *Inyección con Máxima Prioridad Secuencial en Backend Edge (`functions/api/[[route]].js`):* Inyección de directivas `[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (MÁXIMA PRIORIDAD - RESPETA ESTE ORDEN STRICTAMENTE)]` asegurando cumplimiento estricto del embudo por el LLM.
+  5. *Guía de Activación Intuitiva de Perfil (`BusinessOnboardingChecklist.tsx`):* Checklist dinámico integrado en [`BusinessIdentitySubTab.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/business/BusinessIdentitySubTab.tsx) que calcula el porcentaje de avance (0% a 100%), guía los pasos faltantes y ofrece un botón de acceso directo para probar el bot en el simulador en vivo.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 6.08s con 0 errores TypeScript (`npm run build`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `6faf08d`).
+  - *Filtro 3:* Despliegue en Cloudflare Pages verificado con estado HTTP 200 en `https://clikchat.pages.dev`.
+
 ### [2026-10-17] Auditoría, Blindaje y Certificación del Generador de Links de Chat y Enrutamiento Dual
 - **Diagnóstico y Corrección de Enlaces:**
   1. *Corrección en `BusinessLandingCard.tsx`:* La tarjeta generaba `https://clikchat.pages.dev/${slug}` omitiendo el segmento `/chat/`, lo que provocaba que en ciertos navegadores se derivara a la pantalla de login del panel en lugar del chat público del cliente.
