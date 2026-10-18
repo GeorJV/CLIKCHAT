@@ -7,22 +7,25 @@ interface SidebarSimpleNavProps {
   setActiveTab: (tab: ClientTab) => void;
   isExpanded: boolean;
   unresolvedCount: number;
+  isService?: boolean;
 }
 
 export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
   activeTab,
   setActiveTab,
   isExpanded,
-  unresolvedCount
+  unresolvedCount,
+  isService = false
 }) => {
   const navItems = [
     { id: 'chatbot' as ClientTab, label: 'Dashboard Principal', icon: Bot },
     { id: 'business' as ClientTab, label: 'Mi Negocio', icon: Store },
     { id: 'account' as ClientTab, label: 'Mi Cuenta', icon: UserCheck },
-    { id: 'products' as ClientTab, label: 'Mis Productos', icon: ShoppingBag },
+    { id: 'products' as ClientTab, label: isService ? 'Mis Servicios' : 'Mis Productos', icon: ShoppingBag },
+    ...(isService ? [{ id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar }] : []),
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
-    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar },
+    ...(!isService ? [{ id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar }] : []),
     { id: 'training' as ClientTab, label: 'Entrenamiento AI', icon: Brain, badge: unresolvedCount },
     { id: 'soporte' as ClientTab, label: 'Soporte', icon: LifeBuoy },
   ];

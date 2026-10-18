@@ -10,6 +10,7 @@ interface ClientSidebarProps {
   setActiveTab: (tab: ClientTab) => void;
   unresolvedCount: number;
   tenantSlug: string;
+  businessType?: string;
   onLogout?: () => void;
 }
 
@@ -18,6 +19,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
   setActiveTab,
   unresolvedCount,
   tenantSlug,
+  businessType,
   onLogout
 }) => {
   const [isSimpleMode, setIsSimpleMode] = useState(true);
@@ -58,6 +60,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             unresolvedCount={unresolvedCount}
+            isService={businessType === 'servicios'}
           />
         ) : (
           <SidebarProNav
@@ -65,6 +68,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             unresolvedCount={unresolvedCount}
+            isService={businessType === 'servicios'}
           />
         )}
       </div>

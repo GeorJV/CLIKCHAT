@@ -97,6 +97,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         setActiveTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
         unresolvedCount={pendingCount}
         tenantSlug={currentSlug}
+        businessType={tenant?.business_type}
         onLogout={logout}
       />
       <main className="flex-1 h-full overflow-y-auto p-3 sm:px-6 sm:pt-2.5 sm:pb-6 bg-dot-grid transition-all duration-300">
@@ -137,6 +138,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               onUpdateSettings={updateSettings}
               unresolved={unresolved}
               onResolve={resolveQuery}
+              faqs={faqs}
+              onCreateFaq={createFaq}
+              onUpdateFaq={updateFaq}
+              onDeleteFaq={deleteFaq}
+              tenantSlug={currentSlug}
             />
           )}
           {activeTab === 'soporte' && (

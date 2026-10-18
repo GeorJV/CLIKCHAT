@@ -10,13 +10,15 @@ interface SidebarProNavProps {
   setActiveTab: (tab: ClientTab) => void;
   isExpanded: boolean;
   unresolvedCount: number;
+  isService?: boolean;
 }
 
 export const SidebarProNav: React.FC<SidebarProNavProps> = ({
   activeTab,
   setActiveTab,
   isExpanded,
-  unresolvedCount
+  unresolvedCount,
+  isService = false
 }) => {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({
     agencia: true,
@@ -111,7 +113,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         </button>
         {openCats.ventas && (
           <nav className="space-y-0.5">
-            {renderItem('products', 'Mis Productos', ShoppingBag)}
+            {renderItem('products', isService ? 'Mis Servicios' : 'Mis Productos', ShoppingBag)}
           </nav>
         )}
       </div>
