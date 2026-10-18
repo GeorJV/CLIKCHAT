@@ -16,6 +16,19 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-17] Integración Oficial de WhatsApp Business Cloud API (Meta Oficial) con Webhook Edge Serverless y Panel del Comerciante
+- **Diagnóstico y Necesidad de Negocio:**
+  1. *Fricción de Redirección Externa:* Hasta la versión previa, el bot cerraba ventas generando un enlace hacia WhatsApp (`wa.me`). Los comerciantes requerían que el bot respondiera y ejecutara los 4 niveles de RAG directamente dentro de su número oficial de WhatsApp Business 24/7 sin salir de la app de mensajería.
+- **Solución Implementada (ARQMODULAR & Serverless Cloudflare Edge):**
+  1. *Handshake & Webhook Edge (`functions/api/[[route]].js`):* Implementación de verificación oficial de Meta (`GET /api/whatsapp/webhook` con `hub.challenge` y token de verificación por comercio) y recepción de mensajes entrantes (`POST /api/whatsapp/webhook`).
+  2. *Canalización RAG Automática:* Cada mensaje entrante de WhatsApp se vincula a la sesión del cliente (`wa_{telefono}`), se almacena en D1 y se procesa por el motor multi-LLM/RAG (Nivel 1 Cortesía, Nivel 2 Objeciones, Nivel 3 Catálogo). La respuesta se devuelve al cliente por la API de Meta (`graph.facebook.com/v19.0/{phone_number_id}/messages`).
+  3. *Base de Datos D1 (`whatsapp_integrations`):* Almacenamiento seguro por comercio de `phone_number_id`, `business_phone`, `access_token`, `verify_token` y estado de conexión.
+  4. *Panel de Control del Comerciante (`WhatsAppManagerTab.tsx`, `WhatsAppConnectCard.tsx`, `WhatsAppCredentialsModal.tsx`, `WhatsAppTestChatModal.tsx`, `WhatsAppSetupGuide.tsx`):* Pestaña dedicada "WhatsApp Oficial" en la barra lateral con indicador visual en vivo, URL de webhook copiable con 1 clic, modal de credenciales y modal de prueba para enviar mensajes en vivo a números de prueba.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 6.12s con 0 errores (`npm run build`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `13f2233`).
+  - *Filtro 3:* Despliegue en Cloudflare Pages (`index-mvw6oq3V.js`), certificación del handshake de Meta con `CHALLENGE_ACCEPTED_123` y API `/api/whatsapp/config` respondiendo 200 OK.
+
 ### [2026-10-17] Manejador de Objeciones Q&A Nivel 2 y Simulador en Vivo con Corrección 1-Clic (Adaptativo Productos y Servicios)
 - **Diagnóstico y Necesidad de Negocio:**
   1. *Fricción en Entrenamiento de IA:* El dueño del negocio requiere alimentar y calibrar el comportamiento del chatbot comercial sin conocimientos técnicos de vectores o prompts complejos.

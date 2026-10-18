@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-17 20:07 GMT-6
-- **Versión Actual:** 1.53.0 (Manejador de Objeciones Q&A Nivel 2 y Simulador en Vivo con Corrección 1-Clic)
-- **Deploy en Vivo:** https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 5f7e45b)
+- **Última Actualización:** 2026-10-17 22:25 GMT-6
+- **Versión Actual:** 1.54.0 (Canal Oficial WhatsApp Business Cloud API & Webhook Edge)
+- **Deploy en Vivo:** https://clikchat.pages.dev (index-mvw6oq3V.js activo)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 13f2233)
 - **Estado Actual del Sistema:**
-  - Manejador de Objeciones (Q&A Nivel 2): Interfaz Gatillo ➔ Respuesta para blindar dudas comerciales ($0 costo, <50ms) con plantillas adaptativas para productos y servicios.
-  - Simulador en Vivo con Corrección 1-Clic: Consola de pruebas interactiva donde el dueño chatea con su bot y corrige respuestas directamente con el botón "Corregir respuesta", guardándolas como Regla de Oro Nivel 2.
-  - Panel Adaptativo (Productos vs Servicios): Menú lateral y flujos que alternan dinámicamente ("Mis Productos" vs "Mis Servicios" y "Agenda de Citas") según `business_type`.
-  - Verificado con los 3 Filtros: Build Vite limpio en 15.52s, sincronizado en GitHub rama main.
+  - WhatsApp Business Cloud API Oficial: Webhook Edge en `/api/whatsapp/webhook` con handshake Meta y procesamiento de mensajes entrantes directo contra el motor RAG de 4 niveles.
+  - Panel del Comerciante "WhatsApp Oficial": Gestión de credenciales (Phone Number ID, System User Token), URL de webhook personalizada por tenant y modal de prueba de mensajes en vivo.
+  - Tabla D1 `whatsapp_integrations`: Almacenamiento seguro de tokens y números vinculados por comercio.
+  - Verificado con los 3 Filtros: Handshake Meta verificado en producción, build limpio en 6.12s y despliegue CDN exitoso.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
