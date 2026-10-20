@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-19 21:47 GMT-6
-- **Versión Actual:** 1.61.0 (Sección ClikChat en CRM: Atribución de Tráfico y Enlaces Sin Código)
+- **Última Actualización:** 2026-10-20 09:23 GMT-6
+- **Versión Actual:** 1.62.0 (Aislamiento Estricto de Cuentas Nuevas: Cero Mocks Demo ni Beneficios Rellenados)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 10f4012)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 342545f)
 - **Estado Actual del Sistema:**
-  - Sección ClikChat en CRM ([`VoceroClikChatView.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/VoceroClikChatView.tsx)): Pestaña propia en Vocero CRM con 4 sub-secciones (Chats en Vivo, Enlaces y Plantillas, Configuración Web y Simulador de Atribución).
-  - Atribución Automática de Tráfico: Detección inteligente por origen (`anuncio`, `dm`, `post`, `sms`, `qr`, `web`, `direct`) con persistencia en `localStorage` y metadatos de sesión en Edge D1.
-  - Generador de Enlaces y Plantillas No-Code ([`ClikChatLinksAndTemplates.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatLinksAndTemplates.tsx)): Enlaces con UTMs y respuestas automáticas listas para copiar y pegar en Instagram DM, WhatsApp Business y Facebook Messenger.
-  - Simulador de Atribución ([`ClikChatAttributionSimulator.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatAttributionSimulator.tsx)): Sandbox interactivo para probar el flujo comercial en 4 pasos y verificar el origen del lead en tiempo real.
-  - Configuración Web Independiente ([`ClikChatConfigPanel.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatConfigPanel.tsx)): Nombre del bot web, saludo y colores sin alterar catálogo ni base RAG.
-  - Verificado con los 3 Filtros: Vite build limpio en 8.27s (`index-Bhqlk4xi.js`), commit `10f4012` en `main` y despliegue dual completado en Cloudflare Pages.
+  - Aislamiento Absoluto de Cuentas Nuevas: Erradicada la fuga de productos demo (`clikchat_products`) en `useTenantData.ts` y `useProductResolver.ts`. Toda cuenta nueva arranca con catálogo 100% limpio y vacío (`products: []`).
+  - Limpieza Total de Mocks (`productChatMock.ts`): `DEFAULT_PRODUCT` y fallback sin beneficios inventados, sin títulos ficticios ni fotos de stock de comida callejera.
+  - Escaparate Condicional Estricto (`DesktopProductShowcase.tsx` y `ProductCarousel.tsx`): Si no hay productos reales con nombre e imagen, el escaparate y carrusel retornan `null`, dejando el chat 100% limpio.
+  - Links de ClikChat CRM Blindados: Los enlaces y plantillas de auto-respuesta en `ClikChatLinksAndTemplates.tsx` y `VoceroClikChatView.tsx` resuelven el slug del negocio del usuario y no el slug demo `comida-callejera-xl`.
+  - Verificado con los 3 Filtros: Vite build limpio (`index-BCezUvQo.js`), push en GitHub rama `main` y HTTP 200 confirmado en Cloudflare Pages (`clikchat.pages.dev` y `clikchatcrm.pages.dev`).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
