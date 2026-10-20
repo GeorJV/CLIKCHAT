@@ -17,7 +17,7 @@ export const VoceroContactsView: React.FC<VoceroContactsViewProps> = ({ leads, o
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans select-none overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
         <div className="flex items-center gap-3">
           <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Contactos</h2>

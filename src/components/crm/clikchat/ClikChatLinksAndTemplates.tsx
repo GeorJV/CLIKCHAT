@@ -13,7 +13,10 @@ export const ClikChatLinksAndTemplates: React.FC<Props> = ({ tenantSlug, storeNa
     : (typeof window !== 'undefined' && localStorage.getItem('clikchat_active_tenant_slug') && localStorage.getItem('clikchat_active_tenant_slug') !== 'comida-callejera-xl'
       ? localStorage.getItem('clikchat_active_tenant_slug')!
       : (storeName && storeName !== 'Mi Negocio' ? storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'mi-negocio'));
-  const baseUrl = `https://clikchat.pages.dev/chat/${cleanSlug}`;
+  const crmHost = (typeof window !== 'undefined' && (window.location.hostname.includes('clikchatcrm') || window.location.hostname.includes('localhost')))
+    ? window.location.origin
+    : 'https://clikchatcrm.pages.dev';
+  const baseUrl = `${crmHost}/chat/${cleanSlug}`;
 
   const LINKS = [
     { id: 'ad', label: 'Anuncios de Meta & Google', param: 'anuncio', icon: Sparkles, desc: 'Para botones de "Más Información" en campañas de anuncios pagados.' },

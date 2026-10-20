@@ -40,31 +40,34 @@ export const VoceroClikChatView: React.FC<Props> = ({
       : (typeof window !== 'undefined' && localStorage.getItem('clikchat_active_tenant_slug') && localStorage.getItem('clikchat_active_tenant_slug') !== 'comida-callejera-xl'
         ? localStorage.getItem('clikchat_active_tenant_slug')!
         : 'mi-negocio'));
-  const liveChatUrl = `https://clikchat.pages.dev/chat/${cleanSlug}`;
+
+  const crmHost = (typeof window !== 'undefined' && (window.location.hostname.includes('clikchatcrm') || window.location.hostname.includes('localhost')))
+    ? window.location.origin
+    : 'https://clikchatcrm.pages.dev';
+  const liveChatUrl = `${crmHost}/chat/${cleanSlug}`;
 
   const TABS = [
     { id: 'chats' as const, label: 'Bandeja & Atribución', icon: MessageSquareCode, badge: leads.filter(l => l.channel === 'web' || l.channel === 'clikchat').length },
-    { id: 'links' as const, label: 'Enlaces & Plantillas No-Code', icon: Link2 },
+    { id: 'links' as const, label: 'Enlaces & Plantillas', icon: Link2 },
     { id: 'config' as const, label: 'Ajustes Web', icon: Settings2 },
-    { id: 'simulator' as const, label: 'Simulador de Origen', icon: Sparkles },
+    { id: 'simulator' as const, label: 'Simulador', icon: Sparkles },
   ];
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
-      {/* Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-6 shadow-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d5bff] text-white font-mono font-black text-xs shadow-xs">
+      {/* Header perfectamente alineado dentro de pantalla */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-4 sm:px-6 shadow-xs max-w-full">
+        <div className="flex items-center gap-2 shrink-0 min-w-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0d5bff] text-white font-mono font-black text-xs shadow-xs">
             CK
           </div>
-          <div>
-            <h2 className="text-[16px] font-bold tracking-tight text-[#0a1730]">Canal Propio ClikChat</h2>
-            <span className="vocero-kicker">Agente Web con Atribución de Tráfico</span>
-          </div>
+          <h2 className="text-sm sm:text-[15px] font-bold tracking-tight text-[#0a1730] truncate">
+            Canal Propio ClikChat
+          </h2>
         </div>
 
-        {/* Sub-tabs tipo píldora Vocero */}
-        <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl">
+        {/* Sub-tabs tipo píldora compactas y bien estructuradas */}
+        <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl overflow-x-auto [scrollbar-width:none]">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = subTab === tab.id;
@@ -72,7 +75,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
               <button
                 key={tab.id}
                 onClick={() => setSubTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer shrink-0 ${
                   active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
                 }`}
               >
@@ -92,7 +95,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
           href={liveChatUrl}
           target="_blank"
           rel="noreferrer"
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#d8e2f0] bg-[#f8fafc] text-xs font-semibold text-[#0a1730] hover:bg-[#edf2f9] transition"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#d8e2f0] bg-[#f8fafc] text-xs font-semibold text-[#0a1730] hover:bg-[#edf2f9] transition shrink-0"
         >
           <span>Abrir Chat Web</span>
           <ExternalLink className="h-3.5 w-3.5 text-[#8391aa]" />
@@ -100,7 +103,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
       </header>
 
       {/* Main Area */}
-      <main className="flex-1 overflow-y-auto p-5 max-w-6xl w-full mx-auto">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-5 max-w-6xl w-full mx-auto">
         {subTab === 'chats' && (
           <ClikChatConversationsView
             leads={leads}
@@ -122,7 +125,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
         )}
 
         {subTab === 'simulator' && (
-          <ClikChatAttributionSimulator tenantSlug={tenantSlug} storeName={tenant?.name} />
+          <ClikChatAttributionSimulator tenantSlug={tenantSlug} />
         )}
       </main>
     </div>

@@ -22,7 +22,7 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
   const totalValue = leads.reduce((acc, curr) => acc + (curr.deal_value || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-[#f6f8fc] select-none font-sans overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
       {/* Cabecera idéntica a Vocero Pipeline */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
         <div className="flex items-center gap-3">

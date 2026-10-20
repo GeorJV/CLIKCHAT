@@ -46,7 +46,7 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#f6f8fc] border-r border-[#e8edf6] select-none font-sans">
+    <div className="flex-1 flex flex-col h-full bg-[#f6f8fc] border-r border-[#e8edf6] font-sans">
       {/* Cabecera idéntica a Vocero */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-4 shadow-sm">
         <div className="flex items-center gap-3 min-w-0">

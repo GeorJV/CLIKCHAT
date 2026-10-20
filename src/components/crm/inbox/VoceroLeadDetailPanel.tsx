@@ -37,7 +37,7 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
   const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
 
   return (
-    <div className="w-80 h-full bg-white border-l border-[#e8edf6] flex flex-col font-sans select-none overflow-y-auto">
+    <div className="w-80 h-full bg-white border-l border-[#e8edf6] flex flex-col font-sans overflow-y-auto">
       {/* Cabecera idéntica a Vocero */}
       <header className="sticky top-0 flex items-center justify-between border-b border-[#e8edf6] bg-white px-4 py-3 shadow-xs">
         <h3 className="vocero-kicker">Detalles</h3>

@@ -18,7 +18,10 @@ export const VoceroResultsView: React.FC<VoceroResultsViewProps> = ({
   const wonLeads = leads.filter(l => l.stage === 'closed_won').length;
   const totalPipelineValue = leads.reduce((acc, curr) => acc + (curr.value || 0), 0);
   const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
-  const publicUrl = `https://clikchat.pages.dev/chat/${tenantSlug}`;
+  const crmHost = (typeof window !== 'undefined' && (window.location.hostname.includes('clikchatcrm') || window.location.hostname.includes('localhost')))
+    ? window.location.origin
+    : 'https://clikchatcrm.pages.dev';
+  const publicUrl = `${crmHost}/chat/${tenantSlug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);

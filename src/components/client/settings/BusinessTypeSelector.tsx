@@ -7,9 +7,6 @@ export interface BusinessTypeOption {
   badge: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  accentColor: string;
-  borderColor: string;
-  activeBg: string;
 }
 
 export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
@@ -19,9 +16,6 @@ export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
     badge: 'Catálogo & Comanda',
     description: 'Catálogo con fotos, precios, venta cruzada de adicionales y comanda a WhatsApp.',
     icon: ShoppingBag,
-    accentColor: 'text-emerald-400',
-    borderColor: 'border-emerald-500',
-    activeBg: 'bg-emerald-950/40'
   },
   {
     id: 'servicios',
@@ -29,9 +23,6 @@ export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
     badge: 'Citas & Horarios',
     description: 'Tarifas por servicio, consulta de disponibilidad de horarios y reservas.',
     icon: Calendar,
-    accentColor: 'text-blue-400',
-    borderColor: 'border-blue-500',
-    activeBg: 'bg-blue-950/40'
   },
   {
     id: 'soporte',
@@ -39,9 +30,6 @@ export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
     badge: 'FAQ & Asesoría',
     description: 'Respuestas automáticas a dudas frecuentes, cotizaciones y derivación a asesor.',
     icon: Headphones,
-    accentColor: 'text-amber-400',
-    borderColor: 'border-amber-500',
-    activeBg: 'bg-amber-950/40'
   }
 ];
 
@@ -56,12 +44,11 @@ export const BusinessTypeSelector: React.FC<BusinessTypeSelectorProps> = ({
   onChange,
   compact = false
 }) => {
-  // Mapear variantes existentes como 'restaurante' a 'tienda' si fuera necesario para selección visual
   const normalizedValue = value === 'restaurante' ? 'tienda' : value;
 
   return (
-    <div className="space-y-1.5 w-full">
-      <div className={`grid grid-cols-1 ${compact ? 'gap-2' : 'sm:grid-cols-3 gap-2.5'}`}>
+    <div className="space-y-1.5 w-full font-sans">
+      <div className={`grid grid-cols-1 ${compact ? 'gap-2' : 'sm:grid-cols-3 gap-3'}`}>
         {BUSINESS_TYPE_OPTIONS.map((opt) => {
           const Icon = opt.icon;
           const isSelected = normalizedValue === opt.id || value === opt.id;
@@ -77,42 +64,46 @@ export const BusinessTypeSelector: React.FC<BusinessTypeSelectorProps> = ({
                   onChange(opt.id);
                 }
               }}
-              className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
+              className={`p-3.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
                 isSelected
-                  ? `${opt.borderColor} ${opt.activeBg} ring-1.5 ${opt.borderColor} shadow-lg shadow-black/40`
-                  : 'bg-[#121111] border-[#262424] hover:border-zinc-700 hover:bg-[#161515]'
+                  ? 'border-[#0d5bff] bg-blue-50/80 ring-2 ring-[#0d5bff]/25 shadow-md text-[#0a1730]'
+                  : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:bg-[#f8fafc] text-[#334155]'
               }`}
             >
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 ${
-                    isSelected ? 'bg-white/10' : 'bg-[#181717]'
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${
+                    isSelected ? 'bg-[#0d5bff] text-white shadow-xs' : 'bg-[#f1f5f9] text-[#0d5bff]'
                   }`}>
-                    <Icon className={`w-4 h-4 ${opt.accentColor}`} />
+                    <Icon className="w-4 h-4" />
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border transition ${
                     isSelected
-                      ? 'bg-white/10 border-white/20 text-white'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                      ? 'bg-[#0d5bff] text-white border-transparent'
+                      : 'bg-[#f1f5f9] border-[#e2e8f0] text-[#62728d]'
                   }`}>
                     {opt.badge}
                   </span>
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition">
+                  <h4 className={`text-xs font-black tracking-tight transition ${
+                    isSelected ? 'text-[#0a1730]' : 'text-[#1e293b]'
+                  }`}>
                     {opt.title}
                   </h4>
-                  <p className="text-[11px] text-zinc-400 mt-1 leading-snug line-clamp-2">
+                  <p className={`text-[11px] mt-1 leading-relaxed line-clamp-2 transition ${
+                    isSelected ? 'text-[#334155] font-medium' : 'text-[#62728d]'
+                  }`}>
                     {opt.description}
                   </p>
                 </div>
               </div>
 
               {isSelected && (
-                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 mt-2.5 pt-1.5 border-t border-white/5">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <span>Seleccionado</span>
+                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#0d5bff] mt-3 pt-2 border-t border-[#0d5bff]/20">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0d5bff]" />
+                  <span>Modalidad Seleccionada</span>
                 </div>
               )}
             </button>

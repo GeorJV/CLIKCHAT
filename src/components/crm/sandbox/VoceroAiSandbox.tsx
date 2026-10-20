@@ -48,7 +48,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans select-none overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-[#0d5bff]" />

@@ -19,7 +19,7 @@ export const VoceroPipelineColumn: React.FC<VoceroPipelineColumnProps> = ({
   const totalValue = stageLeads.reduce((acc, curr) => acc + (curr.deal_value || 0), 0);
 
   return (
-    <div className="flex h-full w-64 shrink-0 snap-start flex-col rounded-xl border border-[#dde5f1] bg-[#f6f8fc] select-none font-sans overflow-hidden">
+    <div className="flex h-full w-64 shrink-0 snap-start flex-col rounded-xl border border-[#dde5f1] bg-[#f6f8fc] font-sans overflow-hidden">
       {/* Cabecera idéntica a Vocero StageColumn */}
       <div className="flex items-center justify-between border-b border-[#dde5f1] bg-white px-3 py-2.5">
         <span className="text-[13.5px] font-bold tracking-tight text-[#0a1730]">
