@@ -3,6 +3,7 @@ import { User, Phone, Mail, CheckCheck, MessageSquare, RefreshCw, Hash } from 'l
 import { ConversationSession, ChatMessageRecord } from './types';
 import { getVisitorDisplayName } from './conversationUtils';
 import { ChatMessageContent } from '../../chat/ChatMessageContent';
+import { useSmartPolling } from '../../../hooks/useSmartPolling';
 
 interface ConversationDetailProps {
   session: ConversationSession | null;
@@ -13,6 +14,25 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
   const [messages, setMessages] = useState<ChatMessageRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const currentSessionIdRef = useRef<string | null>(null);
+
+  const fetchSessionMessages = async (showSpinner = false) => {
+    if (!session?.id) return;
+    if (showSpinner) setLoading(true);
+    try {
+      const res = await fetch(`/api/chat/messages/${encodeURIComponent(session.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (currentSessionIdRef.current === session.id && data?.messages) {
+          setMessages(data.messages);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Error al cargar mensajes de sesión:', err);
+    } finally {
+      if (showSpinner) setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!session?.id) {
@@ -26,37 +46,17 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
       currentSessionIdRef.current = session.id;
     }
 
-    let isMounted = true;
-
-    const fetchSessionMessages = async (showSpinner = false) => {
-      if (showSpinner) setLoading(true);
-      try {
-        const res = await fetch(`/api/chat/messages/${encodeURIComponent(session.id)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted && currentSessionIdRef.current === session.id && data?.messages) {
-            setMessages(data.messages);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Error al cargar mensajes de sesión:', err);
-      } finally {
-        if (isMounted && showSpinner) setLoading(false);
-      }
-    };
-
     fetchSessionMessages(true);
-
-    const interval = setInterval(() => {
-      fetchSessionMessages(false);
-    }, 4000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
   }, [session?.id]);
+
+  // Polling inteligente: 10s, pausado 100% en segundo plano, refresco inmediato al volver a la pestaña
+  useSmartPolling(() => {
+    fetchSessionMessages(false);
+  }, {
+    intervalMs: 10000,
+    enabled: Boolean(session?.id),
+    runImmediatelyOnFocus: true
+  });
 
   if (!session) {
     return (

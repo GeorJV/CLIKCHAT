@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
 import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
+import { useSmartPolling } from './useSmartPolling';
 
 export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
   const [tenantSlug, setTenantSlug] = useState<string>(() => {
@@ -138,14 +139,14 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
   useEffect(() => { loadTenantsList(); }, [loadTenantsList]);
   useEffect(() => { if (tenantSlug) loadTenantData(tenantSlug); }, [tenantSlug, loadTenantData]);
 
-  // Periodic background refresh for real live metrics every 8 seconds
-  useEffect(() => {
-    if (!tenantSlug) return;
-    const interval = setInterval(() => {
-      loadTenantData(tenantSlug, true);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [tenantSlug, loadTenantData]);
+  // Polling inteligente para métricas en vivo: 30s, pausa total en segundo plano, refresco al volver al foco
+  useSmartPolling(() => {
+    if (tenantSlug) loadTenantData(tenantSlug, true);
+  }, {
+    intervalMs: 30000,
+    enabled: Boolean(tenantSlug),
+    runImmediatelyOnFocus: true
+  });
 
   const resolveQuery = async (queryId: string, answer: string, category: string = 'consultas_resueltas') => {
     if (!answer.trim()) return false;

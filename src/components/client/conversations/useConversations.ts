@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ConversationSession } from './types';
+import { useSmartPolling } from '../../../hooks/useSmartPolling';
 
 export function useConversations(tenantId?: string) {
   const [sessions, setSessions] = useState<ConversationSession[]>([]);
@@ -70,9 +71,16 @@ export function useConversations(tenantId?: string) {
 
   useEffect(() => {
     loadConversations(true);
-    const timer = setInterval(() => loadConversations(false), 6000);
-    return () => clearInterval(timer);
   }, [loadConversations]);
+
+  // Polling inteligente: 15s para el listado de chats, pausa en segundo plano, refresco inmediato al volver
+  useSmartPolling(() => {
+    loadConversations(false);
+  }, {
+    intervalMs: 15000,
+    enabled: Boolean(tenantId),
+    runImmediatelyOnFocus: true
+  });
 
   const handleToggleStatus = async (id: string) => {
     const target = sessions.find(s => s.id === id);

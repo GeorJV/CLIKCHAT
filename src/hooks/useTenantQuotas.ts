@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TenantQuotasResponse, TenantQuotas } from '../types/quotas';
+import { useSmartPolling } from './useSmartPolling';
 
 const DEFAULT_QUOTAS: TenantQuotas = {
   hourly: { limit: 1000, used: 0, remaining: 1000, percentage: 0 },
@@ -12,7 +13,7 @@ interface UseTenantQuotasProps {
   autoRefreshIntervalMs?: number;
 }
 
-export function useTenantQuotas({ tenantId, autoRefreshIntervalMs = 10000 }: UseTenantQuotasProps) {
+export function useTenantQuotas({ tenantId, autoRefreshIntervalMs = 45000 }: UseTenantQuotasProps) {
   const [quotasData, setQuotasData] = useState<TenantQuotasResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -64,13 +65,16 @@ export function useTenantQuotas({ tenantId, autoRefreshIntervalMs = 10000 }: Use
   useEffect(() => {
     if (!tenantId) return;
     fetchQuotas(false);
+  }, [tenantId, fetchQuotas]);
 
-    const intervalId = setInterval(() => {
-      fetchQuotas(false);
-    }, autoRefreshIntervalMs);
-
-    return () => clearInterval(intervalId);
-  }, [tenantId, autoRefreshIntervalMs, fetchQuotas]);
+  // Polling inteligente para cuotas: pausado 100% en segundo plano, refresco inmediato al volver
+  useSmartPolling(() => {
+    fetchQuotas(false);
+  }, {
+    intervalMs: autoRefreshIntervalMs,
+    enabled: Boolean(tenantId),
+    runImmediatelyOnFocus: true
+  });
 
   return {
     quotasData: quotasData?.quotas || DEFAULT_QUOTAS,
