@@ -1,18 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 13:48 GMT-6
-- **Versión Actual:** 1.67.0 (Blindaje de Carrito, Erradicación de Ítems Fantasma, Auditoría de Reclamos y Cero Re-suma)
+- **Última Actualización:** 2026-10-20 13:55 GMT-6
+- **Versión Actual:** 1.68.0 (Meta Llama 3.3 como IA #1 por Defecto y GLM-5.3-Flash como #2 en Respaldo)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit c7f59dd)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 825608d)
 - **Estado Actual del Sistema:**
+  - Modelo #1 Predeterminado: Meta Llama 3.3 70B Fast en Cloudflare Workers AI ejecutado nativamente vía `env.AI.run`.
+  - Modelo #2 Respaldo/Alternativo: GLM-5.3-Flash (`z-ai/glm-5.3-flash:floor`) en OpenRouter con sort price.
   - Blindaje Estricto de Carrito: Prohibido agregar texto arbitrario del usuario como ítem. Solo productos del menú oficial.
   - Erradicación de Botones de Compra Inválidos: `add_item` solo se genera para productos verificados en catálogo D1.
   - Corrección de Re-suma de Comanda: Eliminada extracción de precios de mensajes previos del bot en frontend.
   - Auditoría de Reclamos en 1 Paso: `isDisputeOrCorrection` analiza la comanda, aclara precios de menú y no vende cosas nuevas.
   - Purga Automática de Ítems Corruptos: Limpieza en D1 y LocalStorage de frases y quejas previas erróneas.
-  - Eliminación por Chat: Permite remover ítems solicitándolo con "quita/elimina/borra".
-  - Verificado con 3 Filtros: Build limpio (`index-CVBR6x1I.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio (`index-CVW4fuGO.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
