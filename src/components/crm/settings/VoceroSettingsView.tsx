@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Tenant, Product } from '../../../types';
-import { MessageSquare, Store, ShoppingBag, Cpu, Settings } from 'lucide-react';
+import { MessageSquare, Store, ShoppingBag, Cpu, Settings, Network } from 'lucide-react';
 import { VoceroChannelsSettings } from './VoceroChannelsSettings';
+import { VoceroZernioSettings } from './VoceroZernioSettings';
 import { VoceroBusinessProfileSettings } from './VoceroBusinessProfileSettings';
 import { VoceroCatalogSettings } from './VoceroCatalogSettings';
 import { VoceroAiModelSettings } from './VoceroAiModelSettings';
@@ -25,10 +26,11 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
   onUpdateProduct,
   onDeleteProduct,
 }) => {
-  const [subTab, setSubTab] = useState<'canales' | 'perfil' | 'catalogo' | 'ia'>('canales');
+  const [subTab, setSubTab] = useState<'canales' | 'zernio' | 'perfil' | 'catalogo' | 'ia'>('canales');
 
   const TABS = [
     { id: 'canales' as const, label: 'Canales (WhatsApp / Meta)', icon: MessageSquare },
+    { id: 'zernio' as const, label: 'Zernio (Multicanal)', icon: Network },
     { id: 'perfil' as const, label: 'Perfil del Negocio', icon: Store },
     { id: 'catalogo' as const, label: 'Catálogo / Menú', icon: ShoppingBag, badge: products.length },
     { id: 'ia' as const, label: 'Motor de IA & Proveedores', icon: Cpu },
@@ -36,7 +38,6 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
-      {/* Encabezado Vocero */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-6 shadow-xs">
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-[#0d5bff]" />
@@ -44,8 +45,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
           <span className="vocero-kicker ml-2">Configuración General</span>
         </div>
 
-        {/* Sub-tabs tipo píldora Vocero */}
-        <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl">
+        <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl overflow-x-auto max-w-xl">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = subTab === tab.id;
@@ -53,7 +53,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setSubTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
                   active
                     ? 'bg-white text-[#0d5bff] shadow-xs'
                     : 'text-[#62728d] hover:text-[#0a1730]'
@@ -72,10 +72,12 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
         </div>
       </header>
 
-      {/* Área con scroll */}
       <main className="flex-1 overflow-y-auto p-6 max-w-5xl w-full mx-auto">
         {subTab === 'canales' && (
           <VoceroChannelsSettings tenant={tenant} tenantSlug={tenantSlug} />
+        )}
+        {subTab === 'zernio' && (
+          <VoceroZernioSettings tenantSlug={tenantSlug} />
         )}
         {subTab === 'perfil' && (
           <VoceroBusinessProfileSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />

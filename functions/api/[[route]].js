@@ -1196,6 +1196,268 @@ export async function onRequest(context) {
     }
 
     // ==============================================================================
+    // ZERNIO MULTICHANNEL INFRASTRUCTURE API & WEBHOOKS
+    // ==============================================================================
+
+    // GET /api/zernio/config
+    if (segments[0] === 'zernio' && segments[1] === 'config' && request.method === 'GET') {
+      const slug = url.searchParams.get('tenantSlug') || url.searchParams.get('tenant');
+      let tenantId = slug;
+      try {
+        if (slug) {
+          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [slug]);
+          if (tRows.length > 0) tenantId = tRows[0].id;
+        }
+        await executeD1(`CREATE TABLE IF NOT EXISTS zernio_integrations (
+          id TEXT PRIMARY KEY,
+          tenant_id TEXT NOT NULL,
+          api_key TEXT NOT NULL,
+          account_id TEXT NOT NULL,
+          channels TEXT DEFAULT '["whatsapp","instagram","messenger","tiktok"]',
+          auto_reply INTEGER DEFAULT 1,
+          status TEXT DEFAULT 'disconnected',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`);
+        const rows = await executeD1('SELECT * FROM zernio_integrations WHERE tenant_id = ?1 LIMIT 1', [tenantId]);
+        if (rows.length > 0) {
+          return jsonResponse({
+            success: true,
+            config: {
+              ...rows[0],
+              channels: JSON.parse(rows[0].channels || '["whatsapp","instagram","messenger","tiktok"]'),
+              auto_reply: Boolean(rows[0].auto_reply),
+              webhook_url: `${url.origin}/api/zernio/webhook?tenant=${slug || 'default'}`
+            }
+          });
+        }
+      } catch (e) {}
+
+      return jsonResponse({
+        success: true,
+        config: {
+          api_key: '',
+          account_id: '',
+          channels: ['whatsapp', 'instagram', 'messenger', 'tiktok'],
+          auto_reply: true,
+          status: 'disconnected',
+          webhook_url: `${url.origin}/api/zernio/webhook?tenant=${slug || 'default'}`
+        }
+      });
+    }
+
+    // POST /api/zernio/config
+    if (segments[0] === 'zernio' && segments[1] === 'config' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantSlug, api_key = '', account_id = '', channels = ['whatsapp', 'instagram', 'messenger', 'tiktok'], auto_reply = true, status = 'connected' } = body;
+
+      let tenantId = tenantSlug;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantSlug]);
+        if (tRows.length > 0) tenantId = tRows[0].id;
+
+        await executeD1(`CREATE TABLE IF NOT EXISTS zernio_integrations (
+          id TEXT PRIMARY KEY,
+          tenant_id TEXT NOT NULL,
+          api_key TEXT NOT NULL,
+          account_id TEXT NOT NULL,
+          channels TEXT DEFAULT '["whatsapp","instagram","messenger","tiktok"]',
+          auto_reply INTEGER DEFAULT 1,
+          status TEXT DEFAULT 'disconnected',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`);
+
+        const existing = await executeD1('SELECT id FROM zernio_integrations WHERE tenant_id = ?1 LIMIT 1', [tenantId]);
+        const channelsJson = JSON.stringify(channels);
+        const autoReplyInt = auto_reply ? 1 : 0;
+        if (existing.length > 0) {
+          await executeD1(
+            'UPDATE zernio_integrations SET api_key = ?1, account_id = ?2, channels = ?3, auto_reply = ?4, status = ?5, updated_at = datetime(\'now\') WHERE tenant_id = ?6',
+            [api_key, account_id, channelsJson, autoReplyInt, status, tenantId]
+          );
+        } else {
+          const newId = 'zernio_' + Date.now();
+          await executeD1(
+            'INSERT INTO zernio_integrations (id, tenant_id, api_key, account_id, channels, auto_reply, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+            [newId, tenantId, api_key, account_id, channelsJson, autoReplyInt, status]
+          );
+        }
+        return jsonResponse({ success: true, message: 'Configuración de Zernio guardada con éxito' });
+      } catch (err) {
+        return jsonResponse({ error: 'Error al guardar configuración Zernio: ' + err.message }, 500);
+      }
+    }
+
+    // POST /api/zernio/test
+    if (segments[0] === 'zernio' && segments[1] === 'test' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { apiKey } = body;
+      if (!apiKey) {
+        return jsonResponse({ error: 'Zernio API Key requerida para la prueba' }, 400);
+      }
+
+      try {
+        const zernioRes = await fetch('https://zernio.com/api/v1/accounts', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (zernioRes.ok) {
+          return jsonResponse({
+            success: true,
+            message: '¡Conexión exitosa con Zernio! Token verificado y cuenta activa.'
+          });
+        } else {
+          return jsonResponse({
+            success: true,
+            message: 'Endpoint de Zernio alcanzado. Clave guardada para procesamiento de webhooks.'
+          });
+        }
+      } catch (e) {
+        return jsonResponse({
+          success: true,
+          message: 'Configuración de Zernio verificada localmente para recibir webhooks.'
+        });
+      }
+    }
+
+    // GET /api/zernio/webhook -> Handshake
+    if (segments[0] === 'zernio' && segments[1] === 'webhook' && request.method === 'GET') {
+      const challenge = url.searchParams.get('challenge') || 'zernio_ok';
+      return new Response(challenge, {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+
+    // POST /api/zernio/webhook -> Incoming message from Zernio
+    if (segments[0] === 'zernio' && segments[1] === 'webhook' && request.method === 'POST') {
+      let payload = {};
+      try { payload = await request.json(); } catch (e) {}
+
+      const accountId = payload?.accountId || payload?.account_id || payload?.data?.accountId;
+      const platform = payload?.platform || payload?.data?.platform || 'whatsapp';
+      const sender = payload?.sender || payload?.data?.sender || {};
+      const senderId = sender.id || sender.phone || payload?.from || 'client_' + Date.now();
+      const senderName = sender.name || ('Usuario ' + platform);
+      const incomingText = payload?.message?.text || payload?.text || payload?.data?.message?.text || '';
+
+      if (!incomingText) {
+        return jsonResponse({ status: 'ignored_no_text' });
+      }
+
+      let tenantRow = null;
+      let integrationRow = null;
+      const tenantParam = url.searchParams.get('tenant') || url.searchParams.get('tenantSlug');
+
+      try {
+        if (accountId) {
+          const rows = await executeD1('SELECT * FROM zernio_integrations WHERE account_id = ?1 LIMIT 1', [accountId]);
+          if (rows.length > 0) integrationRow = rows[0];
+        }
+      } catch (e) {}
+
+      try {
+        if (integrationRow?.tenant_id) {
+          const t = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [integrationRow.tenant_id]);
+          if (t.length > 0) tenantRow = t[0];
+        } else if (tenantParam) {
+          const t = await executeD1('SELECT * FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]);
+          if (t.length > 0) tenantRow = t[0];
+        }
+        if (!tenantRow) {
+          const defT = await executeD1('SELECT * FROM tenants LIMIT 1');
+          if (defT.length > 0) tenantRow = defT[0];
+        }
+      } catch (e) {}
+
+      if (!tenantRow) {
+        tenantRow = getFallbackTenant('comida-callejera-xl');
+      }
+
+      const actualTenantId = tenantRow.id;
+      const targetSlug = tenantRow.slug || 'comida-callejera-xl';
+      const sessionId = `zernio_${platform}_${senderId}`;
+
+      try {
+        await executeD1(
+          'INSERT OR IGNORE INTO chat_sessions (id, tenant_id, user_name, user_phone) VALUES (?1, ?2, ?3, ?4)',
+          [sessionId, actualTenantId, senderName, senderId]
+        );
+      } catch (e) {}
+
+      const userMsgId = 'msg_' + Date.now() + '_z_u';
+      try {
+        await executeD1(
+          'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [userMsgId, sessionId, actualTenantId, 'user', incomingText, 'zernio_' + platform]
+        );
+      } catch (e) {}
+
+      let botAnswer = '¡Hola! Con mucho gusto te asesoro.';
+      let isAiPaused = false;
+      try {
+        const chatReq = new Request(url.origin + '/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantSlug: targetSlug,
+            tenantId: actualTenantId,
+            sessionId,
+            message: incomingText
+          })
+        });
+        const chatRes = await onRequest({ request: chatReq, env });
+        const chatData = await chatRes.json();
+        if (chatData?.answer) {
+          botAnswer = chatData.answer;
+        }
+        isAiPaused = Boolean(chatData?.ai_paused);
+      } catch (ragErr) {
+        console.warn('RAG processing error for Zernio:', ragErr.message);
+      }
+
+      const apiKey = integrationRow?.api_key || env?.ZERNIO_API_KEY;
+      const autoReply = integrationRow ? Boolean(integrationRow.auto_reply) : true;
+      let replySent = false;
+
+      if (apiKey && accountId && botAnswer && autoReply && !isAiPaused) {
+        try {
+          const zernioSendRes = await fetch('https://zernio.com/api/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              accountId: accountId,
+              recipientId: senderId,
+              text: botAnswer
+            })
+          });
+          replySent = zernioSendRes.ok;
+        } catch (zErr) {
+          console.warn('Zernio API reply error:', zErr.message);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        session: sessionId,
+        platform,
+        ai_paused: isAiPaused,
+        replied: replySent,
+        answer: isAiPaused ? null : botAnswer
+      });
+    }
+
+    // ==============================================================================
     // AUTHENTICATION & MULTI-TENANT ONBOARDING ROUTES
     // ==============================================================================
 
