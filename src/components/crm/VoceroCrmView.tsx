@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useVoceroCrm } from '../../hooks/useVoceroCrm';
 import { useVoceroMode } from '../../hooks/useVoceroMode';
-import { VoceroTopNav, VoceroViewTab } from './VoceroTopNav';
+import { VoceroAppNav, VoceroNavTab } from './VoceroAppNav';
 import { VoceroInbox } from './inbox/VoceroInbox';
 import { VoceroPipelineBoard } from './pipeline/VoceroPipelineBoard';
+import { VoceroContactsView } from './contacts/VoceroContactsView';
 import { VoceroAiSandbox } from './sandbox/VoceroAiSandbox';
 
 interface VoceroCrmViewProps {
@@ -17,7 +18,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
   tenantSlug,
   tenantName,
 }) => {
-  const [activeTab, setActiveTab] = useState<VoceroViewTab>('inbox');
+  const [activeTab, setActiveTab] = useState<VoceroNavTab>('inbox');
   const { setVoceroMode } = useVoceroMode();
 
   const {
@@ -45,18 +46,18 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-zinc-950 text-slate-100 overflow-hidden font-sans">
-      {/* Barra de Navegación Superior Vocero CRM */}
-      <VoceroTopNav
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f6f8fc] font-sans">
+      {/* Barra Lateral Vocero Oficial (Azul Marino Fijo #0b1327) */}
+      <VoceroAppNav
         activeTab={activeTab}
         onSelectTab={setActiveTab}
-        tenantName={tenantName}
-        tenantSlug={tenantSlug}
+        unreadCount={leads.filter(l => l.stage === 'lead').length}
+        userName={tenantName || tenantSlug}
         onSwitchToClassic={() => setVoceroMode(false)}
       />
 
-      {/* Contenido Dinámico de la Vista */}
-      <main className="flex-1 overflow-hidden relative">
+      {/* Contenido Principal con Papel Frío Vocero (#f6f8fc) */}
+      <main className="flex-1 h-full min-w-0 overflow-hidden relative bg-[#f6f8fc]">
         {activeTab === 'inbox' && (
           <VoceroInbox
             leads={leads}
@@ -87,12 +88,28 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
           />
         )}
 
-        {activeTab === 'sandbox' && (
-          <div className="h-full overflow-y-auto p-4">
-            <VoceroAiSandbox
-              tenantSlug={tenantSlug}
-              tenantName={tenantName}
-            />
+        {activeTab === 'contacts' && (
+          <VoceroContactsView
+            leads={leads}
+            onSelectLead={handleSelectLeadFromPipeline}
+          />
+        )}
+
+        {(activeTab === 'agent' || activeTab === 'lab' || activeTab === 'onboarding') && (
+          <VoceroAiSandbox
+            tenantSlug={tenantSlug}
+            tenantName={tenantName}
+          />
+        )}
+
+        {(activeTab === 'bookings' || activeTab === 'results' || activeTab === 'settings') && (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center text-[#42506b]">
+            <p className="font-serif text-[24px] italic text-[#0a1730] mb-2">
+              Sección de {activeTab.toUpperCase()}
+            </p>
+            <p className="text-xs text-[#8391aa] max-w-sm">
+              Sincronizado directamente con Cloudflare D1 en tiempo real.
+            </p>
           </div>
         )}
       </main>

@@ -19,34 +19,22 @@ export const VoceroPipelineColumn: React.FC<VoceroPipelineColumnProps> = ({
   const totalValue = stageLeads.reduce((acc, curr) => acc + (curr.deal_value || 0), 0);
 
   return (
-    <div className="w-72 shrink-0 flex flex-col h-full bg-zinc-950/80 rounded-2xl border border-zinc-800/80 overflow-hidden">
-      {/* Cabecera de la Columna */}
-      <div className="p-3 border-b border-zinc-800/80 bg-zinc-900/50 space-y-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${stage.color.replace('text-', 'bg-')}`} />
-            <h3 className="text-xs font-bold text-white tracking-tight">{stage.title}</h3>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold border border-zinc-700">
-            {stageLeads.length}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between text-[11px] text-zinc-400">
-          <span className="text-[10px] text-zinc-500 truncate max-w-[150px]">{stage.description}</span>
-          {totalValue > 0 && (
-            <span className="font-mono font-bold text-emerald-400 text-xs">
-              ${totalValue.toLocaleString()}
-            </span>
-          )}
-        </div>
+    <div className="flex h-full w-64 shrink-0 snap-start flex-col rounded-xl border border-[#dde5f1] bg-[#f6f8fc] select-none font-sans overflow-hidden">
+      {/* Cabecera idéntica a Vocero StageColumn */}
+      <div className="flex items-center justify-between border-b border-[#dde5f1] bg-white px-3 py-2.5">
+        <span className="text-[13.5px] font-bold tracking-tight text-[#0a1730]">
+          {stage.title}
+        </span>
+        <span className="rounded-full border border-[#dde5f1] bg-white px-2 py-0.5 font-mono text-[11px] text-[#8391aa]">
+          {stageLeads.length}
+        </span>
       </div>
 
-      {/* Lista de Tarjetas con Scroll */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5">
+      {/* Lista de Leads */}
+      <div className="flex-1 space-y-2 overflow-y-auto p-2">
         {stageLeads.length === 0 ? (
-          <div className="h-28 flex flex-col items-center justify-center text-center p-3 border border-dashed border-zinc-800/80 rounded-xl text-zinc-600">
-            <p className="text-[11px] font-medium">Sin leads en esta etapa</p>
+          <div className="py-8 text-center text-[#8391aa] text-[11.5px]">
+            Sin tratos en esta etapa
           </div>
         ) : (
           stageLeads.map(lead => (
@@ -58,6 +46,11 @@ export const VoceroPipelineColumn: React.FC<VoceroPipelineColumnProps> = ({
             />
           ))
         )}
+      </div>
+
+      {/* Pie de Columna con Total */}
+      <div className="border-t border-[#dde5f1] bg-white px-3 py-2 text-[11px] font-mono text-right text-[#42506b] font-bold">
+        {totalValue > 0 ? `$${totalValue.toLocaleString()} MXN` : '—'}
       </div>
     </div>
   );

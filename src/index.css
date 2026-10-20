@@ -8,7 +8,96 @@
   }
 }
 
-/* Glassmorphism Styles */
+/* ==============================================================================
+   SISTEMA DE DISEÑO EXACTO DE VOCERO CRM (1:1 VOCEROCRM.COM)
+   ============================================================================== */
+.vocero-root {
+  --bg: #ffffff;
+  --bg-subtle: #f6f8fc;
+  --bg-panel: #eef2f9;
+  --bg-hover: #e9eef8;
+  --bg-raised: #ffffff;
+  --text: #0a1730;
+  --text-2: #42506b;
+  --text-3: #8391aa;
+  --text-4: #aab4c8;
+  --border: #e8edf6;
+  --border-strong: #dde5f1;
+  --chip-bg: #ffffff;
+  --row-hover: #f6f8fc;
+  --accent: #0d5bff;
+  --accent-hover: #0a4de6;
+  --accent-soft: #d3e2ff;
+  --accent-tint: #ebf1ff;
+  --accent-text: #0038d8;
+  --accent-fg: #ffffff;
+  --bubble-in: #eaf7ef;
+  --bubble-in-border: #d7eede;
+  --bubble-out: #ebf1ff;
+  --bubble-out-border: #d3e2ff;
+  --bubble-out-text: #0a1730;
+  --success: #1fb35b;
+  --success-tint: #e9f7ee;
+  --success-text: #157a41;
+  --warning: #f2a71b;
+  --warning-tint: #fef6e6;
+  --warning-text: #935f0b;
+  --danger: #d94a4a;
+  --danger-tint: #fdf0f0;
+  --danger-text: #b73535;
+}
+
+.vocero-root.dark, .dark .vocero-root {
+  --bg-subtle: #141c30;
+  --bg: #1c263c;
+  --row-hover: #212c45;
+  --bg-raised: #222d47;
+  --chip-bg: #26334d;
+  --bg-panel: #2c3a57;
+  --bg-hover: #2f3d5e;
+  --text: #e8eefc;
+  --text-2: #bac6e3;
+  --text-3: #9aa9ca;
+  --text-4: #7888ad;
+  --border: #36476f;
+  --border-strong: #4a5d8e;
+  --bubble-in: #173d2c;
+  --bubble-in-border: #2a5e45;
+  --accent: #256bff;
+  --accent-hover: #4883ff;
+  --accent-soft: #1f3f82;
+  --accent-tint: #1e3567;
+  --accent-text: #6f9eff;
+  --accent-fg: #ffffff;
+  --bubble-out: #1e3567;
+  --bubble-out-border: #1f3f82;
+  --bubble-out-text: #e8eefc;
+  --success: #4fd07f;
+  --success-tint: #183e26;
+  --success-text: #7fe0a3;
+  --warning: #f5b74a;
+  --warning-tint: #453315;
+  --warning-text: #f7c86f;
+  --danger: #ef6b6b;
+  --danger-tint: #562727;
+  --danger-text: #f59a9a;
+}
+
+/* Barra lateral Vocero: azul marino fijo #0b1327 */
+.vocero-nav-dark {
+  background-color: #0b1327 !important;
+  color: #e8eefc !important;
+  border-color: #263866 !important;
+}
+
+.vocero-kicker {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #7688b0;
+}
 .glass-panel {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(12px);

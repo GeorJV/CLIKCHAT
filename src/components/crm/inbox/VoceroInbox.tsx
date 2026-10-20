@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CrmLead, CrmMessage, CrmStageId, CrmInboxFilter } from '../../../types/crm';
 import { VoceroConversationList } from './VoceroConversationList';
 import { VoceroActiveChat } from './VoceroActiveChat';
@@ -41,10 +41,12 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
   onUpdateLead,
   onOpenNewLeadModal,
 }) => {
+  const [panelOpen, setPanelOpen] = useState(true);
+
   return (
-    <div className="flex h-full w-full overflow-hidden bg-zinc-950 font-sans">
-      {/* Columna 1: Lista de Conversaciones Multicanal */}
-      <div className="w-80 shrink-0 h-full border-r border-zinc-800/80">
+    <div className="flex h-full w-full overflow-hidden bg-white font-sans">
+      {/* Columna 1: Lista de Conversaciones */}
+      <div className="w-[320px] shrink-0 h-full border-r border-[#e8edf6]">
         <VoceroConversationList
           leads={leads}
           selectedLeadId={selectedLeadId}
@@ -58,25 +60,30 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
         />
       </div>
 
-      {/* Columna 2: Chat Activo & Control de Takeover */}
+      {/* Columna 2: Hilo del Chat Activo */}
       <div className="flex-1 h-full min-w-0">
         <VoceroActiveChat
           lead={selectedLead}
           messages={messages}
           isLoadingMessages={isLoadingMessages}
+          panelOpen={panelOpen}
+          onTogglePanel={() => setPanelOpen(!panelOpen)}
           onToggleTakeover={onToggleTakeover}
           onSendMessage={onSendMessage}
         />
       </div>
 
-      {/* Columna 3: Panel de Detalles del Lead & CRM */}
-      <div className="w-80 shrink-0 h-full hidden lg:block">
-        <VoceroLeadDetailPanel
-          lead={selectedLead}
-          onChangeStage={onChangeStage}
-          onUpdateLead={onUpdateLead}
-        />
-      </div>
+      {/* Columna 3: Detalles del Contacto */}
+      {panelOpen && selectedLead && (
+        <div className="w-80 shrink-0 h-full border-l border-[#e8edf6]">
+          <VoceroLeadDetailPanel
+            lead={selectedLead}
+            onChangeStage={onChangeStage}
+            onUpdateLead={onUpdateLead}
+            onClose={() => setPanelOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

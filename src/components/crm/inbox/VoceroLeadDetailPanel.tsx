@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, Mail, DollarSign, FileText, ExternalLink, Check } from 'lucide-react';
+import { ChevronRight, ExternalLink, DollarSign, FileText, Check } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
-import { VoceroTagsEditor } from './VoceroTagsEditor';
 
 interface VoceroLeadDetailPanelProps {
   lead: CrmLead | null;
   onChangeStage: (leadId: string, stage: CrmStageId) => void;
   onUpdateLead: (leadId: string, fields: Partial<CrmLead>) => void;
+  onClose: () => void;
 }
 
 export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
   lead,
   onChangeStage,
   onUpdateLead,
+  onClose,
 }) => {
   const [dealValue, setDealValue] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [isSavedNotes, setIsSavedNotes] = useState(false);
+  const [savedNotes, setSavedNotes] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -25,121 +26,115 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
     }
   }, [lead?.id]);
 
-  if (!lead) {
-    return (
-      <div className="w-80 h-full bg-zinc-950 p-4 border-l border-zinc-800 text-zinc-500 text-xs flex items-center justify-center">
-        Detalles del Lead
-      </div>
-    );
-  }
-
-  const handleSaveDealValue = () => {
-    const num = parseFloat(dealValue) || 0;
-    onUpdateLead(lead.id, { deal_value: num });
-  };
+  if (!lead) return null;
 
   const handleSaveNotes = () => {
     onUpdateLead(lead.id, { notes });
-    setIsSavedNotes(true);
-    setTimeout(() => setIsSavedNotes(false), 2000);
+    setSavedNotes(true);
+    setTimeout(() => setSavedNotes(false), 2000);
   };
 
   const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
 
   return (
-    <div className="w-80 h-full bg-zinc-950 border-l border-zinc-800/80 overflow-y-auto p-4 space-y-4">
-      {/* Perfil del Contacto */}
-      <div className="text-center pb-3 border-b border-zinc-800 space-y-1.5">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-base text-white shadow-md">
-          {lead.name ? lead.name.slice(0, 2).toUpperCase() : 'LE'}
+    <div className="w-80 h-full bg-white border-l border-[#e8edf6] flex flex-col font-sans select-none overflow-y-auto">
+      {/* Cabecera idéntica a Vocero */}
+      <header className="sticky top-0 flex items-center justify-between border-b border-[#e8edf6] bg-white px-4 py-3 shadow-xs">
+        <h3 className="vocero-kicker">Detalles</h3>
+        <button
+          onClick={onClose}
+          aria-label="Ocultar panel"
+          className="rounded p-1 text-[#8391aa] hover:bg-[#f6f8fc] hover:text-[#0a1730] cursor-pointer"
+        >
+          <ChevronRight className="h-4 w-4" strokeWidth={1.8} />
+        </button>
+      </header>
+
+      <div className="p-4 space-y-4 text-xs">
+        {/* Contacto */}
+        <div className="flex items-center gap-3 pb-3 border-b border-[#e8edf6]">
+          <div className="w-10 h-10 rounded-full bg-[#eef2f9] border border-[#dde5f1] flex items-center justify-center font-bold text-sm text-[#0a1730]">
+            {lead.name ? lead.name.slice(0, 2).toUpperCase() : 'LE'}
+          </div>
+          <div className="min-w-0">
+            <h4 className="font-bold text-[14px] text-[#0a1730] truncate">{lead.name || 'Sin Nombre'}</h4>
+            <p className="font-mono text-[11px] text-[#8391aa]">{lead.phone || 'Sin teléfono'}</p>
+          </div>
         </div>
-        <h3 className="text-sm font-bold text-white tracking-tight">{lead.name || 'Sin Nombre'}</h3>
-        <p className="text-[11px] text-zinc-400 font-mono">{lead.phone || 'Sin Teléfono'}</p>
 
         {cleanPhone && (
           <a
             href={`https://wa.me/${cleanPhone}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold transition mt-1"
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg border border-[#c9ebd6] bg-[#e9f7ee] text-[#157a41] font-bold text-[11px] hover:bg-[#d7eede] transition"
           >
-            <span>Abrir en WhatsApp</span>
-            <ExternalLink className="w-2.5 h-2.5" />
+            <span>Conversar en WhatsApp</span>
+            <ExternalLink className="w-3 h-3" />
           </a>
         )}
-      </div>
 
-      {/* Selector de Etapa del Pipeline (1-Clic) */}
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-          Etapa del Embudo
-        </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {CRM_STAGES.map((st) => (
-            <button
-              key={st.id}
-              onClick={() => onChangeStage(lead.id, st.id)}
-              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold transition text-left border cursor-pointer ${
-                lead.stage === st.id
-                  ? `${st.bgLight} ${st.color} ${st.borderColor} shadow-sm ring-1 ring-current`
-                  : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-900'
-              }`}
-            >
-              {st.title}
-            </button>
-          ))}
+        {/* Etapa del Embudo (Pills de Vocero) */}
+        <div className="space-y-1.5">
+          <span className="vocero-kicker block">Etapa del Embudo</span>
+          <div className="grid grid-cols-2 gap-1.5">
+            {CRM_STAGES.map((s) => {
+              const active = lead.stage === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onChangeStage(lead.id, s.id)}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border text-left transition cursor-pointer ${
+                    active
+                      ? 'border-[#0d5bff] bg-[#ebf1ff] text-[#0038d8] font-bold shadow-xs'
+                      : 'border-[#dde5f1] bg-[#f6f8fc] text-[#42506b] hover:bg-white'
+                  }`}
+                >
+                  {s.title}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Valor del Trato ($ Deal Value) */}
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1 uppercase tracking-wider">
-          <DollarSign className="w-3 h-3 text-emerald-400" /> Valor Estimado / Venta
-        </label>
-        <div className="flex items-center gap-1.5">
-          <input
-            type="number"
-            value={dealValue}
-            onChange={(e) => setDealValue(e.target.value)}
-            onBlur={handleSaveDealValue}
-            placeholder="0.00"
-            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+        {/* Monto del Trato */}
+        <div className="space-y-1.5">
+          <span className="vocero-kicker block">Monto del Trato</span>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-[#8391aa] text-xs">$</span>
+              <input
+                type="number"
+                value={dealValue}
+                onChange={(e) => setDealValue(e.target.value)}
+                onBlur={() => onUpdateLead(lead.id, { deal_value: parseFloat(dealValue) || 0 })}
+                placeholder="0.00"
+                className="w-full pl-6 pr-2 py-1.5 rounded-lg border border-[#dde5f1] bg-[#f6f8fc] text-xs font-mono text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white"
+              />
+            </div>
+            <span className="font-mono text-xs text-[#8391aa] font-bold">MXN</span>
+          </div>
+        </div>
+
+        {/* Notas Internas */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="vocero-kicker block">Notas Privadas</span>
+            {savedNotes && (
+              <span className="text-[10px] text-[#157a41] flex items-center gap-0.5 font-bold">
+                <Check className="w-3 h-3" /> Guardado
+              </span>
+            )}
+          </div>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            onBlur={handleSaveNotes}
+            rows={3}
+            placeholder="Añade notas privadas sobre este cliente…"
+            className="w-full p-2 rounded-lg border border-[#dde5f1] bg-[#f6f8fc] text-xs text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white resize-none"
           />
-          <button
-            onClick={handleSaveDealValue}
-            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold border border-zinc-700 cursor-pointer"
-          >
-            Guardar
-          </button>
         </div>
-      </div>
-
-      {/* Editor de Etiquetas */}
-      <VoceroTagsEditor
-        tags={lead.tags || []}
-        onUpdateTags={(tags) => onUpdateLead(lead.id, { tags })}
-      />
-
-      {/* Notas Privadas del Asesor */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1 uppercase tracking-wider">
-            <FileText className="w-3 h-3 text-emerald-400" /> Notas Internas
-          </label>
-          {isSavedNotes && (
-            <span className="text-[10px] text-emerald-400 flex items-center gap-0.5 font-semibold">
-              <Check className="w-3 h-3" /> Guardado
-            </span>
-          )}
-        </div>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={handleSaveNotes}
-          rows={3}
-          placeholder="Escribe notas privadas sobre las preferencias de este cliente..."
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 resize-none"
-        />
       </div>
     </div>
   );

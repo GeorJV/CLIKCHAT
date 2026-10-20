@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, ChevronLeft, MessageSquare, Bot, UserCheck, DollarSign } from 'lucide-react';
+import { MessageSquareText, ChevronRight, ChevronLeft } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
 
 interface VoceroLeadCardProps {
@@ -13,99 +13,70 @@ export const VoceroLeadCard: React.FC<VoceroLeadCardProps> = ({
   onSelectLead,
   onChangeStage,
 }) => {
-  const isWhatsApp = lead.channel === 'whatsapp';
   const stageIndex = CRM_STAGES.findIndex(s => s.id === lead.stage);
 
-  const handlePrevStage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (stageIndex > 0) {
-      onChangeStage(lead.id, CRM_STAGES[stageIndex - 1].id);
-    }
-  };
-
-  const handleNextStage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (stageIndex < CRM_STAGES.length - 1) {
-      onChangeStage(lead.id, CRM_STAGES[stageIndex + 1].id);
-    }
-  };
+  const timeStr = lead.last_message_at
+    ? new Date(lead.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'Sin actividad';
 
   return (
     <div
       onClick={() => onSelectLead(lead.id)}
-      className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition shadow-sm hover:shadow-md cursor-pointer group space-y-2.5"
+      className="cursor-pointer rounded-lg border border-[#dde5f1] bg-white p-3 shadow-xs hover:shadow-md transition-shadow font-sans select-none space-y-2"
     >
-      {/* Cabecera de la Tarjeta */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white shrink-0">
-            {lead.name ? lead.name.slice(0, 2).toUpperCase() : 'LE'}
-          </div>
-          <div className="min-w-0">
-            <h4 className="text-xs font-bold text-white truncate group-hover:text-emerald-400 transition">
-              {lead.name || 'Sin Nombre'}
-            </h4>
-            <p className="text-[10px] text-zinc-400 font-mono truncate">{lead.phone || 'Sin Teléfono'}</p>
-          </div>
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eef2f9] text-[11px] font-bold text-[#0a1730]">
+          {lead.name ? lead.name.slice(0, 2).toUpperCase() : 'LE'}
         </div>
-
-        <span
-          className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
-            isWhatsApp ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'
-          }`}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13.5px] font-semibold text-[#0a1730]">
+            {lead.name || 'Sin Nombre'}
+          </p>
+          <p className="font-mono text-[10.5px] text-[#8391aa]">
+            {timeStr}
+          </p>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectLead(lead.id);
+          }}
+          title="Abrir conversación"
+          className="rounded p-1 text-[#8391aa] hover:bg-[#ebf1ff] hover:text-[#0038d8] transition"
         >
-          {isWhatsApp ? 'WhatsApp' : 'Web'}
-        </span>
+          <MessageSquareText className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Snippet de Último Mensaje */}
-      {lead.last_message && (
-        <p className="text-[11px] text-zinc-400 line-clamp-2 italic bg-zinc-950/60 p-1.5 rounded-lg border border-zinc-800/60">
-          "{lead.last_message}"
-        </p>
-      )}
-
-      {/* Tags Chips */}
-      {lead.tags && lead.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {lead.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
-              {tag}
-            </span>
-          ))}
-          {lead.tags.length > 3 && (
-            <span className="text-[9px] text-zinc-500">+{lead.tags.length - 3}</span>
-          )}
-        </div>
-      )}
-
-      {/* Pie con Valor del Trato y Controles de Avance */}
-      <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1 font-mono font-bold text-emerald-400">
-          {lead.deal_value > 0 ? (
-            <span>${lead.deal_value.toLocaleString()}</span>
-          ) : (
-            <span className="text-zinc-600 font-normal text-[10px]">Sin valor</span>
-          )}
-        </div>
+      {/* Monto y Botones de Etapa */}
+      <div className="flex items-center justify-between border-t border-[#f0f4fa] pt-1.5 text-xs">
+        <span className="font-mono text-[11px] font-bold text-[#0038d8]">
+          {lead.deal_value > 0 ? `$${lead.deal_value.toLocaleString()} MXN` : '+ monto'}
+        </span>
 
         <div className="flex items-center gap-1">
           {stageIndex > 0 && (
             <button
-              onClick={handlePrevStage}
-              title="Retroceder etapa"
-              className="p-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChangeStage(lead.id, CRM_STAGES[stageIndex - 1].id);
+              }}
+              title="Mover atrás"
+              className="p-1 rounded hover:bg-[#f6f8fc] text-[#8391aa]"
             >
-              <ChevronLeft className="w-3 h-3" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             </button>
           )}
           {stageIndex < CRM_STAGES.length - 1 && (
             <button
-              onClick={handleNextStage}
-              title="Avanzar etapa"
-              className="p-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChangeStage(lead.id, CRM_STAGES[stageIndex + 1].id);
+              }}
+              title="Mover adelante"
+              className="p-1 rounded bg-[#ebf1ff] hover:bg-[#d3e2ff] text-[#0038d8]"
             >
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

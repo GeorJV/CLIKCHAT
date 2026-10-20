@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, MessageSquare, Plus } from 'lucide-react';
+import { Search, X, Inbox, Sparkles } from 'lucide-react';
 import { CrmLead, CrmInboxFilter } from '../../../types/crm';
 import { VoceroConversationItem } from './VoceroConversationItem';
 
@@ -27,7 +27,6 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
   isLoading,
 }) => {
   const filteredLeads = leads.filter(l => {
-    // Filtro por término de búsqueda
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       l.name.toLowerCase().includes(term) ||
@@ -35,7 +34,6 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
       (l.last_message && l.last_message.toLowerCase().includes(term));
     if (!matchesSearch) return false;
 
-    // Filtro por categoría de bandeja
     if (filterInbox === 'whatsapp') return l.channel === 'whatsapp';
     if (filterInbox === 'web') return l.channel === 'web';
     if (filterInbox === 'human_needed') return l.ai_paused === true;
@@ -43,79 +41,84 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
     return true;
   });
 
-  const FILTER_TABS: { id: CrmInboxFilter; label: string }[] = [
-    { id: 'all', label: 'Todos' },
-    { id: 'whatsapp', label: 'WhatsApp' },
-    { id: 'web', label: 'Web' },
-    { id: 'human_needed', label: 'Humano' },
-    { id: 'won', label: 'Ganados' },
+  const FILTROS = [
+    { id: 'all' as CrmInboxFilter, label: 'Todas' },
+    { id: 'human_needed' as CrmInboxFilter, label: 'Humano' },
+    { id: 'whatsapp' as CrmInboxFilter, label: 'WhatsApp' },
+    { id: 'won' as CrmInboxFilter, label: 'Ganadas' },
   ];
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 border-r border-zinc-800/80">
-      {/* Cabecera con Búsqueda y Botón Nuevo Lead */}
-      <div className="p-3 border-b border-zinc-800/80 space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Bandeja Multicanal</h3>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400">
-              {filteredLeads.length}
-            </span>
+    <div className="flex h-full flex-col bg-white border-r border-[#e8edf6] select-none font-sans">
+      {/* Cabecera idéntica a Vocero */}
+      <header className="border-b border-[#e8edf6] px-4 pb-3 pt-3.5 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Bandeja</h2>
+            <span className="font-mono text-[12px] text-[#8391aa]">{leads.length}</span>
           </div>
+
           <button
             onClick={onOpenNewLeadModal}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ebf1ff] hover:bg-[#d3e2ff] text-[#0038d8] text-[11.5px] font-bold transition cursor-pointer"
           >
-            <Plus className="w-3 h-3" />
+            <Sparkles className="w-3 h-3" />
             <span>Nuevo</span>
           </button>
         </div>
 
-        {/* Campo de Búsqueda */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+        {/* Buscador Redondeado Vocero */}
+        <div className="flex items-center gap-2 rounded-full border border-[#dde5f1] bg-white px-3.5 py-[6px] shadow-sm focus-within:border-[#0d5bff] focus-within:ring-2 focus-within:ring-[#d3e2ff]">
+          <Search className="h-3.5 w-3.5 shrink-0 text-[#8391aa]" strokeWidth={1.8} />
           <input
-            type="text"
             value={searchTerm}
             onChange={(e) => onSetSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre, teléfono o chat..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50"
+            placeholder="Buscar por nombre o teléfono…"
+            className="w-full bg-transparent text-[12.5px] outline-none text-[#0a1730] placeholder:text-[#8391aa]"
           />
+          {searchTerm && (
+            <button onClick={() => onSetSearchTerm('')} className="p-0.5 text-[#8391aa] hover:text-[#0a1730]">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
+      </header>
 
-        {/* Pestañas de Filtro */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
-          {FILTER_TABS.map(tab => (
+      {/* Pestañas de Filtro Redondeadas (Foco Separado Vocero) */}
+      <div className="flex items-center gap-1.5 border-b border-[#e8edf6] px-4 py-2 overflow-x-auto scrollbar-none bg-[#f6f8fc]">
+        {FILTROS.map((f) => {
+          const active = filterInbox === f.id;
+          return (
             <button
-              key={tab.id}
-              onClick={() => onSetFilterInbox(tab.id)}
-              className={`px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition cursor-pointer ${
-                filterInbox === tab.id
-                  ? 'bg-zinc-800 text-emerald-400 border border-emerald-500/30'
-                  : 'text-zinc-400 hover:text-white bg-zinc-900/40 hover:bg-zinc-900'
+              key={f.id}
+              onClick={() => onSetFilterInbox(f.id)}
+              className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition-colors cursor-pointer ${
+                active
+                  ? 'border-[#0d5bff] bg-[#0d5bff] text-white shadow-sm'
+                  : 'border-[#dde5f1] bg-white text-[#42506b] hover:border-[#8391aa]'
               }`}
             >
-              {tab.label}
+              <span>{f.label}</span>
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* Lista de Conversaciones */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5 bg-[#f6f8fc]">
         {isLoading && leads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-zinc-500 space-y-2">
-            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs">Cargando conversaciones...</p>
+          <div className="flex flex-col items-center justify-center py-12 text-[#8391aa] space-y-2">
+            <div className="w-5 h-5 border-2 border-[#0d5bff] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs">Cargando bandeja…</p>
           </div>
         ) : filteredLeads.length === 0 ? (
-          <div className="text-center py-10 px-4 text-zinc-500 space-y-1">
-            <p className="text-xs font-semibold text-zinc-400">No hay conversaciones</p>
-            <p className="text-[11px] text-zinc-600">Ningún contacto coincide con los filtros actuales.</p>
+          <div className="text-center py-12 px-4 text-[#8391aa] space-y-1">
+            <Inbox className="w-8 h-8 mx-auto text-[#dde5f1] mb-1" />
+            <p className="text-xs font-semibold text-[#42506b]">Sin conversaciones</p>
+            <p className="text-[11px] text-[#8391aa]">No hay contactos que coincidan con la búsqueda.</p>
           </div>
         ) : (
-          filteredLeads.map(lead => (
+          filteredLeads.map((lead) => (
             <VoceroConversationItem
               key={lead.id}
               lead={lead}
