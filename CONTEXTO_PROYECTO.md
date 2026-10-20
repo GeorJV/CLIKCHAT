@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-18 10:00 GMT-6
-- **Versión Actual:** 1.57.0 (Asistente Visual de Activación Rápida y Navegación Guiada)
-- **Deploy en Vivo:** https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 9fb8440)
+- **Última Actualización:** 2026-10-19 18:20 GMT-6
+- **Versión Actual:** 1.58.0 (Adaptación de Vocero CRM: Pipeline Kanban, Inbox 3-Col y Modo Dual)
+- **Deploy en Vivo:** https://clikchat.pages.dev (y compatible con https://clikchatcrm.pages.dev)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit c940903)
 - **Estado Actual del Sistema:**
-  - Asistente Visual de Activación Rápida: `AgentSetupFlowHero.tsx` en el Dashboard (`ChatbotQLinkTab.tsx`) con 4 tarjetas de avance (0% a 100%), atajos directos y modo minimizable.
-  - Navegación Guiada en Barra Lateral: `SidebarSimpleNav.tsx` reorganizado en 3 secciones: `🚀 Configuración (4 Pasos)` con numeración del 1 al 4, `📊 Operación & Clientes` y `⚙️ Sistema`.
-  - Selector 1-Clic de Modalidad: `BusinessTypeSelector.tsx` activo en registro y panel de identidad para 3 macro-modalidades comerciales con blindaje para restaurantes.
-  - Flujo Comercial en 4 Pasos Obligatorios: `SalesFlowSection.tsx` y `SalesFlowFourStepsEditor.tsx` inyectados con máxima prioridad secuencial en Edge API.
-  - Verificado con los 3 Filtros: Build Vite limpio en 19.53s (`index-CL2QqN0z.js`), sincronizado en GitHub rama main y HTTP 200 en CDN Cloudflare Pages.
+  - Pipeline Kanban Visual: `VoceroPipelineBoard.tsx`, `VoceroPipelineColumn.tsx` y `VoceroLeadCard.tsx` con 6 etapas comerciales y métricas monetarias en tiempo real.
+  - Bandeja Multicanal de 3 Columnas: `VoceroInbox.tsx` con cuenta regresiva de ventana Meta 24h, alternador de Human Takeover (Pausar IA) y panel CRM de etiquetas/notas/etapa.
+  - Modo Dual & Detección de Dominio: `useVoceroMode.ts` y botón flotante/topbar para alternar al instante entre Vocero CRM y ClikChat Clásico en cualquier pantalla.
+  - Backend Edge Serverless D1: Endpoints CRUD `/api/crm/leads`, sincronización automática de chats y pausa de auto-respuesta de IA por asesor humano.
+  - Verificado con los 3 Filtros: Build Vite limpio en 9.76s (`index-ClAmaK97.js`), push en GitHub main y HTTP 200 verificado en Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
