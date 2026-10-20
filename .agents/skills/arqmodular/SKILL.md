@@ -1,3 +1,8 @@
+---
+name: arqmodular
+description: Estándar universal de modularidad, arquitectura limpia y componentes atómicos (<150-180 líneas), separación estricta en 3 capas (tipos, lógica/hooks, UI) y aislamiento quirúrgico.
+---
+
 # 🏛️ ARQMODULAR: Estándar Universal de Modularidad, Arquitectura Limpia y Eficiencia con IA
 
 Este documento define la arquitectura y las reglas de diseño modular que **todo asistente de Inteligencia Artificial y desarrollador DEBE cumplir estrictamente** en este proyecto.
