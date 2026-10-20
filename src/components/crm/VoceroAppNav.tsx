@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   Inbox, Kanban, Users, CalendarDays, ListChecks,
-  Sparkles, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode
+  Sparkles, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, Bot
 } from 'lucide-react';
 import { VoceroBrandLogo } from './VoceroBrandLogo';
 
-export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'onboarding' | 'agent' | 'lab' | 'results' | 'settings';
+export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'onboarding' | 'agent' | 'lab' | 'analyst' | 'results' | 'settings';
 
 interface VoceroAppNavProps {
   activeTab: VoceroNavTab;
@@ -47,8 +47,9 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       ]
     },
     {
-      title: undefined,
+      title: 'Inteligencia',
       items: [
+        { id: 'analyst' as VoceroNavTab, label: 'Analista IA', icon: Bot },
         { id: 'results' as VoceroNavTab, label: 'Resultados', icon: BarChart3 },
       ]
     }

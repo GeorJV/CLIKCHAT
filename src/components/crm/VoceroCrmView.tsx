@@ -13,6 +13,7 @@ import { VoceroOnboardingView } from './onboarding/VoceroOnboardingView';
 import { VoceroBookingsView } from './bookings/VoceroBookingsView';
 import { VoceroResultsView } from './results/VoceroResultsView';
 import { VoceroClikChatView } from './clikchat/VoceroClikChatView';
+import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
 
 interface VoceroCrmViewProps {
   tenantId?: string;
@@ -100,6 +101,10 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
         {activeTab === 'lab' && (
           <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} />
+        )}
+
+        {activeTab === 'analyst' && (
+          <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />
         )}
 
         {activeTab === 'results' && (

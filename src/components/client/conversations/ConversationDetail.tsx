@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Phone, Mail, CheckCheck, MessageSquare, RefreshCw, Hash } from 'lucide-react';
+import { User, Phone, Mail, CheckCheck, MessageSquare, RefreshCw, Hash, Cpu } from 'lucide-react';
 import { ConversationSession, ChatMessageRecord } from './types';
 import { getVisitorDisplayName } from './conversationUtils';
 import { ChatMessageContent } from '../../chat/ChatMessageContent';
@@ -74,6 +74,18 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
 
   const displayName = getVisitorDisplayName(session);
 
+  const chatNeurons = messages.reduce((acc, m) => acc + (m.metadata?.neurons || 0), 0);
+  const chatCostUsd = messages.reduce((acc, m) => {
+    if (m.metadata?.costUsd) return acc + m.metadata.costUsd;
+    if (m.sender === 'assistant') {
+      const estTokens = Math.round((m.message || m.content || '').length / 4) + 600;
+      return acc + (estTokens * 0.0000003);
+    }
+    return acc;
+  }, 0);
+  const activeModel = messages.slice().reverse().find(m => m.metadata?.model)?.metadata?.model || session?.model_used || 'z-ai/glm-5.3-flash:floor';
+  const cleanModelName = activeModel.includes('llama') ? 'Llama 3.3 (CF)' : activeModel.includes('glm') ? 'GLM-5.3-Flash' : 'AI Edge';
+
   return (
     <div className="onyx-card rounded-2xl p-4 sm:p-5 flex flex-col space-y-4 min-h-[500px]">
       {/* Encabezado del Chat Seleccionado */}
@@ -118,6 +130,14 @@ export const ConversationDetail: React.FC<ConversationDetailProps> = ({ session,
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Badge de Consumo & Neuronas del Chat Individual */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141620] border border-indigo-500/25 text-indigo-300 text-[11px] font-mono shadow-xs">
+            <Cpu className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="font-semibold">{chatNeurons > 0 ? `${chatNeurons} neuronas` : cleanModelName}</span>
+            <span className="text-zinc-600">|</span>
+            <span className="text-emerald-400 font-semibold">${chatCostUsd.toFixed(4)} USD</span>
+          </div>
+
           <span className="text-xs text-zinc-400 bg-[#111010] px-2.5 py-1 rounded-lg border border-[#282626] font-mono">
             {messages.length || session.total_messages} msgs
           </span>

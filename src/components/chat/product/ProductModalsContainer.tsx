@@ -3,6 +3,8 @@ import { ProductItem, ProductCheckoutData, OrderItem } from '../../../types/prod
 import { ProductDetailModal } from './ProductDetailModal';
 import { ProductFullscreenModal } from './ProductFullscreenModal';
 import { ProductCheckoutModal } from './ProductCheckoutModal';
+import { ExitIntentToast } from '../ExitIntentToast';
+import { useExitIntent } from '../../../hooks/useExitIntent';
 
 interface Props {
   product: ProductItem;
@@ -22,6 +24,7 @@ interface Props {
   onDirectCheckout: () => void;
   onCloseCheckout: () => void;
   onConfirmCheckout: (data: ProductCheckoutData) => void;
+  onAskQuestion?: (query: string) => void;
 }
 
 export const ProductModalsContainer: React.FC<Props> = ({
@@ -29,8 +32,11 @@ export const ProductModalsContainer: React.FC<Props> = ({
   orderItems = [], orderTotal = null, isRestaurant = false,
   onUpdateQuantity, onRemoveItem,
   onCloseDetail, onProceedBuyDetail, onCloseFullscreen,
-  onAskAboutProduct, onDirectCheckout, onCloseCheckout, onConfirmCheckout
+  onAskAboutProduct, onDirectCheckout, onCloseCheckout, onConfirmCheckout,
+  onAskQuestion
 }) => {
+  const { showExitIntent, dismissExitIntent } = useExitIntent();
+
   return (
     <>
       {detailModal && (
@@ -64,6 +70,17 @@ export const ProductModalsContainer: React.FC<Props> = ({
           onConfirmCheckout={onConfirmCheckout}
         />
       )}
+      <ExitIntentToast
+        isOpen={showExitIntent && !checkoutOpen && !fullscreenOpen && !detailModal}
+        storeName={storeName}
+        hasItemsInCart={Boolean(orderTotal && orderTotal > 0)}
+        onProceedCheckout={onDirectCheckout}
+        onAskQuestion={(q) => {
+          if (onAskQuestion) onAskQuestion(q);
+          else onAskAboutProduct({ ...product, title: q });
+        }}
+        onDismiss={dismissExitIntent}
+      />
     </>
   );
 };

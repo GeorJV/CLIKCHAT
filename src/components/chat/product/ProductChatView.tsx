@@ -10,6 +10,7 @@ import { extractPriceFromText, parsePriceNumber, isAddOrderAction } from '../../
 import { useProductChatSession } from './useProductChatSession';
 import { useProductChatOrder } from './useProductChatOrder';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
+import { useLivePresencePing } from '../../../hooks/useLivePresencePing';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; welcomeMessage?: string;
@@ -42,6 +43,18 @@ export const ProductChatView: React.FC<Props> = ({
     onResetOrderTotal: resetOrder,
     onRestoreOrderTotal: (total) => setOrderTotal(total)
   });
+
+  useLivePresencePing({
+    tenantSlug, sessionId: sessId, activeProduct: selectedProduct?.title,
+    hasCart: Boolean(orderTotal && orderTotal > 0), cartTotal: orderTotal || 0,
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (sessId) fetch('/api/chat/typing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sessId, draftText: inputValue }) }).catch(() => {});
+    }, 350);
+    return () => clearTimeout(t);
+  }, [inputValue, sessId]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400), deliveryDelayMs: 0, onSetLoading: setIsLoading,
@@ -155,7 +168,7 @@ export const ProductChatView: React.FC<Props> = ({
         onUpdateQuantity={updateItemQuantity} onRemoveItem={removeOrderItem}
         onCloseDetail={() => setDetailModal(null)} onProceedBuyDetail={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
         onCloseFullscreen={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
-        onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout}
+        onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} onAskQuestion={handleSendMessage}
       />
     </div>
   );

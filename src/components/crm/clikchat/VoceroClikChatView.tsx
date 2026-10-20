@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { CrmLead, CrmMessage } from '../../../types/crm';
 import { Tenant } from '../../../types';
-import { MessageSquareCode, Link2, Settings2, Sparkles, ExternalLink } from 'lucide-react';
+import { MessageSquareCode, Link2, Settings2, Sparkles, ExternalLink, Cpu } from 'lucide-react';
 import { ClikChatConversationsView } from './ClikChatConversationsView';
 import { ClikChatLinksAndTemplates } from './ClikChatLinksAndTemplates';
 import { ClikChatConfigPanel } from './ClikChatConfigPanel';
 import { ClikChatAttributionSimulator } from './ClikChatAttributionSimulator';
+import { ClikChatSpendingPanel } from './ClikChatSpendingPanel';
 
 interface Props {
   tenant: Tenant | null;
@@ -32,7 +33,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
   onSendMessage,
   onUpdateSettings
 }) => {
-  const [subTab, setSubTab] = useState<'chats' | 'links' | 'config' | 'simulator'>('chats');
+  const [subTab, setSubTab] = useState<'chats' | 'links' | 'config' | 'simulator' | 'spending'>('chats');
   const cleanSlug = (tenantSlug && tenantSlug !== 'comida-callejera-xl')
     ? tenantSlug
     : (tenant?.slug && tenant.slug !== 'comida-callejera-xl'
@@ -48,6 +49,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
 
   const TABS = [
     { id: 'chats' as const, label: 'Bandeja & Atribución', icon: MessageSquareCode, badge: leads.filter(l => l.channel === 'web' || l.channel === 'clikchat').length },
+    { id: 'spending' as const, label: 'Gasto & Neuronas', icon: Cpu },
     { id: 'links' as const, label: 'Enlaces & Plantillas', icon: Link2 },
     { id: 'config' as const, label: 'Ajustes Web', icon: Settings2 },
     { id: 'simulator' as const, label: 'Simulador', icon: Sparkles },
@@ -114,6 +116,10 @@ export const VoceroClikChatView: React.FC<Props> = ({
             onToggleTakeover={onToggleTakeover}
             onSendMessage={onSendMessage}
           />
+        )}
+
+        {subTab === 'spending' && (
+          <ClikChatSpendingPanel tenantId={tenant?.id || tenantSlug} storeName={tenant?.name} />
         )}
 
         {subTab === 'links' && (

@@ -80,6 +80,7 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
             lead={selectedLead}
             onChangeStage={onChangeStage}
             onUpdateLead={onUpdateLead}
+            onSendMessage={onSendMessage}
             onClose={() => setPanelOpen(false)}
           />
         </div>

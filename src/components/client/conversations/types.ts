@@ -7,6 +7,13 @@ export interface ChatMessageRecord {
   text?: string;
   rag_level_used?: string | null;
   rag_level?: string | null;
+  metadata?: {
+    model?: string;
+    provider?: string;
+    neurons?: number;
+    costUsd?: number;
+    tokens?: number;
+  };
   created_at?: string;
   timestamp?: string;
 }
@@ -24,4 +31,7 @@ export interface ConversationSession {
   total_messages: number;
   status: 'online' | 'closed';
   messages?: ChatMessageRecord[];
+  cost_usd?: number;
+  neurons_used?: number;
+  model_used?: string;
 }

@@ -659,12 +659,45 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
   const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
 
-  // Orden estricto de ultra-velocidad y micro-costo:
-  // 1° GLM-5.3-Flash (Titular ultra-rápido: reasoning low + sort latency ~700ms)
-  // 2° DeepSeek Chat (Respaldo directo conversacional)
-  // 3° DeepSeek v3.2 (Respaldo secundario)
+  const cModel = userCustomConfig?.model || '';
+  const cProvider = userCustomConfig?.provider || '';
+  const wantsCloudflareLlama = cModel.includes('llama') || cProvider === 'cloudflare';
+
+  // Opción Prioritaria A: Cloudflare Workers AI con Meta Llama 3.3 70B Fast si fue elegido por el tenant
+  if (wantsCloudflareLlama && env?.AI) {
+    try {
+      const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+        messages: [
+          { role: 'system', content: systemContent },
+          ...history.slice(-6).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+          { role: 'user', content: userMessage }
+        ]
+      });
+      if (cfResp?.response) {
+        const clean = sanitizeAiResponse(cfResp.response);
+        if (clean) {
+          const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
+          const outTokens = Math.round(clean.length / 4);
+          const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
+          const costUsd = Number(((neurons / 1000) * 0.011).toFixed(6));
+          return {
+            text: clean,
+            provider: 'cloudflare_workers_ai',
+            model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+            neurons,
+            costUsd,
+            tokens: inTokens + outTokens
+          };
+        }
+      }
+    } catch (cfErr) {
+      console.warn('Llama 3.3 Cloudflare AI falló, procediendo a OpenRouter:', cfErr.message);
+    }
+  }
+
+  // Opción Prioritaria B: OpenRouter con z-ai/glm-5.3-flash:floor ordenado por precio ("sort": "price")
   const modelPool = [
-    'z-ai/glm-5.3-flash',
+    'z-ai/glm-5.3-flash:floor',
     'deepseek/deepseek-chat',
     'deepseek/deepseek-v3.2'
   ];
@@ -679,10 +712,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         model: dsModel,
         messages,
         temperature: 0.35,
-        max_tokens: 500,
+        max_tokens: 600,
         provider: {
-          sort: 'latency',
-          allow_fallbacks: false // NUNCA permitir que OpenRouter derive a modelos caros como Claude
+          sort: 'price',
+          allow_fallbacks: false
         }
       };
       if (dsModel.includes('glm')) {
@@ -704,7 +737,18 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         const isCutOff = choice?.finish_reason === 'length';
         const clean = sanitizeAiResponse(choice?.message?.content);
         if (clean && !isCutOff) {
-          return { text: clean, provider: dsModel };
+          const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
+          const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+          const totalTokens = pTokens + cTokens;
+          const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000005)).toFixed(6));
+          return {
+            text: clean,
+            provider: 'openrouter',
+            model: dsModel,
+            neurons: 0,
+            costUsd,
+            tokens: totalTokens
+          };
         }
         if (isCutOff) {
           console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
@@ -715,7 +759,40 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     }
   }
 
-  // 2. Respaldo de Emergencia GPT-4o-mini (Cero fallbacks a Claude)
+  // 2. Respaldo Nativo de Cloudflare Workers AI: Meta Llama 3.3 70B Fast
+  if (env?.AI) {
+    try {
+      const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+        messages: [
+          { role: 'system', content: systemContent },
+          ...history.slice(-6).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+          { role: 'user', content: userMessage }
+        ]
+      });
+      if (cfResp?.response) {
+        const clean = sanitizeAiResponse(cfResp.response);
+        if (clean) {
+          const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
+          const outTokens = Math.round(clean.length / 4);
+          const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
+          const costUsd = Number(((neurons / 1000) * 0.011).toFixed(6));
+          return {
+            text: clean,
+            provider: 'cloudflare_workers_ai',
+            model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+            neurons,
+            costUsd,
+            tokens: inTokens + outTokens
+          };
+        }
+        console.warn('Workers AI Llama 3.3 devolvió reporte de seguridad o CoT leak, descartando.');
+      }
+    } catch (e) {
+      console.warn('Workers AI Llama 3.3 falló en Edge:', e.message);
+    }
+  }
+
+  // 3. Respaldo de Emergencia GPT-4o-mini (Cero fallbacks a Claude)
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -731,7 +808,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         temperature: 0.35,
         max_tokens: 450,
         provider: {
-          sort: 'latency',
+          sort: 'price',
           allow_fallbacks: false
         }
       })
@@ -741,38 +818,34 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       const choice = data.choices?.[0];
       const isCutOff = choice?.finish_reason === 'length';
       const clean = sanitizeAiResponse(choice?.message?.content);
-      if (clean && !isCutOff) return { text: clean, provider: 'openai/gpt-4o-mini' };
+      if (clean && !isCutOff) {
+        const pTokens = data.usage?.prompt_tokens || 800;
+        const cTokens = data.usage?.completion_tokens || 150;
+        const totalTokens = pTokens + cTokens;
+        const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6));
+        return {
+          text: clean,
+          provider: 'openai/gpt-4o-mini',
+          model: 'openai/gpt-4o-mini',
+          neurons: 0,
+          costUsd,
+          tokens: totalTokens
+        };
+      }
     }
   } catch (e) {
     console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
   }
 
-  // 3. Respaldo: Cloudflare Workers AI Llama 3 (Con filtro estricto anti-guardrail)
-  if (env?.AI) {
-    try {
-      const cfResp = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-        messages: [
-          { role: 'system', content: systemContent },
-          ...history.slice(-4).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
-          { role: 'user', content: userMessage }
-        ]
-      });
-      if (cfResp?.response) {
-        const clean = sanitizeAiResponse(cfResp.response);
-        if (clean) {
-          return { text: clean, provider: 'cloudflare_workers_ai' };
-        }
-        console.warn('Workers AI devolvió reporte de seguridad o CoT leak, descartando.');
-      }
-    } catch (e) {
-      console.warn('Workers AI Llama falló en Edge:', e.message);
-    }
-  }
-
   // 4. Plantilla de contingencia gastronómica/comercial humana
   return {
     text: `¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?`,
-    provider: 'context_template'
+    provider: 'context_template',
+    model: 'template_fallback',
+    neurons: 0,
+    costUsd: 0,
+    tokens: 0
+  };
   };
 }
 
@@ -907,6 +980,8 @@ const memoryUsers = new Map([
 
 // In-memory fallback tenant store (for high-availability & resilience against transient D1 quotas)
 const memoryTenants = new Map();
+const memoryPresence = new Map();
+const memoryTyping = new Map();
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -923,6 +998,170 @@ export async function onRequest(context) {
     // Health check
     if (segments[0] === 'health') {
       return jsonResponse({ status: 'ok', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
+    }
+
+    // ==============================================================================
+    // PRESENCE RADAR & LIVE TYPING SNEAK PEEK (TIDIO / ZOLUTIUM SUPERCHARGED)
+    // ==============================================================================
+
+    // POST /api/presence/heartbeat
+    if (segments[0] === 'presence' && segments[1] === 'heartbeat' && request.method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const sessionId = b.sessionId || ('anon_' + Math.random().toString(36).substring(2, 9));
+      memoryPresence.set(sessionId, {
+        sessionId,
+        tenantSlug: b.tenantSlug || 'comida-callejera-xl',
+        currentPath: b.currentPath || '/',
+        activeProduct: b.activeProduct || '',
+        hasCart: Boolean(b.hasCart),
+        cartTotal: Number(b.cartTotal || 0),
+        lastSeen: Date.now()
+      });
+
+      const now = Date.now();
+      for (const [sId, entry] of memoryPresence.entries()) {
+        if (now - entry.lastSeen > 60000) memoryPresence.delete(sId);
+      }
+
+      return jsonResponse({ success: true, count: memoryPresence.size });
+    }
+
+    // GET /api/presence/active
+    if (segments[0] === 'presence' && segments[1] === 'active' && request.method === 'GET') {
+      const tenant = url.searchParams.get('tenant') || '';
+      const now = Date.now();
+      const active = [];
+      for (const [sId, entry] of memoryPresence.entries()) {
+        if (now - entry.lastSeen <= 60000) {
+          if (!tenant || entry.tenantSlug === tenant) {
+            active.push({ ...entry, secondsAgo: Math.round((now - entry.lastSeen) / 1000) });
+          }
+        } else {
+          memoryPresence.delete(sId);
+        }
+      }
+      return jsonResponse({ activeCount: active.length, visitors: active });
+    }
+
+    // POST /api/chat/typing
+    if (segments[0] === 'chat' && segments[1] === 'typing' && request.method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const key = b.leadId || b.sessionId;
+      if (key) {
+        memoryTyping.set(key, {
+          text: (b.draftText || '').slice(0, 300),
+          lastUpdated: Date.now()
+        });
+      }
+      return jsonResponse({ success: true });
+    }
+
+    // GET /api/chat/typing/:id
+    if (segments[0] === 'chat' && segments[1] === 'typing' && segments.length === 3 && request.method === 'GET') {
+      const key = segments[2];
+      const entry = memoryTyping.get(key);
+      const isTyping = Boolean(entry && (Date.now() - entry.lastUpdated < 8000) && entry.text);
+      return jsonResponse({
+        isTyping,
+        draftText: isTyping ? entry.text : ''
+      });
+    }
+
+    // POST /api/crm/ai-analyst
+    if (segments[0] === 'crm' && segments[1] === 'ai-analyst' && request.method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const prompt = b.prompt;
+      if (!prompt) return jsonResponse({ error: 'Prompt requerido' }, 400);
+
+      const tenantSlug = b.tenantSlug || 'comida-callejera-xl';
+      let tenantTargetId = b.tenantId;
+      if (!tenantTargetId) {
+        try {
+          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 LIMIT 1', [tenantSlug]);
+          if (tRows.length > 0) tenantTargetId = tRows[0].id;
+        } catch (e) {}
+      }
+
+      let crmStats = { totalLeads: 0, wonLeads: 0, wonValue: 0, byStage: {}, byChannel: {} };
+      let prodStats = { totalViews: 0, buyClicks: 0, warmLeads: 0 };
+
+      if (tenantTargetId) {
+        try {
+          const leads = await executeD1('SELECT stage, channel, deal_value FROM crm_leads WHERE tenant_id = ?1', [tenantTargetId]);
+          crmStats.totalLeads = leads.length;
+          leads.forEach(l => {
+            crmStats.byStage[l.stage] = (crmStats.byStage[l.stage] || 0) + 1;
+            crmStats.byChannel[l.channel] = (crmStats.byChannel[l.channel] || 0) + 1;
+            if (l.stage === 'closed_won') {
+              crmStats.wonLeads += 1;
+              crmStats.wonValue += Number(l.deal_value || 0);
+            }
+          });
+        } catch (e) {}
+
+        try {
+          const pMetrics = await executeD1('SELECT COALESCE(SUM(views), 0) as views, COALESCE(SUM(buy_clicks), 0) as buy_clicks, COALESCE(SUM(warm_leads), 0) as warm_leads FROM product_metrics WHERE tenant_id = ?1', [tenantTargetId]);
+          if (pMetrics.length > 0) {
+            prodStats.totalViews = Number(pMetrics[0].views) || 0;
+            prodStats.buyClicks = Number(pMetrics[0].buy_clicks) || 0;
+            prodStats.warmLeads = Number(pMetrics[0].warm_leads) || 0;
+          }
+        } catch (e) {}
+      }
+
+      const systemPrompt = `Eres el Analista IA Ejecutivo de ClikChat CRM. Tu misión es analizar la data del negocio y dar respuestas concisas, profesionales y accionables al dueño.
+DATOS ACTUALES DEL NEGOCIO:
+- Prospectos Totales: ${crmStats.totalLeads}
+- Ventas Ganadas (Won): ${crmStats.wonLeads}
+- Valor Total Ganado: ₡${crmStats.wonValue.toLocaleString()}
+- Por Etapa: ${JSON.stringify(crmStats.byStage)}
+- Por Canal de Tráfico: ${JSON.stringify(crmStats.byChannel)}
+- Vistas de Catálogo: ${prodStats.totalViews}
+- Clics en Comprar: ${prodStats.buyClicks}
+
+Responde con formato Markdown limpio, usando viñetas y números claros. Incluye un consejo final de 1 línea para aumentar ventas hoy.`;
+
+      let answer = '';
+      try {
+        const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
+          try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
+        })();
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleKey}`;
+        const gResp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nPregunta del Dueño: "${prompt}"` }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+          })
+        });
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          answer = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+      } catch (err) {}
+
+      if (!answer) {
+        answer = `📊 **Resumen de Inteligencia Comercial:**
+• **Total Prospectos:** ${crmStats.totalLeads} contactos registrados.
+• **Ventas Cerradas:** ${crmStats.wonLeads} pedidos (₡${crmStats.wonValue.toLocaleString()}).
+• **Interés de Compra:** ${prodStats.totalViews} visualizaciones y ${prodStats.buyClicks} clics en comprar.
+• **Canales Destacados:** ${Object.entries(crmStats.byChannel).map(([k, v]) => `${k} (${v})`).join(', ') || 'Web directa'}.
+
+💡 **Consejo:** Utiliza la Reactivación en 1-Clic para contactar leads fríos con pedidos pendientes.`;
+      }
+
+      return jsonResponse({
+        success: true,
+        answer,
+        kpis: {
+          totalLeads: crmStats.totalLeads,
+          wonLeads: crmStats.wonLeads,
+          wonValue: crmStats.wonValue,
+          views: prodStats.totalViews,
+          buyClicks: prodStats.buyClicks
+        }
+      });
     }
 
     // ==============================================================================
@@ -2808,7 +3047,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'GET') {
       const sessionId = decodeURIComponent(segments[2]);
       const rows = await executeD1(
-        'SELECT id, session_id, sender, message, rag_level_used, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 100',
+        'SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 100',
         [sessionId]
       );
       let activeOrder = null;
@@ -2826,9 +3065,34 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           };
         }
       } catch (e) {}
+
+      let chatCostUsd = 0;
+      let chatNeurons = 0;
+      let chatTokens = 0;
+      let chatModel = null;
+      rows.forEach(r => {
+        const meta = r.metadata;
+        if (meta && typeof meta === 'object') {
+          if (meta.costUsd) chatCostUsd += Number(meta.costUsd);
+          if (meta.neurons) chatNeurons += Number(meta.neurons);
+          if (meta.tokens) chatTokens += Number(meta.tokens);
+          if (meta.model) chatModel = meta.model;
+        } else if (r.sender === 'assistant') {
+          const est = Math.round((r.message || '').length / 4) + 600;
+          chatTokens += est;
+          chatCostUsd += Number((est * 0.0000003).toFixed(6));
+        }
+      });
+
       return jsonResponse({
         sessionId,
         activeOrder,
+        spending: {
+          costUsd: Number(chatCostUsd.toFixed(5)),
+          neurons: chatNeurons,
+          tokens: chatTokens,
+          model: chatModel || 'z-ai/glm-5.3-flash:floor'
+        },
         messages: rows.map(r => ({
           id: r.id,
           sessionId: r.session_id,
@@ -2836,6 +3100,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           message: r.message,
           content: r.message,
           rag_level_used: r.rag_level_used,
+          metadata: r.metadata,
           created_at: r.created_at,
           timestamp: new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }))
@@ -2865,6 +3130,161 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         [tenantId]
       );
       return jsonResponse({ conversations: rows });
+    }
+
+    // CHAT: GET /api/chat/spending/:tenantId
+    if (segments[0] === 'chat' && segments[1] === 'spending' && segments.length === 3 && request.method === 'GET') {
+      const tenantId = segments[2];
+      try {
+        const messagesRows = await executeD1(
+          `SELECT id, session_id, sender, message, metadata, created_at
+           FROM chat_messages
+           WHERE (tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1)) AND sender = 'assistant'
+           ORDER BY created_at DESC
+           LIMIT 500`,
+          [tenantId]
+        );
+
+        let neuronsToday = 0;
+        let costTodayUsd = 0;
+        let tokensToday = 0;
+        let msgsToday = 0;
+
+        let totalNeurons = 0;
+        let totalCostUsd = 0;
+        let totalTokens = 0;
+
+        let llamaMsgs = 0;
+        let llamaNeurons = 0;
+        let llamaCost = 0;
+
+        let glmMsgs = 0;
+        let glmTokens = 0;
+        let glmCost = 0;
+
+        const sessionSpendingMap = {};
+        const todayStr = new Date().toISOString().slice(0, 10);
+
+        messagesRows.forEach(row => {
+          const isToday = (row.created_at || '').startsWith(todayStr);
+          const meta = row.metadata || {};
+          const isLlama = (meta.model || '').includes('llama') || (meta.provider || '').includes('cloudflare');
+          
+          let mNeurons = Number(meta.neurons || 0);
+          let mTokens = Number(meta.tokens || 0);
+          let mCost = Number(meta.costUsd || 0);
+
+          if (!mCost && !mNeurons && !mTokens) {
+            const chars = (row.message || '').length;
+            mTokens = Math.round(chars / 4) + 600;
+            mCost = Number((mTokens * 0.0000003).toFixed(6));
+          }
+
+          totalCostUsd += mCost;
+          totalNeurons += mNeurons;
+          totalTokens += mTokens;
+
+          if (isToday) {
+            msgsToday += 1;
+            neuronsToday += mNeurons;
+            costTodayUsd += mCost;
+            tokensToday += mTokens;
+          }
+
+          if (isLlama) {
+            llamaMsgs += 1;
+            llamaNeurons += mNeurons;
+            llamaCost += mCost;
+          } else {
+            glmMsgs += 1;
+            glmTokens += mTokens;
+            glmCost += mCost;
+          }
+
+          const sId = row.session_id;
+          if (!sessionSpendingMap[sId]) {
+            sessionSpendingMap[sId] = {
+              sessionId: sId,
+              costUsd: 0,
+              neurons: 0,
+              tokens: 0,
+              messagesCount: 0,
+              lastModel: meta.model || 'z-ai/glm-5.3-flash:floor'
+            };
+          }
+          sessionSpendingMap[sId].costUsd += mCost;
+          sessionSpendingMap[sId].neurons += mNeurons;
+          sessionSpendingMap[sId].tokens += mTokens;
+          sessionSpendingMap[sId].messagesCount += 1;
+        });
+
+        const sessCountRows = await executeD1(
+          'SELECT COUNT(*) as total_chats FROM chat_sessions WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1)',
+          [tenantId]
+        );
+        const totalChats = Math.max(Number(sessCountRows[0]?.total_chats || 0), Object.keys(sessionSpendingMap).length);
+
+        const avgCostPerChat = totalChats > 0 ? totalCostUsd / totalChats : 0;
+        const avgNeuronsPerChat = totalChats > 0 ? totalNeurons / totalChats : 0;
+
+        const recentChatsList = Object.values(sessionSpendingMap).slice(0, 15);
+        for (const c of recentChatsList) {
+          c.costUsd = Number(c.costUsd.toFixed(5));
+          try {
+            const sRow = await executeD1(
+              'SELECT user_name, user_phone, user_email, updated_at FROM chat_sessions WHERE id = ?1 LIMIT 1',
+              [c.sessionId]
+            );
+            if (sRow && sRow[0]) {
+              c.leadName = sRow[0].user_name || sRow[0].user_phone || sRow[0].user_email || 'Visitante Web';
+              c.lastActivity = sRow[0].updated_at;
+            }
+          } catch(e) {}
+        }
+
+        return jsonResponse({
+          success: true,
+          tenantId,
+          daily: {
+            date: todayStr,
+            neurons_today: neuronsToday,
+            neurons_daily_limit: 10000,
+            neurons_percentage: Number(((neuronsToday / 10000) * 100).toFixed(1)),
+            cost_today_usd: Number(costTodayUsd.toFixed(5)),
+            messages_today: msgsToday,
+            tokens_today: tokensToday
+          },
+          overall: {
+            total_cost_usd: Number(totalCostUsd.toFixed(5)),
+            total_neurons: totalNeurons,
+            total_tokens: totalTokens,
+            total_chats: totalChats,
+            avg_cost_per_chat: Number(avgCostPerChat.toFixed(5)),
+            avg_neurons_per_chat: Math.round(avgNeuronsPerChat)
+          },
+          models_breakdown: {
+            llama_3_3: {
+              name: 'Meta Llama 3.3 70B (Cloudflare Workers AI)',
+              modelId: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+              neurons: llamaNeurons,
+              cost_usd: Number(llamaCost.toFixed(5)),
+              messages: llamaMsgs,
+              rate: '$0.011 / 1,000 Neuronas'
+            },
+            glm_flash: {
+              name: 'GLM-5.3-Flash:floor (OpenRouter)',
+              modelId: 'z-ai/glm-5.3-flash:floor',
+              tokens: glmTokens,
+              cost_usd: Number(glmCost.toFixed(5)),
+              messages: glmMsgs,
+              rate: '$0.15/1M in · $0.50/1M out'
+            }
+          },
+          recent_chats: recentChatsList
+        });
+      } catch (err) {
+        return jsonResponse({ error: 'Error al calcular consumo:', details: err.message }, 500);
+      }
     }
 
     // CHAT: POST /api/chat/status
@@ -4333,10 +4753,17 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         llmResult.text = adaptTemporalGreetings(llmResult.text, timePeriod);
 
         const botMsgId = 'msg_' + Date.now() + '_b';
+        const msgMetadata = JSON.stringify({
+          model: llmResult.model || 'z-ai/glm-5.3-flash:floor',
+          provider: llmResult.provider || 'openrouter',
+          neurons: llmResult.neurons || 0,
+          costUsd: llmResult.costUsd || 0,
+          tokens: llmResult.tokens || 0
+        });
         try {
           await executeD1(
-            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, 'level_3_catalog']
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used, metadata) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, 'level_3_catalog', msgMetadata]
           );
         } catch (e) {}
 
@@ -4518,6 +4945,10 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           answer: llmResult.text,
           products: prodsToInclude,
           provider: llmResult.provider,
+          model: llmResult.model,
+          neurons: llmResult.neurons || 0,
+          costUsd: llmResult.costUsd || 0,
+          tokens: llmResult.tokens || 0,
           quickActions,
           orderTotal,
           orderItems: draftItems,

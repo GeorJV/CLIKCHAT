@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ExternalLink, DollarSign, FileText, Check } from 'lucide-react';
+import { ChevronRight, ExternalLink, DollarSign, FileText, Check, Zap } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
+import { LeadReactivationModal } from '../pipeline/LeadReactivationModal';
 
 interface VoceroLeadDetailPanelProps {
   lead: CrmLead | null;
   onChangeStage: (leadId: string, stage: CrmStageId) => void;
   onUpdateLead: (leadId: string, fields: Partial<CrmLead>) => void;
+  onSendMessage?: (leadId: string, text: string) => void;
   onClose: () => void;
 }
 
@@ -13,11 +15,13 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
   lead,
   onChangeStage,
   onUpdateLead,
+  onSendMessage,
   onClose,
 }) => {
   const [dealValue, setDealValue] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [savedNotes, setSavedNotes] = useState(false);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -73,6 +77,14 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
             <ExternalLink className="w-3 h-3" />
           </a>
         )}
+
+        <button
+          onClick={() => setReactivateOpen(true)}
+          className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 font-bold text-[11px] hover:bg-amber-100 transition cursor-pointer shadow-xs"
+        >
+          <Zap className="w-3.5 h-3.5 text-amber-600" />
+          <span>Reactivar Lead (1-Clic)</span>
+        </button>
 
         {/* Etapa del Embudo (Pills de Vocero) */}
         <div className="space-y-1.5">
@@ -136,6 +148,13 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
           />
         </div>
       </div>
+
+      <LeadReactivationModal
+        lead={lead}
+        isOpen={reactivateOpen}
+        onClose={() => setReactivateOpen(false)}
+        onSendMessage={onSendMessage}
+      />
     </div>
   );
 };

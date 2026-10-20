@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles, CheckCircle, Zap } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
 import { VoceroPipelineColumn } from './VoceroPipelineColumn';
 import { VoceroNewLeadModal } from './VoceroNewLeadModal';
@@ -18,11 +18,24 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
   onCreateLead,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [triggerToast, setTriggerToast] = useState<string | null>(null);
 
   const totalValue = leads.reduce((acc, curr) => acc + (curr.deal_value || 0), 0);
 
+  const handleStageChange = (id: string, stage: CrmStageId) => {
+    onChangeStage(id, stage);
+    if (stage === 'won') {
+      setTriggerToast('🎉 ¡Trato cerrado con éxito! Comanda registrada para despacho.');
+    } else if (stage === 'proposal') {
+      setTriggerToast('⚡ Automatización Kanban: Seguimiento de propuesta activado.');
+    } else if (stage === 'lost') {
+      setTriggerToast('📦 Lead en pausa: Disponible para Reactivación en 1-Clic.');
+    }
+    setTimeout(() => setTriggerToast(null), 4000);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden relative">
       {/* Cabecera idéntica a Vocero Pipeline */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
         <div className="flex items-center gap-3">
@@ -41,6 +54,16 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
         </button>
       </header>
 
+      {/* Disparador Automatizado Toast */}
+      {triggerToast && (
+        <div className="absolute top-16 right-6 z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0a1730] shadow-lg ring-1 ring-blue-500/20">
+            <Zap className="h-3.5 w-3.5 text-[#0d5bff]" />
+            <span>{triggerToast}</span>
+          </div>
+        </div>
+      )}
+
       {/* Columnas Horizontales */}
       <div className="flex-1 flex gap-3 overflow-x-auto p-4 snap-x scrollbar-thin bg-[#f6f8fc]">
         {CRM_STAGES.map((stage) => (
@@ -49,7 +72,7 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
             stage={stage}
             leads={leads}
             onSelectLead={onSelectLead}
-            onChangeStage={onChangeStage}
+            onChangeStage={handleStageChange}
           />
         ))}
       </div>
