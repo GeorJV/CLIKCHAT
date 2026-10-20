@@ -57,7 +57,8 @@ export const ProductChatView: React.FC<Props> = ({
             tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl',
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
             sessionId: sessId, message: userText, clientHour: new Date().getHours(),
-            clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+            clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+            source: typeof window !== 'undefined' ? (localStorage.getItem('clikchat_traffic_source') || undefined) : undefined
           })
         });
         if (!res.ok) throw new Error('Error en el servidor de chat');

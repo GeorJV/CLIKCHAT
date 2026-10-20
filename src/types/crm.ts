@@ -1,6 +1,8 @@
 export type CrmStageId = 'lead' | 'qualifying' | 'proposal' | 'negotiation' | 'won' | 'lost';
 
-export type CrmChannel = 'whatsapp' | 'web' | 'instagram';
+export type CrmChannel = 'whatsapp' | 'web' | 'instagram' | 'clikchat';
+
+export type TrafficSource = 'web' | 'anuncio' | 'post' | 'dm' | 'sms' | 'qr' | 'direct';
 
 export interface CrmLead {
   id: string;
@@ -20,6 +22,8 @@ export interface CrmLead {
   created_at: string;
   updated_at: string;
   unread_count?: number;
+  source?: TrafficSource;
+  source_detail?: string;
 }
 
 export interface CrmStage {

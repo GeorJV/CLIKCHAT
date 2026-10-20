@@ -61,6 +61,10 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
 
   useEffect(() => {
     let isMounted = true;
+    if (typeof window !== 'undefined') {
+      const s = new URLSearchParams(window.location.search).get('src') || new URLSearchParams(window.location.search).get('source');
+      if (s) try { localStorage.setItem('clikchat_traffic_source', s.toLowerCase()); } catch (e) {}
+    }
 
     async function resolve() {
       if (!productItem) setIsLoading(true);
@@ -82,9 +86,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
               const t = tData.tenant;
               if (t.name) setStoreName(t.name);
               if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
-              if (t.avatar_url) setAgentAvatar(t.avatar_url);
-              if (t.welcome_message) setWelcomeMessage(t.welcome_message);
-              if (t.business_type) setBusinessType(t.business_type);
+              if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
               saveCachedTenant(t);
             }
             if (tData.products && tData.products.length > 0) {

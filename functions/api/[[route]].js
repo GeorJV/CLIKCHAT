@@ -2974,12 +2974,36 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         [tenantId]
       );
 
-      const parsedLeads = rows.map(r => ({
-        ...r,
-        deal_value: Number(r.deal_value || 0),
-        ai_paused: Boolean(r.ai_paused),
-        tags: Array.isArray(r.tags) ? r.tags : (typeof r.tags === 'string' && r.tags.startsWith('[') ? JSON.parse(r.tags) : [])
-      }));
+      const parsedLeads = rows.map(r => {
+        const rawTags = Array.isArray(r.tags) ? r.tags : (typeof r.tags === 'string' && r.tags.startsWith('[') ? JSON.parse(r.tags) : []);
+        const tagStr = rawTags.join(' ').toLowerCase();
+        const sessLower = (r.session_id || '').toLowerCase();
+        const notesLower = (r.notes || '').toLowerCase();
+
+        let src = 'web';
+        if (tagStr.includes('anuncio') || sessLower.includes('anuncio') || notesLower.includes('anuncio') || tagStr.includes('ad')) {
+          src = 'anuncio';
+        } else if (tagStr.includes('dm') || sessLower.includes('dm') || notesLower.includes('dm')) {
+          src = 'dm';
+        } else if (tagStr.includes('post') || sessLower.includes('post') || notesLower.includes('post')) {
+          src = 'post';
+        } else if (tagStr.includes('sms') || sessLower.includes('sms') || notesLower.includes('sms')) {
+          src = 'sms';
+        } else if (tagStr.includes('qr') || sessLower.includes('qr') || notesLower.includes('qr')) {
+          src = 'qr';
+        } else if (r.channel === 'whatsapp') {
+          src = 'direct';
+        }
+
+        return {
+          ...r,
+          deal_value: Number(r.deal_value || 0),
+          ai_paused: Boolean(r.ai_paused),
+          tags: rawTags,
+          source: src,
+          source_detail: src === 'anuncio' ? 'Anuncio Publicitario (Ads)' : (src === 'dm' ? 'Mensaje Directo (DM)' : (src === 'post' ? 'Publicación o Bio' : (src === 'sms' ? 'Mensaje SMS / WhatsApp' : (src === 'qr' ? 'Código QR' : 'Visita Web Directa'))))
+        };
+      });
 
       return jsonResponse({ leads: parsedLeads });
     }
@@ -3456,7 +3480,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     if (segments[0] === 'chat' && segments[1] === 'message' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour } = body;
+      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour, source } = body;
 
       if (!message) {
         return jsonResponse({ error: 'Mensaje requerido' }, 400);
