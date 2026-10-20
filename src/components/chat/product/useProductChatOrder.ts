@@ -86,7 +86,7 @@ export function useProductChatOrder({
     } else if (botAnswer) {
       const parsed: OrderItem[] = [];
       for (const l of botAnswer.split('\n')) {
-        const m = l.match(/^\s*[-*•]?\s*(\d+)x\s+([^—–-]+)[—–-]\s*[₡¢$€£]?\s*([\d,.]+)/i);
+        const m = l.match(/^\s*[-*•]?\s*(\d+)x\s+([^—–\-(]+?)(?:\s*[—–-]\s*|\s*\()\s*[₡¢$€£]?\s*([\d,.]+)/i);
         if (m) {
           parsed.push({
             quantity: parseInt(m[1], 10),

@@ -124,21 +124,11 @@ export const ProductChatView: React.FC<Props> = ({
     if (!text) return;
     setInputValue('');
     if (isRestaurant && isAddOrderAction(text)) {
-      let addedPrice = extractPriceFromText(text, selectedProduct?.currency);
-      let catalogItem = null;
-      if (products.length > 0) {
-        const norm = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-        const matched = products.find(p => {
-          const pName = p.title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-          return norm.includes(pName) || pName.includes(norm.replace(/agregar|quiero|sumar|anotar|dame|ponme|si/g, '').trim());
-        });
-        if (matched && matched.price > 0) {
-          catalogItem = { title: matched.title, price: parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC') };
-          if (addedPrice === null || addedPrice <= 0) addedPrice = catalogItem.price;
-        }
-      }
-      if (catalogItem && addedPrice !== null && addedPrice > 0) {
-        registerAddedItem(catalogItem.title, addedPrice);
+      const addedPrice = extractPriceFromText(text, selectedProduct?.currency);
+      const cleanName = text.replace(/^(?:si\s+)?(?:agregar|agregame|sumar|anotar|dame|ponme|quiero)\s+/i, '').replace(/\([^)]*\)/g, '').trim();
+      const resolvedTitle = cleanName.length >= 2 ? cleanName : (selectedProduct?.title || 'Producto');
+      if (addedPrice !== null && addedPrice > 0) {
+        registerAddedItem(resolvedTitle, addedPrice);
       }
     }
     if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); } else { sendVoiceQuery(text); }

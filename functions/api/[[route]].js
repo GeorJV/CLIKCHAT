@@ -294,6 +294,43 @@ function cleanProductQueryName(rawMsg) {
   }).join(' ');
 }
 
+function extractMenuProductsFromDocuments(rawDocs = [], docChunks = [], defaultCurrency = "CRC") {
+  const items = [];
+  const isCRC = defaultCurrency.toUpperCase() === "CRC";
+  const itemRegex = /^\s*[-*•]?\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s/&,.'\"-]{2,45}?)\s*(?:\((?:[\$₡¢€£]|CRC|USD|EUR)?\s*[*_]*([\d.,]+)[*_]*\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\)|(?::|—|-|\.{2,})\s*(?:[\$₡¢€£]|CRC|USD|EUR)\s*[*_]*([\d.,]+)[*_]*)(?:\s*[:—–-]\s*(.+))?$/i;
+  const sources = [];
+  for (const d of rawDocs) { if (d.raw_content) sources.push(d.raw_content); }
+  for (const c of docChunks) { if (c.content) sources.push(c.content); }
+  for (const text of sources) {
+    const lines = text.split(/\r?\n/);
+    for (let line of lines) {
+      line = line.trim();
+      if (!line || line.length < 5) continue;
+      if (/^(?:informaci[oó]n|horario|sedes|nota|entradas|hamburguesas|fritos|hot dogs|papas fritas|nachos|alitas|men[uú]|almuerzos|bebidas|cervezas|promociones|postres|din[aá]micas)\b/i.test(line)) continue;
+      const match = line.match(itemRegex);
+      if (match) {
+        const name = match[1].trim();
+        const rawPrice = match[2] || match[3];
+        const desc = (match[4] || "").trim();
+        const price = parsePriceNumber(rawPrice, isCRC);
+        if (name && price > 0 && !items.some(it => it.name.toLowerCase() === name.toLowerCase())) {
+          items.push({
+            id: "menu_" + name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+            name,
+            title: name,
+            price,
+            currency: defaultCurrency,
+            short_description: desc || name,
+            full_description: desc || name,
+            details: { category: "Menú" }
+          });
+        }
+      }
+    }
+  }
+  return items;
+}
+
 function getFallbackTenant(slug = '') {
   if (slug === 'clikchat-admin' || slug === 'ten_clikchat_admin') {
     return {
@@ -517,7 +554,7 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
 
   const temporalInstruction = userTimeInfo
     ? `\n7. REGLAS NATURALES DE SALUDO Y DESPEDIDA SEGÚN LA HORA (${userTimeInfo.userHour !== undefined ? userTimeInfo.userHour : 16}:00 - ${userTimeInfo.greetingDesc || 'Tarde'}):
-   - CONVERSACIÓN EN CURSO: ${isOngoingConversation ? 'YA HAY MENSAJES PREVIOS. NO vuelvas a saludar con "¡Buenas tardes!" ni similares al inicio de cada mensaje. Habla de forma directa, fluida y natural como en WhatsApp.' : 'Es el primer mensaje: puedes saludar amablemente.'}
+   - CONVERSACIÓN EN CURSO: ${isOngoingConversation ? 'YA HAY MENSAJES PREVIOS EN ESTA CONVERSACIÓN. Queda TERMINANTEMENTE PROHIBIDO volver a saludar (NO digas "¡Hola!", "¡Buenas tardes!", "¡Pura vida! Te damos la bienvenida a...", ni "¿Qué se te antoja ordenar?"). Habla de forma directa, respondiendo exactamente lo que el cliente preguntó sin rodeos ni saludos repetidos.' : 'Es el primer mensaje: puedes saludar amablemente.'}
    - PROHIBIDO DESPEDIRSE EN CADA MENSAJE: Si la conversación sigue activa respondiendo dudas o tomando el pedido, termina con tu pregunta de seguimiento comercial. NUNCA agregues frases de despedida (como "¡Que tengas una tarde divertida!", "¡Excelente tarde!", etc.) al final de respuestas intermedias.
    - CUÁNDO DESPEDIRSE: ÚNICAMENTE si el cliente se despide expresamente o se cerró/confirmó la orden. En ese caso (y solo en ese caso), usa: "${userTimeInfo.farewellPhrase || '¡Que tengas una excelente tarde!'}"
    - CONTROL DE HORARIO: ${userTimeInfo.timePeriod === 'tarde' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente día". Usa términos de tarde.' : userTimeInfo.timePeriod === 'noche' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente tarde". Usa términos de noche.' : 'Usa términos de mañana/día.'}`
@@ -556,7 +593,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 
   const messages = [
     { role: 'system', content: systemContent },
-    ...history.slice(-6).map(h => ({
+    ...history.slice(-16).map(h => ({
       role: h.sender === 'user' ? 'user' : 'assistant',
       content: h.message
     })),
@@ -669,7 +706,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
         messages: [
           { role: 'system', content: systemContent },
-          ...history.slice(-6).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+          ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
           { role: 'user', content: userMessage }
         ]
       });
@@ -765,7 +802,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
         messages: [
           { role: 'system', content: systemContent },
-          ...history.slice(-6).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+          ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
           { role: 'user', content: userMessage }
         ]
       });
@@ -4062,7 +4099,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             ...p,
             price: parsePriceNumber(p.price, pIsCRC)
           };
-        });
+        }).filter(p => (p.price > 0 && p.name && p.name.trim().length > 1) || (p.name && !/^(?:comida\s*cajera\s*xl|default|catalogo\s*oficial)$/i.test(p.name.trim())));
         docChunks = cRows;
         rawDocs = rRows;
       } catch (dataErr) {
@@ -4073,6 +4110,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       for (const d of rawDocs) {
         if (d.raw_content && !docChunks.some(c => c.title === d.title)) {
           docChunks.push({ title: d.title, content: d.raw_content });
+        }
+      }
+
+      // Extraer platillos reales del menú desde los documentos RAG y unificar catálogo
+      const docProducts = extractMenuProductsFromDocuments(rawDocs, docChunks, targetTenant.currency || "CRC");
+      for (const dp of docProducts) {
+        if (!products.some(p => p.name.toLowerCase() === dp.name.toLowerCase())) {
+          products.push(dp);
         }
       }
 
@@ -4139,7 +4184,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
 
       // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (CORTESÍA INMEDIATA CON ROL DE MESERA)
-      const isSimpleGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
+      const isSimpleGreeting = sessionHistory.length === 0 && /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
         && queryWords.length <= 4
         && !hasDirectProductMatch
         && !isCheckoutOrOrderQuery
@@ -4274,8 +4319,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         // 1. Información General del Negocio
         contextBlock += `--- INFORMACIÓN GENERAL DEL NEGOCIO ---\n`;
         contextBlock += `NOMBRE DE LA EMPRESA: ${targetTenant.name || 'ClikChat Store'}\n`;
-        if (targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
+        if (sessionHistory.length === 0 && targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
           contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
+        }
+        if (sessionHistory.length > 0) {
+          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${sessionHistory.length + 1}). El Paso 1 de Bienvenida y Saludo inicial YA FUERON COMPLETADOS. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a...") o preguntar "¿Qué se te antoja ordenar hoy?". Responde DIRECTAMENTE a la consulta actual del cliente.\n`;
         }
         contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
         contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;
@@ -5020,6 +5068,31 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
               { id: 'view_menu', label: '📖 Ver Menú', actionText: '¿Cuáles son las opciones del menú?', variant: 'secondary' },
               { id: 'view_total', label: '🧾 Ver Pedido', actionText: '¿Cuánto es el total?', variant: 'primary' }
             ];
+          }
+        }
+
+        // Si no hay add_item pero el bot explicó o sugirió un platillo del menú, garantizar el botón de agregar
+        if (!isDisputeOrCorrection && !isConfirmingOrder && (!quickActions || !quickActions.some(q => q.id === 'add_item'))) {
+          for (const p of products) {
+            const pNorm = (p.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const botNorm = (llmResult.text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (pNorm.length >= 4 && botNorm.includes(pNorm) && p.price > 0) {
+              const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+              const fPrice = isCRC ? Math.round(p.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(p.price).toFixed(2);
+              quickActions = [
+                { id: 'add_item', label: '➕ Sí, quiero agregar ' + p.name, actionText: 'Agregar ' + p.name + ' (' + sym + fPrice + ')', variant: 'gastronomic' },
+                ...(quickActions || []).filter(q => q.id !== 'add_item')
+              ];
+              break;
+            }
+          }
+        }
+
+        // En conversaciones en curso, erradicar cualquier saludo de bienvenida repetido en el texto final
+        if (sessionHistory.length > 0 && llmResult.text) {
+          llmResult.text = llmResult.text.replace(/^(?:¡?(?:pura\s*vida|hola|buenas(?:\s*tardes|\s*noches|\s*d[ií]as)?|buenos\s*d[ií]as)!?[\s,]*)+(?:te\s+damos\s+la\s+bienvenida\s+a\s+[^.!]+[.!](?:\s*¿en\s+qu[eé]\s+te\s+puedo\s+colaborar\s+hoy\??)?\s*)?/i, '').trim();
+          if (llmResult.text) {
+            llmResult.text = llmResult.text.charAt(0).toUpperCase() + llmResult.text.slice(1);
           }
         }
 
