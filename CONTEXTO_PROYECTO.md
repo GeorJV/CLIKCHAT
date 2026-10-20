@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 09:23 GMT-6
-- **Versión Actual:** 1.62.0 (Aislamiento Estricto de Cuentas Nuevas: Cero Mocks Demo ni Beneficios Rellenados)
+- **Última Actualización:** 2026-10-20 09:30 GMT-6
+- **Versión Actual:** 1.63.0 (Skill polling-inteligente Global & Ahorro Anti-Drain en Edge)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 342545f)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 2e60ca3)
 - **Estado Actual del Sistema:**
-  - Aislamiento Absoluto de Cuentas Nuevas: Erradicada la fuga de productos demo (`clikchat_products`) en `useTenantData.ts` y `useProductResolver.ts`. Toda cuenta nueva arranca con catálogo 100% limpio y vacío (`products: []`).
-  - Limpieza Total de Mocks (`productChatMock.ts`): `DEFAULT_PRODUCT` y fallback sin beneficios inventados, sin títulos ficticios ni fotos de stock de comida callejera.
-  - Escaparate Condicional Estricto (`DesktopProductShowcase.tsx` y `ProductCarousel.tsx`): Si no hay productos reales con nombre e imagen, el escaparate y carrusel retornan `null`, dejando el chat 100% limpio.
-  - Links de ClikChat CRM Blindados: Los enlaces y plantillas de auto-respuesta en `ClikChatLinksAndTemplates.tsx` y `VoceroClikChatView.tsx` resuelven el slug del negocio del usuario y no el slug demo `comida-callejera-xl`.
-  - Verificado con los 3 Filtros: Vite build limpio (`index-BCezUvQo.js`), push en GitHub rama `main` y HTTP 200 confirmado en Cloudflare Pages (`clikchat.pages.dev` y `clikchatcrm.pages.dev`).
+  - Nueva Skill Global `polling-inteligente` preinstalada en Bóveda Central, entorno global `.gemini` y repositorio local.
+  - Hook Canónico `useSmartPolling.ts`: Detección instantánea de visibilidad (`document.hidden`), pausa total de peticiones en segundo plano y refresco al regresar el foco.
+  - Polling Quirúrgico Optimizado: `ConversationDetail.tsx` (10s), `useConversations.ts` (15s), `useClientPortal.ts` (30s) y `useTenantQuotas.ts` (45s) blindados contra agotamiento de cuota de Cloudflare Workers.
+  - Verificado con los 3 Filtros: Vite build limpio (`index-BnIT7viC.js`), push en GitHub rama `main` y HTTP 200 confirmado en Cloudflare Pages (`clikchat.pages.dev` y `clikchatcrm.pages.dev`).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
