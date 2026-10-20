@@ -1,15 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 09:30 GMT-6
-- **Versión Actual:** 1.63.0 (Skill polling-inteligente Global & Ahorro Anti-Drain en Edge)
+- **Última Actualización:** 2026-10-20 09:46 GMT-6
+- **Versión Actual:** 1.64.0 (Refactor UX/UI: Tema Claro 4 Pasos, Selección de Texto, Agenda con Calendario y Enlaces CRM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 2e60ca3)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 8fedb3d)
 - **Estado Actual del Sistema:**
-  - Nueva Skill Global `polling-inteligente` preinstalada en Bóveda Central, entorno global `.gemini` y repositorio local.
-  - Hook Canónico `useSmartPolling.ts`: Detección instantánea de visibilidad (`document.hidden`), pausa total de peticiones en segundo plano y refresco al regresar el foco.
-  - Polling Quirúrgico Optimizado: `ConversationDetail.tsx` (10s), `useConversations.ts` (15s), `useClientPortal.ts` (30s) y `useTenantQuotas.ts` (45s) blindados contra agotamiento de cuota de Cloudflare Workers.
-  - Verificado con los 3 Filtros: Vite build limpio (`index-BnIT7viC.js`), push en GitHub rama `main` y HTTP 200 confirmado en Cloudflare Pages (`clikchat.pages.dev` y `clikchatcrm.pages.dev`).
+  - Modalidad Comercial Visible (`BusinessTypeSelector.tsx`): Contraste absoluto, fondo azul suave con borde e iconos eléctricos para legibilidad perfecta al hacer clic.
+  - Selección de Texto Habilitada: Erradicado `select-none` en contactos, chats, panel de leads y pipeline para permitir copiar información libremente.
+  - Menú Responsivo Anti-Cortes (`VoceroSettingsView.tsx` y `ClikChatConversationsView.tsx`): Menú desplegable tipo 3 rayitas/puntos que contiene secciones excedentes sin recortar botones.
+  - Tema Claro en 4 Pasos (`SalesFlowSection.tsx` y `SalesFlowFourStepsEditor.tsx`): Eliminados tonos negros y degradados oscuros; tarjetas blancas, bordes suaves y tipografía navy `#0a1730`.
+  - Enlaces Dinámicos en CRM: URLs públicas resuelven `clikchatcrm.pages.dev` cuando se opera en el CRM.
+  - Agenda con Filtros y Mini Calendario (`VoceroBookingsView.tsx` y `VoceroCompactCalendar.tsx`): Filtros dinámicos (Hoy, Mañana, Día próximo, Esta Semana, Semana Siguiente) y vista mensual interactiva.
+  - Verificado con los 3 Filtros: Vite build limpio (`index-BUR5uIgT.js`), push en GitHub rama `main` y HTTP 200 en ambos dominios.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
