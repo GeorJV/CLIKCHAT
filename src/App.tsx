@@ -5,7 +5,7 @@ import { ProductChatView } from './components/chat/product/ProductChatView';
 import { ServiceChatView } from './components/chat/service/ServiceChatView';
 import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
-import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe } from 'lucide-react';
+import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe, UtensilsCrossed, Truck } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
 import { useAppRouter, AppView, getTenantTabPath } from './hooks/useAppRouter';
 import { useAuth } from './hooks/useAuth';
@@ -13,14 +13,17 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { useVoceroMode } from './hooks/useVoceroMode';
 import { VoceroCrmView } from './components/crm/VoceroCrmView';
 import { VoceroModeTogglePill } from './components/crm/common/VoceroModeTogglePill';
+import { KitchenKdsView } from './components/kds/KitchenKdsView';
+import { RiderDispatchView } from './components/rider/RiderDispatchView';
 
 const NAV_VIEWS = [
-  { id: 'landing' as AppView, label: 'Web Oficial', icon: Globe, path: '/' },
+  { id: 'landing' as AppView, label: 'Web', icon: Globe, path: '/' },
   { id: 'chat' as AppView, label: 'Chat Móvil', icon: Smartphone, path: '/chat' },
-  { id: 'product' as AppView, label: 'Chat Producto', icon: ShoppingBag, path: '/producto' },
-  { id: 'service' as AppView, label: 'Chat Servicio', icon: Calendar, path: '/servicio' },
-  { id: 'client' as AppView, label: 'Panel Cliente', icon: Briefcase, path: '/dashboard' },
-  { id: 'admin' as AppView, label: 'Super Admin', icon: ShieldCheck, path: '/super-admin' },
+  { id: 'product' as AppView, label: 'Producto', icon: ShoppingBag, path: '/producto' },
+  { id: 'kds' as AppView, label: 'KDS Cocina', icon: UtensilsCrossed, path: '/kds' },
+  { id: 'rider' as AppView, label: 'Riders', icon: Truck, path: '/rider' },
+  { id: 'client' as AppView, label: 'Panel', icon: Briefcase, path: '/dashboard' },
+  { id: 'admin' as AppView, label: 'Admin', icon: ShieldCheck, path: '/super-admin' },
 ] as const;
 
 export function App() {
@@ -138,6 +141,18 @@ export function App() {
                 onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />
             )}
+          </div>
+        )}
+
+        {currentView === 'kds' && (
+          <div className="h-full w-full overflow-hidden bg-[#121214]">
+            <ErrorBoundary fallbackTitle="KDS Cocina"><KitchenKdsView tenantSlug={selectedTenantSlug} storeName={storeName || 'Cocina'} /></ErrorBoundary>
+          </div>
+        )}
+
+        {currentView === 'rider' && (
+          <div className="h-full w-full overflow-hidden bg-[#121214]">
+            <ErrorBoundary fallbackTitle="Motorizados"><RiderDispatchView riderName="Repartidor Express" /></ErrorBoundary>
           </div>
         )}
 

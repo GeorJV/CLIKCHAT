@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ClientTab } from '../types/client';
 
-export type AppView = 'landing' | 'chat' | 'product' | 'service' | 'client' | 'admin';
+export type AppView = 'landing' | 'chat' | 'product' | 'service' | 'client' | 'admin' | 'kds' | 'rider';
 
 export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
   '/dashboard': 'chatbot',
@@ -110,7 +110,7 @@ export function useAppRouter() {
     }
   }
 
-  const RESERVED_PATHS = new Set(['user', 'panel', 'dashboard', 'admin', 'super-admin', 'login', 'registro', 'producto', 'servicio', 'chat', 'api', 'inicio', 'landing', 'crm']);
+  const RESERVED_PATHS = new Set(['user', 'panel', 'dashboard', 'admin', 'super-admin', 'login', 'registro', 'producto', 'servicio', 'chat', 'api', 'inicio', 'landing', 'crm', 'kds', 'rider', 'motorizados']);
   const isDirectTenantUrl = parts.length === 1 && !RESERVED_PATHS.has(parts[0]);
   const isChatProductUrl = parts[0] === 'chat' && parts.length >= 3;
   const isChatSlugUrl = (parts[0] === 'chat' && parts.length === 2) || isDirectTenantUrl;
@@ -137,17 +137,21 @@ export function useAppRouter() {
     if (parts[2]) routeProductId = parts[2];
   }
 
+  const isKdsUrl = pathname === '/kds' || searchParams.get('view') === 'kds';
+  const isRiderUrl = pathname === '/rider' || pathname === '/motorizados' || searchParams.get('view') === 'rider';
   const isProductUrl = isChatProductUrl || isProductSlugUrl || pathname === '/producto' || pathname.startsWith('/p/') || searchParams.has('p') || searchParams.get('view') === 'product';
   const isServiceUrl = pathname === '/servicio' || pathname.startsWith('/servicio/') || searchParams.has('s') || searchParams.get('view') === 'service';
   const isChatUrl = isChatSlugUrl || pathname === '/chat' || searchParams.get('view') === 'chat';
   const isAdminUrl = pathname === '/super-admin' || searchParams.get('view') === 'admin';
   const isLoginUrl = pathname === '/login';
   const isRegisterUrl = pathname === '/registro';
-  const isLandingUrl = (pathname === '/' || pathname === '/inicio' || pathname === '/landing') && !searchParams.has('p') && !searchParams.has('s') && !searchParams.has('t') && !searchParams.has('view') && !isPanelUrl && !isChatSlugUrl;
+  const isLandingUrl = (pathname === '/' || pathname === '/inicio' || pathname === '/landing') && !searchParams.has('p') && !searchParams.has('s') && !searchParams.has('t') && !searchParams.has('view') && !isPanelUrl && !isChatSlugUrl && !isKdsUrl && !isRiderUrl;
 
   let currentView: AppView = 'client';
   if (isLandingUrl) currentView = 'landing';
   else if (isAdminUrl) currentView = 'admin';
+  else if (isKdsUrl) currentView = 'kds';
+  else if (isRiderUrl) currentView = 'rider';
   else if (isProductUrl) currentView = 'product';
   else if (isServiceUrl) currentView = 'service';
   else if (isChatUrl) currentView = 'chat';
