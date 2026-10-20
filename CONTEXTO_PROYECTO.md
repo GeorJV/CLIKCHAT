@@ -1,18 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 09:46 GMT-6
-- **Versión Actual:** 1.64.0 (Refactor UX/UI: Tema Claro 4 Pasos, Selección de Texto, Agenda con Calendario y Enlaces CRM)
+- **Última Actualización:** 2026-10-20 13:13 GMT-6
+- **Versión Actual:** 1.65.0 (Superfunciones Tidio + Zolutium: Radar En Vivo, Live Typing, Exit-Intent, Analista IA y Reactivación)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 8fedb3d)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 3abcdf8)
 - **Estado Actual del Sistema:**
-  - Modalidad Comercial Visible (`BusinessTypeSelector.tsx`): Contraste absoluto, fondo azul suave con borde e iconos eléctricos para legibilidad perfecta al hacer clic.
-  - Selección de Texto Habilitada: Erradicado `select-none` en contactos, chats, panel de leads y pipeline para permitir copiar información libremente.
-  - Menú Responsivo Anti-Cortes (`VoceroSettingsView.tsx` y `ClikChatConversationsView.tsx`): Menú desplegable tipo 3 rayitas/puntos que contiene secciones excedentes sin recortar botones.
-  - Tema Claro en 4 Pasos (`SalesFlowSection.tsx` y `SalesFlowFourStepsEditor.tsx`): Eliminados tonos negros y degradados oscuros; tarjetas blancas, bordes suaves y tipografía navy `#0a1730`.
-  - Enlaces Dinámicos en CRM: URLs públicas resuelven `clikchatcrm.pages.dev` cuando se opera en el CRM.
-  - Agenda con Filtros y Mini Calendario (`VoceroBookingsView.tsx` y `VoceroCompactCalendar.tsx`): Filtros dinámicos (Hoy, Mañana, Día próximo, Esta Semana, Semana Siguiente) y vista mensual interactiva.
-  - Verificado con los 3 Filtros: Vite build limpio (`index-BUR5uIgT.js`), push en GitHub rama `main` y HTTP 200 en ambos dominios.
+  - Atajos Rápidos (`/sinpe`, `/horario`, `/catalogo`): `CannedResponsesPopover.tsx` en `VoceroActiveChat.tsx`.
+  - Gancho Exit-Intent & Inactividad: `useExitIntent.ts` y `ExitIntentToast.tsx` para retención de compras.
+  - Radar de Visitantes en Vivo: `useLivePresencePing.ts`, `useLiveVisitors.ts` y `LiveVisitorsBar.tsx` con conteo en tiempo real.
+  - Previsualización de Escritura en Vivo (Sneak Peek): `useLiveTyping.ts` con visualización previa en `VoceroActiveChat.tsx`.
+  - Analista IA Gerencial: Pestaña `VoceroAiAnalystView.tsx` y endpoint `/api/crm/ai-analyst` conectado a Cloudflare D1.
+  - Reactivación de Leads Fríos en 1 Clic: `LeadReactivationModal.tsx` con 3 plantillas en `VoceroLeadDetailPanel.tsx`.
+  - Automatizaciones Kanban: Disparadores de toasts y seguimiento automático en `VoceroPipelineBoard.tsx`.
+  - Verificado con 3 Filtros: Vite build limpio (`index-CP-SByOQ.js`), sync GitHub `main` y HTTP 200 en ambos dominios.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
