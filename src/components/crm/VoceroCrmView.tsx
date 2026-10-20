@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { useVoceroCrm } from '../../hooks/useVoceroCrm';
 import { useVoceroMode } from '../../hooks/useVoceroMode';
+import { useClientPortal } from '../../hooks/useClientPortal';
 import { VoceroAppNav, VoceroNavTab } from './VoceroAppNav';
 import { VoceroInbox } from './inbox/VoceroInbox';
 import { VoceroPipelineBoard } from './pipeline/VoceroPipelineBoard';
 import { VoceroContactsView } from './contacts/VoceroContactsView';
 import { VoceroAiSandbox } from './sandbox/VoceroAiSandbox';
+import { VoceroSettingsView } from './settings/VoceroSettingsView';
+import { VoceroAgentView } from './agent/VoceroAgentView';
+import { VoceroOnboardingView } from './onboarding/VoceroOnboardingView';
+import { VoceroBookingsView } from './bookings/VoceroBookingsView';
+import { VoceroResultsView } from './results/VoceroResultsView';
 
 interface VoceroCrmViewProps {
   tenantId?: string;
@@ -20,6 +26,19 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<VoceroNavTab>('inbox');
   const { setVoceroMode } = useVoceroMode();
+
+  const {
+    tenant,
+    products,
+    faqs,
+    updateSettings,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    createFaq,
+    updateFaq,
+    deleteFaq,
+  } = useClientPortal(tenantSlug);
 
   const {
     leads,
@@ -38,7 +57,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
     sendAgentMessage,
     updateLead,
     createLead,
-  } = useVoceroCrm(tenantId);
+  } = useVoceroCrm(tenant?.id || tenantId);
 
   const handleSelectLeadFromPipeline = (leadId: string) => {
     setSelectedLeadId(leadId);
@@ -47,16 +66,14 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f6f8fc] font-sans">
-      {/* Barra Lateral Vocero Oficial (Azul Marino Fijo #0b1327) */}
       <VoceroAppNav
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         unreadCount={leads.filter(l => l.stage === 'lead').length}
-        userName={tenantName || tenantSlug}
+        userName={tenant?.name || tenantName || tenantSlug}
         onSwitchToClassic={() => setVoceroMode(false)}
       />
 
-      {/* Contenido Principal con Papel Frío Vocero (#f6f8fc) */}
       <main className="flex-1 h-full min-w-0 overflow-hidden relative bg-[#f6f8fc]">
         {activeTab === 'inbox' && (
           <VoceroInbox
@@ -95,22 +112,59 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({
           />
         )}
 
-        {(activeTab === 'agent' || activeTab === 'lab' || activeTab === 'onboarding') && (
-          <VoceroAiSandbox
-            tenantSlug={tenantSlug}
-            tenantName={tenantName}
+        {activeTab === 'bookings' && (
+          <VoceroBookingsView
+            tenantId={tenant?.id || tenantId}
+            currency={tenant?.currency}
           />
         )}
 
-        {(activeTab === 'bookings' || activeTab === 'results' || activeTab === 'settings') && (
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center text-[#42506b]">
-            <p className="font-serif text-[24px] italic text-[#0a1730] mb-2">
-              Sección de {activeTab.toUpperCase()}
-            </p>
-            <p className="text-xs text-[#8391aa] max-w-sm">
-              Sincronizado directamente con Cloudflare D1 en tiempo real.
-            </p>
-          </div>
+        {activeTab === 'onboarding' && (
+          <VoceroOnboardingView
+            tenant={tenant}
+            products={products}
+            faqs={faqs}
+            onNavigateTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'agent' && (
+          <VoceroAgentView
+            tenant={tenant}
+            tenantSlug={tenantSlug}
+            faqs={faqs}
+            onUpdateSettings={updateSettings}
+            onCreateFaq={createFaq}
+            onUpdateFaq={updateFaq}
+            onDeleteFaq={deleteFaq}
+          />
+        )}
+
+        {activeTab === 'lab' && (
+          <VoceroAiSandbox
+            tenantSlug={tenantSlug}
+            tenantName={tenant?.name || tenantName}
+          />
+        )}
+
+        {activeTab === 'results' && (
+          <VoceroResultsView
+            leads={leads}
+            tenantSlug={tenantSlug}
+            currency={tenant?.currency}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <VoceroSettingsView
+            tenant={tenant}
+            tenantSlug={tenantSlug}
+            products={products}
+            onUpdateSettings={updateSettings}
+            onCreateProduct={createProduct}
+            onUpdateProduct={updateProduct}
+            onDeleteProduct={deleteProduct}
+          />
         )}
       </main>
     </div>
