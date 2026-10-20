@@ -846,7 +846,6 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     costUsd: 0,
     tokens: 0
   };
-  };
 }
 
 // ==============================================================================
