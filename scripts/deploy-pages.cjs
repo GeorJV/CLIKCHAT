@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Script de despliegue directo a Cloudflare Pages
  * Las credenciales se leen exclusivamente desde .env
  */
@@ -13,7 +13,7 @@ if (!token) {
   process.exit(1);
 }
 
-console.log('🚀 Iniciando despliegue en Cloudflare Pages (clikchat)...');
+console.log('🚀 Iniciando despliegue dual en Cloudflare Pages...');
 
 const env = {
   ...process.env,
@@ -22,11 +22,19 @@ const env = {
 };
 
 try {
+  console.log('📦 1/2 Desplegando en clikchat (https://clikchat.pages.dev)...');
   execSync('npx wrangler pages deploy dist --project-name clikchat --commit-dirty=true', {
     env,
     stdio: 'inherit'
   });
-  console.log('✅ Despliegue completado con éxito.');
+
+  console.log('📦 2/2 Desplegando en clikchatcrm (https://clikchatcrm.pages.dev)...');
+  execSync('npx wrangler pages deploy dist --project-name clikchatcrm --commit-dirty=true', {
+    env,
+    stdio: 'inherit'
+  });
+
+  console.log('✅ Despliegue dual completado con éxito en ambos dominios.');
 } catch (e) {
   console.error('❌ Error en el despliegue:', e.message);
   process.exit(1);
