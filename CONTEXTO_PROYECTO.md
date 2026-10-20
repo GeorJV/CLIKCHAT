@@ -1,19 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 13:13 GMT-6
-- **Versión Actual:** 1.65.0 (Superfunciones Tidio + Zolutium: Radar En Vivo, Live Typing, Exit-Intent, Analista IA y Reactivación)
+- **Última Actualización:** 2026-10-20 13:16 GMT-6
+- **Versión Actual:** 1.66.0 (Llama 3.3 Workers AI, GLM-5.3-Flash Floor Price Sort, Telemetría de Neuronas y Panel de Gasto)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 3abcdf8)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 6dc1810)
 - **Estado Actual del Sistema:**
-  - Atajos Rápidos (`/sinpe`, `/horario`, `/catalogo`): `CannedResponsesPopover.tsx` en `VoceroActiveChat.tsx`.
-  - Gancho Exit-Intent & Inactividad: `useExitIntent.ts` y `ExitIntentToast.tsx` para retención de compras.
-  - Radar de Visitantes en Vivo: `useLivePresencePing.ts`, `useLiveVisitors.ts` y `LiveVisitorsBar.tsx` con conteo en tiempo real.
-  - Previsualización de Escritura en Vivo (Sneak Peek): `useLiveTyping.ts` con visualización previa en `VoceroActiveChat.tsx`.
-  - Analista IA Gerencial: Pestaña `VoceroAiAnalystView.tsx` y endpoint `/api/crm/ai-analyst` conectado a Cloudflare D1.
-  - Reactivación de Leads Fríos en 1 Clic: `LeadReactivationModal.tsx` con 3 plantillas en `VoceroLeadDetailPanel.tsx`.
-  - Automatizaciones Kanban: Disparadores de toasts y seguimiento automático en `VoceroPipelineBoard.tsx`.
-  - Verificado con 3 Filtros: Vite build limpio (`index-CP-SByOQ.js`), sync GitHub `main` y HTTP 200 en ambos dominios.
+  - Meta Llama 3.3 en Edge: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) con conteo de neuronas.
+  - GLM-5.3-Flash: OpenRouter (`z-ai/glm-5.3-flash:floor`) con parámetro `"provider": { "sort": "price" }` para costo mínimo.
+  - Panel de Consumo & Neuronas IA: 4 KPIs (Neuronas hoy vs límite 10k, Gasto hoy, Gasto acumulado y Costo medio por chat).
+  - Desglose y Métricas por Chat: Telemetría de neuronas, tokens y costo en USD por conversación en `ClikChatSpendingPanel.tsx`.
+  - Badge de Telemetría: Encabezado de chat con consumo de neuronas y costo por sesión en `ConversationDetail.tsx`.
+  - Superfunciones Vocero: Radar En Vivo, Sneak Peek de Escritura, Exit-Intent y Analista IA 100% operativos.
+  - Verificado con 3 Filtros: Build limpio (`index-CP-SByOQ.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
