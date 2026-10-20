@@ -2731,20 +2731,39 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const { tenantId, name, phone, email, channel = 'web', stage = 'lead', dealValue = 0, tags = [], notes = '' } = body;
       if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
 
+      let targetTenantId = tenantId;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [tenantId]);
+        if (tRows.length > 0) targetTenantId = tRows[0].id;
+        else {
+          const defT = await executeD1('SELECT id FROM tenants LIMIT 1');
+          if (defT.length > 0) targetTenantId = defT[0].id;
+        }
+      } catch (e) {}
+
       const id = 'lead_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
       const sessionId = 'crm_' + Date.now().toString(36);
+
+      try {
+        await executeD1(
+          `INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, status, updated_at)
+           VALUES (?1, ?2, ?3, ?4, ?5, 'active', datetime('now'))
+           ON CONFLICT(id) DO UPDATE SET updated_at = datetime('now')`,
+          [sessionId, targetTenantId, name || null, phone || null, email || null]
+        );
+      } catch (sessErr) {}
 
       await executeD1(
         `INSERT INTO crm_leads (id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, 'Lead registrado en CRM', datetime('now'), datetime('now'), datetime('now'))`,
-        [id, tenantId, sessionId, name || 'Nuevo Lead', phone || '', email || '', channel, stage, Number(dealValue) || 0, JSON.stringify(tags), notes]
+        [id, targetTenantId, sessionId, name || 'Nuevo Lead', phone || '', email || '', channel, stage, Number(dealValue) || 0, JSON.stringify(tags), notes]
       );
 
       return jsonResponse({
         success: true,
         lead: {
           id,
-          tenant_id: tenantId,
+          tenant_id: targetTenantId,
           session_id: sessionId,
           name: name || 'Nuevo Lead',
           phone: phone || '',
@@ -2856,9 +2875,30 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       if (rows.length === 0) return jsonResponse({ error: 'Lead no encontrado' }, 404);
 
       const lead = rows[0];
-      const actualTenantId = tenantId || lead.tenant_id;
+      let actualTenantId = tenantId || lead.tenant_id;
       const targetSessionId = lead.session_id || leadId;
       const agentMsgId = 'msg_' + Date.now() + '_agent';
+
+      // 0. Asegurar tenant válido y sesión viva en chat_sessions para respetar foreign key
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1', [actualTenantId]);
+        if (tRows.length > 0) actualTenantId = tRows[0].id;
+        else {
+          const defT = await executeD1('SELECT id FROM tenants LIMIT 1');
+          if (defT.length > 0) actualTenantId = defT[0].id;
+        }
+      } catch (e) {}
+
+      try {
+        await executeD1(
+          `INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, status, updated_at)
+           VALUES (?1, ?2, ?3, ?4, 'active', datetime('now'))
+           ON CONFLICT(id) DO UPDATE SET updated_at = datetime('now')`,
+          [targetSessionId, actualTenantId, lead.name || null, lead.phone || null]
+        );
+      } catch (sessErr) {
+        console.warn('Session init warning:', sessErr.message);
+      }
 
       // 1. Guardar mensaje en chat_messages como sender = 'agent'
       await executeD1(
