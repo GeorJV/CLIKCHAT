@@ -4372,58 +4372,13 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         let quickActions = [];
         let detectedItemName = '';
         let detectedItemPrice = 0;
-        const isDisputeOrCorrection = /\b(cobrando|cobras|cobran|cobro|de\s*mas|caro|error|mal|equivocaste|equivocado|no\s*son|no\s*es\s*el\s*precio|precio\s*mal|cuenta\s*mal|total\s*mal|soluciona|solucioname|arregla|revisa|revisar|por\s*que\s*tanto|reclamo|elimina|quita|borra|borrame|quitame|cancelame|saca|sacame)\b/i.test(normMsg);
-        const isRemovingItemAction = /\b(quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\b/i.test(normMsg);
-        const isConfirmingOrder = !isDisputeOrCorrection && /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
-        
-        // Detectar si pregunta específicamente por un ítem/platillo (ej: "cuanto es la hamburguesa", "cuanto vale el mini cheese", "precio del combo")
-        const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(normMsg);
-
-        // Consultar la cuenta general del pedido ("cuánto es", "la cuenta", "cuánto es para pagar")
-        const isAskingBillTotal = !isAskingSpecificItem && (
-          /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|cuanto\s*debo(\s*en\s*total)?|cobrar|cerrar\s*(mi\s*)?orden|cerrar\s*(el\s*)?pedido)\b/i.test(normMsg)
-          && !/\b(cuanto\s*(vale|cuesta|sale))\b/i.test(normMsg)
-        );
-
-        // Consultar precio puntual de un platillo o producto ("cuánto vale el mini cheese", "cuánto cuesta...")
-        const isAskingItemPrice = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
-          isAskingSpecificItem ||
-          /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*como\s*(esta|sale))\b/i.test(normMsg)
-        );
-
-        // Consultar qué trae, qué incluye, qué contiene o ingredientes de un ítem/combo
-        const isAskingItemDetails = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
-          /\b(que\s*(trae|incluye|contiene|lleva|viene)|de\s*que\s*(es|esta\s*hech[oa])|cuales\s*son\s*los\s*ingredientes|ingredientes|como\s*viene|que\s*es\s*(el|la|este|esta)|cuentame\s*de|informacion\s*de)\b/i.test(normMsg)
-        );
-
-        const isAddingMore = /\b(agregar\s*algo\s*mas|anadir\s*algo\s*mas|ver\s*mas\s*productos|cambiar\s*algo)\b/i.test(normMsg);
-        // Procesar eliminación de ítem si el cliente lo solicita expresamente
-        if (isRemovingItemAction && draftItems.length > 0) {
-          const targetTerm = normMsg.replace(/^(?:por\s*favor\s*)?(?:quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\s+(?:el|la|los|las|un|una|mi)?\s*/i, '').trim();
-          if (targetTerm) {
-            const rIdx = draftItems.findIndex(it => {
-              const itn = it.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-              return itn.includes(targetTerm) || targetTerm.includes(itn);
-            });
-            if (rIdx !== -1) {
-              if ((draftItems[rIdx].quantity || 1) > 1) draftItems[rIdx].quantity -= 1;
-              else draftItems.splice(rIdx, 1);
-              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
-              if (draftOrder && draftOrder.id) {
-                await executeD1(
-                  "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
-                  [JSON.stringify(draftItems), draftTotal, draftOrder.id]
-                ).catch(() => {});
-              }
-            }
-          }
-        }
-
-
-        // Gestión y persistencia de comanda activa en D1 por sesión
+        let itemName = '';
+        let addedPrice = null;
         let draftOrder = null;
         let draftItems = [];
         let draftTotal = 0;
+
+        // Gestión y persistencia de comanda activa en D1 por sesión
         try {
           const dOrders = await executeD1(
             "SELECT id, order_items, total_amount, currency, status FROM orders WHERE session_id = ?1 AND (tenant_id = ?2 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?2 OR id = ?2)) ORDER BY created_at DESC LIMIT 1",
@@ -4452,6 +4407,52 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           }
         } catch (e) {}
 
+        const isDisputeOrCorrection = /\b(cobrando|cobras|cobran|cobro|de\s*mas|caro|error|mal|equivocaste|equivocado|no\s*son|no\s*es\s*el\s*precio|precio\s*mal|cuenta\s*mal|total\s*mal|soluciona|solucioname|arregla|revisa|revisar|por\s*que\s*tanto|reclamo|elimina|quita|borra|borrame|quitame|cancelame|saca|sacame)\b/i.test(normMsg);
+        const isRemovingItemAction = /\b(quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\b/i.test(normMsg);
+        const isConfirmingOrder = !isDisputeOrCorrection && /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
+        
+        // Detectar si pregunta específicamente por un ítem/platillo
+        const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(normMsg);
+
+        // Consultar la cuenta general del pedido
+        const isAskingBillTotal = !isAskingSpecificItem && (
+          /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido|quiero\s*pagar|donde\s*pago|como\s*pago|cuanto\s*debo(\s*en\s*total)?|cobrar|cerrar\s*(mi\s*)?orden|cerrar\s*(el\s*)?pedido)\b/i.test(normMsg)
+          && !/\b(cuanto\s*(vale|cuesta|sale))\b/i.test(normMsg)
+        );
+
+        // Consultar precio puntual de un platillo
+        const isAskingItemPrice = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
+          isAskingSpecificItem ||
+          /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*como\s*(esta|sale))\b/i.test(normMsg)
+        );
+
+        // Consultar qué trae o ingredientes
+        const isAskingItemDetails = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
+          /\b(que\s*(trae|incluye|contiene|lleva|viene)|de\s*que\s*(es|esta\s*hech[oa])|cuales\s*son\s*los\s*ingredientes|ingredientes|como\s*viene|que\s*es\s*(el|la|este|esta)|cuentame\s*de|informacion\s*de)\b/i.test(normMsg)
+        );
+
+        const isAddingMore = /\b(agregar\s*algo\s*mas|anadir\s*algo\s*mas|ver\s*mas\s*productos|cambiar\s*algo)\b/i.test(normMsg);
+        // Procesar eliminación de ítem si el cliente lo solicita
+        if (isRemovingItemAction && draftItems.length > 0) {
+          const targetTerm = normMsg.replace(/^(?:por\s*favor\s*)?(?:quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\s+(?:el|la|los|las|un|una|mi)?\s*/i, '').trim();
+          if (targetTerm) {
+            const rIdx = draftItems.findIndex(it => {
+              const itn = it.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              return itn.includes(targetTerm) || targetTerm.includes(itn);
+            });
+            if (rIdx !== -1) {
+              if ((draftItems[rIdx].quantity || 1) > 1) draftItems[rIdx].quantity -= 1;
+              else draftItems.splice(rIdx, 1);
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+              if (draftOrder && draftOrder.id) {
+                await executeD1(
+                  "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
+                  [JSON.stringify(draftItems), draftTotal, draftOrder.id]
+                ).catch(() => {});
+              }
+            }
+          }
+        }
         // Detección de consultas informativas (NO son acciones de agregar a la compra)
         const isInformationalInquiry = isAskingItemDetails || isAskingItemPrice || isAskingDiscount || /\b(saber|conocer|ver|preguntar|consultar|averiguar|informacion|info|horario|horarios|abren|cierran|ubicacion|donde|cuando|como vienen|que trae|que lleva|que incluye|tienen|hacen|menu|carta|catalogo|promocion|promociones|descuento|descuentos)\b/i.test(normMsg);
 
@@ -4467,14 +4468,13 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         const isAddingItemAction = !isDisputeOrCorrection && !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
         if (isAddingItemAction) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
-          let addedPrice = null;
           const matchPrice = message.match(/(?:[\$₡¢€£]|CRC|USD|EUR)\s*[*_]*([\d,.]+)|([\d,.]+)\s*[*_]*(?:[\$₡¢€£]|CRC|USD|EUR)|\(\s*(?:[\$₡¢€£]|CRC|USD|EUR)?\s*[*_]*([\d,.]+)[*_]*\s*\)/i);
           if (matchPrice) {
             const raw = (matchPrice[1] || matchPrice[2] || matchPrice[3]).replace(/[*_]/g, '').replace(/[.,;:\s]+$/, '');
             addedPrice = parsePriceNumber(raw, isCRC);
           }
 
-          let itemName = cleanProductQueryName(
+          itemName = cleanProductQueryName(
             message.replace(/^(?:si\s+)?(?:agregar|agregame|agregale|agregamelo|agregalo|anadir|anademe|sumar|sumame|anotar|anotame|anotamelo|quiero|ponme|dame|damelo|sirveme|traeme|apuntame|mandame)\s+/i, '')
               .replace(/\([^)]*\)/g, '')
           );
