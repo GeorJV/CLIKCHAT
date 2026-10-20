@@ -16,29 +16,23 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
 }
 
 function synthesizeFallbackProduct(idOrSlug: string, isRestaurant: boolean, currency: string = 'CRC'): ProductItem {
-  const isId = idOrSlug.startsWith('prod_');
-  const title = isId ? (isRestaurant ? 'Especialidad de la Casa' : 'Producto Destacado') : idOrSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  const isCRC = (currency || 'CRC').toUpperCase() === 'CRC';
-  const price = isCRC ? (isRestaurant ? 5500 : 15000) : (isRestaurant ? 9.99 : 24.99);
   return {
-    id: idOrSlug, title, slug: isId ? 'especialidad' : idOrSlug, category: isRestaurant ? 'Plato Principal' : 'Catálogo Oficial',
-    price, currency, image: '', images: [], stock: 50, inStock: true,
-    benefits: isRestaurant ? ['Ingredientes frescos del día.', 'Preparación artesanal al momento.', 'Guarnición o bebida opcional.'] : ['Garantía oficial y entrega inmediata.', 'Atención personalizada 24/7.'],
-    description: isRestaurant ? `Disfruta de ${title}, preparado con ingredientes frescos y auténtico sabor.` : `${title} con las mejores especificaciones de la tienda.`,
-    specifications: {}
+    id: idOrSlug, title: '', slug: idOrSlug, category: '',
+    price: 0, currency, image: '', images: [], stock: 0, inStock: true,
+    benefits: [], description: '', specifications: {}
   };
 }
 
 export function useProductResolver(productId: string | null, tenantSlug: string = 'comida-callejera-xl') {
   const cached = getCachedTenant(tenantSlug);
   const isRestaurant = cached.business_type === 'restaurante' || /comida|callejera|restaurante/i.test(tenantSlug);
-  const initialStoreName = (cached.name && cached.name !== 'Tienda Oficial') ? cached.name : (tenantSlug === 'comida-callejera-xl' ? 'COMIDA CALLEJERA XL' : 'Tienda Oficial');
-  const initialBotName = tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : (cached.bot_name && cached.bot_name !== 'Asesor Comercial' ? cached.bot_name : (isRestaurant ? 'Mesero Virtual' : 'Asesor Comercial'));
+  const initialStoreName = cached.name ? cached.name : (tenantSlug === 'comida-callejera-xl' ? 'COMIDA CALLEJERA XL' : '');
+  const initialBotName = tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : (cached.bot_name || '');
 
   const [productItem, setProductItem] = useState<ProductItem | null>(() => {
     if (!productId || typeof window === 'undefined') return null;
     try {
-      const keys = [`clikchat_products_${tenantSlug}`, 'clikchat_products'];
+      const keys = tenantSlug === 'comida-callejera-xl' ? [`clikchat_products_${tenantSlug}`, 'clikchat_products'] : [`clikchat_products_${tenantSlug}`];
       for (const k of keys) {
         const s = localStorage.getItem(k);
         if (s) {
@@ -106,7 +100,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
       // 2. Comprobar caché local multi-fuente (prioridad instantánea sin latencia)
       let resolvedItem: ProductItem | null = productItem;
       try {
-        const localKeys = [`clikchat_products_${tenantSlug}`, 'clikchat_products'];
+        const localKeys = tenantSlug === 'comida-callejera-xl' ? [`clikchat_products_${tenantSlug}`, 'clikchat_products'] : [`clikchat_products_${tenantSlug}`];
         for (const key of localKeys) {
           const saved = localStorage.getItem(key);
           if (saved) {

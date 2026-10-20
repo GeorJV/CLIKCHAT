@@ -33,7 +33,14 @@ export const VoceroClikChatView: React.FC<Props> = ({
   onUpdateSettings
 }) => {
   const [subTab, setSubTab] = useState<'chats' | 'links' | 'config' | 'simulator'>('chats');
-  const liveChatUrl = `https://clikchat.pages.dev/chat/${tenantSlug}`;
+  const cleanSlug = (tenantSlug && tenantSlug !== 'comida-callejera-xl')
+    ? tenantSlug
+    : (tenant?.slug && tenant.slug !== 'comida-callejera-xl'
+      ? tenant.slug
+      : (typeof window !== 'undefined' && localStorage.getItem('clikchat_active_tenant_slug') && localStorage.getItem('clikchat_active_tenant_slug') !== 'comida-callejera-xl'
+        ? localStorage.getItem('clikchat_active_tenant_slug')!
+        : 'mi-negocio'));
+  const liveChatUrl = `https://clikchat.pages.dev/chat/${cleanSlug}`;
 
   const TABS = [
     { id: 'chats' as const, label: 'Bandeja & Atribución', icon: MessageSquareCode, badge: leads.filter(l => l.channel === 'web' || l.channel === 'clikchat').length },

@@ -8,7 +8,12 @@ interface Props {
 
 export const ClikChatLinksAndTemplates: React.FC<Props> = ({ tenantSlug, storeName = 'Mi Negocio' }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const baseUrl = `https://clikchat.pages.dev/chat/${tenantSlug}`;
+  const cleanSlug = (tenantSlug && tenantSlug !== 'comida-callejera-xl')
+    ? tenantSlug
+    : (typeof window !== 'undefined' && localStorage.getItem('clikchat_active_tenant_slug') && localStorage.getItem('clikchat_active_tenant_slug') !== 'comida-callejera-xl'
+      ? localStorage.getItem('clikchat_active_tenant_slug')!
+      : (storeName && storeName !== 'Mi Negocio' ? storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'mi-negocio'));
+  const baseUrl = `https://clikchat.pages.dev/chat/${cleanSlug}`;
 
   const LINKS = [
     { id: 'ad', label: 'Anuncios de Meta & Google', param: 'anuncio', icon: Sparkles, desc: 'Para botones de "Más Información" en campañas de anuncios pagados.' },
@@ -29,19 +34,19 @@ export const ClikChatLinksAndTemplates: React.FC<Props> = ({ tenantSlug, storeNa
       id: 'tpl-ig',
       channel: 'Instagram DM (Mensaje Automático)',
       icon: Instagram,
-      text: `¡Hola! 👋 Gracias por escribirnos a ${storeName}. Para consultar nuestro catálogo completo, ver precios oficiales y hacer tu pedido en 1 minuto con atención inmediata 24/7, toca aquí: 👉 ${baseUrl}?src=dm`
+      text: `¡Hola! 👋 Gracias por escribirnos a ${storeName}. Para consultar nuestro catálogo, ver opciones oficiales y hacer tu pedido en 1 minuto con atención inmediata 24/7, toca aquí: 👉 ${baseUrl}?src=dm`
     },
     {
       id: 'tpl-wa',
       channel: 'WhatsApp Business (Mensaje de Bienvenida)',
       icon: MessageSquare,
-      text: `¡Hola! 👋 Con mucho gusto te asesoramos. Puedes consultar el menú, armar tu orden y pagar con SINPE Móvil o tarjeta al instante aquí: 👉 ${baseUrl}?src=sms`
+      text: `¡Hola! 👋 Con mucho gusto te asesoramos en ${storeName}. Puedes consultar nuestro catálogo, ver opciones disponibles y hacer tu pedido con atención inmediata 24/7 aquí: 👉 ${baseUrl}?src=sms`
     },
     {
       id: 'tpl-fb',
       channel: 'Facebook Messenger (Respuesta Instantánea)',
       icon: Facebook,
-      text: `¡Hola! 👋 Bienvenido a ${storeName}. Toca nuestro enlace oficial para cotizar y ordenar directamente con nuestro asistente virtual: 👉 ${baseUrl}?src=dm`
+      text: `¡Hola! 👋 Bienvenido a ${storeName}. Toca nuestro enlace oficial para asesorarte, consultar precios y ordenar directamente con nuestro asistente: 👉 ${baseUrl}?src=dm`
     }
   ];
 

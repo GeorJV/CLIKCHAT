@@ -16,7 +16,8 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
   // Track which product has in-card glassmorphism active ('benefits' | 'details' | null)
   const [activeOverlay, setActiveOverlay] = useState<{ productId: string; mode: 'benefits' | 'details' } | null>(null);
 
-  if (!products || products.length === 0) return null;
+  const validProducts = (products || []).filter(p => (p.name || p.title) && ((p.images && p.images.length > 0) || p.image));
+  if (validProducts.length === 0) return null;
 
   return (
     <div
@@ -38,11 +39,9 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
       {/* Horizontal Scrollable Carousel Container */}
       <div className="flex space-x-3 px-3.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
-        {products.map((product) => {
-          const images = (product.images && product.images.length > 0
-            ? product.images
-            : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600']
-          ).slice(0, 3); // Max 3 images
+        {validProducts.map((product) => {
+          const images = (product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : [])).slice(0, 3);
+          if (images.length === 0) return null;
 
           const mainImage = images[0];
           const isOverlayOpen = activeOverlay?.productId === product.id;

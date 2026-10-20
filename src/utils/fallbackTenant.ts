@@ -117,25 +117,7 @@ export function getCachedTenant(slug: string = ''): Tenant {
   }
 
   if (targetSlug === 'comida-callejera-xl') return REAL_DEFAULT_TENANT;
-  if (typeof window === 'undefined') return { ...CLEAN_EMPTY_TENANT, slug: targetSlug };
-  const isRestaurant = /restaurante|comida|burger|pizza|deli|tacos|cafe|bar|sushi|bistr|parrilla|asador/i.test(slug);
-  const humanName = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  return {
-    ...CLEAN_EMPTY_TENANT,
-    id: `ten_${slug}`,
-    slug,
-    name: humanName,
-    bot_name: isRestaurant ? 'Mesero Virtual' : 'Asesor Comercial',
-    welcome_message: isRestaurant
-      ? `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿Qué se te antoja ordenar hoy?`
-      : `¡Hola! 👋 Te damos la bienvenida a ${humanName}. ¿En qué podemos asesorarte hoy?`,
-    system_prompt: isRestaurant
-      ? 'Eres el mesero y asesor gastronómico profesional del restaurante. Atiende con amabilidad y apetito, ayuda al cliente a armar su pedido, y únicamente después de que el usuario ya agregó o solicitó agregar algo a su compra, sugiere acompañamientos o bebidas (ej: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?").'
-      : 'Eres el asesor comercial de la tienda. Tu objetivo es resaltar los beneficios de los productos y guiar al usuario a comprar.',
-    business_type: isRestaurant ? 'restaurante' : 'tienda',
-    currency: 'CRC',
-    status: 'active'
-  };
+  return { ...CLEAN_EMPTY_TENANT, id: `ten_${slug}`, slug: slug || targetSlug };
 }
 
 export function saveCachedTenant(tenant: Tenant): void {

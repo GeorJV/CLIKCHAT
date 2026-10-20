@@ -17,7 +17,7 @@ export function useTenantData(tenantSlug: string = 'comida-callejera-xl'): UseTe
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const localKeys = [`clikchat_products_${tenantSlug}`, 'clikchat_products'];
+        const localKeys = tenantSlug === 'comida-callejera-xl' ? [`clikchat_products_${tenantSlug}`, 'clikchat_products'] : [`clikchat_products_${tenantSlug}`];
         for (const k of localKeys) {
           const saved = localStorage.getItem(k);
           if (saved) {
