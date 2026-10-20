@@ -114,6 +114,7 @@ function testSingleRoute(url, label) {
 
               if (target.id) {
                 const closeReq = http.request(`http://127.0.0.1:9222/json/close/${target.id}`, { method: 'GET' }, () => {});
+                closeReq.on('error', () => {});
                 closeReq.end();
               }
 
