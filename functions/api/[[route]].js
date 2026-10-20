@@ -4668,7 +4668,23 @@ ${renderedTicket}
           ];
         } else if (isDisputeOrCorrection) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC';
-          const sym = isCRC ? '₡' : '
+          const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+          const fTotal = isCRC ? Math.round(draftTotal).toLocaleString('es-CR') : draftTotal.toFixed(2);
+          contextBlock += `\n\n[RECLAMO / AUDITORÍA DE PRECIOS O CUENTA SOLICITADA POR EL CLIENTE]:
+El cliente indica que hay un error en los precios, que el total no coincide o que se le está cobrando de más o un monto equivocado.
+Instrucciones obligatorias:
+1) Actúa con total empatía, amabilidad y cortesía. Discúlpate cordialmente por cualquier confusión o discrepancia.
+2) Audita y muestra con total transparencia la comanda real activa con los productos verificados del menú:
+${draftItems.length > 0 ? draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${sym}${isCRC ? Math.round(Number(it.price)).toLocaleString('es-CR') : Number(it.price).toFixed(2)})`).join('\n') : '(El pedido no contiene ítems adicionales en este momento)'}
+💰 Total matemáticamente verificado: ${sym}${fTotal} ${activeCurrency}
+3) Aclara con claridad el precio oficial exacto del producto consultado según el menú (ej: el Dip cuesta su precio oficial de catálogo, sin aumentos).
+4) Pregúntale amablemente si la comanda queda correcta así o si desea retirar o modificar algún platillo.
+5) TERMINANTEMENTE PROHIBIDO: Queda prohibido inventar o agregar nuevos ítems a la cuenta, o intentar hacer venta cruzada mientras se atiende un reclamo de precios.`;
+          quickActions = [
+            { id: 'view_total', label: `🧾 Ver Comanda (${sym}${fTotal})`, actionText: '¿Cuánto es el total?', variant: 'primary' },
+            { id: 'confirm_order', label: '✅ Confirmar Pedido Corregido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' }
+          ];
+        } else if (isAskingBillTotal) {
           contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total de la cuenta o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
           quickActions = [
             { id: 'confirm_order', label: '✅ Confirmar Pedido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' },
