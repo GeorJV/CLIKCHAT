@@ -1,19 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 13:55 GMT-6
-- **Versión Actual:** 1.68.0 (Meta Llama 3.3 como IA #1 por Defecto y GLM-5.3-Flash como #2 en Respaldo)
+- **Última Actualización:** 2026-10-20 15:20 GMT-6
+- **Versión Actual:** 1.69.0 (Catálogo Unificado RAG, Anti Re-Saludo y Comanda Instantánea)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 825608d)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit e3d57d5)
 - **Estado Actual del Sistema:**
+  - Erradicación de Re-saludo a Mitad de Chat: `isSimpleGreeting` limitado a `sessionHistory.length === 0` y memoria ampliada a 16 turnos.
+  - Catálogo Unificado desde RAG: 75 platillos extraídos de `knowledge_documents` integrados a `products` (Salchi Pack, Chili Papa, etc.).
+  - Botón "➕ Sí, quiero agregar {ítem}": Siempre generado cuando el bot asesora o menciona cualquier producto del menú.
+  - Comanda con Optimismo 0ms: `ProductChatView.tsx` registra en tiempo real el ítem en la comanda sin latencia perceptible.
+  - Detalle de Orden Sincronizado: Comanda y totales en D1 y LocalStorage completamente operativos y auditados.
   - Modelo #1 Predeterminado: Meta Llama 3.3 70B Fast en Cloudflare Workers AI ejecutado nativamente vía `env.AI.run`.
   - Modelo #2 Respaldo/Alternativo: GLM-5.3-Flash (`z-ai/glm-5.3-flash:floor`) en OpenRouter con sort price.
-  - Blindaje Estricto de Carrito: Prohibido agregar texto arbitrario del usuario como ítem. Solo productos del menú oficial.
-  - Erradicación de Botones de Compra Inválidos: `add_item` solo se genera para productos verificados en catálogo D1.
-  - Corrección de Re-suma de Comanda: Eliminada extracción de precios de mensajes previos del bot en frontend.
-  - Auditoría de Reclamos en 1 Paso: `isDisputeOrCorrection` analiza la comanda, aclara precios de menú y no vende cosas nuevas.
-  - Purga Automática de Ítems Corruptos: Limpieza en D1 y LocalStorage de frases y quejas previas erróneas.
-  - Verificado con 3 Filtros: Build limpio (`index-CVW4fuGO.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio (`index-V6XE-65u.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
