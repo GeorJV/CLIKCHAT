@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-19 20:38 GMT-6
-- **Versión Actual:** 1.60.0 (Frontend Design Aplicado: Checkout Híbrido SINPE+ELP, KDS Cocina y Portal Motorizados)
+- **Última Actualización:** 2026-10-19 21:47 GMT-6
+- **Versión Actual:** 1.61.0 (Sección ClikChat en CRM: Atribución de Tráfico y Enlaces Sin Código)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit a8de38f)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 10f4012)
 - **Estado Actual del Sistema:**
-  - Skill Oficial frontend-design Instalada: `.agent/skills/frontend-design/SKILL.md` activa, eliminando clichés de IA con paleta gastronómica carbón `#121214`, hierro `#1a1a1e` y brasa `#ff5416`.
-  - Checkout Híbrido Gastronómico (`ProductCheckoutModal.tsx`): 3 compuertas (SINPE Móvil copiable con 1-clic y referencia, Enlace ELP seguro SSL, y Efectivo con cálculo de vuelto para el motorizado).
-  - Pantalla KDS de Cocina (`KitchenKdsView.tsx` en `/kds`): 3 columnas operativas (En Cola, En Cocción con cronómetro de alerta de minutos, Listas para Entrega) con checkboxes de ítems para cocineros.
-  - Portal de Motorizados (`RiderDispatchView.tsx` en `/rider`): Interfaz móvil táctil con accesos directos a Waze, WhatsApp con 1 toque, recordatorio de cobro vs pagado y botón deslizante de entrega.
-  - Verificado con los 3 Filtros: Build Vite limpio en 6.34s (`index-BegAJ02F.js`), push en GitHub main y HTTP 200 en `/kds`, `/rider` y raíz.
+  - Sección ClikChat en CRM ([`VoceroClikChatView.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/VoceroClikChatView.tsx)): Pestaña propia en Vocero CRM con 4 sub-secciones (Chats en Vivo, Enlaces y Plantillas, Configuración Web y Simulador de Atribución).
+  - Atribución Automática de Tráfico: Detección inteligente por origen (`anuncio`, `dm`, `post`, `sms`, `qr`, `web`, `direct`) con persistencia en `localStorage` y metadatos de sesión en Edge D1.
+  - Generador de Enlaces y Plantillas No-Code ([`ClikChatLinksAndTemplates.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatLinksAndTemplates.tsx)): Enlaces con UTMs y respuestas automáticas listas para copiar y pegar en Instagram DM, WhatsApp Business y Facebook Messenger.
+  - Simulador de Atribución ([`ClikChatAttributionSimulator.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatAttributionSimulator.tsx)): Sandbox interactivo para probar el flujo comercial en 4 pasos y verificar el origen del lead en tiempo real.
+  - Configuración Web Independiente ([`ClikChatConfigPanel.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/clikchat/ClikChatConfigPanel.tsx)): Nombre del bot web, saludo y colores sin alterar catálogo ni base RAG.
+  - Verificado con los 3 Filtros: Vite build limpio en 8.27s (`index-Bhqlk4xi.js`), commit `10f4012` en `main` y despliegue dual completado en Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
