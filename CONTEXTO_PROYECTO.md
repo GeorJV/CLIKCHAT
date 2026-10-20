@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-19 20:05 GMT-6
-- **Versión Actual:** 1.59.0 (Vocero CRM 100% Funcional: Ajustes, Agente 4-Pasos, Onboarding, Canales Meta y Zernio)
-- **Deploy en Vivo:** https://clikchatcrm.pages.dev y https://clikchat.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 94d5574)
+- **Última Actualización:** 2026-10-19 20:38 GMT-6
+- **Versión Actual:** 1.60.0 (Frontend Design Aplicado: Checkout Híbrido SINPE+ELP, KDS Cocina y Portal Motorizados)
+- **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit a8de38f)
 - **Estado Actual del Sistema:**
-  - Módulos Vocero 100% Operativos: Bandeja, Pipeline, Contactos, Citas (`VoceroBookingsView`), Guía de inicio (`VoceroOnboardingView`), Agente (`VoceroAgentView`), Laboratorio (`VoceroAiSandbox`), Resultados (`VoceroResultsView`), Ajustes (`VoceroSettingsView`).
-  - Ajustes & Perfil del Negocio: Identidad comercial, selector de tipo de negocio (1-clic), catálogo/menú, selección de LLM (GLM-5.3-Flash, Llama 3.3, Claude), persistencia en Cloudflare D1.
-  - Canales de Mensajería: WhatsApp Oficial Meta Cloud API (Webhooks y Handshake), Instagram Direct, Facebook Messenger y suite unificada Zernio Multicanal (`/api/zernio/config`, `/api/zernio/webhook`).
-  - Entrenamiento Comercial: Flujo de ventas en 4 pasos obligatorio, manejador de objeciones (Q&A Nivel 2), reglas operativas y documentos RAG Nivel 3.
-  - Verificado con los 3 Filtros: Build Vite limpio en 6.58s (`index-DYszz1Jg.js`), push en GitHub main y HTTP 200 en ambos dominios.
+  - Skill Oficial frontend-design Instalada: `.agent/skills/frontend-design/SKILL.md` activa, eliminando clichés de IA con paleta gastronómica carbón `#121214`, hierro `#1a1a1e` y brasa `#ff5416`.
+  - Checkout Híbrido Gastronómico (`ProductCheckoutModal.tsx`): 3 compuertas (SINPE Móvil copiable con 1-clic y referencia, Enlace ELP seguro SSL, y Efectivo con cálculo de vuelto para el motorizado).
+  - Pantalla KDS de Cocina (`KitchenKdsView.tsx` en `/kds`): 3 columnas operativas (En Cola, En Cocción con cronómetro de alerta de minutos, Listas para Entrega) con checkboxes de ítems para cocineros.
+  - Portal de Motorizados (`RiderDispatchView.tsx` en `/rider`): Interfaz móvil táctil con accesos directos a Waze, WhatsApp con 1 toque, recordatorio de cobro vs pagado y botón deslizante de entrega.
+  - Verificado con los 3 Filtros: Build Vite limpio en 6.34s (`index-BegAJ02F.js`), push en GitHub main y HTTP 200 en `/kds`, `/rider` y raíz.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
