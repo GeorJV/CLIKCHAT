@@ -28,7 +28,10 @@ export function useProductChatOrder({
     if (typeof window !== 'undefined' && isRestaurant) {
       try {
         const s = localStorage.getItem(orderItemsKey);
-        if (s) return JSON.parse(s);
+        if (s) {
+        const parsed = JSON.parse(s);
+        return Array.isArray(parsed) ? parsed.filter(it => it.name && it.name.length <= 45 && !/^(?:pero|me\s*estan|soluciona|no\s*son|por\s*que|dijiste|esos\s*no|de\s*mas)/i.test(it.name)) : [];
+      }
       } catch {}
     }
     return [];

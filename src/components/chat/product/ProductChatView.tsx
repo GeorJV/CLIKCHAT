@@ -125,24 +125,20 @@ export const ProductChatView: React.FC<Props> = ({
     setInputValue('');
     if (isRestaurant && isAddOrderAction(text)) {
       let addedPrice = extractPriceFromText(text, selectedProduct?.currency);
-      if ((addedPrice === null || addedPrice <= 0) && products.length > 0) {
-        const norm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      let catalogItem = null;
+      if (products.length > 0) {
+        const norm = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
         const matched = products.find(p => {
-          const pName = p.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          return norm.includes(pName) || pName.includes(norm.replace(/agregar|quiero|sumar|anotar/g, '').trim());
+          const pName = p.title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+          return norm.includes(pName) || pName.includes(norm.replace(/agregar|quiero|sumar|anotar|dame|ponme|si/g, '').trim());
         });
-        if (matched && matched.price > 0) addedPrice = parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC');
-      }
-      if ((addedPrice === null || addedPrice <= 0) && messages.length > 0) {
-        const lastBot = [...messages].reverse().find(m => m.sender === 'assistant' && m.content);
-        if (lastBot?.content) {
-          const priceFromLastBot = extractPriceFromText(lastBot.content, selectedProduct?.currency);
-          if (priceFromLastBot && priceFromLastBot > 0) addedPrice = priceFromLastBot;
+        if (matched && matched.price > 0) {
+          catalogItem = { title: matched.title, price: parsePriceNumber(matched.price, (matched.currency || selectedProduct?.currency) === 'CRC') };
+          if (addedPrice === null || addedPrice <= 0) addedPrice = catalogItem.price;
         }
       }
-      if (addedPrice !== null && addedPrice > 0) {
-        const rawName = text.replace(/^(?:agregar|anadir|quiero|sumar|anotar|dame)\s+/i, '').replace(/\s*\([^)]*\).*$/, '').trim() || 'Producto';
-        registerAddedItem(rawName, addedPrice);
+      if (catalogItem && addedPrice !== null && addedPrice > 0) {
+        registerAddedItem(catalogItem.title, addedPrice);
       }
     }
     if (!fromVoice) { trackEvent('chat_message'); sendBatchedMessage(text); } else { sendVoiceQuery(text); }

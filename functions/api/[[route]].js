@@ -4319,12 +4319,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           contextBlock += '\n\n[ESTADO OFICIAL DE PROMOCIONES]: Actualmente NO existen descuentos especiales, cupones ni promociones VIP/PRO vigentes en la base de datos oficial. Los precios válidos son única y exclusivamente los indicados en la lista de productos del catálogo.';
         }
 
-        // 5. Pre-Cierre y Confirmación Tentativa de Órdenes (Botones Automáticos)
+        // 5. Pre-Cierre, Reclamos y Confirmación Tentativa de Órdenes
         const normMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         let quickActions = [];
         let detectedItemName = '';
         let detectedItemPrice = 0;
-        const isConfirmingOrder = /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
+        const isDisputeOrCorrection = /\b(cobrando|cobras|cobran|cobro|de\s*mas|caro|error|mal|equivocaste|equivocado|no\s*son|no\s*es\s*el\s*precio|precio\s*mal|cuenta\s*mal|total\s*mal|soluciona|solucioname|arregla|revisa|revisar|por\s*que\s*tanto|reclamo|elimina|quita|borra|borrame|quitame|cancelame|saca|sacame)\b/i.test(normMsg);
+        const isRemovingItemAction = /\b(quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\b/i.test(normMsg);
+        const isConfirmingOrder = !isDisputeOrCorrection && /\b(confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|si,?\s*(deseo\s*)?confirmar|cerrar\s*orden|cerrar\s*pedido|quiero\s*cerrar\s*la\s*orden)\b/i.test(normMsg);
         
         // Detectar si pregunta específicamente por un ítem/platillo (ej: "cuanto es la hamburguesa", "cuanto vale el mini cheese", "precio del combo")
         const isAskingSpecificItem = /\b(cuanto\s*(es|vale|cuesta|sale)|precio|costo)\s+(el|la|los|las|un|una|este|esta|ese|esa)\s+(?!cuenta\b)[a-z0-9]+/i.test(normMsg);
@@ -4336,17 +4338,39 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         );
 
         // Consultar precio puntual de un platillo o producto ("cuánto vale el mini cheese", "cuánto cuesta...")
-        const isAskingItemPrice = !isAskingBillTotal && !isConfirmingOrder && (
+        const isAskingItemPrice = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
           isAskingSpecificItem ||
           /\b((cuanto|que)\s*(vale|cuesta|sale)|precio|costo|a\s*como\s*(esta|sale))\b/i.test(normMsg)
         );
 
         // Consultar qué trae, qué incluye, qué contiene o ingredientes de un ítem/combo
-        const isAskingItemDetails = !isAskingBillTotal && !isConfirmingOrder && (
+        const isAskingItemDetails = !isDisputeOrCorrection && !isAskingBillTotal && !isConfirmingOrder && (
           /\b(que\s*(trae|incluye|contiene|lleva|viene)|de\s*que\s*(es|esta\s*hech[oa])|cuales\s*son\s*los\s*ingredientes|ingredientes|como\s*viene|que\s*es\s*(el|la|este|esta)|cuentame\s*de|informacion\s*de)\b/i.test(normMsg)
         );
 
         const isAddingMore = /\b(agregar\s*algo\s*mas|anadir\s*algo\s*mas|ver\s*mas\s*productos|cambiar\s*algo)\b/i.test(normMsg);
+        // Procesar eliminación de ítem si el cliente lo solicita expresamente
+        if (isRemovingItemAction && draftItems.length > 0) {
+          const targetTerm = normMsg.replace(/^(?:por\s*favor\s*)?(?:quita|quitame|quitar|elimina|eliminame|eliminar|borra|borrame|borrar|cancela|cancelame|cancelar|saca|sacame|sacar)\s+(?:el|la|los|las|un|una|mi)?\s*/i, '').trim();
+          if (targetTerm) {
+            const rIdx = draftItems.findIndex(it => {
+              const itn = it.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              return itn.includes(targetTerm) || targetTerm.includes(itn);
+            });
+            if (rIdx !== -1) {
+              if ((draftItems[rIdx].quantity || 1) > 1) draftItems[rIdx].quantity -= 1;
+              else draftItems.splice(rIdx, 1);
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+              if (draftOrder && draftOrder.id) {
+                await executeD1(
+                  "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
+                  [JSON.stringify(draftItems), draftTotal, draftOrder.id]
+                ).catch(() => {});
+              }
+            }
+          }
+        }
+
 
         // Gestión y persistencia de comanda activa en D1 por sesión
         let draftOrder = null;
@@ -4360,7 +4384,23 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           if (dOrders && dOrders.length > 0) {
             draftOrder = dOrders[0];
             try { draftItems = JSON.parse(draftOrder.order_items || '[]'); } catch (e) { draftItems = []; }
-            draftTotal = Number(draftOrder.total_amount) || 0;
+            // Purga automática inmediata de ítems corruptos o quejas grabadas por error
+            const cleanItems = draftItems.filter(it => {
+              const n = (it.name || '').trim();
+              if (!n || n.length > 45) return false;
+              if (/^(?:pero|me\s*estan|soluciona|no\s*son|por\s*que|dijiste|esos\s*no|de\s*mas|corbando|cobrando|error)/i.test(n)) return false;
+              return !isNaN(Number(it.price)) && Number(it.price) > 0;
+            });
+            if (cleanItems.length !== draftItems.length) {
+              draftItems = cleanItems;
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+              await executeD1(
+                "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
+                [JSON.stringify(draftItems), draftTotal, draftOrder.id]
+              ).catch(() => {});
+            } else {
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+            }
           }
         } catch (e) {}
 
@@ -4376,7 +4416,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           hasReferentialPhrase
         );
         const startsWithAdd = /^(?:agregar|agregame|agregale|agregamelo|agregalo|anotar|anotame|anotamelo|sumar|dame|ponme)\b/i.test(normMsg);
-        const isAddingItemAction = !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
+        const isAddingItemAction = !isDisputeOrCorrection && !isConfirmingOrder && (startsWithAdd || (!isInformationalInquiry && (hasExplicitAddVerb || hasExplicitOrderIntent)));
         if (isAddingItemAction) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
           let addedPrice = null;
@@ -4472,7 +4512,13 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             itemName = 'Producto del Menú';
           }
 
-          if (addedPrice && !isNaN(addedPrice) && addedPrice > 0) {
+          const isRealMenuProduct = itemName && products.some(p => {
+            const pNorm = (p.name || p.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const iNorm = itemName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return pNorm.includes(iNorm) || iNorm.includes(pNorm);
+          });
+          const isCorruptName = /^(?:pero|me\s*estan|soluciona|no\s*son|de\s*mas|error|corbando|cobrando)/i.test(itemName) || itemName.length > 40;
+          if (isRealMenuProduct && !isCorruptName && addedPrice && !isNaN(addedPrice) && addedPrice > 0) {
             draftItems.push({ name: itemName, price: addedPrice, quantity: 1 });
             draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
 
@@ -4619,6 +4665,675 @@ ${renderedTicket}
             { id: 'send_receipt', label: '📸 Enviar Comprobante', actionText: 'Ya realicé el pago, aquí envío mi comprobante', variant: 'primary' },
             { id: 'copy_order', label: '📋 Copiar Pedido', actionText: `COPIAR_PEDIDO:#${orderId}`, variant: 'secondary' },
             { id: 'whatsapp_order', label: '📲 Enviar a WhatsApp', actionText: `WHATSAPP_REDIRECT:${waUrl}`, variant: 'success' }
+          ];
+        } else if (isDisputeOrCorrection) {
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const sym = isCRC ? '₡' : '
+          contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total de la cuenta o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
+          quickActions = [
+            { id: 'confirm_order', label: '✅ Confirmar Pedido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' },
+            { id: 'add_more', label: '➕ Agregar algo más', actionText: 'Deseo agregar algo más a la orden', variant: 'secondary' }
+          ];
+        } else if (isAskingItemDetails || isAskingItemPrice) {
+          let itemLabel = '➕ Sí, lo quiero agregar';
+          let itemAction = 'Agregar al pedido';
+          let prodName = '';
+          let prodPrice = 0;
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+
+          if (matchedProducts.length > 0) {
+            const mp = matchedProducts[0];
+            prodName = mp.name;
+            prodPrice = parsePriceNumber(mp.price, isCRC);
+          } else {
+            const cleanQueryName = cleanProductQueryName(message);
+            const normCleanQ = (cleanQueryName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const cMatch = products.find(p => {
+              const pNorm = (p.name || p.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              return normCleanQ && (pNorm.includes(normCleanQ) || normCleanQ.includes(pNorm));
+            });
+            if (cMatch) {
+              prodName = cMatch.name || cMatch.title;
+              prodPrice = parsePriceNumber(cMatch.price, isCRC);
+            }
+
+            // Buscar coincidencia en chunks de documentos o catálogo D1 para nombre y precio
+            const normClean = (prodName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            for (const c of chunksToInclude) {
+              const cText = `${c.title} ${c.content}`;
+              const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (normClean && cNorm.includes(normClean)) {
+                const priceInChunk = extractPriceFromText(cText, isCRC);
+                if (priceInChunk && priceInChunk > 0) {
+                  prodPrice = priceInChunk;
+                  break;
+                }
+              }
+            }
+          }
+
+          detectedItemName = prodName;
+          detectedItemPrice = prodPrice;
+
+          const formattedPrice = prodPrice > 0
+            ? (isCRC ? Math.round(prodPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : (Number.isInteger(prodPrice) ? prodPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : prodPrice.toFixed(2)))
+            : '';
+
+          if (prodName) {
+            itemLabel = `➕ Sí, quiero agregar ${prodName}`;
+            itemAction = formattedPrice
+              ? `Agregar ${prodName} (${sym}${formattedPrice})`
+              : `Agregar ${prodName} al pedido`;
+          }
+
+          if (isAskingItemDetails) {
+            const isCRC = activeCurrency.toUpperCase() === 'CRC';
+            const formattedPrice = isCRC ? Math.round(Number(prodPrice)).toLocaleString('es-CR') : Number(prodPrice).toFixed(2);
+            contextBlock += `\n\n[CONSULTA SOBRE DETALLES / INGREDIENTES / CONTENIDO DEL PRODUCTO]:
+El cliente está preguntando qué trae, qué incluye o cuáles son los ingredientes ${prodName ? `de "${prodName}"` : 'del producto'}.
+Instrucciones obligatorias:
+1) Explica con amabilidad, entusiasmo y apetitosidad qué ingredientes, componentes o porciones trae según la información del catálogo.
+2) Menciona claramente su precio oficial (${activeSym}${formattedPrice || '[Precio]'}).
+3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"
+4) REGLA DE ORO DE VENTA CRUZADA: El cliente NO ha agregado este producto todavía a su orden. Queda TERMINANTEMENTE PROHIBIDO preguntar "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" ni ofrecer bebidas o adicionales en este momento. Limítate a responder la duda y preguntar amablemente si desea agregar este platillo a su pedido.`;
+          } else if (isAskingItemPrice) {
+            contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
+Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda.
+REGLA DE ORO: NO sugerir bebidas ni más papas. Solo después de que el usuario decida agregarlo a su compra se le pueden sugerir adicionales.`;
+          }
+
+          const isLegitProduct = prodName && products.some(p => {
+            const pNorm = (p.name || p.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const itNorm = prodName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return pNorm.includes(itNorm) || itNorm.includes(pNorm);
+          });
+          if (isLegitProduct && prodPrice > 0 && !isDisputeOrCorrection) {
+            quickActions = [
+              { id: 'add_item', label: itemLabel, actionText: itemAction, variant: 'gastronomic' }
+            ];
+          } else {
+            quickActions = [
+              { id: 'view_menu', label: '📖 Ver Menú Completo', actionText: '¿Cuáles son las opciones del menú?', variant: 'secondary' },
+              { id: 'view_total', label: '🧾 Ver mi Pedido', actionText: '¿Cuánto es el total?', variant: 'primary' }
+            ];
+          }
+        } else if (isAddingMore) {
+          contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
+        }
+
+        // Inyección de Estrategia y Flujo Conversacional de Venta en 4 Pasos
+        if (targetTenant.sales_flow_rules && targetTenant.sales_flow_rules.trim()) {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO CONVERSACIONAL DE VENTA EN 4 PASOS (MÁXIMA PRIORIDAD - RESPETA ESTE ORDEN STRICTAMENTE)]:\n${targetTenant.sales_flow_rules.trim()}`;
+        } else if (targetTenant.business_type === 'restaurante') {
+          contextBlock += `\n\n[ESTRATEGIA Y PROTOCOLO DE MESERO PROFESIONAL EN 4 PASOS - RESTAURANTE]:
+PASO 1 (Bienvenida & Apertura): Atiende con calidez y dinamismo como un mesero atento, saluda y pregunta qué se le antoja ordenar hoy. PROHIBIDO cobrar o pedir datos personales aquí.
+PASO 2 (Asesoría del Menú & Precios): Muestra opciones del menú, platillos destacados e ingredientes con precios reales. Resuelve dudas sobre preparaciones o salsas.
+PASO 3 (Venta Cruzada Condicional): ÚNICAMENTE después de que el comensal ya haya elegido o solicitado un platillo, ofrece acompañamientos o bebidas (ej: "¿Te gustaría agregar bebida o más papas a tu orden?"). PROHIBIDO antes.
+PASO 4 (Comanda y Cierre): Pregunta si es para comer en el restaurante o para entrega express, resume la comanda con "¿cuánto es?" y canaliza al WhatsApp oficial para pago y despacho.`;
+        } else if (targetTenant.business_type === 'servicios') {
+          contextBlock += `\n\n[ESTRATEGIA DE CONVERSIÓN EN 4 PASOS - SERVICIOS Y CITAS]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda profesionalmente y consulta brevemente la necesidad o situación que el cliente desea solucionar.
+PASO 2 (Propuesta de Servicio & Tarifas): Explica el servicio o paquete más adecuado, detallando qué incluye, duración estimada y tarifa oficial.
+PASO 3 (Agendamiento Activo): Ofrece activamente 2 opciones de horario o fecha (ej: "¿Te queda más cómodo en la mañana o en la tarde?").
+PASO 4 (Confirmación Provisional & WhatsApp): Solicita nombre completo y teléfono, confirma la reserva provisional y canaliza al WhatsApp oficial para registrar en agenda.`;
+        } else if (targetTenant.business_type === 'soporte') {
+          contextBlock += `\n\n[ESTRATEGIA DE ATENCIÓN EN 4 PASOS - SOPORTE Y ASESORÍA]:
+PASO 1 (Recepción Empática & Escucha): Saluda con cortesía y escucha activamente la consulta o duda del cliente sin respuestas genéricas.
+PASO 2 (Resolución Clara & Verificada): Responde con precisión basándote en la base de conocimientos y políticas oficiales, sin inventar información.
+PASO 3 (Verificación de Claridad): Pregunta si la explicación fue suficiente o si tiene alguna otra duda pendiente.
+PASO 4 (Canalización Humana): Si la consulta requiere trámite especial o seguimiento personalizado, ofrece conectar al cliente con un asesor humano en WhatsApp.`;
+        } else {
+          contextBlock += `\n\n[ESTRATEGIA Y FLUJO DE VENTA EN 4 PASOS - TIENDA / CATÁLOGO]:
+PASO 1 (Bienvenida & Diagnóstico): Saluda amablemente y haz una pregunta abierta para entender qué producto o artículo está buscando el cliente sin apresurarlo.
+PASO 2 (Presentación & Beneficios): Muestra el artículo del catálogo con su precio oficial, disponibilidad inmediata y valor diferencial.
+PASO 3 (Venta Cruzada & Envío): Sugiere un accesorio o producto complementario del catálogo y consulta la provincia o cantón de entrega para el envío.
+PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, resume el pedido con el total y canaliza al cliente a WhatsApp con comprobante para despacho.`;
+        }
+
+        // Blindaje Universal de Venta Cruzada para Restaurantes
+        if (targetTenant.business_type === 'restaurante') {
+          contextBlock += `\n\n[REGLA DE ORO DE VENTA CRUZADA - RESTAURANTE (MÁXIMA PRIORIDAD)]:
+La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" SOLO DEBE SALIR cuando el usuario YA agregó o solicitó agregar algo a su compra. Si el usuario no ha agregado nada aún (solo saluda, pregunta precios, ingredientes o consulta opciones), queda TERMINANTEMENTE PROHIBIDO sugerir bebidas o más papas. Solo después de que el usuario ya agregó o solicitó agregar algo a su orden sale esa sugerencia.`;
+        }
+
+        const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
+
+        const llmResult = await callEdgeLLM({
+          systemPrompt,
+          operationalRules: targetTenant.operational_rules || '',
+          context: contextBlock,
+          history: sessionHistory,
+          userMessage: message,
+          env,
+          customKey: targetTenant.custom_llm_key,
+          userTimeInfo
+        });
+        const cleanReply = sanitizeAiResponse(llmResult?.text);
+        llmResult.text = cleanReply || (
+          targetTenant.business_type === 'restaurante'
+            ? '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?'
+            : '¡Hola! Con mucho gusto te atiendo. ¿En qué te puedo asesorar o qué producto estás buscando el día de hoy?'
+        );
+        llmResult.text = adaptTemporalGreetings(llmResult.text, timePeriod);
+
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        const msgMetadata = JSON.stringify({
+          model: llmResult.model || 'z-ai/glm-5.3-flash:floor',
+          provider: llmResult.provider || 'openrouter',
+          neurons: llmResult.neurons || 0,
+          costUsd: llmResult.costUsd || 0,
+          tokens: llmResult.tokens || 0
+        });
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used, metadata) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, 'level_3_catalog', msgMetadata]
+          );
+        } catch (e) {}
+
+        const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
+        const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
+
+        // RESCATE POST-LLM: Si la IA confirmó que anotó un producto (ej: "Tu Queque de chocolate... ya está anotado")
+        // pero draftItems no lo había capturado, extraerlo directamente de la respuesta del LLM
+        if (isRestaurant && draftItems.length === 0 && !isDisputeOrCorrection) {
+          const llmAnoteMatch = llmResult.text.match(/(?:tu|el|la)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,50}?)\s+(?:ya\s+est[aá]\s+(?:anotad[oa]|agregad[oa]|list[oa])|(?:ha\s+sido|queda)\s+(?:anotad[oa]|agregad[oa]))/i)
+            || llmResult.text.match(/(?:anotad[oa]|agregad[oa]|sumad[oa])\s+(?:el|la|tu)?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,50}?)(?:[.,!\n]|$)/i);
+
+          if (llmAnoteMatch) {
+            const detectedBotItem = llmAnoteMatch[1].trim();
+            const normBotItem = detectedBotItem.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            let botItemPrice = null;
+
+            // 1. Buscar precio en chunks RAG
+            for (const c of chunksToInclude) {
+              const cText = `${c.title} ${c.content}`;
+              const cNorm = cText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (cNorm.includes(normBotItem) || normBotItem.split(/\s+/).filter(w => w.length > 4).some(w => cNorm.includes(w))) {
+                const cp = extractPriceFromText(cText, isCRC);
+                if (cp && cp > 0) {
+                  botItemPrice = cp;
+                  break;
+                }
+              }
+            }
+
+            // 2. Buscar precio en catálogo D1
+            if (!botItemPrice && products.length > 0) {
+              const pMatch = products.find(p => p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normBotItem));
+              if (pMatch && pMatch.price > 0) botItemPrice = pMatch.price;
+            }
+
+            // 3. Buscar precio en el historial de chat
+            if (!botItemPrice && sessionHistory && sessionHistory.length > 0) {
+              for (let i = sessionHistory.length - 1; i >= 0; i--) {
+                const hp = extractPriceFromText(sessionHistory[i].message || sessionHistory[i].content || '', isCRC);
+                if (hp && hp > 0) {
+                  botItemPrice = hp;
+                  break;
+                }
+              }
+            }
+
+            // 4. Si aún no se encontró, precio del propio texto de respuesta
+            if (!botItemPrice || botItemPrice === 0) {
+              const priceInBotText = extractPriceFromText(llmResult.text, isCRC);
+              if (priceInBotText && priceInBotText > 0) botItemPrice = priceInBotText;
+            }
+
+            if (botItemPrice && botItemPrice > 0) {
+              draftItems.push({ name: detectedBotItem, price: botItemPrice, quantity: 1 });
+              draftTotal = draftItems.reduce((acc, it) => acc + (Number(it.price) * (Number(it.quantity) || 1)), 0);
+
+              try {
+                if (draftOrder && draftOrder.status === 'draft') {
+                  await executeD1(
+                    "UPDATE orders SET order_items = ?1, total_amount = ?2, updated_at = datetime('now') WHERE id = ?3",
+                    [JSON.stringify(draftItems), draftTotal, draftOrder.id]
+                  );
+                } else {
+                  const newDraftId = 'ord_' + Math.random().toString(36).substring(2, 7);
+                  await executeD1(
+                    "INSERT INTO orders (id, tenant_id, session_id, order_items, total_amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'draft')",
+                    [newDraftId, actualTenantId, currentSessionId, JSON.stringify(draftItems), draftTotal, activeCurrency]
+                  );
+                }
+              } catch (e) {}
+
+              const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+              const fPrice = isCRC ? Math.round(botItemPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(botItemPrice).toFixed(2);
+              const fDraftTotal = isCRC ? Math.round(draftTotal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : Number(draftTotal).toFixed(2);
+
+              quickActions = [
+                {
+                  id: 'view_total',
+                  label: `🧾 Ver Comanda / Total (${sym}${fDraftTotal})`,
+                  actionText: '¿Cuánto es el total?',
+                  variant: 'primary'
+                },
+                {
+                  id: 'add_more',
+                  label: '➕ Agregar algo más',
+                  actionText: '¿Qué opciones de bebidas o acompañamientos tienen?',
+                  variant: 'secondary'
+                },
+                {
+                  id: 'confirm_order',
+                  label: '✅ Confirmar Pedido Completo',
+                  actionText: 'Sí, deseo confirmar mi pedido',
+                  variant: 'success'
+                }
+              ];
+            }
+          }
+        }
+
+        let orderTotal = draftTotal > 0 ? draftTotal : null;
+        if (isRestaurant && !orderTotal) {
+          const totalMatch = llmResult.text.match(/(?:total(?:\s*a\s*pagar|\s*del\s*pedido)?|monto\s*total|cuenta\s*(?:es\s*de|ser[ií]a)?|ser[ií]an)[^\d$₡¢€]*[*_]*[\$₡¢€]?[*_]*\s*([\d,.]+)/i)
+            || llmResult.text.match(/[*_]*[\$₡¢€]?[*_]*\s*([\d,.]+)\s*(?:en\s*total|total)/i);
+          if (totalMatch) {
+            const rawVal = parsePriceNumber(totalMatch[1], isCRC);
+            if (!isNaN(rawVal) && rawVal > 0) {
+              orderTotal = rawVal;
+            }
+          }
+        }
+        if (isRestaurant && orderTotal === null) {
+          orderTotal = 0;
+        }
+
+        if (isAddingItemAction && draftItems.length > 0) {
+          const expectedGreeting = '¡Perfecto! 😊 Entonces tu pedido queda así:';
+          if (!llmResult.text.includes('¡Perfecto!') && !llmResult.text.includes('Entonces tu pedido queda así')) {
+            llmResult.text = `${expectedGreeting}\n\n${llmResult.text.trim()}`;
+          }
+          llmResult.text = llmResult.text.replace(/(?:¿\s*)?(?:deseas\s+|quieres\s+|para\s+)?confirmar\s+(?:tu\s+|el\s+|la\s+|este\s+)?(?:taco|hamburguesa|platillo|producto|orden\s+de|combo)[^.?!\n]*[.?!\n]?/gi, '').trim();
+        }
+
+        if (isConfirmingOrder && renderedTicket && !llmResult.text.includes('╔═')) {
+          llmResult.text += '\n\n' + renderedTicket;
+        }
+
+        // Refinamiento inteligente de Quick Actions post-respuesta del LLM
+        if (quickActions && quickActions.length > 0 && quickActions[0].id === 'add_item') {
+          let refinedName = detectedItemName;
+          let refinedPrice = detectedItemPrice;
+          const isCRC = activeCurrency.toUpperCase() === 'CRC';
+          const sym = isCRC ? '₡' : (activeCurrency.toUpperCase() === 'EUR' ? '€' : '$');
+
+          // 1. Extraer nombre destacado en negritas de la respuesta del LLM (ej: "**Carlota de Melocotón**")
+          const boldMatches = [...llmResult.text.matchAll(/\*\*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s-]{3,45})\*\*/g)]
+            .map(m => m[1].trim())
+            .filter(b => !/^(?:total|precio|valor|atenci[oó]n|nota|importante|horario|postres?\s*cl[aá]sicos?|bebidas?|combo|men[uú])$/i.test(b));
+
+          if (boldMatches.length > 0) {
+            const normQuery = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const candidate = boldMatches.find(b => {
+              const bNorm = b.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              const bWords = bNorm.split(/\s+/).filter(w => w.length > 2);
+              return bWords.some(bw => normQuery.includes(bw));
+            });
+            if (candidate) {
+              refinedName = candidate;
+            } else if (!refinedName && boldMatches[0]) {
+              refinedName = boldMatches[0];
+            }
+          }
+
+          // 2. Extraer precio del texto del LLM si no se tenía o era 0
+          if (!refinedPrice || refinedPrice === 0) {
+            const priceFromLLM = extractPriceFromText(llmResult.text, isCRC);
+            if (priceFromLLM && priceFromLLM > 0) {
+              refinedPrice = priceFromLLM;
+            }
+          }
+
+          const isRefinedCatalog = refinedName && products.some(p => {
+            const pNorm = (p.name || p.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const rNorm = refinedName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return pNorm.includes(rNorm) || rNorm.includes(pNorm);
+          });
+          if (isRefinedCatalog && refinedPrice > 0 && !isDisputeOrCorrection) {
+            const formattedPrice = isCRC ? Math.round(refinedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : (Number.isInteger(refinedPrice) ? refinedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : refinedPrice.toFixed(2));
+            quickActions[0].label = `➕ Sí, quiero agregar ${refinedName}`;
+            quickActions[0].actionText = formattedPrice ? `Agregar ${refinedName} (${sym}${formattedPrice})` : `Agregar ${refinedName} al pedido`;
+          } else if (quickActions[0] && quickActions[0].id === 'add_item') {
+            quickActions = [
+              { id: 'view_menu', label: '📖 Ver Menú', actionText: '¿Cuáles son las opciones del menú?', variant: 'secondary' },
+              { id: 'view_total', label: '🧾 Ver Pedido', actionText: '¿Cuánto es el total?', variant: 'primary' }
+            ];
+          }
+        }
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_3_catalog',
+          levelLabel: 'Nivel 3: Asesoría de Catálogo & RAG',
+          confidence: matchedProducts.length > 0 ? 0.92 : 0.70,
+          answer: llmResult.text,
+          products: prodsToInclude,
+          provider: llmResult.provider,
+          model: llmResult.model,
+          neurons: llmResult.neurons || 0,
+          costUsd: llmResult.costUsd || 0,
+          tokens: llmResult.tokens || 0,
+          quickActions,
+          orderTotal,
+          orderItems: draftItems,
+          currency: activeCurrency,
+          isRestaurant,
+          isAskingTotal: isAskingBillTotal
+        });
+      }
+
+      // 7. NIVEL 4: Fallback / Anti-Alucinación / HITL
+      try {
+        const unresId = 'unres_' + Date.now();
+        await executeD1(
+          'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, status) VALUES (?1, ?2, ?3, ?4, ?5)',
+          [unresId, actualTenantId, currentSessionId, message, 'pending']
+        );
+      } catch (uErr) {}
+
+      const fallbackAnswer = `No tengo ese dato exacto en el catálogo en este momento. Con mucho gusto lo consulto directamente con nuestro equipo de atención para darte información precisa.\n\n¿Me podrías indicar tu número de WhatsApp o correo electrónico para contactarte de inmediato?`;
+      const botMsgId = 'msg_' + Date.now() + '_b';
+      try {
+        await executeD1(
+          'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [botMsgId, currentSessionId, actualTenantId, 'assistant', fallbackAnswer, 'fallback_hitl']
+        );
+      } catch (e) {}
+
+      return jsonResponse({
+        sessionId: currentSessionId,
+        level: 'fallback_hitl',
+        levelLabel: 'Nivel 4: Derivación a Asesor Humano',
+        confidence: 0.15,
+        answer: fallbackAnswer,
+        isFallback: true,
+        requiresLeadInfo: true,
+        orderTotal: null,
+        isRestaurant: targetTenant.business_type === 'restaurante'
+      });
+    }
+
+    // LEAD CAPTURE: POST /api/chat/lead
+    if (segments[0] === 'chat' && segments[1] === 'lead' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { sessionId, name, phone, email } = body;
+      if (!sessionId) return jsonResponse({ error: 'sessionId requerido' }, 400);
+
+      await executeD1(
+        'UPDATE chat_sessions SET user_name = COALESCE(?1, user_name), user_phone = COALESCE(?2, user_phone), user_email = COALESCE(?3, user_email), updated_at = datetime(\'now\') WHERE id = ?4',
+        [name || null, phone || null, email || null, sessionId]
+      );
+      try {
+        await executeD1(
+          'UPDATE unresolved_queries SET user_lead_info = ?1 WHERE session_id = ?2',
+          [JSON.stringify({ name, phone, email }), sessionId]
+        );
+      } catch (e) {}
+
+      return jsonResponse({ success: true, message: 'Datos de contacto registrados' });
+    }
+
+    // PWA PUSH SUBSCRIBE: POST /api/chat/push-subscribe
+    if (segments[0] === 'chat' && segments[1] === 'push-subscribe' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { sessionId, subscription } = body;
+      if (!sessionId || !subscription) return jsonResponse({ error: 'sessionId y subscription requeridos' }, 400);
+
+      await executeD1(
+        'UPDATE chat_sessions SET pwa_push_subscription = ?1, updated_at = datetime(\'now\') WHERE id = ?2',
+        [JSON.stringify(subscription), sessionId]
+      );
+      return jsonResponse({ success: true, message: 'Suscripción Web Push registrada con éxito' });
+    }
+
+    // INVENTORY BULK IMPORT: POST /api/products/bulk-import (From Excel .xlsx / CSV)
+    if (segments[0] === 'products' && segments[1] === 'bulk-import' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantId, products: importItems } = body;
+      if (!importItems || !Array.isArray(importItems) || importItems.length === 0) {
+        return jsonResponse({ error: 'Lista de productos requerida' }, 400);
+      }
+
+      let resolvedTenantId = tenantId;
+      if (!resolvedTenantId || resolvedTenantId === 'tenant-demo') {
+        const t = await executeD1('SELECT id FROM tenants LIMIT 1');
+        resolvedTenantId = t[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+      }
+
+      let importedCount = 0;
+      for (const item of importItems) {
+        if (!item.name) continue;
+        const id = 'prod_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const itemCurr = (item.currency || 'USD').toUpperCase();
+        const price = parsePriceNumber(item.price, itemCurr === 'CRC');
+        const details = {
+          stock: item.stock !== undefined ? parseInt(item.stock, 10) : 10,
+          sku: item.sku || '',
+          category: item.category || 'General'
+        };
+
+        await executeD1(
+          'INSERT INTO products (id, tenant_id, name, slug, price, currency, short_description, full_description, images, benefits, details, cta_label, cta_url) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
+          [
+            id, resolvedTenantId, item.name, slug, price, item.currency || 'USD',
+            item.short_description || `Producto: ${item.name}`,
+            item.full_description || item.short_description || `Producto de catálogo: ${item.name}`,
+            JSON.stringify([]),
+            JSON.stringify([`Stock disponible: ${details.stock} unidades`, `SKU: ${details.sku || 'N/A'}`]),
+            JSON.stringify(details),
+            'Comprar Ahora',
+            ''
+          ]
+        );
+
+        await executeD1(
+          'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
+          [id, resolvedTenantId]
+        );
+        importedCount++;
+      }
+
+      return jsonResponse({ success: true, count: importedCount }, 201);
+    }
+
+    // FAQS BULK: POST /api/faqs/bulk
+    if (segments[0] === 'faqs' && segments[1] === 'bulk' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenant_id, faqs: faqsList } = body;
+      if (!faqsList || !Array.isArray(faqsList)) return jsonResponse({ error: 'Lista de faqs requerida' }, 400);
+
+      for (const f of faqsList) {
+        if (!f.question || !f.answer) continue;
+        const id = 'faq_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+        const keywords = tokenize(f.question).slice(0, 15);
+        await executeD1(
+          'INSERT INTO faqs (id, tenant_id, question, answer, keywords, category, confidence_threshold, source) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
+          [id, tenant_id || 'tenant-demo', f.question, f.answer, JSON.stringify(keywords), f.category || 'general', f.confidence_threshold || 0.65, 'bulk_upload']
+        );
+      }
+      return jsonResponse({ success: true, count: faqsList.length }, 201);
+    }
+
+    // DOCUMENTS: GET /api/documents
+    if (segments[0] === 'documents' && segments.length === 1 && request.method === 'GET') {
+      const tenantId = url.searchParams.get('tenantId');
+      if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
+
+      const rows = await executeD1(
+        'SELECT kd.id, kd.title, kd.category, kd.file_type, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.tenant_id = ?1 OR kd.tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) GROUP BY kd.id ORDER BY kd.created_at DESC',
+        [tenantId]
+      );
+      return jsonResponse({ documents: rows });
+    }
+
+    // DOCUMENTS: POST /api/documents (and POST /api/documents/ingest)
+    if (segments[0] === 'documents' && (segments.length === 1 || segments[1] === 'ingest') && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenant_id, title, content, category } = body;
+      if (!tenant_id || !title || !content) {
+        return jsonResponse({ error: 'tenant_id, title y content requeridos' }, 400);
+      }
+
+      let actualTenantId = tenant_id;
+      try {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenant_id]);
+        if (tRows.length > 0) {
+          actualTenantId = tRows[0].id;
+        } else {
+          const defT = await executeD1('SELECT id FROM tenants LIMIT 1');
+          actualTenantId = defT[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+        }
+      } catch (e) {
+        actualTenantId = 'a0000000-0000-0000-0000-000000000001';
+      }
+
+      const docId = 'doc_' + Date.now();
+      await executeD1(
+        'INSERT INTO knowledge_documents (id, tenant_id, title, category, file_type, raw_content) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+        [docId, actualTenantId, title, category || 'manuales', 'text', content]
+      );
+
+      // Particionar en párrafos (~600 caracteres con overlap)
+      const clean = content.trim();
+      const chunks = [];
+      let start = 0;
+      while (start < clean.length) {
+        let end = start + 600;
+        if (end < clean.length) {
+          const cut = Math.max(clean.lastIndexOf('.', end), clean.lastIndexOf('\n', end));
+          if (cut > start + 150) end = cut + 1;
+        }
+        const chunkText = clean.slice(start, end).trim();
+        if (chunkText.length > 20) chunks.push(chunkText);
+        start = end - 100;
+        if (start >= clean.length - 40) break;
+      }
+
+      if (chunks.length === 0 && clean.length > 0) {
+        chunks.push(clean);
+      }
+
+      await Promise.all(chunks.map((chk, i) => {
+        const chunkId = 'chk_' + Date.now() + '_' + i;
+        const keywords = tokenize(chk).slice(0, 15);
+        return executeD1(
+          'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [chunkId, docId, actualTenantId, i, chk, JSON.stringify(keywords)]
+        );
+      }));
+
+      return jsonResponse({ success: true, document: { id: docId, title, chunksCount: chunks.length } }, 201);
+    }
+
+    // DOCUMENTS: GET /api/documents/:id (Ver contenido y chunks)
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'GET') {
+      const id = segments[1];
+      const docRows = await executeD1(
+        'SELECT kd.id, kd.tenant_id, kd.title, kd.category, kd.file_type, kd.raw_content, kd.created_at, COUNT(dc.id) as chunks_count FROM knowledge_documents kd LEFT JOIN document_chunks dc ON kd.id = dc.document_id WHERE kd.id = ?1 GROUP BY kd.id LIMIT 1',
+        [id]
+      );
+      if (!docRows.length) return jsonResponse({ error: 'Documento no encontrado' }, 404);
+      const doc = docRows[0];
+      const chunks = await executeD1(
+        'SELECT id, chunk_index, content FROM document_chunks WHERE document_id = ?1 ORDER BY chunk_index ASC',
+        [id]
+      );
+      return jsonResponse({
+        document: {
+          ...doc,
+          chunks
+        }
+      });
+    }
+
+    // DOCUMENTS: PUT /api/documents/:id (Editar y re-indexar chunks)
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'PUT') {
+      const id = segments[1];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { title, content, category } = body;
+      if (!title || !content) {
+        return jsonResponse({ error: 'title y content requeridos' }, 400);
+      }
+
+      await executeD1(
+        'UPDATE knowledge_documents SET title = ?1, raw_content = ?2, category = COALESCE(?3, category), updated_at = datetime(\'now\') WHERE id = ?4',
+        [title, content, category || null, id]
+      );
+
+      // Eliminar chunks anteriores y re-indexar
+      await executeD1('DELETE FROM document_chunks WHERE document_id = ?1', [id]);
+
+      const docRows = await executeD1('SELECT tenant_id FROM knowledge_documents WHERE id = ?1', [id]);
+      const actualTenantId = docRows[0]?.tenant_id || 'a0000000-0000-0000-0000-000000000001';
+
+      const clean = content.trim();
+      const chunks = [];
+      let start = 0;
+      while (start < clean.length) {
+        let end = start + 600;
+        if (end < clean.length) {
+          const cut = Math.max(clean.lastIndexOf('.', end), clean.lastIndexOf('\n', end));
+          if (cut > start + 150) end = cut + 1;
+        }
+        const chunkText = clean.slice(start, end).trim();
+        if (chunkText.length > 20) chunks.push(chunkText);
+        start = end - 100;
+        if (start >= clean.length - 40) break;
+      }
+      if (chunks.length === 0 && clean.length > 0) chunks.push(clean);
+
+      await Promise.all(chunks.map((chk, i) => {
+        const chunkId = 'chk_' + Date.now() + '_' + i;
+        const keywords = tokenize(chk).slice(0, 15);
+        return executeD1(
+          'INSERT INTO document_chunks (id, document_id, tenant_id, chunk_index, content, keywords) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+          [chunkId, id, actualTenantId, i, chk, JSON.stringify(keywords)]
+        );
+      }));
+
+      return jsonResponse({ success: true, message: 'Documento actualizado y re-indexado exitosamente', chunksCount: chunks.length });
+    }
+
+    // DOCUMENTS: DELETE /api/documents/:id
+    if (segments[0] === 'documents' && segments.length === 2 && request.method === 'DELETE') {
+      const id = segments[1];
+      await executeD1('DELETE FROM document_chunks WHERE document_id = ?1', [id]);
+      await executeD1('DELETE FROM knowledge_documents WHERE id = ?1', [id]);
+      return jsonResponse({ success: true, message: 'Documento eliminado exitosamente de Cloudflare D1' });
+    }
+
+    return jsonResponse({ message: 'Ruta no encontrada' }, 404);
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+}
+;
+          const fTotal = isCRC ? Math.round(draftTotal).toLocaleString('es-CR') : draftTotal.toFixed(2);
+          contextBlock += `\n\n[RECLAMO / AUDITORÍA DE PRECIOS O CUENTA SOLICITADA POR EL CLIENTE]:
+El cliente indica que hay un error en los precios, que el total no coincide o que se le está cobrando de más o un monto equivocado.
+Instrucciones obligatorias:
+1) Actúa con total empatía, amabilidad y cortesía. Discúlpate cordialmente por cualquier confusión o discrepancia.
+2) Audita y muestra con total transparencia la comanda real activa con los productos verificados del menú:
+${draftItems.length > 0 ? draftItems.map(it => `• ${it.quantity || 1}x ${it.name} (${sym}${isCRC ? Math.round(Number(it.price)).toLocaleString('es-CR') : Number(it.price).toFixed(2)})`).join('\n') : '(El pedido no contiene ítems adicionales en este momento)'}
+💰 Total matemáticamente verificado: ${sym}${fTotal} ${activeCurrency}
+3) Aclara con claridad el precio oficial exacto del producto consultado según el menú (ej: el Dip cuesta su precio oficial de catálogo, sin aumentos).
+4) Pregúntale amablemente si la comanda queda correcta así o si desea retirar o modificar algún platillo.
+5) TERMINANTEMENTE PROHIBIDO: Queda prohibido inventar o agregar nuevos ítems a la cuenta, o intentar hacer venta cruzada mientras se atiende un reclamo de precios.`;
+          quickActions = [
+            { id: 'view_total', label: `🧾 Ver Comanda (${sym}${fTotal})`, actionText: '¿Cuánto es el total?', variant: 'primary' },
+            { id: 'confirm_order', label: '✅ Confirmar Pedido Corregido', actionText: 'Sí, deseo confirmar mi pedido', variant: 'success' }
           ];
         } else if (isAskingBillTotal) {
           contextBlock += `\n\n[SOLICITUD DE TOTAL / PRE-CIERRE DE PEDIDO]: El cliente está consultando el total de la cuenta o listo para pagar. Calcula o menciona el monto total correspondiente según los productos y solicita amablemente su confirmación para guardar su orden tentativamente o si desea agregar algo más.`;
