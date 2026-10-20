@@ -11,7 +11,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
   tenant,
   onUpdateSettings
 }) => {
-  const [model, setModel] = useState(tenant?.custom_ai_config?.model || 'z-ai/glm-5.3-flash:floor');
+  const [model, setModel] = useState(tenant?.custom_ai_config?.model || '@cf/meta/llama-3.3-70b-instruct-fp8-fast');
   const [apiKey, setApiKey] = useState(tenant?.custom_ai_config?.apiKey || '');
   const [cadence, setCadence] = useState(tenant?.response_delay_sec !== undefined ? String(tenant.response_delay_sec) : '0');
   const [tone, setTone] = useState(tenant?.tone_of_voice || 'Profesional y Cortés');
@@ -70,8 +70,8 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
               onChange={(e) => setModel(e.target.value)}
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             >
-              <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (OpenRouter Floor - Ultra Económico & Rápido)</option>
-              <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Nativo)</option>
+              <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Nativo / Por Defecto)</option>
+              <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (OpenRouter Floor - Respaldo Económico & Rápido)</option>
               <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Equilibrado)</option>
               <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat)</option>
             </select>

@@ -661,10 +661,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 
   const cModel = userCustomConfig?.model || '';
   const cProvider = userCustomConfig?.provider || '';
-  const wantsCloudflareLlama = cModel.includes('llama') || cProvider === 'cloudflare';
+  const wantsOnlyGLM = cModel.includes('glm') || (cProvider === 'openrouter' && !cModel.includes('llama'));
 
-  // Opción Prioritaria A: Cloudflare Workers AI con Meta Llama 3.3 70B Fast si fue elegido por el tenant
-  if (wantsCloudflareLlama && env?.AI) {
+  // OPCIÓN 1 (POR DEFECTO DEL SISTEMA): Meta Llama 3.3 70B Fast en Cloudflare Workers AI
+  if (!wantsOnlyGLM && env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
         messages: [
@@ -691,11 +691,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         }
       }
     } catch (cfErr) {
-      console.warn('Llama 3.3 Cloudflare AI falló, procediendo a OpenRouter:', cfErr.message);
+      console.warn('Llama 3.3 Cloudflare AI no disponible o cuota superada, procediendo al respaldo 2° OpenRouter (GLM-5.3-Flash):', cfErr.message);
     }
   }
 
-  // Opción Prioritaria B: OpenRouter con z-ai/glm-5.3-flash:floor ordenado por precio ("sort": "price")
+  // OPCIÓN 2 (SEGUNDO LUGAR / RESPALDO): OpenRouter con z-ai/glm-5.3-flash:floor ordenado por precio ("sort": "price")
   const modelPool = [
     'z-ai/glm-5.3-flash:floor',
     'deepseek/deepseek-chat',
