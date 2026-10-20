@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-19 18:20 GMT-6
-- **Versión Actual:** 1.58.0 (Adaptación de Vocero CRM: Pipeline Kanban, Inbox 3-Col y Modo Dual)
-- **Deploy en Vivo:** https://clikchat.pages.dev (y compatible con https://clikchatcrm.pages.dev)
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit c940903)
+- **Última Actualización:** 2026-10-19 20:05 GMT-6
+- **Versión Actual:** 1.59.0 (Vocero CRM 100% Funcional: Ajustes, Agente 4-Pasos, Onboarding, Canales Meta y Zernio)
+- **Deploy en Vivo:** https://clikchatcrm.pages.dev y https://clikchat.pages.dev
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 94d5574)
 - **Estado Actual del Sistema:**
-  - Pipeline Kanban Visual: `VoceroPipelineBoard.tsx`, `VoceroPipelineColumn.tsx` y `VoceroLeadCard.tsx` con 6 etapas comerciales y métricas monetarias en tiempo real.
-  - Bandeja Multicanal de 3 Columnas: `VoceroInbox.tsx` con cuenta regresiva de ventana Meta 24h, alternador de Human Takeover (Pausar IA) y panel CRM de etiquetas/notas/etapa.
-  - Modo Dual & Detección de Dominio: `useVoceroMode.ts` y botón flotante/topbar para alternar al instante entre Vocero CRM y ClikChat Clásico en cualquier pantalla.
-  - Backend Edge Serverless D1: Endpoints CRUD `/api/crm/leads`, sincronización automática de chats y pausa de auto-respuesta de IA por asesor humano.
-  - Verificado con los 3 Filtros: Build Vite limpio en 9.76s (`index-ClAmaK97.js`), push en GitHub main y HTTP 200 verificado en Cloudflare Pages.
+  - Módulos Vocero 100% Operativos: Bandeja, Pipeline, Contactos, Citas (`VoceroBookingsView`), Guía de inicio (`VoceroOnboardingView`), Agente (`VoceroAgentView`), Laboratorio (`VoceroAiSandbox`), Resultados (`VoceroResultsView`), Ajustes (`VoceroSettingsView`).
+  - Ajustes & Perfil del Negocio: Identidad comercial, selector de tipo de negocio (1-clic), catálogo/menú, selección de LLM (GLM-5.3-Flash, Llama 3.3, Claude), persistencia en Cloudflare D1.
+  - Canales de Mensajería: WhatsApp Oficial Meta Cloud API (Webhooks y Handshake), Instagram Direct, Facebook Messenger y suite unificada Zernio Multicanal (`/api/zernio/config`, `/api/zernio/webhook`).
+  - Entrenamiento Comercial: Flujo de ventas en 4 pasos obligatorio, manejador de objeciones (Q&A Nivel 2), reglas operativas y documentos RAG Nivel 3.
+  - Verificado con los 3 Filtros: Build Vite limpio en 6.58s (`index-DYszz1Jg.js`), push en GitHub main y HTTP 200 en ambos dominios.
 - **Decisiones Técnicas Inmutables:**
-  - Validación obligatoria de cada cambio con los 3 filtros antes de dar por terminado.
+  - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
   - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md (Memoria Protegida).
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
