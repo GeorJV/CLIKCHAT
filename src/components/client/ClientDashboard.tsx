@@ -18,6 +18,7 @@ import { UserProfileTab } from './UserProfileTab';
 import { MyAccountTab } from './account/MyAccountTab';
 import { WhatsAppManagerTab } from './whatsapp/WhatsAppManagerTab';
 import { SwitchTenantModal } from './modals/SwitchTenantModal';
+import { VoceroCrmView } from '../crm/VoceroCrmView';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
@@ -135,13 +136,22 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'soporte' && (
             <SupportTab ownerEmail={user?.email || tenant?.owner_email} tenantName={tenant?.name} />
           )}
+          {activeTab === 'crm' && (
+            <div className="h-[calc(100vh-2rem)] -m-3 sm:-mx-6 sm:-my-2.5 rounded-2xl overflow-hidden border border-zinc-800">
+              <VoceroCrmView
+                tenantId={tenant?.id}
+                tenantSlug={currentSlug || activeSlug}
+                tenantName={tenant?.name}
+              />
+            </div>
+          )}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
           {activeTab === 'clientes' && <ClientsTab tenantId={tenant?.id} />}
           {activeTab === 'agenda' && <AgendaTab tenantId={tenant?.id} />}
           {(activeTab === 'account' || activeTab === 'user') && (
             <MyAccountTab tenant={tenant} user={user} onUpdateSettings={updateSettings} />
           )}
-          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user'].includes(activeTab) && (
+          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user', 'crm'].includes(activeTab) && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
               onOpenLiveChat={onOpenLiveChat} onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}

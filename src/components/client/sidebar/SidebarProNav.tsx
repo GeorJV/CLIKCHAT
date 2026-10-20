@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   ChevronDown, ChevronRight, LayoutDashboard, Users,
-  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy, UserCheck, MessageCircle
+  Store, MessageSquare, Brain, ShoppingBag, Calendar, LifeBuoy, UserCheck, MessageCircle, Kanban
 } from 'lucide-react';
 
 interface SidebarProNavProps {
@@ -94,6 +94,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         </button>
         {openCats.operaciones && (
           <nav className="space-y-0.5">
+            {renderItem('crm', 'Vocero CRM', Kanban)}
             {renderItem('business', 'Mi Negocio', Store)}
             {renderItem('conversations', 'Conversaciones', MessageSquare)}
             {renderItem('agenda', 'Agenda de Citas', Calendar)}

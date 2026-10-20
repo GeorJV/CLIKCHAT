@@ -10,6 +10,9 @@ import { useProductResolver } from './hooks/useProductResolver';
 import { useAppRouter, AppView, getTenantTabPath } from './hooks/useAppRouter';
 import { useAuth } from './hooks/useAuth';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { useVoceroMode } from './hooks/useVoceroMode';
+import { VoceroCrmView } from './components/crm/VoceroCrmView';
+import { VoceroModeTogglePill } from './components/crm/common/VoceroModeTogglePill';
 
 const NAV_VIEWS = [
   { id: 'landing' as AppView, label: 'Web Oficial', icon: Globe, path: '/' },
@@ -23,15 +26,14 @@ const NAV_VIEWS = [
 export function App() {
   const { pathname, search, currentView, routeTenantSlug, routeProductId, navigate } = useAppRouter();
   const { user } = useAuth();
+  const { isVoceroMode } = useVoceroMode();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = routeProductId || params?.get('p') || null;
 
   const isSuperAdmin = Boolean(
-    user?.role === 'superadmin' ||
-    currentView === 'admin' ||
+    user?.role === 'superadmin' || currentView === 'admin' ||
     (typeof window !== 'undefined' && localStorage.getItem('clikchat_role') === 'superadmin') ||
-    params?.has('admin') ||
-    params?.get('role') === 'superadmin'
+    params?.has('admin') || params?.get('role') === 'superadmin'
   );
 
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => (
@@ -96,23 +98,16 @@ export function App() {
             />
           </div>
         )}
-
         {currentView === 'chat' && (
           <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
-            <MobileChatView
-              tenantSlug={selectedTenantSlug}
-              onNavigateToPanel={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
-            />
+            <MobileChatView tenantSlug={selectedTenantSlug} onNavigateToPanel={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
           </div>
         )}
 
         {currentView === 'product' && (
           <div className="h-full w-full overflow-hidden bg-[#222020]">
             {isResolvingProduct && !productItem ? (
-              <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
-                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
-                <span className="text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</span>
-              </div>
+              <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</div>
             ) : (
               <ProductChatView
                 storeName={storeName || 'Tienda Oficial'}
@@ -129,14 +124,10 @@ export function App() {
             )}
           </div>
         )}
-
         {currentView === 'service' && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
             {isResolvingProduct && !storeName ? (
-              <div className="h-full w-full flex flex-col items-center justify-center bg-[#151414] text-zinc-400">
-                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
-                <span className="text-xs font-semibold text-zinc-300">Cargando servicio y asesoría virtual...</span>
-              </div>
+              <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando servicio y asesoría virtual...</div>
             ) : (
               <ServiceChatView
                 storeName={storeName || 'Centro Especializado'}
@@ -152,18 +143,22 @@ export function App() {
 
         {currentView === 'client' && (
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
-            <ErrorBoundary fallbackTitle="Panel del Negocio">
-              <ClientDashboard
-                tenantSlug={selectedTenantSlug}
-                onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)}
-                onSelectTenant={(slug) => {
-                  setSelectedTenantSlug(slug);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('clikchat_active_tenant_slug', slug);
-                  }
-                }}
-              />
-            </ErrorBoundary>
+            {isVoceroMode ? (
+              <ErrorBoundary fallbackTitle="Vocero CRM">
+                <VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} />
+              </ErrorBoundary>
+            ) : (
+              <ErrorBoundary fallbackTitle="Panel del Negocio">
+                <ClientDashboard
+                  tenantSlug={selectedTenantSlug}
+                  onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)}
+                  onSelectTenant={(slug) => {
+                    setSelectedTenantSlug(slug);
+                    if (typeof window !== 'undefined') localStorage.setItem('clikchat_active_tenant_slug', slug);
+                  }}
+                />
+              </ErrorBoundary>
+            )}
           </div>
         )}
 
@@ -174,6 +169,8 @@ export function App() {
             </ErrorBoundary>
           </div>
         )}
+
+        <VoceroModeTogglePill />
       </main>
     </div>
   );

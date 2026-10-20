@@ -1044,9 +1044,9 @@ export async function onRequest(context) {
         console.warn('RAG internal processing error:', ragErr.message);
       }
 
-      // 4. Send reply via Meta Cloud API if token is configured
+      // 4. Send reply via Meta Cloud API if token is configured (solo si la IA no está pausada)
       const accessToken = integrationRow?.access_token || env?.WHATSAPP_ACCESS_TOKEN;
-      if (accessToken && phoneNumberId) {
+      if (accessToken && phoneNumberId && botAnswer && !chatData?.ai_paused) {
         try {
           await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
             method: 'POST',
@@ -1069,8 +1069,9 @@ export async function onRequest(context) {
       return jsonResponse({
         success: true,
         session: sessionId,
-        replied: Boolean(accessToken && phoneNumberId),
-        answer: botAnswer
+        ai_paused: Boolean(chatData?.ai_paused),
+        replied: Boolean(accessToken && phoneNumberId && botAnswer && !chatData?.ai_paused),
+        answer: chatData?.ai_paused ? null : botAnswer
       });
     }
 
@@ -2640,6 +2641,285 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       return jsonResponse({ clients: rows });
     }
 
+    // ==============================================================================
+    // CRM VOCERO: PIPELINE KANBAN & INBOX 3-COLUMNAS (CLOUDFLARE D1)
+    // ==============================================================================
+
+    // Helper: Inicializar tabla crm_leads en D1
+    async function ensureCrmLeadsTable() {
+      await executeD1(`
+        CREATE TABLE IF NOT EXISTS crm_leads (
+          id TEXT PRIMARY KEY,
+          tenant_id TEXT NOT NULL,
+          session_id TEXT,
+          name TEXT,
+          phone TEXT,
+          email TEXT,
+          channel TEXT DEFAULT 'web',
+          stage TEXT DEFAULT 'lead',
+          deal_value REAL DEFAULT 0,
+          tags TEXT DEFAULT '[]',
+          notes TEXT DEFAULT '',
+          ai_paused INTEGER DEFAULT 0,
+          last_message TEXT DEFAULT '',
+          last_message_at TEXT DEFAULT (datetime('now')),
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `);
+    }
+
+    // CRM: GET /api/crm/leads/:tenantId
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'GET') {
+      const tenantId = segments[2];
+      await ensureCrmLeadsTable();
+
+      // Sincronización transparente de chat_sessions existentes hacia crm_leads si no existen
+      try {
+        await executeD1(`
+          INSERT OR IGNORE INTO crm_leads (
+            id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at
+          )
+          SELECT 
+            'lead_' || s.id,
+            s.tenant_id,
+            s.id,
+            COALESCE(s.user_name, CASE WHEN s.id LIKE 'wa_%' THEN 'WhatsApp ' || substr(s.id, 4) ELSE 'Lead Web ' || substr(s.id, -4) END),
+            COALESCE(s.user_phone, CASE WHEN s.id LIKE 'wa_%' THEN substr(s.id, 4) ELSE '' END),
+            COALESCE(s.user_email, ''),
+            CASE WHEN s.id LIKE 'wa_%' THEN 'whatsapp' ELSE 'web' END,
+            'lead',
+            0,
+            '[]',
+            '',
+            0,
+            COALESCE((SELECT message FROM chat_messages WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1), 'Chat iniciado'),
+            s.updated_at,
+            s.created_at,
+            s.updated_at
+          FROM chat_sessions s
+          WHERE s.tenant_id = ?1 AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
+        `, [tenantId]);
+      } catch (syncErr) {
+        console.warn('Sync crm_leads warning:', syncErr.message);
+      }
+
+      const rows = await executeD1(
+        `SELECT id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at
+         FROM crm_leads
+         WHERE tenant_id = ?1
+         ORDER BY updated_at DESC`,
+        [tenantId]
+      );
+
+      const parsedLeads = rows.map(r => ({
+        ...r,
+        deal_value: Number(r.deal_value || 0),
+        ai_paused: Boolean(r.ai_paused),
+        tags: Array.isArray(r.tags) ? r.tags : (typeof r.tags === 'string' && r.tags.startsWith('[') ? JSON.parse(r.tags) : [])
+      }));
+
+      return jsonResponse({ leads: parsedLeads });
+    }
+
+    // CRM: POST /api/crm/leads -> Crear lead manual
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 2 && request.method === 'POST') {
+      await ensureCrmLeadsTable();
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+
+      const { tenantId, name, phone, email, channel = 'web', stage = 'lead', dealValue = 0, tags = [], notes = '' } = body;
+      if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
+
+      const id = 'lead_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+      const sessionId = 'crm_' + Date.now().toString(36);
+
+      await executeD1(
+        `INSERT INTO crm_leads (id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, 'Lead registrado en CRM', datetime('now'), datetime('now'), datetime('now'))`,
+        [id, tenantId, sessionId, name || 'Nuevo Lead', phone || '', email || '', channel, stage, Number(dealValue) || 0, JSON.stringify(tags), notes]
+      );
+
+      return jsonResponse({
+        success: true,
+        lead: {
+          id,
+          tenant_id: tenantId,
+          session_id: sessionId,
+          name: name || 'Nuevo Lead',
+          phone: phone || '',
+          email: email || '',
+          channel,
+          stage,
+          deal_value: Number(dealValue) || 0,
+          tags,
+          notes,
+          ai_paused: false,
+          last_message: 'Lead registrado en CRM',
+          last_message_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      });
+    }
+
+    // CRM: PATCH /api/crm/leads/:id -> Actualizar stage, deal_value, tags, notes
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'PATCH') {
+      await ensureCrmLeadsTable();
+      const leadId = segments[2];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+
+      const updates = [];
+      const params = [];
+      let pIdx = 1;
+
+      if (body.stage !== undefined) {
+        updates.push(`stage = ?${pIdx++}`);
+        params.push(body.stage);
+      }
+      if (body.deal_value !== undefined) {
+        updates.push(`deal_value = ?${pIdx++}`);
+        params.push(Number(body.deal_value) || 0);
+      }
+      if (body.tags !== undefined) {
+        updates.push(`tags = ?${pIdx++}`);
+        params.push(JSON.stringify(body.tags));
+      }
+      if (body.notes !== undefined) {
+        updates.push(`notes = ?${pIdx++}`);
+        params.push(body.notes);
+      }
+      if (body.name !== undefined) {
+        updates.push(`name = ?${pIdx++}`);
+        params.push(body.name);
+      }
+      if (body.phone !== undefined) {
+        updates.push(`phone = ?${pIdx++}`);
+        params.push(body.phone);
+      }
+      if (body.email !== undefined) {
+        updates.push(`email = ?${pIdx++}`);
+        params.push(body.email);
+      }
+      if (body.ai_paused !== undefined) {
+        updates.push(`ai_paused = ?${pIdx++}`);
+        params.push(body.ai_paused ? 1 : 0);
+      }
+
+      if (updates.length === 0) {
+        return jsonResponse({ error: 'Sin campos para actualizar' }, 400);
+      }
+
+      updates.push(`updated_at = datetime('now')`);
+      params.push(leadId);
+
+      await executeD1(
+        `UPDATE crm_leads SET ${updates.join(', ')} WHERE id = ?${pIdx} OR session_id = ?${pIdx}`,
+        params
+      );
+
+      return jsonResponse({ success: true, message: 'Lead actualizado correctamente' });
+    }
+
+    // CRM: POST /api/crm/leads/:id/takeover -> Alternar control humano vs IA
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 4 && segments[3] === 'takeover' && request.method === 'POST') {
+      await ensureCrmLeadsTable();
+      const leadId = segments[2];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+
+      const aiPausedVal = body.ai_paused ? 1 : 0;
+      await executeD1(
+        `UPDATE crm_leads SET ai_paused = ?1, updated_at = datetime('now') WHERE id = ?2 OR session_id = ?2`,
+        [aiPausedVal, leadId]
+      );
+
+      return jsonResponse({ success: true, ai_paused: Boolean(aiPausedVal) });
+    }
+
+    // CRM: POST /api/crm/leads/:id/message -> Enviar mensaje manual de asesor humano
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 4 && segments[3] === 'message' && request.method === 'POST') {
+      await ensureCrmLeadsTable();
+      const leadId = segments[2];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+
+      const { message, tenantId } = body;
+      if (!message || !message.trim()) return jsonResponse({ error: 'Mensaje requerido' }, 400);
+
+      // Obtener datos del lead
+      const rows = await executeD1(
+        `SELECT id, tenant_id, session_id, phone, channel FROM crm_leads WHERE id = ?1 OR session_id = ?1 LIMIT 1`,
+        [leadId]
+      );
+      if (rows.length === 0) return jsonResponse({ error: 'Lead no encontrado' }, 404);
+
+      const lead = rows[0];
+      const actualTenantId = tenantId || lead.tenant_id;
+      const targetSessionId = lead.session_id || leadId;
+      const agentMsgId = 'msg_' + Date.now() + '_agent';
+
+      // 1. Guardar mensaje en chat_messages como sender = 'agent'
+      await executeD1(
+        `INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used)
+         VALUES (?1, ?2, ?3, 'agent', ?4, 'human_takeover')`,
+        [agentMsgId, targetSessionId, actualTenantId, message.trim()]
+      );
+
+      // 2. Actualizar último mensaje en crm_leads
+      await executeD1(
+        `UPDATE crm_leads SET last_message = ?1, last_message_at = datetime('now'), updated_at = datetime('now') WHERE id = ?2`,
+        [message.trim(), lead.id]
+      );
+
+      // 3. Si el canal es WhatsApp, despachar directamente por Meta Cloud API
+      let waDelivered = false;
+      if (lead.channel === 'whatsapp' && lead.phone) {
+        try {
+          const intRows = await executeD1(
+            `SELECT phone_number_id, access_token FROM whatsapp_integrations WHERE tenant_id = ?1 AND is_active = 1 LIMIT 1`,
+            [actualTenantId]
+          );
+          if (intRows.length > 0 && intRows[0].access_token && intRows[0].phone_number_id) {
+            const rawPhone = lead.phone.replace(/[^0-9]/g, '');
+            await fetch(`https://graph.facebook.com/v19.0/${intRows[0].phone_number_id}/messages`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${intRows[0].access_token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: rawPhone,
+                type: 'text',
+                text: { body: message.trim() }
+              })
+            });
+            waDelivered = true;
+          }
+        } catch (waErr) {
+          console.warn('Error enviando WhatsApp manual:', waErr.message);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        messageId: agentMsgId,
+        waDelivered,
+        sender: 'agent',
+        message: message.trim(),
+        created_at: new Date().toISOString()
+      });
+    }
+
+    // CRM: DELETE /api/crm/leads/:id -> Eliminar lead
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'DELETE') {
+      const leadId = segments[2];
+      await executeD1(`DELETE FROM crm_leads WHERE id = ?1`, [leadId]);
+      return jsonResponse({ success: true, message: 'Lead eliminado correctamente' });
+    }
+
     // CHAT: GET /api/chat/tenant-metrics/:tenantId
     if (segments[0] === 'chat' && segments[1] === 'tenant-metrics' && segments.length === 3 && request.method === 'GET') {
       const tenantId = segments[2];
@@ -2955,6 +3235,48 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       } catch (msgErr) {
         console.warn('Msg D1 warning:', msgErr.message);
       }
+
+      // Sincronizar automáticamente hacia crm_leads (Vocero CRM)
+      try {
+        await executeD1(`
+          INSERT INTO crm_leads (id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, updated_at)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'lead', 0, '[]', '', 0, ?8, datetime('now'), datetime('now'))
+          ON CONFLICT(id) DO UPDATE SET
+            name = COALESCE(?4, name),
+            phone = COALESCE(?5, phone),
+            email = COALESCE(?6, email),
+            last_message = ?8,
+            last_message_at = datetime('now'),
+            updated_at = datetime('now')
+        `, [
+          'lead_' + currentSessionId,
+          actualTenantId,
+          currentSessionId,
+          leadInfo?.name || null,
+          leadInfo?.phone || (currentSessionId.startsWith('wa_') ? currentSessionId.replace('wa_', '') : null),
+          leadInfo?.email || null,
+          currentSessionId.startsWith('wa_') ? 'whatsapp' : 'web',
+          message
+        ]);
+      } catch (crmSyncErr) {}
+
+      // Verificar si la IA está pausada (Human Takeover activo)
+      try {
+        const leadCheck = await executeD1(
+          'SELECT ai_paused FROM crm_leads WHERE session_id = ?1 OR id = ?2 LIMIT 1',
+          [currentSessionId, 'lead_' + currentSessionId]
+        );
+        if (leadCheck.length > 0 && Boolean(leadCheck[0].ai_paused)) {
+          return jsonResponse({
+            success: true,
+            sessionId: currentSessionId,
+            answer: null,
+            ai_paused: true,
+            sender: 'human_takeover',
+            message: 'La atención ha sido pausada para este cliente. Un asesor humano responderá en breve.'
+          });
+        }
+      } catch (pauseCheckErr) {}
 
       // 4. NIVEL 1: Memoria Episódica D1 (últimos turnos para mantener contexto)
       let sessionHistory = [];

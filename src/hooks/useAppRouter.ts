@@ -16,6 +16,7 @@ export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
   '/entrenamiento-ai': 'training',
   '/soporte': 'soporte',
   '/mi-cuenta': 'account',
+  '/crm': 'crm',
 };
 
 export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
@@ -33,6 +34,7 @@ export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
   soporte: '/soporte',
   user: '/mi-cuenta',
   account: '/mi-cuenta',
+  crm: '/crm',
 };
 
 export function getTenantTabPath(slug?: string, tab: ClientTab = 'business'): string {
@@ -108,7 +110,7 @@ export function useAppRouter() {
     }
   }
 
-  const RESERVED_PATHS = new Set(['user', 'panel', 'dashboard', 'admin', 'super-admin', 'login', 'registro', 'producto', 'servicio', 'chat', 'api', 'inicio', 'landing']);
+  const RESERVED_PATHS = new Set(['user', 'panel', 'dashboard', 'admin', 'super-admin', 'login', 'registro', 'producto', 'servicio', 'chat', 'api', 'inicio', 'landing', 'crm']);
   const isDirectTenantUrl = parts.length === 1 && !RESERVED_PATHS.has(parts[0]);
   const isChatProductUrl = parts[0] === 'chat' && parts.length >= 3;
   const isChatSlugUrl = (parts[0] === 'chat' && parts.length === 2) || isDirectTenantUrl;

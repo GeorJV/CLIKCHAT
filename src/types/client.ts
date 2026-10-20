@@ -15,7 +15,8 @@ export type ClientTab =
   | 'whatsapp'
   | 'soporte'
   | 'user'
-  | 'account';
+  | 'account'
+  | 'crm';
 
 export interface DocumentChunk {
   id: string;
