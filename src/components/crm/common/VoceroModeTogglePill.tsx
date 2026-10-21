@@ -12,7 +12,7 @@ export const VoceroModeTogglePill: React.FC<VoceroModeTogglePillProps> = ({ vari
   const buttonContent = (
     <button
       onClick={toggleVoceroMode}
-      title="Alternar entre la experiencia Vocero CRM y ClikChat Clásico"
+      title="Alternar entre la experiencia ClikChat CRM y ClikChat Clásico"
       className={`group flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 shadow-xl border cursor-pointer ${
         isVoceroMode
           ? 'bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 border-emerald-500/40 hover:border-emerald-500 shadow-emerald-950/40'
@@ -24,7 +24,7 @@ export const VoceroModeTogglePill: React.FC<VoceroModeTogglePillProps> = ({ vari
         {isVoceroMode ? (
           <>
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="tracking-tight text-white">Modo Vocero CRM</span>
+            <span className="tracking-tight text-white">Modo ClikChat CRM</span>
             <span className="text-[10px] text-zinc-400 font-normal hidden sm:inline">| Ver Clásico</span>
           </>
         ) : (
@@ -32,7 +32,7 @@ export const VoceroModeTogglePill: React.FC<VoceroModeTogglePillProps> = ({ vari
             <MessageCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-400 transition" />
             <span className="tracking-tight">ClikChat Clásico</span>
             <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-              ⚡ Probar Vocero CRM
+              ⚡ Modo ClikChat CRM
             </span>
           </>
         )}

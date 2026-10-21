@@ -30,11 +30,11 @@ export const VoceroTopNav: React.FC<VoceroTopNavProps> = ({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center font-black text-xs text-white shadow-md">
-            VC
+            CK
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-sm tracking-tight text-white">VOCERO CRM</span>
+              <span className="font-extrabold text-sm tracking-tight text-white">CLIKCHAT CRM</span>
               <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Cloudflare Edge
               </span>

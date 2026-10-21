@@ -84,7 +84,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
 
       <main className="flex-1 overflow-y-auto p-6 max-w-4xl w-full mx-auto space-y-4">
         <div className="rounded-2xl border border-[#d8e2f0] bg-white p-5 shadow-xs">
-          <h3 className="text-base font-bold text-[#0a1730] mb-1">¡Bienvenido a ClikChat Vocero CRM!</h3>
+          <h3 className="text-base font-bold text-[#0a1730] mb-1">¡Bienvenido a ClikChat CRM!</h3>
           <p className="text-xs text-[#62728d]">
             Sigue estos 4 pasos para poner a tu agente de inteligencia artificial a atender, cotizar y vender en piloto automático.
           </p>

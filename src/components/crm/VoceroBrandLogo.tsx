@@ -28,12 +28,12 @@ export function VoceroBrandMark({ className = 'h-6 w-6' }: { className?: string 
 export function VoceroBrandLogo({ kicker = 'CRM · WhatsApp' }: { kicker?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#0d5bff] to-[#00c6f5] text-white shadow-sm">
-        <VoceroBrandMark className="h-5 w-5 text-white" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#0d5bff] to-[#00c6f5] text-white shadow-sm font-black text-xs font-mono">
+        CK
       </div>
       <div className="min-w-0">
         <span className="block text-[15px] font-extrabold tracking-tight text-white leading-none">
-          VOCERO
+          CLIKCHAT
         </span>
         <span className="vocero-kicker mt-1 block leading-none">
           {kicker}
