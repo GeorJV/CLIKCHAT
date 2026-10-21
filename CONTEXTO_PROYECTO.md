@@ -1,19 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 15:20 GMT-6
-- **Versión Actual:** 1.69.0 (Catálogo Unificado RAG, Anti Re-Saludo y Comanda Instantánea)
+- **Última Actualización:** 2026-10-20 20:55 GMT-6
+- **Versión Actual:** 1.70.0 (Login Blindado en CRM y Normalización de Leads Nulos)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit e3d57d5)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 79b546b)
 - **Estado Actual del Sistema:**
+  - Login Blindado en CRM: En `clikchatcrm.pages.dev`, los usuarios no autenticados ven correctamente el formulario de inicio de sesión (`ClientLogin`) sin saltos ciegos a Vocero CRM.
+  - Blindaje Anti-Crash de Leads: Sanitización en 3 capas (Backend, Hook y UI) para `name`, `phone`, `email` y `last_message`, erradicando el error `Cannot read properties of null (reading 'toLowerCase')`.
+  - Sesión y Salida Asimétrica: Incorporado botón de cierre de sesión (`onLogout`) en el panel de navegación de Vocero CRM.
   - Erradicación de Re-saludo a Mitad de Chat: `isSimpleGreeting` limitado a `sessionHistory.length === 0` y memoria ampliada a 16 turnos.
-  - Catálogo Unificado desde RAG: 75 platillos extraídos de `knowledge_documents` integrados a `products` (Salchi Pack, Chili Papa, etc.).
-  - Botón "➕ Sí, quiero agregar {ítem}": Siempre generado cuando el bot asesora o menciona cualquier producto del menú.
-  - Comanda con Optimismo 0ms: `ProductChatView.tsx` registra en tiempo real el ítem en la comanda sin latencia perceptible.
-  - Detalle de Orden Sincronizado: Comanda y totales en D1 y LocalStorage completamente operativos y auditados.
-  - Modelo #1 Predeterminado: Meta Llama 3.3 70B Fast en Cloudflare Workers AI ejecutado nativamente vía `env.AI.run`.
-  - Modelo #2 Respaldo/Alternativo: GLM-5.3-Flash (`z-ai/glm-5.3-flash:floor`) en OpenRouter con sort price.
-  - Verificado con 3 Filtros: Build limpio (`index-V6XE-65u.js`), sync GitHub `main` y 12/12 rutas verificadas en Chrome Headless.
+  - Catálogo Unificado desde RAG: 75 platillos extraídos de `knowledge_documents` integrados a `products`.
+  - Verificado con 3 Filtros: Build limpio (`index-D1RLgnsM.js`), commit `79b546b` en `main` y 12/12 rutas verificadas en Chrome Headless en ambos dominios.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
