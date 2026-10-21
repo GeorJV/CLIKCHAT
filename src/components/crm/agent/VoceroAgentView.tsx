@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../../types';
-import { Sparkles, TrendingUp, ShieldCheck, ShieldAlert, FileText } from 'lucide-react';
+import { Sparkles, TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog } from 'lucide-react';
+import { VoceroAgentIdentitySection } from './VoceroAgentIdentitySection';
 import { SalesFlowSection } from '../../client/training/SalesFlowSection';
 import { ObjectionsManagerSection } from '../../client/training/objections/ObjectionsManagerSection';
 import { OperationalRulesSection } from '../../client/training/OperationalRulesSection';
@@ -26,11 +27,12 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
   onUpdateFaq,
   onDeleteFaq,
 }) => {
-  const [subTab, setSubTab] = useState<'flujo' | 'objeciones' | 'reglas' | 'docs'>('flujo');
+  const [subTab, setSubTab] = useState<'identidad' | 'flujo' | 'objeciones' | 'reglas' | 'docs'>('identidad');
 
   const TABS = [
-    { id: 'flujo' as const, label: 'Flujo en 4 Pasos (Ventas)', icon: TrendingUp },
-    { id: 'objeciones' as const, label: 'Objeciones & FAQs (Q&A)', icon: ShieldCheck, badge: faqs.length },
+    { id: 'identidad' as const, label: 'Identidad & Prompt', icon: UserCog },
+    { id: 'flujo' as const, label: 'Flujo en 4 Pasos', icon: TrendingUp },
+    { id: 'objeciones' as const, label: 'Objeciones & FAQs', icon: ShieldCheck, badge: faqs.length },
     { id: 'reglas' as const, label: 'Reglas Operativas', icon: ShieldAlert },
     { id: 'docs' as const, label: 'Documentos RAG', icon: FileText },
   ];
@@ -75,6 +77,12 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
 
       {/* Main Container */}
       <main className="flex-1 overflow-y-auto p-6 max-w-5xl w-full mx-auto">
+        {subTab === 'identidad' && (
+          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
+            <VoceroAgentIdentitySection tenant={tenant} onUpdateSettings={onUpdateSettings} />
+          </div>
+        )}
+
         {subTab === 'flujo' && (
           <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
             <SalesFlowSection tenant={tenant} onUpdateSettings={onUpdateSettings} />

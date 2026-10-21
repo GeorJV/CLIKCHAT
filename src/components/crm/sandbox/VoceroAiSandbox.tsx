@@ -18,9 +18,18 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const txt = input.trim();
+  const PERSONAS = [
+    { label: '🛍️ Decidido', text: 'Hola, quiero comprar ya mismo. ¿Cómo puedo pagar y cuándo me lo envían?' },
+    { label: '🏷️ Precios', text: 'Hola, ¿cuánto cuesta lo más vendido y qué ofertas tienen hoy?' },
+    { label: '😡 Molesto', text: 'Llevo esperando mi pedido y nadie me contesta, exijo una solución.' },
+    { label: '🙋 Pide Humano', text: 'Hola, no quiero hablar con un bot, pásame con un asesor real por favor.' },
+    { label: '❓ Fuera de Menú', text: '¿Ustedes también venden repuestos de autos y hacen envíos a México?' },
+    { label: '📱 Informal', text: 'ke onda bro si benden comida todavia o ya cerraron?' },
+  ];
+
+  const handleSendText = async (textToSend?: string) => {
+    const txt = (textToSend || input).trim();
+    if (!txt || loading) return;
     setInput('');
     setMessages(prev => [...prev, { id: String(Date.now()), sender: 'user', text: txt, rag: '' }]);
     setLoading(true);
@@ -46,6 +55,8 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       setLoading(false);
     }
   };
+
+  const handleSend = () => handleSendText();
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
@@ -92,6 +103,20 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
             <span>Consultando fuentes y respondiendo…</span>
           </div>
         )}
+      </div>
+
+      <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas Vocero:</span>
+        {PERSONAS.map(p => (
+          <button
+            key={p.label}
+            onClick={() => handleSendText(p.text)}
+            disabled={loading}
+            className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer"
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       <div className="p-3 bg-white border-t border-[#e8edf6] max-w-3xl w-full mx-auto">
