@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 21:28 GMT-6
-- **Versión Actual:** 1.72.0 (Agente Vocero al 100% y Laboratorio con 6 Personas de Compradores)
+- **Última Actualización:** 2026-10-20 21:55 GMT-6
+- **Versión Actual:** 1.73.0 (Vocero CRM al 100%: Citas Interactivas, Contactos CSV/Canales, Juez IA & Doradas)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 77e87ae)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 6dafafb)
 - **Estado Actual del Sistema:**
-  - Suite de Agente Vocero al 100%: Incorporada sección de Identidad & Prompt (`bot_name`, `welcome_message`, `tone_of_voice`, `system_prompt`, avatar), Flujo en 4 Pasos, Objeciones Q&A, Reglas Operativas y Documentos RAG.
-  - Laboratorio Vocero Completo: Agregadas las 6 personas de compradores simulados (Decidido, Precios, Molesto, Pide Humano, Fuera de Menú, Informal) con evaluación RAG en tiempo real.
-  - Rebranding a ClikChat CRM: Unificado en logos, píldoras y navegación.
-  - Login Blindado en CRM: Sin saltos ciegos; formulario `ClientLogin` accesible y seguro.
-  - Verificado con 3 Filtros: Build limpio (`index-BZp9W737.js`), commit `77e87ae` en `main` y 12/12 rutas verificadas en Chrome Headless.
+  - Suite de Agente Vocero al 100%: Identidad, Prompt, 4 Pasos, Objeciones Q&A, Reglas Operativas y Docs RAG.
+  - Laboratorio y Juez Vocero: 6 personas compradoras, AI Judge scoring (0-100) y guardado de respuestas doradas.
+  - Citas & Reservaciones Interactivas: Modal "+ Nueva Cita", toggle confirmada/pendiente y persistencia localStorage.
+  - Contactos CRM: Exportación a CSV con 1 clic, filtros por canal (WhatsApp/Web) y enlace directo a WhatsApp.
+  - Verificado con 3 Filtros: Build limpio (`index-Jk3I5fAJ.js`), commit `6dafafb` en `main` y 12/12 rutas verificadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
