@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-20 20:55 GMT-6
-- **Versión Actual:** 1.70.0 (Login Blindado en CRM y Normalización de Leads Nulos)
+- **Última Actualización:** 2026-10-20 21:05 GMT-6
+- **Versión Actual:** 1.71.0 (Unificación Total de Marca Vocero -> ClikChat CRM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 79b546b)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 023ef1c)
 - **Estado Actual del Sistema:**
-  - Login Blindado en CRM: En `clikchatcrm.pages.dev`, los usuarios no autenticados ven correctamente el formulario de inicio de sesión (`ClientLogin`) sin saltos ciegos a Vocero CRM.
-  - Blindaje Anti-Crash de Leads: Sanitización en 3 capas (Backend, Hook y UI) para `name`, `phone`, `email` y `last_message`, erradicando el error `Cannot read properties of null (reading 'toLowerCase')`.
-  - Sesión y Salida Asimétrica: Incorporado botón de cierre de sesión (`onLogout`) en el panel de navegación de Vocero CRM.
-  - Erradicación de Re-saludo a Mitad de Chat: `isSimpleGreeting` limitado a `sessionHistory.length === 0` y memoria ampliada a 16 turnos.
-  - Catálogo Unificado desde RAG: 75 platillos extraídos de `knowledge_documents` integrados a `products`.
-  - Verificado con 3 Filtros: Build limpio (`index-D1RLgnsM.js`), commit `79b546b` en `main` y 12/12 rutas verificadas en Chrome Headless en ambos dominios.
+  - Rebranding a ClikChat CRM: Unificado el nombre en logotipos (`CLIKCHAT`), barras de navegación, botones flotantes (`Modo ClikChat CRM`), barra lateral y pantallas de onboarding.
+  - Login Blindado en CRM: En `clikchatcrm.pages.dev`, usuarios no autenticados ven correctamente `ClientLogin` sin bloqueos.
+  - Blindaje Anti-Crash de Leads: Sanitización en 3 capas (Backend, Hook y UI) para `name`, `phone`, `email` y `last_message`.
+  - Cierre de Sesión Asimétrico: Botón de logout directo en la barra de navegación del CRM.
+  - Erradicación de Re-saludo a Mitad de Chat: `isSimpleGreeting` limitado a `sessionHistory.length === 0` y memoria a 16 turnos.
+  - Verificado con 3 Filtros: Build limpio (`index-BLZeLMqr.js`), commit `023ef1c` en `main` y 12/12 rutas verificadas en Chrome Headless en ambos dominios.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
