@@ -38,7 +38,7 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
     setTimeout(() => setSavedNotes(false), 2000);
   };
 
-  const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+  const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
 
   return (
     <div className="w-80 h-full bg-white border-l border-[#e8edf6] flex flex-col font-sans overflow-y-auto">

@@ -28,11 +28,14 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
   isLoading,
 }) => {
   const filteredLeads = leads.filter(l => {
-    const term = searchTerm.toLowerCase();
+    const term = (searchTerm || '').toLowerCase();
+    const name = (l.name || '').toLowerCase();
+    const phone = l.phone || '';
+    const lastMsg = (l.last_message || '').toLowerCase();
     const matchesSearch =
-      l.name.toLowerCase().includes(term) ||
-      l.phone.includes(term) ||
-      (l.last_message && l.last_message.toLowerCase().includes(term));
+      name.includes(term) ||
+      phone.includes(term) ||
+      lastMsg.includes(term);
     if (!matchesSearch) return false;
 
     if (filterInbox === 'whatsapp') return l.channel === 'whatsapp';

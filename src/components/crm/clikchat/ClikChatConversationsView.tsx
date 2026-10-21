@@ -101,7 +101,7 @@ export const ClikChatConversationsView: React.FC<Props> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-[#0a1730] truncate">{l.name}</span>
+                    <span className="font-bold text-xs text-[#0a1730] truncate">{l.name || 'Lead Web'}</span>
                     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold border ${badge.color}`}>
                       <BadgeIcon className="h-2.5 w-2.5" />
                       {badge.label}
@@ -125,7 +125,7 @@ export const ClikChatConversationsView: React.FC<Props> = ({
                   <User className="h-4 w-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-[#0a1730]">{selectedLead.name}</h4>
+                  <h4 className="text-xs font-bold text-[#0a1730]">{selectedLead.name || 'Lead Web'}</h4>
                   <div className="flex items-center gap-2 text-[10.5px] text-[#8391aa]">
                     <span>Origen: <strong>{getSourceBadge(selectedLead.source).label}</strong></span>
                     {selectedLead.deal_value > 0 && <span className="text-[#0f8b44] font-mono font-bold">₡{selectedLead.deal_value.toLocaleString()}</span>}

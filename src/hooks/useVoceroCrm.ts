@@ -17,7 +17,14 @@ export function useVoceroCrm(tenantId?: string) {
       const res = await fetch(`/api/crm/leads/${tenantId}`);
       if (res.ok) {
         const data = await res.json();
-        setLeads(data.leads || []);
+        const raw = Array.isArray(data.leads) ? data.leads : [];
+        setLeads(raw.map((l: any) => ({
+          ...l,
+          name: l.name || 'Lead Web',
+          phone: l.phone || '',
+          email: l.email || '',
+          last_message: l.last_message || 'Chat iniciado',
+        })));
       }
     } catch (err) {
       console.warn('Error cargando leads CRM:', err);
@@ -154,22 +161,9 @@ export function useVoceroCrm(tenantId?: string) {
   }, [tenantId]);
 
   return {
-    leads,
-    selectedLeadId,
-    setSelectedLeadId,
-    selectedLead,
-    messages,
-    isLoadingLeads,
-    isLoadingMessages,
-    filterInbox,
-    setFilterInbox,
-    searchTerm,
-    setSearchTerm,
-    loadLeads,
-    changeLeadStage,
-    toggleTakeover,
-    sendAgentMessage,
-    updateLead,
-    createLead,
+    leads, selectedLeadId, setSelectedLeadId, selectedLead, messages,
+    isLoadingLeads, isLoadingMessages, filterInbox, setFilterInbox,
+    searchTerm, setSearchTerm, loadLeads, changeLeadStage,
+    toggleTakeover, sendAgentMessage, updateLead, createLead,
   };
 }

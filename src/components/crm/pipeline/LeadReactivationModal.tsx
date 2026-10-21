@@ -35,7 +35,7 @@ export const LeadReactivationModal: React.FC<LeadReactivationModalProps> = ({
 }) => {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [customText, setCustomText] = useState(
-    REACTIVATION_TEMPLATES[0].text(lead.name)
+    REACTIVATION_TEMPLATES[0].text(lead.name || 'Cliente')
   );
   const [sentSuccess, setSentSuccess] = useState(false);
 
@@ -43,10 +43,10 @@ export const LeadReactivationModal: React.FC<LeadReactivationModalProps> = ({
 
   const handleSelectTemplate = (idx: number) => {
     setSelectedIdx(idx);
-    setCustomText(REACTIVATION_TEMPLATES[idx].text(lead.name));
+    setCustomText(REACTIVATION_TEMPLATES[idx].text(lead.name || 'Cliente'));
   };
 
-  const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+  const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
 
   const handleSendWeb = () => {
     if (onSendMessage) {

@@ -19,9 +19,10 @@ interface VoceroCrmViewProps {
   tenantId?: string;
   tenantSlug: string;
   tenantName?: string;
+  onLogout?: () => void;
 }
 
-export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSlug, tenantName }) => {
+export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSlug, tenantName, onLogout }) => {
   const [activeTab, setActiveTab] = useState<VoceroNavTab>('inbox');
   const { setVoceroMode } = useVoceroMode();
 
@@ -51,6 +52,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         unreadCount={leads.filter(l => l.stage === 'lead').length}
         userName={tenant?.name || tenantName || tenantSlug}
         onSwitchToClassic={() => setVoceroMode(false)}
+        onLogout={onLogout}
       />
 
       <main className="flex-1 h-full min-w-0 overflow-hidden relative bg-[#f6f8fc]">

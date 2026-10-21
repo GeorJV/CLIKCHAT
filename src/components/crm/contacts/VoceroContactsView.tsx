@@ -10,11 +10,13 @@ interface VoceroContactsViewProps {
 export const VoceroContactsView: React.FC<VoceroContactsViewProps> = ({ leads, onSelectLead }) => {
   const [search, setSearch] = useState('');
 
-  const filtered = leads.filter(l =>
-    l.name.toLowerCase().includes(search.toLowerCase()) ||
-    l.phone.includes(search) ||
-    l.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = leads.filter(l => {
+    const term = (search || '').toLowerCase();
+    const name = (l.name || '').toLowerCase();
+    const phone = l.phone || '';
+    const email = (l.email || '').toLowerCase();
+    return name.includes(term) || phone.includes(term) || email.includes(term);
+  });
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">

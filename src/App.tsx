@@ -28,7 +28,7 @@ const NAV_VIEWS = [
 
 export function App() {
   const { pathname, search, currentView, routeTenantSlug, routeProductId, navigate } = useAppRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { isVoceroMode } = useVoceroMode();
   const params = typeof window !== 'undefined' ? new URLSearchParams(search) : null;
   const productId = routeProductId || params?.get('p') || null;
@@ -45,14 +45,11 @@ export function App() {
 
   useEffect(() => {
     const t = routeTenantSlug || params?.get('t');
-    if (t && t !== selectedTenantSlug) {
-      setSelectedTenantSlug(t);
-    } else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !t) {
-      setSelectedTenantSlug(user.tenantSlug);
-    }
+    if (t && t !== selectedTenantSlug) setSelectedTenantSlug(t);
+    else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !t) setSelectedTenantSlug(user.tenantSlug);
   }, [search, routeTenantSlug, user?.tenantSlug]);
-  const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
 
+  const { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));
 
   return (
@@ -71,16 +68,12 @@ export function App() {
           <div className="flex items-center space-x-1 bg-[#111010] p-1 rounded-xl border border-[#282626]">
             {NAV_VIEWS.map(({ id, label, icon: Icon, path }) => (
               <button
-                key={id}
-                onClick={() => navigate(id === 'client' ? getTenantTabPath(selectedTenantSlug, 'business') : path)}
+                key={id} onClick={() => navigate(id === 'client' ? getTenantTabPath(selectedTenantSlug, 'business') : path)}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  currentView === id
-                    ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
+                  currentView === id ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{label}</span>
+                <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{label}</span>
               </button>
             ))}
           </div>
@@ -113,15 +106,10 @@ export function App() {
               <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando producto y asesoría virtual...</div>
             ) : (
               <ProductChatView
-                storeName={storeName || 'Tienda Oficial'}
-                agentName={agentName || 'Asistente Virtual'}
-                agentAvatar={agentAvatar}
-                welcomeMessage={welcomeMessage}
-                tenantSlug={selectedTenantSlug}
-                initialProduct={productItem || DEFAULT_PRODUCT}
-                products={productItem ? [productItem] : [DEFAULT_PRODUCT]}
-                responseDelaySec={responseDelaySec}
-                businessType={businessType}
+                storeName={storeName || 'Tienda Oficial'} agentName={agentName || 'Asistente Virtual'}
+                agentAvatar={agentAvatar} welcomeMessage={welcomeMessage} tenantSlug={selectedTenantSlug}
+                initialProduct={productItem || DEFAULT_PRODUCT} products={productItem ? [productItem] : [DEFAULT_PRODUCT]}
+                responseDelaySec={responseDelaySec} businessType={businessType}
                 onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />
             )}
@@ -133,11 +121,8 @@ export function App() {
               <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando servicio y asesoría virtual...</div>
             ) : (
               <ServiceChatView
-                storeName={storeName || 'Centro Especializado'}
-                agentName={agentName || 'Asesora Profesional'}
-                agentAvatar={agentAvatar}
-                tenantSlug={selectedTenantSlug}
-                responseDelaySec={responseDelaySec}
+                storeName={storeName || 'Centro Especializado'} agentName={agentName || 'Asesora Profesional'}
+                agentAvatar={agentAvatar} tenantSlug={selectedTenantSlug} responseDelaySec={responseDelaySec}
                 onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}
               />
             )}
@@ -158,9 +143,9 @@ export function App() {
 
         {currentView === 'client' && (
           <div className="h-full w-full overflow-y-auto bg-[#151414]">
-            {isVoceroMode ? (
+            {isAuthenticated && isVoceroMode ? (
               <ErrorBoundary fallbackTitle="Vocero CRM">
-                <VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} />
+                <VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} onLogout={logout} />
               </ErrorBoundary>
             ) : (
               <ErrorBoundary fallbackTitle="Panel del Negocio">

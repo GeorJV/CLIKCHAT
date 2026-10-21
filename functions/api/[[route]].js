@@ -3453,6 +3453,10 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         return {
           ...r,
+          name: r.name || (r.id && r.id.startsWith('lead_wa_') ? 'WhatsApp ' + r.id.slice(8) : (r.session_id ? 'Lead ' + r.session_id.slice(-4) : 'Lead Web')),
+          phone: r.phone || '',
+          email: r.email || '',
+          last_message: r.last_message || '',
           deal_value: Number(r.deal_value || 0),
           ai_paused: Boolean(r.ai_paused),
           tags: rawTags,
