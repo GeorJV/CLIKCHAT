@@ -27,6 +27,7 @@ export const VoceroProductMetricsTable: React.FC<VoceroProductMetricsTableProps>
             <th className="pb-3 text-center">Clics</th>
             <th className="pb-3 text-center">Vio Foto</th>
             <th className="pb-3 text-center">Chat IA</th>
+            <th className="pb-3 text-center">Vio Detalle</th>
             <th className="pb-3 text-center">Agregó</th>
             <th className="pb-3 text-center">No Agregó</th>
             <th className="pb-3 text-center">Clic Comprar</th>
@@ -61,6 +62,7 @@ export const VoceroProductMetricsTable: React.FC<VoceroProductMetricsTableProps>
                 <td className="py-3 text-center font-semibold text-[#0a1730]">{m.views || 0}</td>
                 <td className="py-3 text-center font-semibold text-purple-700">{m.photoViews || 0}</td>
                 <td className="py-3 text-center font-semibold text-blue-600">{m.chatInteractions || 0}</td>
+                <td className="py-3 text-center font-bold text-teal-600">{m.detailViews || 0}</td>
                 <td className="py-3 text-center font-bold text-emerald-600">{m.addedToCart || 0}</td>
                 <td className="py-3 text-center text-amber-600">{m.notAdded || 0}</td>
                 <td className="py-3 text-center font-bold text-[#0d5bff]">{m.buyClicks || 0}</td>

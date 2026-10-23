@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ProductItem, ProductChatMessage, ProductCheckoutData } from '../../../types/productChat';
 import { adaptTemporalText } from '../../../utils/temporalGreeting';
 import { formatPriceWithCurrency } from '../../../utils/currency';
+import { broadcastProductMetric } from '../../../utils/metricsSync';
 
 interface UseProductChatSessionOptions {
   selectedProduct: ProductItem;
@@ -107,9 +108,14 @@ export function useProductChatSession({
 
   const trackEvent = (event: string, temperature?: string) => {
     if (!selectedProduct.id) return;
+    broadcastProductMetric(selectedProduct.id, event);
     fetch(`/api/products/${selectedProduct.id}/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event, temperature })
+    }).then(r => r.json()).then(data => {
+      if (data?.metrics) {
+        broadcastProductMetric(selectedProduct.id, event, data.metrics);
+      }
     }).catch(() => {});
   };
 

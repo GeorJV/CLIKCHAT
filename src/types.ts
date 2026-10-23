@@ -23,6 +23,7 @@ export interface Product {
     notAdded?: number;
     removedFromCart?: number;
     benefitViews?: number;
+    detailViews?: number;
     coldLeads?: number;
     warmLeads?: number;
     hotLeads?: number;

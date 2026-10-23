@@ -1,11 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 10:18 GMT-6
-- **Versión Actual:** 1.91.0 (Modal Nuevo Producto/Servicio Homologado al Tema Web Oficial)
+- **Última Actualización:** 2026-10-23 10:34 GMT-6
+- **Versión Actual:** 1.92.0 (Telemetría Reactiva en Vivo & Métrica Detalle del Producto)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent + Polling inteligente a 4s.
+  - Métrica "Vio Detalle del Producto": Columna D1 `detail_views` y tarjeta simétrica en modal de 8 KPIs y reportes.
   - Modal Producto/Servicio `ProductModal`: Homologado 100% al tema claro oficial y azul royal #0d5bff.
   - FAQ IQ /faqs: Aprendizaje supervisado cuando la IA no sabe, HITL y guardado directo a RAG Nivel 2.
   - Flow IQ /agente: 3 Estrategias listas (Asesor Consultivo B2B, Venta Directa y Citas/Agendamiento).
@@ -14,9 +16,6 @@
   - Lead Score Numérico 0-100: Termómetro visual (🔥/☕/❄️) en panel de contacto, bandeja y Kanban.
   - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de ventana.
   - Viewport CRM Bloqueado: Contenedor en `overflow-hidden` durante modo CRM y reset `window.scrollTo(0, 0)`.
-  - Unificación de Contraste en Botones: Estados activos en azul royal `#0d5bff` con texto e íconos blancos.
-  - Telemetría y Métricas: Clics comprar, fotos vistas, chat IA, 7 eventos y termómetro de leads.
-  - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

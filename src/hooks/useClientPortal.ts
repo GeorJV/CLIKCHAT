@@ -3,6 +3,7 @@ import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
 import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
 import { useSmartPolling } from './useSmartPolling';
+import { subscribeToProductMetrics, broadcastProductMetric } from '../utils/metricsSync';
 
 export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
   const [tenantSlug, setTenantSlug] = useState<string>(() => {
@@ -138,6 +139,30 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
 
   useEffect(() => { loadTenantsList(); }, [loadTenantsList]);
   useEffect(() => { if (tenantSlug) loadTenantData(tenantSlug); }, [tenantSlug, loadTenantData]);
+
+  // Suscripción reactiva instantánea a métricas en vivo (Cross-Tab y local)
+  useEffect(() => {
+    const unsubscribe = subscribeToProductMetrics(({ productId, event, metrics }) => {
+      setProducts(prev => prev.map(p => {
+        if (p.id !== productId && p.slug !== productId) return p;
+        if (metrics) {
+          return { ...p, metrics: { ...p.metrics, ...metrics } };
+        }
+        const m = p.metrics || { views: 0, buyClicks: 0 };
+        const nextM = { ...m };
+        if (event === 'buy_click') nextM.buyClicks = (nextM.buyClicks || 0) + 1;
+        else if (event === 'photo_view' || event === 'image_view' || event === 'fullscreen_view') nextM.photoViews = (nextM.photoViews || 0) + 1;
+        else if (event === 'chat_interaction' || event === 'chat_message' || event === 'message_sent') nextM.chatInteractions = (nextM.chatInteractions || 0) + 1;
+        else if (event === 'added_to_cart' || event === 'added_to_order') nextM.addedToCart = (nextM.addedToCart || 0) + 1;
+        else if (event === 'not_added' || event === 'discarded') nextM.notAdded = (nextM.notAdded || 0) + 1;
+        else if (event === 'removed_from_cart' || event === 'abandoned_after_buy' || event === 'cancel_order') nextM.removedFromCart = (nextM.removedFromCart || 0) + 1;
+        else if (event === 'detail_view' || event === 'detail' || event === 'spec_view') nextM.detailViews = (nextM.detailViews || 0) + 1;
+        else if (event === 'view' || event === 'product_click') nextM.views = (nextM.views || 0) + 1;
+        return { ...p, metrics: nextM };
+      }));
+    });
+    return unsubscribe;
+  }, []);
 
   // Polling inteligente para métricas en vivo: 30s, pausa total en segundo plano, refresco al volver al foco
   useSmartPolling(() => {
@@ -389,11 +414,18 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
 
   const trackProductEvent = async (productId: string, event: string) => {
     try {
-      await fetch(`/api/products/${encodeURIComponent(productId)}/track`, {
+      broadcastProductMetric(productId, event);
+      const res = await fetch(`/api/products/${encodeURIComponent(productId)}/track`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event })
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.metrics) {
+          broadcastProductMetric(productId, event, data.metrics);
+        }
+      }
       setProducts(prev => prev.map(p => {
         if (p.id !== productId && p.slug !== productId) return p;
         const m = p.metrics || { views: 0, buyClicks: 0 };
@@ -404,6 +436,7 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
         else if (event === 'added_to_cart') nextM.addedToCart = (nextM.addedToCart || 0) + 1;
         else if (event === 'not_added') nextM.notAdded = (nextM.notAdded || 0) + 1;
         else if (event === 'removed_from_cart') nextM.removedFromCart = (nextM.removedFromCart || 0) + 1;
+        else if (event === 'detail_view' || event === 'detail' || event === 'spec_view') nextM.detailViews = (nextM.detailViews || 0) + 1;
         else if (event === 'view' || event === 'product_click') nextM.views = (nextM.views || 0) + 1;
         return { ...p, metrics: nextM };
       }));

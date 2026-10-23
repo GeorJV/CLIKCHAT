@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '../../types';
 import { CheckCircle2, ShoppingCart, Sparkles, Info, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { broadcastProductMetric } from '../../utils/metricsSync';
 
 interface DesktopProductShowcaseProps {
   products: Product[];
@@ -73,14 +74,26 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
       {/* 2. Dos Botones: Beneficios y Detalles */}
       <div className="grid grid-cols-2 gap-2 mt-4">
         <button
-          onClick={() => setActiveTab('benefits')}
+          onClick={() => {
+            setActiveTab('benefits');
+            if (product.id) {
+              broadcastProductMetric(product.id, 'benefit_view');
+              fetch(`/api/products/${product.id}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'benefit_view' }) }).catch(() => {});
+            }
+          }}
           className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${activeTab === 'benefits' ? 'cuadro-tornasol active !border-cyan-400/60 shadow-lg text-white' : 'cuadro-tornasol hover:opacity-100 text-zinc-300'}`}
         >
           <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors relative z-10" />
           <span className="relative z-10">Beneficios</span>
         </button>
         <button
-          onClick={() => setActiveTab('details')}
+          onClick={() => {
+            setActiveTab('details');
+            if (product.id) {
+              broadcastProductMetric(product.id, 'detail_view');
+              fetch(`/api/products/${product.id}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'detail_view' }) }).catch(() => {});
+            }
+          }}
           className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${activeTab === 'details' ? 'cuadro-tornasol active !border-cyan-400/60 shadow-lg text-white' : 'cuadro-tornasol hover:opacity-100 text-zinc-300'}`}
         >
           <Info className="w-3.5 h-3.5 text-zinc-400 group-hover:text-teal-300 transition-colors relative z-10" />

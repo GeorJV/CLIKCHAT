@@ -242,7 +242,9 @@ router.post('/:id/track', async (req, res) => {
       updateSql = `UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
     } else if (event === 'benefit_view') {
       updateSql = `UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
-    } else if (event === 'detail_view' || event === 'spec_view' || event === 'fullscreen_view') {
+    } else if (event === 'detail_view' || event === 'detail' || event === 'spec_view') {
+      updateSql = `UPDATE product_metrics SET detail_views = COALESCE(detail_views, 0) + 1, views = views + 1, cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
+    } else if (event === 'fullscreen_view') {
       updateSql = `UPDATE product_metrics SET views = views + 1, cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;
     } else if (event === 'chat_message' || event === 'message_sent') {
       updateSql = `UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = $1`;

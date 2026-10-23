@@ -28,6 +28,10 @@ export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [metricsProduct, setMetricsProduct] = useState<Product | null>(null);
 
+  const activeMetricsProduct = metricsProduct
+    ? (products.find(p => p.id === metricsProduct.id) || metricsProduct)
+    : null;
+
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.details?.category && p.details.category.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -158,8 +162,8 @@ export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
       />
 
       <VoceroProductMetricsModal
-        isOpen={Boolean(metricsProduct)}
-        product={metricsProduct}
+        isOpen={Boolean(activeMetricsProduct)}
+        product={activeMetricsProduct}
         tenantSlug={tenantSlug}
         currency={currency}
         onClose={() => setMetricsProduct(null)}

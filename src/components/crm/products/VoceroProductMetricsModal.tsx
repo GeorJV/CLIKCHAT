@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product } from '../../../types';
-import { X, MousePointerClick, Eye, MessageSquare, ShoppingCart, XCircle, CreditCard, Undo2, Flame, Snowflake, Coffee, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import { X, MousePointerClick, Eye, MessageSquare, ShoppingCart, XCircle, CreditCard, Undo2, Flame, Snowflake, Coffee, Copy, Check, ExternalLink, FileText } from 'lucide-react';
+import { subscribeToProductMetrics } from '../../../utils/metricsSync';
 
 interface VoceroProductMetricsModalProps {
   isOpen: boolean;
@@ -11,16 +12,52 @@ interface VoceroProductMetricsModalProps {
 }
 
 export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps> = ({
-  isOpen,
-  product,
-  tenantSlug,
-  currency = 'CRC',
-  onClose
+  isOpen, product, tenantSlug, currency = 'CRC', onClose
 }) => {
   const [copied, setCopied] = useState(false);
+  const [liveMetrics, setLiveMetrics] = useState<NonNullable<Product['metrics']>>(() => (product?.metrics || {}) as any);
+
+  useEffect(() => {
+    if (product?.metrics) setLiveMetrics(product.metrics as any);
+  }, [product?.metrics]);
+
+  useEffect(() => {
+    if (!isOpen || !product?.id) return;
+    const unsubscribe = subscribeToProductMetrics(({ productId, event, metrics }) => {
+      if (productId !== product.id && productId !== product.slug) return;
+      if (metrics) {
+        setLiveMetrics(prev => ({ ...prev, ...metrics }));
+        return;
+      }
+      setLiveMetrics(prev => {
+        const next = { ...prev };
+        if (event === 'buy_click') next.buyClicks = (next.buyClicks || 0) + 1;
+        else if (event === 'photo_view' || event === 'image_view' || event === 'fullscreen_view') next.photoViews = (next.photoViews || 0) + 1;
+        else if (event === 'chat_interaction' || event === 'chat_message' || event === 'message_sent') next.chatInteractions = (next.chatInteractions || 0) + 1;
+        else if (event === 'added_to_cart' || event === 'added_to_order') next.addedToCart = (next.addedToCart || 0) + 1;
+        else if (event === 'not_added' || event === 'discarded') next.notAdded = (next.notAdded || 0) + 1;
+        else if (event === 'removed_from_cart' || event === 'abandoned_after_buy' || event === 'cancel_order') next.removedFromCart = (next.removedFromCart || 0) + 1;
+        else if (event === 'detail_view' || event === 'detail' || event === 'spec_view') next.detailViews = (next.detailViews || 0) + 1;
+        else if (event === 'view' || event === 'product_click') next.views = (next.views || 0) + 1;
+        return next;
+      });
+    });
+
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetch(`/api/products/${encodeURIComponent(product.id)}`)
+          .then(r => r.json())
+          .then(data => { if (data?.product?.metrics) setLiveMetrics(data.product.metrics); })
+          .catch(() => {});
+      }
+    }, 4000);
+
+    return () => { unsubscribe(); clearInterval(timer); };
+  }, [isOpen, product?.id, product?.slug]);
+
   if (!isOpen || !product) return null;
 
-  const m = product.metrics || ({} as any);
+  const m = liveMetrics || {};
   const views = Number(m.views) || 0;
   const buyClicks = Number(m.buyClicks) || 0;
   const photoViews = Number(m.photoViews) || 0;
@@ -28,15 +65,14 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
   const addedToCart = Number(m.addedToCart) || 0;
   const notAdded = Number(m.notAdded) || 0;
   const removedFromCart = Number(m.removedFromCart) || 0;
+  const detailViews = Number(m.detailViews) || 0;
   const coldLeads = Number(m.coldLeads) || views;
   const warmLeads = Number(m.warmLeads) || chatInteractions;
   const hotLeads = Number(m.hotLeads) || buyClicks;
 
   const questionsAnswered = views > 0 ? Math.max(Math.round(views * 1.5), 1) : 0;
   const objectionsResolved = Math.max(warmLeads, views > 0 ? Math.round(views * 0.7) : 0);
-
-  const crmHost = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
-  const directLink = `${crmHost}/chat/${tenantSlug}?p=${product.id}`;
+  const directLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev'}/chat/${tenantSlug}?p=${product.id}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(directLink);
@@ -53,12 +89,15 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
             <div className="h-9 w-9 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center overflow-hidden shrink-0">
               {product.images && product.images[0] ? (
                 <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-xs">🍴</span>
-              )}
+              ) : (<span className="text-xs">🍴</span>)}
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-[#0a1730] truncate">{product.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#0a1730] truncate">{product.name}</h3>
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-600 border border-emerald-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> En Vivo
+                </span>
+              </div>
               <p className="text-[11px] text-[#0f8b44] font-semibold">{product.currency || currency} {Number(product.price).toLocaleString()}</p>
             </div>
           </div>
@@ -68,7 +107,7 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Grid de las 7 Métricas en Vivo */}
+          {/* Grid de las 8 Métricas en Vivo */}
           <div>
             <span className="vocero-kicker mb-2 block">Telemetría de Clics y Rendimiento</span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -85,6 +124,10 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
                 <p className="text-base font-bold text-blue-600 mt-0.5">{chatInteractions}</p>
               </div>
               <div className="p-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                <div className="flex items-center justify-between text-[#8391aa] text-[10px]"><span className="font-semibold">Vio Detalle</span><FileText className="h-3 w-3 text-teal-600" /></div>
+                <p className="text-base font-bold text-teal-600 mt-0.5">{detailViews}</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
                 <div className="flex items-center justify-between text-[#8391aa] text-[10px]"><span className="font-semibold">Lo Agregó</span><ShoppingCart className="h-3 w-3 text-emerald-600" /></div>
                 <p className="text-base font-bold text-emerald-600 mt-0.5">{addedToCart}</p>
               </div>
@@ -96,8 +139,8 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
                 <div className="flex items-center justify-between text-[#8391aa] text-[10px]"><span className="font-semibold">Clic Comprar</span><CreditCard className="h-3 w-3 text-[#0d5bff]" /></div>
                 <p className="text-base font-bold text-[#0d5bff] mt-0.5">{buyClicks}</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] col-span-2">
-                <div className="flex items-center justify-between text-[#8391aa] text-[10px]"><span className="font-semibold">Compró y Quitó (Abandono)</span><Undo2 className="h-3 w-3 text-rose-500" /></div>
+              <div className="p-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                <div className="flex items-center justify-between text-[#8391aa] text-[10px]"><span className="font-semibold">Compró y Quitó</span><Undo2 className="h-3 w-3 text-rose-500" /></div>
                 <p className="text-base font-bold text-rose-600 mt-0.5">{removedFromCart}</p>
               </div>
             </div>

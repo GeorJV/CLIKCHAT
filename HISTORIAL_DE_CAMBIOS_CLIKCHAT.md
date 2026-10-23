@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Telemetría Reactiva Inmediata en Vivo (Zero-Delay) & Métrica de Detalle del Producto
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Actualización en Vivo:* Cuando un cliente o visitante interactuaba con un producto en el chat (dando clic a comprar, viendo fotos, abriendo detalles, etc.), el dueño del negocio con el panel o modal de métricas abierto no veía los números actualizarse inmediatamente; requería cerrar y volver a abrir la ventana para que se refrescaran.
+  2. *Ausencia de la Métrica "Detalle del Producto":* A pesar de que los clientes pulsaban en "Detalle del Producto" en el chat y escaparate, esa métrica no se registraba en su propia columna ni aparecía en el reporte de clics y rendimiento ni en el modal del producto.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Anti-Drain Polling):**
+  1. *Motor de Sincronización Inmediata (`metricsSync.ts` - 78 líneas):*
+     - Sistema de sincronización reactiva local y Cross-Tab multi-pestaña usando `BroadcastChannel('clikchat_metrics_bus')`, `CustomEvent` y escucha en `StorageEvent`.
+     - Actualización instantánea a 0ms en el mismo dispositivo o navegador al registrar cualquier evento de clic.
+  2. *Métrica y Columna "Vio Detalle del Producto" (`functions/api/[[route]].js`, `server/routes/products.js`, `types.ts`):*
+     - Columna `detail_views` creada y persistida en Cloudflare D1 en la tabla `product_metrics`.
+     - Eventos `detail_view`, `detail` y `spec_view` incrementan de forma atómica tanto `detail_views` como `views` y `cold_leads`.
+     - Integración completa en endpoints de consulta (`GET /api/products/:id`, `GET /api/products`, `GET /api/tenants/:slug`).
+  3. *Modal y Reportes con 8 KPIs Simétricos (`VoceroProductMetricsModal.tsx` - 177 líneas, `VoceroClickPerformanceReport.tsx` - 173 líneas, `VoceroProductMetricsTable.tsx` - 77 líneas):*
+     - `VoceroProductMetricsModal`: Tarjeta de **Vio Detalle** (`FileText`, color teal) en una cuadrícula simétrica de 8 métricas (2x4 en desktop). Estado reactivo local con suscripción en vivo y sondeo anti-drain a 4s cuando el modal está visible. Badge animado "En Vivo".
+     - `VoceroClickPerformanceReport`: Grid de 8 métricas activas con total de `details`, botón de simulación `+1 Detalle` y tabla desglosada con columna "Vio Detalle".
+     - `VoceroCatalogSettings`: Sincronización reactiva del modal con `activeMetricsProduct` en tiempo real desde la lista de productos.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 13.41s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-D7RqgE7j.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Corrección Integral de Auto-Scroll en Bandeja y Unificación de Contraste en Botones de Navegación CRM
 - **Diagnóstico y Necesidad:**
   1. *Desajuste de Pantalla en Bandeja:* Al pulsar sobre "Bandeja" en el menú lateral, `endRef.scrollIntoView()` desplazaba hacia abajo todos los contenedores ancestros y el viewport general de la ventana, ocultando la barra superior y descuadrando la vista.
