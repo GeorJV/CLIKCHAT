@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 20:59 GMT-6
-- **Versión Actual:** 1.82.0 (Carga y Drag & Drop de Documentos para Instrucciones Maestras / System Prompt)
+- **Última Actualización:** 2026-10-22 21:05 GMT-6
+- **Versión Actual:** 1.83.0 (Estructuración Explícita y Tracker de los 4 Pasos de Identidad del Agente)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `f4ad82a` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `f9d9d28` en `main`)
 - **Estado Actual del Sistema:**
+  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, Paso 2 Tono, Paso 3 Bienvenida, Paso 4 Prompt/Docs) con tracker de progreso.
   - Adjuntos System Prompt: Carga y Drag & Drop de archivos de texto (.txt, .md), PDF (.pdf) y Word (.docx, .doc) con extracción e inyección directa.
   - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio ("Cargar Productos").
   - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto, resaltado esmeralda y enlaces directos.
@@ -14,7 +15,6 @@
   - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen`, área conversacional y elementos 100% visibles.
   - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.
   - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes.
-  - Modelos Google AI Studio: Estandarización exclusiva en `gemini-2.5-flash` y `gemini-2.5-pro`.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 14/14 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Estructuración Explícita y Tracker de los 4 Pasos de Entrenamiento de Identidad del Agente
+- **Diagnóstico y Necesidad:**
+  1. *Ambigüedad en los 4 Pasos de Entrenamiento:* En el Paso 3 de la Guía de Inicio Rápido ("Entrenamiento del Agente 4 Pasos"), al ingresar a la pantalla del agente figuraban cuatro campos (Nombre, Tono de Voz, Mensaje de Bienvenida y System Prompt) sin enumeración visible, generando incertidumbre sobre si conformaban un solo paso o si faltaban tres pasos adicionales.
+  2. *Requerimiento de Claridad y Seguimiento:* Enumerar explícitamente cada uno de los 4 pasos, proveer un indicador visual de progreso y alinear la descripción de la Guía de Inicio con la sección de Identidad del Agente.
+- **Solución Implementada (ARQMODULAR & UX Guiada):**
+  1. *Enumeración Canónica en `VoceroAgentIdentitySection.tsx` (165 líneas):*
+     - **PASO 1:** Nombre del Asistente Virtual (con badge `PASO 1` azul índigo).
+     - **PASO 2:** Tono de Voz Conversacional (con badge `PASO 2` en el selector múltiple `ToneMultiSelectDropdown`).
+     - **PASO 3:** Mensaje de Bienvenida Inicial (con badge `PASO 3` y aviso de envío inmediato en segundo 0).
+     - **PASO 4:** Instrucciones Maestras (System Prompt) & Documentos Adjuntos (con badge `PASO 4` y módulo Drag & Drop).
+  2. *Tracker Reactivo de Progreso de Identidad:*
+     - Barra superior integrada que computa en vivo: `X de 4 Pasos Completados` con insignias de estado individuales (`1. Nombre`, `2. Tono`, `3. Bienvenida`, `4. System Prompt`) que cambian a verde esmeralda conforme se completan los campos.
+  3. *Clarificación de Subpestañas del Agente (`VoceroAgentView.tsx`):*
+     - Subpestaña 1 renombrada a `Identidad (4 Pasos)` y subpestaña 2 a `Flujo de Ventas (4 Pasos)`, distinguiendo nítidamente los 4 pasos de identidad frente al embudo comercial de ventas.
+  4. *Alineación de la Guía de Inicio Rápido (`VoceroOnboardingView.tsx`):*
+     - Actualización del Paso 3: descripciones claras (`1. Nombre, 2. Tono, 3. Mensaje de bienvenida y 4. System Prompt`) y validación inteligente para marcarlo como completado al configurar los campos de identidad del agente.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 18.05s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-Bp3IgC0f.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `f9d9d28`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 14/14 rutas activas y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Carga y Drag & Drop de Documentos (Texto, PDF y Word) para Instrucciones Maestras (System Prompt)
 - **Diagnóstico y Necesidad:**
   1. *Entrada Manual Limitada:* En la sección de Identidad & Personalidad del Agente Vocero (`VoceroAgentIdentitySection.tsx`), el campo de Instrucciones Maestras del Sistema (`system_prompt`) requería escribir o pegar texto de forma manual.
