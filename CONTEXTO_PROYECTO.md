@@ -1,19 +1,20 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 20:38 GMT-6
-- **Versión Actual:** 1.79.0 (Enrutamiento Independiente por Pestaña CRM y Persistencia ante Recargas)
+- **Última Actualización:** 2026-10-22 20:47 GMT-6
+- **Versión Actual:** 1.80.0 (Canal 'Chat Agente ClikChat' Interno sin API con Selector por Defecto)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `1fff9db` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `bd87ae8` en `main`)
 - **Estado Actual del Sistema:**
-  - Enrutamiento Canónico por Pestaña: Sincronización de URL en barra de direcciones (`/agente`, `/citas`, `/laboratorio`, etc.) y persistencia 100% independiente ante recargas F5.
+  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto, resaltado esmeralda y enlaces directos.
+  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/agente`, `/citas`, `/ajustes`, etc.) y persistencia 100% independiente ante recargas F5.
   - Auto-Scroll Reactivo: Desplazamiento automático multi-tick hacia el último mensaje tipo WhatsApp sin desbordes.
   - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen`, área conversacional y elementos 100% visibles.
   - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.
   - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes.
   - Modelos Google AI Studio: Estandarización exclusiva en `gemini-2.5-flash` y `gemini-2.5-pro`.
   - Suite Vocero CRM 100%: Pipeline, Inbox, Citas, Contactos CSV, Laboratorio y Juez IA con scoring.
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 13/13 rutas verificadas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 14/14 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

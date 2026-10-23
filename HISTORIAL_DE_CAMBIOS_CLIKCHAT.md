@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Integración de Canal 'Chat Agente ClikChat' Interno sin API con Selector Activo por Defecto
+- **Diagnóstico y Necesidad:**
+  1. *Dependencia Exclusiva de APIs Externas:* En Ajustes del Sistema (sección Canales, accesible desde el paso 1 de Guía de Inicio Rápido tras 'Revisar Perfil'), únicamente figuraban WhatsApp Business Cloud API, Instagram Direct y Facebook Messenger, requiriendo credenciales y webhooks de Meta.
+  2. *Requerimiento de Canal Web Nativo Inmediato:* Incorporar la opción oficial "Chat Agente ClikChat", que opere de forma 100% interna e integrada sin necesidad de APIs de terceros ni cuentas de Meta Developers, con capacidad de seleccionarse y marcarse de forma destacada para activarlo como canal por defecto.
+- **Solución Implementada (ARQMODULAR & Modularidad Quirúrgica):**
+  1. *Componente Atómico `VoceroClikChatChannelCard.tsx` (<165 líneas):*
+     - Tarjeta con diseño estilizado y reactivo: se resalta con borde esmeralda (`border-emerald-500`), fondo gradiente con relieve (`bg-gradient-to-br from-emerald-50/70`) y anillo sutil (`ring-emerald-500/20`) al encontrarse activo.
+     - Selector interactivo con checkbox estilizado: permite alternar entre "Canal Activo por Defecto" y "Inactivo" con persistencia local y sincronización en configuración de negocio (`clikchat_channel_active`).
+     - Insignia de estado: "Canal Nativo Interno • Sin API" y badge indicador de conexión inmediata.
+     - Barra de enlaces canónicos: visualización de la URL web directa del negocio con botón de copiado (`Copiar Enlace Web`) y botón de apertura rápida (`Abrir Chat Agente`).
+  2. *Modularización de Canales Meta (`VoceroMetaChannelsGrid.tsx` - 63 líneas):*
+     - Extracción limpia de las tarjetas de Instagram Direct y Facebook Messenger para garantizar que `VoceroChannelsSettings.tsx` se mantenga estrictamente en 157 líneas (<180 líneas requeridas por ARQMODULAR).
+  3. *Ampliación de Suite de Verificación (`verify-deploy.js`):*
+     - Incorporación de la ruta canónica `/user/mi-negocio/comida-callejera-xl/ajustes` a la batería automatizada de pruebas con Chrome Headless (14/14 rutas validadas sin errores).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 7.97s con 0 errores (`npm run build`). Bundle activo: `index-CDbGJ6Tx.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `bd87ae8`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 14/14 rutas activas y 0 errores en Chrome headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Enrutamiento Dinámico Independiente por Pestaña de Menú CRM y Persistencia ante Recargas
 - **Diagnóstico y Necesidad:**
   1. *URL Fija al Navegar entre Pestañas:* Al hacer clic en los botones del menú de navegación (ej: Agente, Pipeline, Contactos, Citas, Laboratorio), la URL en la barra del navegador permanecía estática.
