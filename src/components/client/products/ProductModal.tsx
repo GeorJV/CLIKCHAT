@@ -26,6 +26,7 @@ export const ProductModal: React.FC<Props> = ({
 
   const resolvedCurrency = productToEdit?.currency || defaultCurrency || 'CRC';
   const isRestaurant = businessType === 'restaurante';
+  const isServices = businessType === 'servicios';
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState(isRestaurant ? 'Platos Fuertes' : 'General');
@@ -98,31 +99,37 @@ export const ProductModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-4xl bg-[#161515] border border-[#2e2b2b] rounded-xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
-        {/* Encabezado Delgado & Tema Web */}
-        <div className="flex items-center justify-between px-4 py-2.5 sm:px-5 sm:py-2.5 border-b border-[#282626] bg-[#121111]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/45 backdrop-blur-xs overflow-y-auto font-sans">
+      <div className="w-full max-w-4xl bg-white border border-[#e2e8f0] rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+        {/* Encabezado Tema Web Vocero */}
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5 border-b border-[#e8edf6] bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#ebf1ff] border border-[#d3e2ff] flex items-center justify-center text-[#0d5bff] shrink-0">
               <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight leading-none">
-                {productToEdit ? 'Editar producto' : 'Crear producto'}
+              <h3 className="text-sm sm:text-base font-bold text-[#0a1730] tracking-tight leading-none">
+                {productToEdit
+                  ? (isServices ? 'Editar servicio' : 'Editar producto')
+                  : (isServices ? 'Crear nuevo servicio' : 'Crear nuevo producto')}
               </h3>
-              <p className="text-[11px] text-zinc-400 mt-0.5 leading-none">
-                Configura datos comerciales, foto, beneficios y especificaciones para tu tienda.
+              <p className="text-[11px] text-[#62728d] mt-1 leading-none">
+                Configura datos comerciales, foto, beneficios y especificaciones oficiales para tu catálogo.
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-[#222020] transition-colors cursor-pointer" aria-label="Cerrar">
+          <button
+            onClick={onClose}
+            className="text-[#8391aa] hover:text-[#0a1730] p-1.5 rounded-lg hover:bg-[#f6f8fc] transition cursor-pointer"
+            aria-label="Cerrar"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Cuerpo del formulario con 2 columnas bien distribuidas */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-5 overflow-y-auto flex-1 bg-[#161515]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-5 overflow-y-auto flex-1 bg-white">
             <div className="lg:col-span-7">
               <ProductModalFieldsLeft
                 name={name} setName={setName} category={category} setCategory={setCategory}
@@ -130,6 +137,7 @@ export const ProductModal: React.FC<Props> = ({
                 sku={sku} setSku={setSku} description={description} setDescription={setDescription}
                 imageUrl={imageUrl} setImageUrl={setImageUrl} externalUrl={externalUrl} setExternalUrl={setExternalUrl}
                 isActive={isActive} setIsActive={setIsActive}
+                businessType={businessType}
               />
             </div>
             <div className="lg:col-span-5">
@@ -143,14 +151,22 @@ export const ProductModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Botones de acción Footer Delgado */}
-          <div className="flex items-center justify-end gap-2.5 px-4 py-2.5 sm:px-5 sm:py-2.5 border-t border-[#282626] bg-[#121111]">
-            <button type="button" onClick={onClose} className="px-3.5 py-1.5 rounded-lg bg-[#222020] hover:bg-[#2c2929] border border-[#333030] text-zinc-300 font-medium text-xs transition-colors cursor-pointer">
+          {/* Botones de acción Footer Vocero */}
+          <div className="flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-3 border-t border-[#e8edf6] bg-[#f8fafc]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-[#f6f8fc] border border-[#dde5f1] text-[#42506b] font-semibold text-xs transition cursor-pointer"
+            >
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting || !name.trim()} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer">
+            <button
+              type="submit"
+              disabled={isSubmitting || !name.trim()}
+              className="px-4 py-2 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
               <Check className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Guardando...' : 'Guardar producto'}</span>
+              <span>{isSubmitting ? 'Guardando...' : (isServices ? 'Guardar servicio' : 'Guardar producto')}</span>
             </button>
           </div>
         </form>

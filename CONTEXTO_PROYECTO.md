@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 10:11 GMT-6
-- **Versión Actual:** 1.90.0 (Tríada Insignia: FAQ IQ, Flow IQ y Live Lab con Modificar Respuesta)
+- **Última Actualización:** 2026-10-23 10:18 GMT-6
+- **Versión Actual:** 1.91.0 (Modal Nuevo Producto/Servicio Homologado al Tema Web Oficial)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Modal Producto/Servicio `ProductModal`: Homologado 100% al tema claro oficial y azul royal #0d5bff.
   - FAQ IQ /faqs: Aprendizaje supervisado cuando la IA no sabe, HITL y guardado directo a RAG Nivel 2.
   - Flow IQ /agente: 3 Estrategias listas (Asesor Consultivo B2B, Venta Directa y Citas/Agendamiento).
   - Live Lab /lab: Entorno de pruebas con "Modificar respuesta" in-line y comprobación de aprendizaje.

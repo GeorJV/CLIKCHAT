@@ -1414,3 +1414,33 @@ Agregado al historial de cambios aplicando el filtro de los tres pasos.
 - Filtro 3: Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
 
 Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
+
+---
+
+## [Registro #011] — UI/UX: Homologación Completa del Modal "Crear Producto / Nuevo Servicio" al Tema Web Oficial
+
+- **Fecha:** 2026-10-23
+- **Estado:** `ready_for_review`
+- **Versión:** v1.91.0
+- **Requerimiento:**
+  Ajustar el modal emergente de "Nuevo Servicio / Crear Producto" para que deje atrás el tema oscuro antiguo y adopte al 100% el tema de color claro de la plataforma web oficial.
+
+### Cambios Realizados (ARQMODULAR)
+1. **Modal Principal (`ProductModal.tsx`):**
+   - Sustitución de paleta oscura (`#161515`, `#121111`, `#2e2b2b`, verde esmeralda) por el tema oficial de ClikChat: tarjeta blanca inmaculada (`bg-white border-[#e2e8f0] shadow-2xl`), cabecera con icono azul royal `#0d5bff` sobre fondo suave `bg-[#ebf1ff]`, tipografía de alto contraste `text-[#0a1730]` y fondo semitransparente con desenfoque suave `bg-black/45 backdrop-blur-xs`.
+   - Adaptación dinámica de textos según tipo de negocio: "Crear nuevo servicio" / "Editar servicio" si `businessType === 'servicios'`, o "Crear nuevo producto" / "Editar producto" si es retail/restaurante.
+   - Botón de guardado principal en azul royal `#0d5bff` (hover `#0047e1`) y botón de cancelar con borde satinado `border-[#dde5f1]`.
+2. **Campos Izquierdos (`ProductModalFieldsLeft.tsx`):**
+   - Inputs, selects y textareas migrados a fondo suave `bg-[#f8fafc]`, borde perimetral `border-[#dde5f1]` y enfoque activo `focus:border-[#0d5bff] focus:bg-white`.
+   - Botón de carga de fotos y tarjeta de previsualización homologados a la estética clara.
+3. **Campos Derechos (`ProductModalFieldsRight.tsx`):**
+   - Píldoras informativas estilizadas en `bg-[#ebf1ff] text-[#0038d8]` y `bg-[#f1f5f9] text-[#62728d]`.
+   - Textareas de beneficios/ingredientes y detalles/especificaciones unificados con el tema general.
+
+### Verificación
+- Filtro 1: Compilación limpia `npm run build` sin errores (0 errores).
+- Filtro 2: Commit registrado en git rama `main`.
+- Filtro 3: Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
+
+Agregado al historial de cambios aplicando el filtro de los tres pasos.
