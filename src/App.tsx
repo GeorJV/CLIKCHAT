@@ -53,7 +53,7 @@ export function App() {
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#151414] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] max-h-[100dvh] w-full max-w-full bg-[#151414] text-slate-100 overflow-hidden font-sans">
       {!hideTopBar && isSuperAdmin && (
         <nav className="h-12 shrink-0 bg-[#151414] border-b border-[#282626] flex items-center justify-between px-3 md:px-6 z-40">
           <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}>
@@ -95,7 +95,7 @@ export function App() {
           </div>
         )}
         {currentView === 'chat' && (
-          <div className="h-full w-full flex items-center justify-center bg-[#151414] p-0 md:p-4">
+          <div className="h-full w-full max-h-full overflow-hidden flex flex-col items-center justify-center bg-[#151414] p-0 sm:p-1.5 md:p-3">
             <MobileChatView tenantSlug={selectedTenantSlug} onNavigateToPanel={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
           </div>
         )}

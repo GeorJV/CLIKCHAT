@@ -34,6 +34,9 @@ export const QuickActionButtons: React.FC<QuickActionButtonsProps> = ({
     }
     setClickedId(action.id);
     onSelect(action.actionText);
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('clikchat:scroll-bottom'));
+    }, 40);
   };
 
   const getVariantStyles = (variant?: string, isClicked?: boolean) => {

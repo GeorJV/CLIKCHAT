@@ -30,7 +30,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     return (
       <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
         <div
-          className={`w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl transition-all shadow-sm break-words overflow-hidden ${
+          className={`w-fit max-w-[92%] sm:max-w-[84%] min-w-0 rounded-2xl transition-all shadow-sm break-words overflow-hidden ${
             msg.isAudio ? 'px-2 py-0.5' : isUser ? 'px-3 py-1.5 text-xs sm:text-sm' : 'p-3 text-xs leading-relaxed'
           } ${
             isUser
@@ -116,7 +116,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         return (
           <div
             key={`chunk-${idx}`}
-            className="w-fit max-w-[88%] sm:max-w-[80%] rounded-2xl transition-all shadow-sm break-words overflow-hidden p-3 text-xs leading-relaxed bg-slate-800 text-slate-100 border border-slate-700/70 shadow-lg shadow-black/60"
+            className="w-fit max-w-[92%] sm:max-w-[84%] min-w-0 rounded-2xl transition-all shadow-sm break-words overflow-hidden p-3 text-xs leading-relaxed bg-slate-800 text-slate-100 border border-slate-700/70 shadow-lg shadow-black/60"
           >
             {isFirst && msg.levelLabel && (
               <div className="flex items-center space-x-1 mb-1.5 pb-1 border-b border-slate-700/50">

@@ -1,42 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, RefreshCw, Layers, Star, CheckCircle } from 'lucide-react';
 
 interface SandboxMsg {
-  id: string;
-  sender: 'assistant' | 'user';
-  text: string;
-  rag?: string;
-  score?: number;
-  isGolden?: boolean;
+  id: string; sender: 'assistant' | 'user'; text: string; rag?: string; score?: number; isGolden?: boolean;
 }
 
 interface VoceroAiSandboxProps {
-  tenantSlug: string;
-  tenantName?: string;
+  tenantSlug: string; tenantName?: string;
 }
 
 const PERSONAS = [
-  { label: '🛍️ Decidido', text: 'Hola, quiero comprar ya mismo. ¿Cómo puedo pagar y cuándo me lo envían?' },
-  { label: '🏷️ Precios', text: 'Hola, ¿cuánto cuesta lo más vendido y qué ofertas tienen hoy?' },
+  { label: '🛍️ Decidido', text: 'Hola, quiero comprar ya mismo. Cómo puedo pagar y cuándo me lo envían?' },
+  { label: '🏷️ Precios', text: 'Hola, cuánto cuesta lo más vendido y qué ofertas tienen hoy?' },
   { label: '😡 Molesto', text: 'Llevo esperando mi pedido y nadie me contesta, exijo una solución.' },
   { label: '🙋 Pide Humano', text: 'Hola, no quiero hablar con un bot, pásame con un asesor real por favor.' },
-  { label: '❓ Fuera de Menú', text: '¿Ustedes también venden repuestos de autos y hacen envíos a México?' },
+  { label: '❓ Fuera de Menú', text: 'Ustedes también venden repuestos de autos y hacen envíos a México?' },
   { label: '📱 Informal', text: 'ke onda bro si benden comida todavia o ya cerraron?' },
 ];
 
 export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, tenantName }) => {
   const [messages, setMessages] = useState<SandboxMsg[]>([
     {
-      id: '1',
-      sender: 'assistant',
-      text: `¡Hola! Soy tu agente virtual para ${tenantName || 'tu negocio'}. Estoy configurado con RAG y embudo de ventas. ¿En qué te puedo asesorar hoy?`,
-      rag: 'L1 · Bienvenida',
-      score: 98,
-      isGolden: true
+      id: '1', sender: 'assistant',
+      text: `Hola! Soy tu agente virtual para ${tenantName || 'tu negocio'}. Estoy configurado con RAG y embudo de ventas. En qué te puedo asesorar hoy?`,
+      rag: 'L1 · Bienvenida', score: 98, isGolden: true
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (containerRef.current) containerRef.current.scrollTo({ top: containerRef.current.scrollHeight, behavior });
+  };
+
+  useEffect(() => {
+    scrollToBottom('smooth');
+    const t = setTimeout(() => scrollToBottom('smooth'), 120);
+    return () => clearTimeout(t);
+  }, [messages, loading]);
 
   const handleSendText = async (textToSend?: string) => {
     const txt = (textToSend || input).trim();
@@ -44,23 +46,19 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
     setInput('');
     setMessages(prev => [...prev, { id: String(Date.now()), sender: 'user', text: txt }]);
     setLoading(true);
+    setTimeout(() => scrollToBottom('smooth'), 40);
 
     try {
       const res = await fetch('/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantSlug, sessionId: 'sandbox_' + Date.now(), message: txt })
       });
       if (res.ok) {
         const d = await res.json();
-        const calculatedScore = Math.floor(Math.random() * 8) + 92; // 92 - 99 score
+        const calculatedScore = Math.floor(Math.random() * 8) + 92;
         setMessages(prev => [...prev, {
-          id: String(Date.now() + 1),
-          sender: 'assistant',
-          text: d.answer || 'Respuesta generada.',
-          rag: d.rag_level_used || 'RAG Híbrido D1',
-          score: calculatedScore,
-          isGolden: false
+          id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.',
+          rag: d.rag_level_used || 'RAG Híbrido D1', score: calculatedScore, isGolden: false
         }]);
       }
     } catch (e) {
@@ -91,7 +89,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 max-w-3xl w-full mx-auto space-y-3">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 max-w-3xl w-full mx-auto space-y-3 pb-8">
         {messages.map((m) => {
           const isUser = m.sender === 'user';
           return (
@@ -121,10 +119,8 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl p-3 text-[13px] leading-relaxed border shadow-sm ${
-                  isUser
-                    ? 'bg-[#eaf7ef] border-[#d7eede] text-[#0a1730] rounded-tr-sm'
-                    : 'bg-[#ebf1ff] border-[#d3e2ff] text-[#0a1730] rounded-tl-sm'
+                className={`max-w-[85%] rounded-2xl p-3 text-[13px] leading-relaxed border shadow-sm break-words ${
+                  isUser ? 'bg-[#eaf7ef] border-[#d7eede] text-[#0a1730] rounded-tr-sm' : 'bg-[#ebf1ff] border-[#d3e2ff] text-[#0a1730] rounded-tl-sm'
                 }`}
               >
                 {m.text}
@@ -140,7 +136,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         )}
       </div>
 
-      <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas Vocero:</span>
         {PERSONAS.map(p => (
           <button
@@ -154,7 +150,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         ))}
       </div>
 
-      <div className="p-3 bg-white border-t border-[#e8edf6] max-w-3xl w-full mx-auto">
+      <div className="p-3 bg-white border-t border-[#e8edf6] max-w-3xl w-full mx-auto shrink-0">
         <div className="flex items-center gap-2">
           <input
             value={input}

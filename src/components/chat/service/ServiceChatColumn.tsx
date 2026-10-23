@@ -24,7 +24,20 @@ export const ServiceChatColumn: React.FC<Props> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const t = setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 120);
+    return () => clearTimeout(t);
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+    };
+    window.addEventListener('clikchat:scroll-bottom', handleScroll);
+    return () => window.removeEventListener('clikchat:scroll-bottom', handleScroll);
+  }, []);
   useEffect(() => { if (!inputValue && textareaRef.current) textareaRef.current.style.height = 'auto'; }, [inputValue]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

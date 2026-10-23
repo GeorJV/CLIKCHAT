@@ -13,32 +13,42 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
   isCollapsed,
   onOpenFullscreen
 }) => {
-  // Track which product has in-card glassmorphism active ('benefits' | 'details' | null)
+  const [userCollapsed, setUserCollapsed] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<{ productId: string; mode: 'benefits' | 'details' } | null>(null);
 
   const validProducts = (products || []).filter(p => (p.name || p.title) && ((p.images && p.images.length > 0) || p.image));
   if (validProducts.length === 0) return null;
+  const isHidden = isCollapsed || userCollapsed;
 
   return (
     <div
-      className={`carousel-transition w-full bg-slate-900/90 border-b border-slate-800/80 overflow-hidden lg:hidden ${
-        isCollapsed
+      className={`carousel-transition w-full bg-slate-900/95 border-b border-slate-800/80 overflow-hidden lg:hidden ${
+        isHidden
           ? 'max-h-0 opacity-0 my-0 py-0 border-none pointer-events-none'
-          : 'max-h-72 opacity-100 py-2.5 my-0'
+          : 'max-h-52 opacity-100 py-1.5 my-0'
       }`}
     >
-      <div className="px-3.5 mb-1.5 flex items-center justify-between">
+      <div className="px-3 mb-1 flex items-center justify-between">
         <div className="flex items-center space-x-1.5">
           <ShoppingBag className="w-3.5 h-3.5 text-indigo-400" />
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
-            Escaparate Móvil (Toca la foto para pantalla completa)
+            Escaparate
           </span>
         </div>
-        <span className="text-[10px] text-slate-400 font-medium">{products.length} ítems</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-slate-400 font-medium">{products.length} ítems</span>
+          <button
+            type="button"
+            onClick={() => setUserCollapsed(prev => !prev)}
+            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+          >
+            Ocultar
+          </button>
+        </div>
       </div>
 
       {/* Horizontal Scrollable Carousel Container */}
-      <div className="flex space-x-3 px-3.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
+      <div className="flex space-x-2.5 px-3 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
         {validProducts.map((product) => {
           const images = (product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : [])).slice(0, 3);
           if (images.length === 0) return null;
@@ -49,10 +59,10 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
           return (
             <div
               key={product.id}
-              className="snap-start shrink-0 w-[260px] rounded-2xl bg-slate-800/90 border border-slate-700/80 overflow-hidden shadow-xl flex flex-col relative"
+              className="snap-start shrink-0 w-[200px] rounded-xl bg-slate-800/90 border border-slate-700/80 overflow-hidden shadow-lg flex flex-col relative"
             >
               {/* Product Image Area with In-Place Glassmorphic Overlay */}
-              <div className="relative h-32 w-full overflow-hidden bg-slate-950">
+              <div className="relative h-24 w-full overflow-hidden bg-slate-950">
                 <img
                   src={mainImage}
                   alt={product.name}
