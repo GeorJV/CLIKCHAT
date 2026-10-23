@@ -97,45 +97,62 @@ function testSingleRoute(url, label) {
 
           const ws = new WebSocket(wsUrl);
           let errors = [];
+          let pollInterval = null;
+          let timeoutHandle = null;
+          let evalCount = 0;
+          let isFinished = false;
+
+          const finish = (err, successHtml) => {
+            if (isFinished) return;
+            isFinished = true;
+            if (pollInterval) clearInterval(pollInterval);
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+            try { ws.close(); } catch (e) {}
+            if (target.id) {
+              const closeReq = http.request(`http://127.0.0.1:9222/json/close/${target.id}`, { method: 'GET' }, () => {});
+              closeReq.on('error', () => {});
+              closeReq.end();
+            }
+            if (err) reject(err);
+            else resolve(successHtml);
+          };
 
           ws.onopen = () => {
             ws.send(JSON.stringify({ id: 1, method: 'Runtime.enable' }));
             setTimeout(() => {
-              ws.send(JSON.stringify({
-                id: 2,
-                method: 'Runtime.evaluate',
-                params: { expression: 'document.getElementById("root") ? document.getElementById("root").innerHTML.trim() : ""' }
-              }));
-            }, 4000);
+              pollInterval = setInterval(() => {
+                if (isFinished) return;
+                evalCount++;
+                ws.send(JSON.stringify({
+                  id: 100 + evalCount,
+                  method: 'Runtime.evaluate',
+                  params: { expression: 'document.getElementById("root") ? document.getElementById("root").innerHTML.trim() : ""' }
+                }));
+              }, 500);
+            }, 1000);
+
+            timeoutHandle = setTimeout(() => {
+              finish(new Error(`Timeout esperando hidratación de DOM en ${url}`));
+            }, 10000);
           };
 
           ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
             if (msg.method === 'Runtime.exceptionThrown') {
               errors.push(msg.params.exceptionDetails?.exception?.description || msg.params.exceptionDetails?.text || 'Unknown Error');
-            } else if (msg.id === 2) {
+            } else if (msg.id && msg.id >= 101) {
               const html = msg.result?.result?.value || '';
-              ws.close();
-
-              if (target.id) {
-                const closeReq = http.request(`http://127.0.0.1:9222/json/close/${target.id}`, { method: 'GET' }, () => {});
-                closeReq.on('error', () => {});
-                closeReq.end();
-              }
 
               if (errors.length > 0) {
                 console.error(`  ❌ [FALLO] ${label} (${url}): Excepciones en runtime:`);
                 errors.forEach(e => console.error('     ->', e));
-                return reject(new Error(`Errores en ruta ${url}`));
+                return finish(new Error(`Errores en ruta ${url}`));
               }
 
-              if (!html || html.length < 50) {
-                console.error(`  ❌ [FALLO] ${label} (${url}): Pantalla negra/vacía detectada.`);
-                return reject(new Error(`DOM vacío en ${url}`));
+              if (html && html.length >= 50) {
+                console.log(`  ✅ [OK] ${label} (${url}) -> ${html.length} bytes renderizados, 0 errores.`);
+                return finish(null, html);
               }
-
-              console.log(`  ✅ [OK] ${label} (${url}) -> ${html.length} bytes renderizados, 0 errores.`);
-              resolve(true);
             }
           };
         } catch (e) {
