@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 17:40 GMT-6
-- **Versión Actual:** 2.2.1 (Redirección a Negocio, Copiado Libre de Respuestas y Homologación CLICKCHAT & GeoSoft.LAt)
+- **Última Actualización:** 2026-10-23 17:51 GMT-6
+- **Versión Actual:** 2.2.2 (Blindaje Integral Anti-Fuga de SETUP_PAYLOAD y Aumento a 2048 Tokens)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Redirección Post-Login: Conexión directa al panel de configuración del negocio (settings / perfil).
-  - Copiado de Respuestas Habilitado: Erradicado select-none global y añadida selección/botón de 1-clic.
-  - Asistente Homologado: Presentación oficial "CLICKCHAT Y GeoSoft.LAt" sin menciones a Meta.
-  - Onboarding Inteligente: Extracción JSON estructurada sin fallas autocompletando perfil, catálogo y FAQs.
-  - Cabecera Cerebro Compacta: Título reducido, entrenamiento por fases y menú popup desplegable.
+  - Blindaje Anti-Fuga de SETUP_PAYLOAD: Aislamiento estricto de JSON técnico tanto en Edge como en UI.
+  - Generación Completa Sin Cortes: max_tokens 2048 en Cloudflare Edge y Gemini 2.5 Flash con auto-rescate.
+  - Transición Instantánea a Éxito: El usuario pasa directamente a la pantalla de módulos completados.
+  - Redirección Post-Login: Conexión directa a ajustes del negocio (settings / perfil).
+  - Copiado de Respuestas Habilitado: Selección nativa y botón de 1-clic con feedback visual.
   - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

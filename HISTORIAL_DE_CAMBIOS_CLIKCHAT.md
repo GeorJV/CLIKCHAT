@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Blindaje Integral Anti-Fuga de SETUP_PAYLOAD, Aislamiento de JSON Técnico y Aumento a 2048 Tokens en Edge (v2.2.2)
+- **Diagnóstico y Necesidad:**
+  1. *Fuga de Bloque Técnico [SETUP_PAYLOAD] en Chat:* La respuesta final del asistente de onboarding mostraba en la burbuja del usuario el tag [SETUP_PAYLOAD] y el objeto JSON crudo de configuración.
+  2. *Corte por Límite de Tokens por Defecto:* Al no fijarse max_tokens en env.AI.run, el motor de borde truncaba la respuesta a mitad del JSON, impidiendo el cierre con [/SETUP_PAYLOAD] y provocando que el regex del backend devolviera el bloque sin limpiar.
+  3. *Falta de Filtro Preventivo en UI:* Si el payload venía en el cuerpo del mensaje, el frontend no lo sanitizaba antes de pintarlo en pantalla.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js (+48 líneas):
+     - Fijado max_tokens: 2048 y temperature: 0.3 en Cloudflare Workers AI y maxOutputTokens: 2048 en Google Gemini 2.5 Flash de respaldo.
+     - Extracción incondicional: cleanMessage se genera partiendo estrictamente antes de [SETUP_PAYLOAD], erradicando el JSON técnico de cualquier mensaje visible.
+     - Algoritmo tolerante de rescate regex para reconstruir datos estructurados (nombre, giro, teléfono, bot, productos y FAQs) aun ante eventuales cortes.
+  2. aiOnboardingService.ts (64 líneas):
+     - Función exportada sanitizeInterviewText que limpia de forma preventiva cualquier tag [SETUP_PAYLOAD] o bloque ```json.
+  3. VoceroAiInterviewChat.tsx (147 líneas):
+     - Sanitización en el renderizado de la burbuja y en el botón de copiado de 1-clic con feedback visual.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-lP-ZN1uJ.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit dac8b31).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Redirección Post-Login a Panel de Negocio, Habilitación de Copia de Respuestas y Homologación de Asistente CLICKCHAT & GeoSoft.LAt (v2.2.1)
 - **Diagnóstico y Necesidad:**
   1. *Redirección Post-Login:* Tras iniciar sesión, el usuario debe ser transportado directamente al panel de configuración del negocio (settings / perfil del negocio).
