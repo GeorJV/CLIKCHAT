@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Reestructuración Integral de Lógica y Enrutamiento entre Perfil de Negocio (Paso 1) y Canales de WhatsApp (Paso 4)
+- **Diagnóstico y Necesidad:**
+  1. *Inversión Confusa de Vistas:* Al hacer clic en el Paso 1 de la Guía de Inicio Rápido ("Perfil y Modalidad del Negocio" -> "Revisar Perfil"), el sistema abría por defecto la pestaña de Canales de WhatsApp / Meta, en lugar de mostrar la información de identidad comercial (giro, nombre, teléfono, horarios).
+  2. *Duplicación con el Paso 4:* Al pulsar en el Paso 4 ("Conectar Canales WhatsApp Oficial"), se abría la misma ventana de Canales, haciendo que tanto el Paso 1 como el Paso 4 compartieran pantalla y generaran confusión en la experiencia guiada.
+- **Solución Implementada (ARQMODULAR & Enrutamiento Canónico):**
+  1. *Reordenación Jerárquica en Ajustes del Sistema (`VoceroSettingsView.tsx` - 172 líneas):*
+     - **Pestaña 1:** `Perfil del Negocio` (Paso 1: Giro comercial, modalidad, nombre, teléfono, horarios, dirección física y moneda).
+     - **Pestaña 2:** `Canales (WhatsApp & ClikChat)` (Paso 4: Chat Agente ClikChat, WhatsApp Cloud API Oficial, Instagram Direct y Facebook Messenger).
+     - **Pestaña 3:** `Catálogo / Menú`.
+     - **Pestaña 4:** `Motor de IA`.
+     - **Pestaña 5:** `Zernio Multicanal`.
+  2. *Enrutamiento Dinámico Canónico por Subruta (`VoceroSettingsView.tsx` & `VoceroCrmView.tsx`):*
+     - Detección reactiva de URL mediante `getSubTabFromUrl` y sincronización con el historial del navegador (`window.history.pushState`).
+     - Soporte para URLs canónicas dedicadas: `/user/mi-negocio/:slug/perfil` y `/user/mi-negocio/:slug/canales`, conservando la pantalla exacta ante recargas (F5).
+  3. *Alineación de la Guía de Inicio Rápido (`VoceroOnboardingView.tsx`):*
+     - **Paso 1 ("Revisar Perfil"):** Navega directamente a `/perfil`, desplegando la pantalla de Giro y Modalidad Comercial.
+     - **Paso 2 ("Cargar Productos"):** Navega a `/productos`, desplegando el catálogo de productos y servicios.
+     - **Paso 3 ("Entrenar Agente"):** Navega a `/agente`, desplegando los 4 pasos de identidad y prompt.
+     - **Paso 4 ("Conectar Canales"):** Navega directamente a `/canales`, desplegando la configuración de WhatsApp Cloud API y ClikChat.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 21.61s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-D_XonFhs.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `e8368b5`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 16/16 rutas activas y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Estructuración Explícita y Tracker de los 4 Pasos de Entrenamiento de Identidad del Agente
 - **Diagnóstico y Necesidad:**
   1. *Ambigüedad en los 4 Pasos de Entrenamiento:* En el Paso 3 de la Guía de Inicio Rápido ("Entrenamiento del Agente 4 Pasos"), al ingresar a la pantalla del agente figuraban cuatro campos (Nombre, Tono de Voz, Mensaje de Bienvenida y System Prompt) sin enumeración visible, generando incertidumbre sobre si conformaban un solo paso o si faltaban tres pasos adicionales.

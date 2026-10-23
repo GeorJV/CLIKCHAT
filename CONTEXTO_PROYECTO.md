@@ -1,21 +1,21 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 21:05 GMT-6
-- **Versión Actual:** 1.83.0 (Estructuración Explícita y Tracker de los 4 Pasos de Identidad del Agente)
+- **Última Actualización:** 2026-10-22 21:11 GMT-6
+- **Versión Actual:** 1.84.0 (Alineación Canónica Perfil en Paso 1 y Canales en Paso 4 con /perfil y /canales)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `f9d9d28` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `e8368b5` en `main`)
 - **Estado Actual del Sistema:**
-  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, Paso 2 Tono, Paso 3 Bienvenida, Paso 4 Prompt/Docs) con tracker de progreso.
-  - Adjuntos System Prompt: Carga y Drag & Drop de archivos de texto (.txt, .md), PDF (.pdf) y Word (.docx, .doc) con extracción e inyección directa.
-  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio ("Cargar Productos").
-  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto, resaltado esmeralda y enlaces directos.
-  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/productos`, `/agente`, `/citas`, `/ajustes`) y persistencia total ante F5.
+  - Desacople Perfil (Paso 1) y Canales (Paso 4): Paso 1 abre Perfil del Negocio (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
+  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, Paso 2 Tono, Paso 3 Bienvenida, Paso 4 Prompt/Docs) con tracker.
+  - Adjuntos System Prompt: Carga y Drag & Drop de archivos de texto (.txt, .md), PDF (.pdf) y Word (.docx, .doc) con extracción directa.
+  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio.
+  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto y resaltado esmeralda.
+  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/perfil`, `/canales`, `/productos`, `/agente`) y persistencia ante F5.
   - Auto-Scroll Reactivo: Desplazamiento automático multi-tick hacia el último mensaje tipo WhatsApp sin desbordes.
   - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen`, área conversacional y elementos 100% visibles.
   - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.
-  - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes.
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 14/14 rutas verificadas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 16/16 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
