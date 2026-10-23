@@ -1,11 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 11:22 GMT-6
-- **Versión Actual:** 1.95.0 (Creación Dinámica de Plantillas Rápidas de Restricciones)
+- **Última Actualización:** 2026-10-23 11:28 GMT-6
+- **Versión Actual:** 1.96.0 (Reestructuración Visual Profesional de Encabezado y Pestañas de Ajustes)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Encabezado Ajustes: Título "Ajustes del Sistema" arriba y "CONFIGURACIÓN" abajo en pequeño.
+  - Pestañas Ajustes: Reestructuradas con etiquetas simétricas y espacio generoso, sin recortes.
   - Plantillas de Restricciones: Modal `CreateRulePresetModal` con Nombre, Subtítulo y Descripción guardable.
   - Tarjetas de Restricción: Componente atómico `RulePresetCardItem` con alternancia 1-clic y borrado.
   - Reglas Operativas & Documentos RAG: Homologados al tema claro oficial (#f8fafc/white/azul #0d5bff).
@@ -13,7 +15,6 @@
   - FAQ IQ Objeciones & Modal: Totalmente borderless en blanco puro, shadow-2xl e inputs limpios.
   - Flow IQ & Flow 4 Pasos: Editor atómico con sombras suaves y sin bordes toscos.
   - Cero Íconos de IA: Erradicación universal de Bot/Brain/Sparkles en navegación y vistas.
-  - Pestañas Ajustes: Adaptadas responsivamente sin desbordamiento ni recortes laterales.
   - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**

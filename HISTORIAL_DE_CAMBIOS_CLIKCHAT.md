@@ -16,6 +16,23 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Reestructuración Visual Profesional del Encabezado y Pestañas en Ajustes del Sistema
+- **Diagnóstico y Necesidad:**
+  1. *Colisión y Truncamiento en el Encabezado:* El título "Ajustes del Sistema" se truncaba a "Ajustes del S..." y la palabra "CONFIGURACIÓN" se situaba horizontalmente al lado, chocando y pegándose directamente contra el botón "Perfil del Negocio".
+  2. *Solapamiento de Pestañas:* Los botones superiores estaban comprimidos, lo que causaba que la pestaña "Zernio Multicanal" quedara cortada a la derecha ("Zernio Mul...") y superpuesta con el botón de menú hamburguesa.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `VoceroSettingsView.tsx` (179 líneas):
+     - Encabezado ejecutivo `h-16` con espaciado generoso `gap-4` y sin dobles bordes.
+     - Título estructurado en columna vertical: "Ajustes del Sistema" en negrita arriba y "CONFIGURACIÓN" en pequeñito abajo (`text-[10px] uppercase tracking-widest text-[#8391aa] mt-0.5`), liberando espacio horizontal.
+     - Barra de pestañas estructurada con etiquetas responsivas: nombres completos en pantallas amplias (*Perfil del Negocio, Canales (WhatsApp), Catálogo / Menú, Motor de IA, Zernio Multicanal*) y etiquetas concisas en pantallas medianas (*Perfil, Canales, Catálogo, Motor IA, Zernio*), ocupando únicamente ~380px y asegurando que quepan todos los botones sin pegarse.
+     - Remoción del ícono hamburguesa redundante en pantallas desktop/tablet (restringido únicamente a móviles `< 640px`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 13.35s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-o8fh2vQb.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Creación Dinámica y Guardado Persistente de Plantillas Rápidas de Restricciones & Anti-Alucinación
 - **Diagnóstico y Necesidad:**
   1. *Limitación a Plantillas Estáticas:* En la sección de "Plantillas Rápidas de Restricciones & Anti-Alucinación", el sistema contaba únicamente con las 5 reglas predefinidas en código, sin permitir al usuario crear sus propias plantillas personalizadas.
