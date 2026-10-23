@@ -164,7 +164,22 @@ async function runFullSuite() {
     '--no-sandbox'
   ]);
 
-  await new Promise(r => setTimeout(r, 1500));
+  let ready = false;
+  for (let i = 0; i < 15; i++) {
+    try {
+      await new Promise((res, rej) => {
+        const r = http.get('http://127.0.0.1:9222/json/version', (resp) => {
+          if (resp.statusCode === 200) res(); else rej();
+        });
+        r.on('error', rej);
+        r.setTimeout(1000, () => { r.destroy(); rej(); });
+      });
+      ready = true;
+      break;
+    } catch (e) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
 
   let passed = 0;
   let failed = 0;
