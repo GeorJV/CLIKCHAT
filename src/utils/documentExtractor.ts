@@ -31,14 +31,24 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return await file.text();
   }
 
-  // 2. Microsoft Word (.docx)
-  if (extension === 'docx') {
-    if (!window.mammoth) {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  // 2. Microsoft Word (.docx, .doc)
+  if (['docx', 'doc'].includes(extension)) {
+    try {
+      if (!window.mammoth) {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+      }
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await window.mammoth.extractRawText({ arrayBuffer });
+      if (result?.value?.trim()) {
+        return result.value.trim();
+      }
+    } catch (e) {
+      console.warn('Mammoth extraction failed or format is legacy .doc, using binary fallback:', e);
     }
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await window.mammoth.extractRawText({ arrayBuffer });
-    return result.value ? result.value.trim() : '';
+    const buffer = await file.arrayBuffer();
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+    const matches = text.match(/[\w\sÁÉÍÓÚáéíóúñÑ.,;:!¿?()\-]{4,}/g) || [];
+    return matches.join(' ').slice(0, 20000).trim();
   }
 
   // 3. Adobe PDF (.pdf)
@@ -64,5 +74,5 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return fullText.trim();
   }
 
-  throw new Error(`Formato .${extension} no soportado. Usa archivos .txt, .docx o .pdf`);
+  throw new Error(`Formato .${extension} no soportado. Usa archivos .txt, .md, .pdf, .docx o .doc`);
 }

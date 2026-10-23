@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
 import { Bot, MessageSquare, Sparkles, User, Save, CheckCircle2 } from 'lucide-react';
 import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
+import { VoceroSystemPromptAttachment } from './VoceroSystemPromptAttachment';
 
 interface VoceroAgentIdentitySectionProps {
   tenant: Tenant | null;
@@ -110,6 +111,10 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
           onChange={(e) => setSystemPrompt(e.target.value)}
           placeholder="Ej: Eres la asesora virtual del comercio. Tu objetivo es orientar al cliente en su compra, resolver dudas con el menú y canalizar la orden a WhatsApp sin inventar precios."
           className="w-full rounded-xl border border-[#dde5f1] bg-[#f6f8fc] px-3.5 py-2 text-xs text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white transition font-mono text-[11.5px]"
+        />
+        <VoceroSystemPromptAttachment
+          systemPrompt={systemPrompt}
+          onSystemPromptChange={setSystemPrompt}
         />
       </div>
 
