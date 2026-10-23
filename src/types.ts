@@ -54,6 +54,7 @@ export interface Tenant {
   logo_url?: string;
   tone_of_voice?: string;
   response_delay_sec?: number;
+  message_delivery_mode?: 'micro' | 'interleaved' | 'single';
   custom_llm_key?: string;
   operational_rules?: string;
   business_type?: string;

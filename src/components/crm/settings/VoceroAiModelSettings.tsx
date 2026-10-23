@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
-import { Sparkles, Cpu, Clock, Key, Save, CheckCircle2 } from 'lucide-react';
+import { Cpu, Clock, Key, Save, CheckCircle2 } from 'lucide-react';
 import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
+import { MessageDeliveryModeSelector } from '../common/MessageDeliveryModeSelector';
+import { DeliveryMode } from '../../../utils/messageSplitter';
 
 interface VoceroAiModelSettingsProps {
   tenant: Tenant | null;
   onUpdateSettings: (updates: Partial<Tenant>) => Promise<boolean>;
 }
 
-export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
-  tenant,
-  onUpdateSettings
-}) => {
+export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ tenant, onUpdateSettings }) => {
   const [model, setModel] = useState('@cf/meta/llama-3.3-70b-instruct-fp8-fast');
   const [apiKey, setApiKey] = useState('');
-  const [cadence, setCadence] = useState('0');
+  const [cadence, setCadence] = useState('2');
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('interleaved');
   const [tone, setTone] = useState('Profesional y Cortés');
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -23,21 +23,22 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
     if (!tenant) return;
     let savedKey = (tenant as any)?.custom_ai_config?.apiKey || '';
     let savedModel = (tenant as any)?.custom_ai_config?.model || '';
+    let savedDelivery = (tenant as any)?.message_delivery_mode || (tenant as any)?.custom_ai_config?.deliveryMode || '';
 
-    if (!savedKey && tenant.custom_llm_key) {
-      if (tenant.custom_llm_key.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(tenant.custom_llm_key);
-          savedKey = parsed.key || '';
-          savedModel = parsed.model || savedModel;
-        } catch {}
-      } else {
-        savedKey = tenant.custom_llm_key;
-      }
+    if (tenant.custom_llm_key && tenant.custom_llm_key.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(tenant.custom_llm_key);
+        savedKey = parsed.key || savedKey;
+        savedModel = parsed.model || savedModel;
+        if (parsed.deliveryMode) savedDelivery = parsed.deliveryMode;
+      } catch {}
     }
-
+    if (!savedDelivery && typeof window !== 'undefined') {
+      savedDelivery = (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) || 'interleaved';
+    }
     if (savedKey) setApiKey(savedKey);
     if (savedModel) setModel(savedModel);
+    if (savedDelivery) setDeliveryMode(savedDelivery as DeliveryMode);
     if (tenant.response_delay_sec !== undefined) setCadence(String(tenant.response_delay_sec));
     if (tenant.tone_of_voice) setTone(tenant.tone_of_voice);
   }, [tenant]);
@@ -46,21 +47,17 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
     e.preventDefault();
     setIsSaving(true);
     setSavedSuccess(false);
+    if (typeof window !== 'undefined') localStorage.setItem('clikchat_delivery_mode', deliveryMode);
 
     const trimmedKey = apiKey.trim();
     const isGoogle = model.includes('gemini') || trimmedKey.startsWith('AIza') || trimmedKey.startsWith('AQ.');
     const provider = model.startsWith('@cf') ? 'cloudflare' : isGoogle ? 'google' : model.includes('gpt') ? 'openai' : 'openrouter';
 
-    const custom_llm_key = trimmedKey ? JSON.stringify({ key: trimmedKey, provider, model }) : '';
-    const custom_ai_config = trimmedKey ? { enabled: true, provider, model, apiKey: trimmedKey, temperature: 0.3 } : undefined;
+    const custom_llm_key = JSON.stringify({ key: trimmedKey, provider, model, deliveryMode, cadence: Number(cadence) || 0 });
+    const custom_ai_config = { enabled: Boolean(trimmedKey), provider, model, apiKey: trimmedKey, deliveryMode, cadence: Number(cadence) || 0, temperature: 0.3 };
 
     try {
-      const ok = await onUpdateSettings({
-        response_delay_sec: Number(cadence) || 0,
-        tone_of_voice: tone,
-        custom_llm_key,
-        custom_ai_config
-      } as any);
+      const ok = await onUpdateSettings({ response_delay_sec: Number(cadence) || 0, tone_of_voice: tone, message_delivery_mode: deliveryMode, custom_llm_key, custom_ai_config } as any);
       if (ok) {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
@@ -77,7 +74,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
           <h3 className="text-sm font-bold text-[#0a1730] flex items-center gap-2">
             <Cpu className="h-4 w-4 text-[#0d5bff]" /> Motor de Inteligencia Artificial
           </h3>
-          <p className="text-xs text-[#62728d]">Selecciona el modelo LLM que atenderá y cotizará con tus clientes.</p>
+          <p className="text-xs text-[#62728d]">Configura el modelo LLM, cadencia y modo de envío humanizado de tu asesor.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,10 +111,15 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
               onChange={(e) => setCadence(e.target.value)}
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             >
-              <option value="0">Inmediata (Sin espera, &lt;1 segundo)</option>
-              <option value="3">Humanizada Corta (3 segundos de lectura/tipeo)</option>
-              <option value="6">Humanizada Realista (6 segundos simulando asesor)</option>
+              <option value="1">1 segundo (Respuesta rápida)</option>
+              <option value="2">2 segundos (Pausa natural de lectura recomendada)</option>
+              <option value="3">3 segundos (Humanizada realista)</option>
+              <option value="0">0 segundos (Inmediata, sin espera)</option>
             </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <MessageDeliveryModeSelector value={deliveryMode} onChange={setDeliveryMode} />
           </div>
 
           <div className="md:col-span-2">

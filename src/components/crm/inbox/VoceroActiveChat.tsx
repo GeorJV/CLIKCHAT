@@ -3,6 +3,7 @@ import { PanelRight, Bot, UserCheck, Send, Zap } from 'lucide-react';
 import { CrmLead, CrmMessage } from '../../../types/crm';
 import { CannedResponsesPopover } from './CannedResponsesPopover';
 import { useLiveTyping } from '../../../hooks/useLiveTyping';
+import { splitMessageByDeliveryMode, DeliveryMode } from '../../../utils/messageSplitter';
 
 interface VoceroActiveChatProps {
   lead: CrmLead | null;
@@ -80,13 +81,28 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => {
           const isUser = m.sender === 'user';
+          const deliveryMode: DeliveryMode = (typeof window !== 'undefined'
+            ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode)
+            : null) || 'interleaved';
+          const bubbles = !isUser ? splitMessageByDeliveryMode(m.message, deliveryMode) : [];
+
           return (
             <div key={m.id} className={`flex flex-col ${isUser ? 'items-start' : 'items-end'}`}>
-              <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-xs ${
-                isUser ? 'bg-white border border-[#dde5f1] text-[#0a1730] rounded-bl-sm' : 'bg-[#0d5bff] text-white rounded-br-sm'
-              }`}>
-                {m.message}
-              </div>
+              {!isUser && bubbles.length > 1 ? (
+                <div className="flex flex-col items-end space-y-1 max-w-[78%]">
+                  {bubbles.map((b, i) => (
+                    <div key={i} className="rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-xs bg-[#0d5bff] text-white rounded-br-sm">
+                      {b}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-xs ${
+                  isUser ? 'bg-white border border-[#dde5f1] text-[#0a1730] rounded-bl-sm' : 'bg-[#0d5bff] text-white rounded-br-sm'
+                }`}>
+                  {bubbles[0] || m.message}
+                </div>
+              )}
               <span className="font-mono text-[9.5px] text-[#8391aa] mt-1 px-1">
                 {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
               </span>
