@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Selector Desplegable Multiselección de Tonos de Comunicación (7 Mejores Modos Combinables)
+- **Diagnóstico y Necesidad:**
+  1. *Limitación de Selección Única o Campo de Texto:* El tono de comunicación se configuraba mediante texto libre o selector rígido de una sola opción, impidiendo a los comerciantes calibrar la personalidad del bot mediante combinaciones estratégicas de alta conversión (por ejemplo, combinar empatía y cercanía con enfoque directo de cierre de ventas).
+- **Solución Implementada (ARQMODULAR & UX Interactiva):**
+  1. *Componente Atómico Multiselección (`ToneMultiSelectDropdown.tsx`):* Selector desplegable interactivo con los 7 mejores modos de comunicación calibrados para ventas:
+     - 🤝 **Cercano y Empático** (Calidez humana y cercanía)
+     - 🎯 **Vendedor Persuasivo** (Enfocado en beneficios y cierre de ventas)
+     - 👔 **Profesional y Cortés** (Formalidad ejecutiva y respeto)
+     - ⚡ **Directo y Eficiente** (Respuestas concisas y al grano)
+     - 🌟 **Entusiasta y Alegre** (Alta energía y emojis atractivos)
+     - 🛡️ **Resolutivo y Servicial** (Paciencia y resolución de dudas)
+     - 🍽️ **Gastronómico y Sugestivo** (Descripciones apetecibles y venta cruzada de platillos)
+  2. *Soporte Multicheckbox de Combinación:* Permite marcar 2 o más checkboxes simultáneamente (ej: *Cercano y Empático + Vendedor Persuasivo*), reflejando la cantidad de tonos activos y actualizando la directiva conversacional en el backend y D1.
+  3. *Integración Dual en CRM:* Incorporado en Ajustes de IA (`VoceroAiModelSettings.tsx`) y en la Ficha de Identidad del Agente (`VoceroAgentIdentitySection.tsx`), manteniendo ambos componentes bajo el estándar ARQMODULAR (<165 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 15.39s con 0 errores TypeScript (`npm run build`). Bundle activo `index-DSMam3DH.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit en progreso).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 12/12 rutas activas y 0 errores.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Estandarización Exclusiva de Modelos Google AI Studio (Gemini 2.5 Flash / Pro) y Erradicación de Versiones Obsoletas
 - **Diagnóstico y Necesidad:**
   1. *Regla de Calidad de Modelos Google:* Las versiones previas (como Gemini 2.0 Flash o 1.5 Pro) quedaron obsoletas y fuera del estándar de producción de Google AI Studio. Se requería erradicar cualquier referencia o configuración a versiones antiguas y garantizar que el sistema opere exclusivamente con las mejores y más recientes versiones oficiales de Google.

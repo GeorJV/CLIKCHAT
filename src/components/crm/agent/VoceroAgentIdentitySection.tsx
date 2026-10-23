@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
 import { Bot, MessageSquare, Sparkles, User, Save, CheckCircle2 } from 'lucide-react';
+import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
 
 interface VoceroAgentIdentitySectionProps {
   tenant: Tenant | null;
@@ -49,14 +50,6 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
     }
   };
 
-  const TONES = [
-    'Cercano y Amigable',
-    'Profesional y Cortés',
-    'Vendedor Persuasivo',
-    'Enérgico y Dinámico',
-    'Empático y Resolutivo',
-  ];
-
   return (
     <form onSubmit={handleSave} className="space-y-5 font-sans">
       <div className="border-b border-[#e8edf6] pb-3 flex items-center justify-between">
@@ -89,18 +82,7 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#0a1730] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#0d5bff]" /> Tono de Voz Conversacional
-          </label>
-          <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value)}
-            className="w-full rounded-xl border border-[#dde5f1] bg-[#f6f8fc] px-3.5 py-2 text-xs text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white transition"
-          >
-            {TONES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          <ToneMultiSelectDropdown value={tone} onChange={setTone} label="Tono de Voz Conversacional" />
         </div>
       </div>
 

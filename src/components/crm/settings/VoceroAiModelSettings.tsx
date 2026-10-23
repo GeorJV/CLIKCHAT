@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
 import { Sparkles, Cpu, Clock, Key, Save, CheckCircle2 } from 'lucide-react';
+import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
 
 interface VoceroAiModelSettingsProps {
   tenant: Tenant | null;
@@ -136,16 +137,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-[#0d5bff]" /> Tono de Comunicación
-            </label>
-            <input
-              type="text"
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-              placeholder="Ej: Amable, alegre, enfocado en cerrar ventas y resolver dudas"
-              className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
-            />
+            <ToneMultiSelectDropdown value={tone} onChange={setTone} />
           </div>
         </div>
 

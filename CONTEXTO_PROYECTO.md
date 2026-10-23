@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 19:10 GMT-6
-- **Versión Actual:** 1.75.0 (Google AI Studio Gemini 2.5 Flash / Pro Oficiales & Memoria Protegida)
+- **Última Actualización:** 2026-10-22 19:48 GMT-6
+- **Versión Actual:** 1.76.0 (Selector Desplegable Multiselección de 7 Tonos de Comunicación)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 02b448c)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit en progreso)
 - **Estado Actual del Sistema:**
+  - Selector de Tonos Multiselección: Dropdown interactivo con 7 modos comerciales combinables con checkboxes múltiples (`ToneMultiSelectDropdown.tsx`).
   - Conexión Multi-IA Nativa: Google AI Studio (`gemini-2.5-flash`, `gemini-2.5-pro`), OpenRouter (`openrouter.ai`) y Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`).
   - Suite de Agente Vocero al 100%: Identidad, Prompt, 4 Pasos, Objeciones Q&A, Reglas Operativas y Docs RAG.
   - Laboratorio y Juez Vocero: 6 personas compradoras, AI Judge scoring (0-100) y guardado de respuestas doradas.
