@@ -23,7 +23,9 @@ const ROUTES = [
   { path: '/user/mi-negocio/comida-callejera-xl/conversaciones', label: 'Panel: Conversaciones' },
   { path: '/user/mi-negocio/comida-callejera-xl/mi-cuenta', label: 'Panel: Mi Cuenta' },
   { path: '/user/mi-negocio/comida-callejera-xl/agente', label: 'Panel: Agente Vocero (Ruta Específica)' },
-  { path: '/user/mi-negocio/comida-callejera-xl/ajustes', label: 'Panel: Ajustes del Sistema (Canales & Perfil)' },
+  { path: '/user/mi-negocio/comida-callejera-xl/ajustes', label: 'Panel: Ajustes del Sistema' },
+  { path: '/user/mi-negocio/comida-callejera-xl/perfil', label: 'Panel: Perfil del Negocio (Ajustes)' },
+  { path: '/user/mi-negocio/comida-callejera-xl/canales', label: 'Panel: Canales de Chat (Ajustes)' },
   { path: '/super-admin', label: 'Panel: Super Admin' },
   { path: '/dashboard', label: 'Redirección Canónica /dashboard' }
 ];

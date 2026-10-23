@@ -10,7 +10,7 @@ interface VoceroOnboardingViewProps {
   tenant: Tenant | null;
   products: Product[];
   faqs: FAQ[];
-  onNavigateTab: (tab: VoceroNavTab) => void;
+  onNavigateTab: (tab: VoceroNavTab, subPath?: string) => void;
 }
 
 export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
@@ -35,6 +35,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
       isDone: isStep1Done,
       icon: Store,
       targetTab: 'settings' as VoceroNavTab,
+      targetSubPath: 'perfil',
       btnLabel: isStep1Done ? 'Revisar Perfil' : 'Configurar Perfil'
     },
     {
@@ -44,6 +45,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
       isDone: isStep2Done,
       icon: ShoppingBag,
       targetTab: 'products' as VoceroNavTab,
+      targetSubPath: 'productos',
       btnLabel: isStep2Done ? 'Gestionar Ítems' : 'Cargar Productos'
     },
     {
@@ -55,16 +57,18 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
       isDone: isStep3Done,
       icon: Sparkles,
       targetTab: 'agent' as VoceroNavTab,
+      targetSubPath: 'agente',
       btnLabel: isStep3Done ? 'Afinar Agente' : 'Entrenar Agente'
     },
     {
       num: 4,
-      title: 'Conectar Canales (WhatsApp Oficial)',
-      desc: isStep4Done ? 'Canal de mensajería vinculado.' : 'Conecta tu WhatsApp Business Cloud API de Meta para recibir chats en vivo.',
+      title: 'Conectar Canales (WhatsApp Oficial & ClikChat)',
+      desc: isStep4Done ? 'Canales de mensajería vinculados.' : 'Conecta tu WhatsApp Cloud API o activa el Chat Agente ClikChat nativo sin API.',
       isDone: isStep4Done,
       icon: MessageSquare,
       targetTab: 'settings' as VoceroNavTab,
-      btnLabel: isStep4Done ? 'Ver Canales' : 'Conectar WhatsApp'
+      targetSubPath: 'canales',
+      btnLabel: isStep4Done ? 'Ver Canales' : 'Conectar Canales'
     }
   ];
 
@@ -123,7 +127,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
                 </div>
 
                 <button
-                  onClick={() => onNavigateTab(s.targetTab)}
+                  onClick={() => onNavigateTab(s.targetTab, s.targetSubPath)}
                   className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer shrink-0 ${
                     s.isDone
                       ? 'border border-[#d8e2f0] bg-[#f8fafc] text-[#0a1730] hover:bg-[#edf2f9]'

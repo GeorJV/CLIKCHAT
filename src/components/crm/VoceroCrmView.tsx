@@ -52,14 +52,17 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
   // Al montar, normalizar URL canónica si no tiene subruta específica
   useEffect(() => {
     const canonical = getVoceroTabPath(tenantSlug, activeTab);
-    if (pathname !== canonical && !pathname.endsWith(`/${activeTab}`) && !pathname.includes(`/${activeTab}`)) {
+    const isSubSetting = pathname.includes('/perfil') || pathname.includes('/canales') || pathname.includes('/whatsapp');
+    if (!isSubSetting && pathname !== canonical && !pathname.endsWith(`/${activeTab}`) && !pathname.includes(`/${activeTab}`)) {
       navigate(canonical, { replace: true });
     }
   }, [tenantSlug]);
 
-  const handleSelectTab = (tab: VoceroNavTab) => {
+  const handleSelectTab = (tab: VoceroNavTab, subPath?: string) => {
     setActiveTab(tab);
-    const targetPath = getVoceroTabPath(tenantSlug, tab);
+    const targetPath = subPath
+      ? `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${subPath}`
+      : getVoceroTabPath(tenantSlug, tab);
     if (pathname !== targetPath) {
       navigate(targetPath);
     }

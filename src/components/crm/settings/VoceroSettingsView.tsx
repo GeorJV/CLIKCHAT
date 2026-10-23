@@ -21,9 +21,34 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
   tenant, tenantSlug, products, onUpdateSettings,
   onCreateProduct, onUpdateProduct, onDeleteProduct,
 }) => {
-  const [subTab, setSubTab] = useState<'canales' | 'zernio' | 'perfil' | 'catalogo' | 'ia'>('canales');
+  const getInitialSubTab = (): 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio' => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.toLowerCase();
+      if (p.endsWith('/canales') || p.includes('/canales') || p.endsWith('/whatsapp')) return 'canales';
+      if (p.endsWith('/catalogo') || p.includes('/catalogo')) return 'catalogo';
+      if (p.endsWith('/ia') || p.includes('/ia')) return 'ia';
+      if (p.endsWith('/zernio') || p.includes('/zernio')) return 'zernio';
+      if (p.endsWith('/perfil') || p.includes('/perfil')) return 'perfil';
+    }
+    return 'perfil';
+  };
+
+  const [subTab, setSubTab] = useState<'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio'>(getInitialSubTab);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onPop = () => setSubTab(getInitialSubTab());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const handleSelectSubTab = (tabId: 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio') => {
+    setSubTab(tabId);
+    if (typeof window !== 'undefined' && tenantSlug) {
+      window.history.pushState({}, '', `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${tabId}`);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -36,11 +61,11 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
   }, []);
 
   const TABS = [
-    { id: 'canales' as const, label: 'Canales (WhatsApp)', icon: MessageSquare },
-    { id: 'zernio' as const, label: 'Zernio', icon: Network },
     { id: 'perfil' as const, label: 'Perfil del Negocio', icon: Store },
+    { id: 'canales' as const, label: 'Canales (WhatsApp & ClikChat)', icon: MessageSquare },
     { id: 'catalogo' as const, label: 'Catálogo / Menú', icon: ShoppingBag, badge: products.length },
     { id: 'ia' as const, label: 'Motor de IA', icon: Cpu },
+    { id: 'zernio' as const, label: 'Zernio Multicanal', icon: Network },
   ];
 
   return (
@@ -62,7 +87,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setSubTab(tab.id)}
+                  onClick={() => handleSelectSubTab(tab.id)}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
                     active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
                   }`}
@@ -106,7 +131,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => { setSubTab(tab.id); setIsMenuOpen(false); }}
+                    onClick={() => { handleSelectSubTab(tab.id); setIsMenuOpen(false); }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer text-left ${
                       active ? 'bg-blue-50 text-[#0d5bff]' : 'text-[#42506b] hover:bg-[#f8fafc] hover:text-[#0a1730]'
                     }`}
