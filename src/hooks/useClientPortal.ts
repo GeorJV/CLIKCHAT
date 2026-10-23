@@ -387,9 +387,35 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
     return true;
   };
 
+  const trackProductEvent = async (productId: string, event: string) => {
+    try {
+      await fetch(`/api/products/${encodeURIComponent(productId)}/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event })
+      });
+      setProducts(prev => prev.map(p => {
+        if (p.id !== productId && p.slug !== productId) return p;
+        const m = p.metrics || { views: 0, buyClicks: 0 };
+        const nextM = { ...m };
+        if (event === 'buy_click') nextM.buyClicks = (nextM.buyClicks || 0) + 1;
+        else if (event === 'photo_view') nextM.photoViews = (nextM.photoViews || 0) + 1;
+        else if (event === 'chat_interaction' || event === 'chat_message') nextM.chatInteractions = (nextM.chatInteractions || 0) + 1;
+        else if (event === 'added_to_cart') nextM.addedToCart = (nextM.addedToCart || 0) + 1;
+        else if (event === 'not_added') nextM.notAdded = (nextM.notAdded || 0) + 1;
+        else if (event === 'removed_from_cart') nextM.removedFromCart = (nextM.removedFromCart || 0) + 1;
+        else if (event === 'view' || event === 'product_click') nextM.views = (nextM.views || 0) + 1;
+        return { ...p, metrics: nextM };
+      }));
+    } catch (err) {
+      console.warn('Track event warning:', err);
+    }
+  };
+
   return {
     tenantSlug, setTenantSlug, tenant, products, faqs, unresolved,
     availableTenants, isLoading, saveSuccess, loadTenantData,
-    resolveQuery, createFaq, updateFaq, deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings
+    resolveQuery, createFaq, updateFaq, deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings,
+    trackProductEvent
   };
 }

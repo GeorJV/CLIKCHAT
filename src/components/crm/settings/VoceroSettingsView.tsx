@@ -161,8 +161,12 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
         {subTab === 'perfil' && <VoceroBusinessProfileSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
         {subTab === 'catalogo' && (
           <VoceroCatalogSettings
-            products={products} tenantCurrency={tenant?.currency}
-            onCreateProduct={onCreateProduct} onUpdateProduct={onUpdateProduct} onDeleteProduct={onDeleteProduct}
+            products={products}
+            currency={tenant?.currency}
+            tenantSlug={tenantSlug}
+            onCreateProduct={onCreateProduct}
+            onUpdateProduct={onUpdateProduct}
+            onDeleteProduct={onDeleteProduct}
           />
         )}
         {subTab === 'ia' && <VoceroAiModelSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}

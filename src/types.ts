@@ -17,10 +17,15 @@ export interface Product {
   metrics?: {
     views: number;
     buyClicks: number;
-    benefitViews: number;
-    coldLeads: number;
-    warmLeads: number;
-    hotLeads: number;
+    photoViews?: number;
+    chatInteractions?: number;
+    addedToCart?: number;
+    notAdded?: number;
+    removedFromCart?: number;
+    benefitViews?: number;
+    coldLeads?: number;
+    warmLeads?: number;
+    hotLeads?: number;
   };
 }
 

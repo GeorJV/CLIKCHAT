@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Product } from '../../../types';
-import { Plus, Search, Trash2, Edit2, ShoppingBag, Tag } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, ShoppingBag, Tag, BarChart2 } from 'lucide-react';
 import { ProductModal } from '../../client/products/ProductModal';
+import { VoceroProductMetricsModal } from '../products/VoceroProductMetricsModal';
 
 interface VoceroCatalogSettingsProps {
   products: Product[];
@@ -10,6 +11,7 @@ interface VoceroCatalogSettingsProps {
   onDeleteProduct: (id: string) => Promise<boolean>;
   currency?: string;
   businessType?: string;
+  tenantSlug?: string;
 }
 
 export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
@@ -18,33 +20,23 @@ export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
   onUpdateProduct,
   onDeleteProduct,
   currency = 'CRC',
-  businessType = 'tienda'
+  businessType = 'tienda',
+  tenantSlug = 'comida-callejera-xl'
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [metricsProduct, setMetricsProduct] = useState<Product | null>(null);
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.details?.category && p.details.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleOpenCreate = () => {
-    setEditingProduct(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (p: Product) => {
-    setEditingProduct(p);
-    setIsModalOpen(true);
-  };
-
+  const handleOpenCreate = () => { setEditingProduct(null); setIsModalOpen(true); };
+  const handleOpenEdit = (p: Product) => { setEditingProduct(p); setIsModalOpen(true); };
   const handleSubmit = async (data: Partial<Product> & { name: string; price: number }) => {
-    if (editingProduct) {
-      return await onUpdateProduct(editingProduct.id, data);
-    } else {
-      return await onCreateProduct(data);
-    }
+    return editingProduct ? await onUpdateProduct(editingProduct.id, data) : await onCreateProduct(data);
   };
 
   return (
@@ -122,23 +114,34 @@ export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-1 mt-3 pt-2 border-t border-[#f1f5f9]">
+              <div className="flex items-center justify-between gap-1 mt-3 pt-2 border-t border-[#f1f5f9]">
                 <button
-                  onClick={() => handleOpenEdit(item)}
-                  className="p-1.5 rounded-lg text-[#62728d] hover:bg-[#f1f5f9] hover:text-[#0d5bff] cursor-pointer"
-                  title="Editar ítem"
+                  type="button"
+                  onClick={() => setMetricsProduct(item)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#ebf1ff] text-[#0d5bff] hover:bg-[#d8e4fe] transition cursor-pointer text-[10px] font-bold"
+                  title="Ver métricas y telemetría de este ítem"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  <BarChart2 className="h-3 w-3" />
+                  <span>Métricas</span>
                 </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`¿Eliminar ${item.name}?`)) onDeleteProduct(item.id);
-                  }}
-                  className="p-1.5 rounded-lg text-[#62728d] hover:bg-[#fff0f0] hover:text-[#e11d48] cursor-pointer"
-                  title="Eliminar ítem"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEdit(item)}
+                    className="p-1.5 rounded-lg text-[#62728d] hover:bg-[#f1f5f9] hover:text-[#0d5bff] cursor-pointer"
+                    title="Editar ítem"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`¿Eliminar ${item.name}?`)) onDeleteProduct(item.id);
+                    }}
+                    className="p-1.5 rounded-lg text-[#62728d] hover:bg-[#fff0f0] hover:text-[#e11d48] cursor-pointer"
+                    title="Eliminar ítem"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -152,6 +155,14 @@ export const VoceroCatalogSettings: React.FC<VoceroCatalogSettingsProps> = ({
         onSubmit={handleSubmit}
         defaultCurrency={currency}
         businessType={businessType}
+      />
+
+      <VoceroProductMetricsModal
+        isOpen={Boolean(metricsProduct)}
+        product={metricsProduct}
+        tenantSlug={tenantSlug}
+        currency={currency}
+        onClose={() => setMetricsProduct(null)}
       />
     </div>
   );

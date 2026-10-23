@@ -2114,9 +2114,15 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         targetTenant = pRows[0].tenant_id || targetTenant;
       }
 
-      // 2. Ensure row exists in product_metrics
+      // 2. Ensure row exists in product_metrics and columns are present
+      try { await executeD1('ALTER TABLE product_metrics ADD COLUMN photo_views INTEGER DEFAULT 0'); } catch (e) {}
+      try { await executeD1('ALTER TABLE product_metrics ADD COLUMN chat_interactions INTEGER DEFAULT 0'); } catch (e) {}
+      try { await executeD1('ALTER TABLE product_metrics ADD COLUMN added_to_cart INTEGER DEFAULT 0'); } catch (e) {}
+      try { await executeD1('ALTER TABLE product_metrics ADD COLUMN not_added INTEGER DEFAULT 0'); } catch (e) {}
+      try { await executeD1('ALTER TABLE product_metrics ADD COLUMN removed_from_cart INTEGER DEFAULT 0'); } catch (e) {}
+
       await executeD1(
-        'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
+        'INSERT INTO product_metrics (product_id, tenant_id, views, buy_clicks, benefit_views, cold_leads, warm_leads, hot_leads, photo_views, chat_interactions, added_to_cart, not_added, removed_from_cart) VALUES (?1, ?2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) ON CONFLICT(product_id) DO NOTHING',
         [targetId, targetTenant]
       );
 
@@ -2137,12 +2143,20 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       let updateSql = "UPDATE product_metrics SET views = views + 1, updated_at = datetime('now') WHERE product_id = ?1";
       if (event === 'buy_click') {
         updateSql = "UPDATE product_metrics SET buy_clicks = buy_clicks + 1, hot_leads = hot_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'photo_view' || event === 'image_view' || event === 'fullscreen_view') {
+        updateSql = "UPDATE product_metrics SET photo_views = COALESCE(photo_views, 0) + 1, views = views + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'chat_message' || event === 'chat_interaction' || event === 'message_sent') {
+        updateSql = "UPDATE product_metrics SET chat_interactions = COALESCE(chat_interactions, 0) + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'added_to_cart' || event === 'added_to_order') {
+        updateSql = "UPDATE product_metrics SET added_to_cart = COALESCE(added_to_cart, 0) + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'not_added' || event === 'discarded') {
+        updateSql = "UPDATE product_metrics SET not_added = COALESCE(not_added, 0) + 1, updated_at = datetime('now') WHERE product_id = ?1";
+      } else if (event === 'removed_from_cart' || event === 'abandoned_after_buy' || event === 'cancel_order') {
+        updateSql = "UPDATE product_metrics SET removed_from_cart = COALESCE(removed_from_cart, 0) + 1, updated_at = datetime('now') WHERE product_id = ?1";
       } else if (event === 'benefit_view') {
         updateSql = "UPDATE product_metrics SET benefit_views = benefit_views + 1, warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
-      } else if (event === 'detail_view' || event === 'spec_view' || event === 'fullscreen_view') {
+      } else if (event === 'detail_view' || event === 'spec_view') {
         updateSql = "UPDATE product_metrics SET views = views + 1, cold_leads = cold_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
-      } else if (event === 'chat_message' || event === 'message_sent') {
-        updateSql = "UPDATE product_metrics SET warm_leads = warm_leads + 1, updated_at = datetime('now') WHERE product_id = ?1";
       } else if (event === 'lead') {
         if (temperature === 'hot') {
           updateSql = "UPDATE product_metrics SET hot_leads = hot_leads + 1, buy_clicks = buy_clicks + 1, updated_at = datetime('now') WHERE product_id = ?1";
@@ -2162,7 +2176,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     if (segments[0] === 'products' && segments.length === 2 && request.method === 'GET') {
       const id = segments[1];
       const rows = await executeD1(
-        'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.id = ?1 OR p.slug = ?1 LIMIT 1',
+        'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.photo_views, 0) as m_photo_views, COALESCE(m.chat_interactions, 0) as m_chat_interactions, COALESCE(m.added_to_cart, 0) as m_added_to_cart, COALESCE(m.not_added, 0) as m_not_added, COALESCE(m.removed_from_cart, 0) as m_removed_from_cart, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.id = ?1 OR p.slug = ?1 LIMIT 1',
         [id]
       );
       if (!rows.length) return jsonResponse({ error: 'Producto no encontrado' }, 404);
@@ -2175,6 +2189,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           metrics: {
             views: Number(row.m_views) || 0,
             buyClicks: Number(row.m_buy_clicks) || 0,
+            photoViews: Number(row.m_photo_views) || 0,
+            chatInteractions: Number(row.m_chat_interactions) || 0,
+            addedToCart: Number(row.m_added_to_cart) || 0,
+            notAdded: Number(row.m_not_added) || 0,
+            removedFromCart: Number(row.m_removed_from_cart) || 0,
             benefitViews: Number(row.m_benefit_views) || 0,
             coldLeads: Number(row.m_cold_leads) || 0,
             warmLeads: Number(row.m_warm_leads) || 0,
@@ -2261,7 +2280,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     // LIST PRODUCTS: GET /api/products
     if (segments[0] === 'products' && segments.length === 1 && request.method === 'GET') {
       const tenantId = url.searchParams.get('tenantId');
-      let querySql = 'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id';
+      let querySql = 'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.photo_views, 0) as m_photo_views, COALESCE(m.chat_interactions, 0) as m_chat_interactions, COALESCE(m.added_to_cart, 0) as m_added_to_cart, COALESCE(m.not_added, 0) as m_not_added, COALESCE(m.removed_from_cart, 0) as m_removed_from_cart, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id';
 
       const params = [];
       if (tenantId) {
@@ -2280,6 +2299,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             metrics: {
               views: Number(r.m_views) || 0,
               buyClicks: Number(r.m_buy_clicks) || 0,
+              photoViews: Number(r.m_photo_views) || 0,
+              chatInteractions: Number(r.m_chat_interactions) || 0,
+              addedToCart: Number(r.m_added_to_cart) || 0,
+              notAdded: Number(r.m_not_added) || 0,
+              removedFromCart: Number(r.m_removed_from_cart) || 0,
               benefitViews: Number(r.m_benefit_views) || 0,
               coldLeads: Number(r.m_cold_leads) || 0,
               warmLeads: Number(r.m_warm_leads) || 0,
@@ -2900,7 +2924,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         try {
           if (tenant && tenant.id) {
             products = await executeD1(
-              'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.tenant_id = ?1 AND p.is_active = 1 ORDER BY p.created_at ASC',
+              'SELECT p.*, COALESCE(m.views, 0) as m_views, COALESCE(m.buy_clicks, 0) as m_buy_clicks, COALESCE(m.photo_views, 0) as m_photo_views, COALESCE(m.chat_interactions, 0) as m_chat_interactions, COALESCE(m.added_to_cart, 0) as m_added_to_cart, COALESCE(m.not_added, 0) as m_not_added, COALESCE(m.removed_from_cart, 0) as m_removed_from_cart, COALESCE(m.benefit_views, 0) as m_benefit_views, COALESCE(m.cold_leads, 0) as m_cold_leads, COALESCE(m.warm_leads, 0) as m_warm_leads, COALESCE(m.hot_leads, 0) as m_hot_leads FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id WHERE p.tenant_id = ?1 AND p.is_active = 1 ORDER BY p.created_at ASC',
               [tenant.id]
             );
           }
@@ -2931,6 +2955,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             metrics: {
               views: Number(p.m_views) || 0,
               buyClicks: Number(p.m_buy_clicks) || 0,
+              photoViews: Number(p.m_photo_views) || 0,
+              chatInteractions: Number(p.m_chat_interactions) || 0,
+              addedToCart: Number(p.m_added_to_cart) || 0,
+              notAdded: Number(p.m_not_added) || 0,
+              removedFromCart: Number(p.m_removed_from_cart) || 0,
               benefitViews: Number(p.m_benefit_views) || 0,
               coldLeads: Number(p.m_cold_leads) || 0,
               warmLeads: Number(p.m_warm_leads) || 0,

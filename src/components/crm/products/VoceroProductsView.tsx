@@ -39,6 +39,7 @@ export const VoceroProductsView: React.FC<VoceroProductsViewProps> = ({
           products={products}
           currency={tenant?.currency}
           businessType={tenant?.business_type}
+          tenantSlug={tenant?.slug || 'comida-callejera-xl'}
           onCreateProduct={onCreateProduct}
           onUpdateProduct={onUpdateProduct}
           onDeleteProduct={onDeleteProduct}
