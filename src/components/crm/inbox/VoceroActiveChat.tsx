@@ -20,11 +20,13 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
 }) => {
   const [draft, setDraft] = useState('');
   const [showCanned, setShowCanned] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { isTyping, draftText } = useLiveTyping(lead?.session_id || lead?.id);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
       </header>
 
       {/* Lista de Mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => {
           const isUser = m.sender === 'user';
           const deliveryMode: DeliveryMode = (typeof window !== 'undefined'
@@ -121,7 +123,6 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
             </div>
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
       {/* Compositor con Atajos Rápidos */}

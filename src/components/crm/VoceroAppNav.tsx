@@ -62,7 +62,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
   ];
 
   return (
-    <aside className="w-56 shrink-0 h-full flex flex-col justify-between p-3 select-none vocero-nav-dark border-r font-sans text-[#e8eefc]">
+    <aside className="w-56 shrink-0 h-full flex flex-col justify-between p-3 select-none vocero-nav-dark border-r font-sans text-[#e8eefc] overflow-y-auto [scrollbar-width:none]">
       <div className="space-y-4">
         {/* Marca Vocero Oficial */}
         <div className="px-2 pt-1 pb-1">
@@ -74,7 +74,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
           {GROUPS.map((group, idx) => (
             <div key={group.title || idx} className="flex flex-col gap-0.5">
               {group.title && (
-                <span className="vocero-kicker mb-1 block px-2.5">
+                <span className="vocero-kicker mb-1 block px-2.5 text-[#889cc4]">
                   {group.title}
                 </span>
               )}
@@ -85,16 +85,18 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
-                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
+                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors cursor-pointer group ${
                       isActive
-                        ? 'bg-[#182750] text-[#6f9eff]'
-                        : 'text-[#a9b8dc] hover:bg-[#131f3d] hover:text-[#e8eefc]'
+                        ? 'bg-[#0d5bff] text-white font-bold shadow-md shadow-[#0d5bff]/25'
+                        : 'text-[#c2d0f0] hover:bg-[#132247] hover:text-white'
                     }`}
                   >
-                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#3fdcff]' : 'text-[#7688b0]'}`} strokeWidth={1.8} />
+                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-[#889cc4] group-hover:text-white'}`} strokeWidth={isActive ? 2.2 : 1.8} />
                     <span className="flex-1 text-left truncate">{item.label}</span>
                     {item.badge !== undefined && item.badge > 0 && (
-                      <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#0d5bff] px-1.5 text-[10px] font-bold text-white">
+                      <span className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                        isActive ? 'bg-white text-[#0d5bff]' : 'bg-[#0d5bff] text-white'
+                      }`}>
                         {item.badge}
                       </span>
                     )}
@@ -110,13 +112,13 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       <div className="space-y-2 pt-2 border-t border-[#263866]">
         <button
           onClick={() => onSelectTab('settings')}
-          className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold transition-colors cursor-pointer ${
+          className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors cursor-pointer group ${
             activeTab === 'settings'
-              ? 'bg-[#182750] text-[#6f9eff]'
-              : 'text-[#a9b8dc] hover:bg-[#131f3d] hover:text-[#e8eefc]'
+              ? 'bg-[#0d5bff] text-white font-bold shadow-md shadow-[#0d5bff]/25'
+              : 'text-[#c2d0f0] hover:bg-[#132247] hover:text-white'
           }`}
         >
-          <Settings className="h-4 w-4 shrink-0 text-[#7688b0]" strokeWidth={1.8} />
+          <Settings className={`h-4 w-4 shrink-0 ${activeTab === 'settings' ? 'text-white' : 'text-[#889cc4] group-hover:text-white'}`} strokeWidth={activeTab === 'settings' ? 2.2 : 1.8} />
           <span className="flex-1 text-left">Ajustes</span>
         </button>
 

@@ -89,7 +89,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
                   key={tab.id}
                   onClick={() => handleSelectSubTab(tab.id)}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
-                    active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
+                    active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#334155] hover:text-[#0a1730] hover:bg-white/60'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />

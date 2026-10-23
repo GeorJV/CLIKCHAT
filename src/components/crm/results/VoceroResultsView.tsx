@@ -39,7 +39,7 @@ export const VoceroResultsView: React.FC<VoceroResultsViewProps> = ({
             type="button"
             onClick={() => setSubTab('clicks')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              subTab === 'clicks' ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
+              subTab === 'clicks' ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#334155] hover:text-[#0a1730] hover:bg-white/60'
             }`}
           >
             <MousePointerClick className="h-3.5 w-3.5" />
@@ -53,7 +53,7 @@ export const VoceroResultsView: React.FC<VoceroResultsViewProps> = ({
             type="button"
             onClick={() => setSubTab('commercial')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              subTab === 'commercial' ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
+              subTab === 'commercial' ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#334155] hover:text-[#0a1730] hover:bg-white/60'
             }`}
           >
             <TrendingUp className="h-3.5 w-3.5" />

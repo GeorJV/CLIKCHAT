@@ -53,6 +53,11 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     }
   }, [currentVoceroTab]);
 
+  // Asegurar que la pantalla no se desplace hacia abajo al cambiar de pestaña
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   // Al montar, normalizar URL canónica si no tiene subruta específica
   useEffect(() => {
     const canonical = getVoceroTabPath(tenantSlug, activeTab);
@@ -96,8 +101,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             onSelectLead={setSelectedLeadId} messages={messages} isLoadingLeads={isLoadingLeads}
             isLoadingMessages={isLoadingMessages} filterInbox={filterInbox} onSetFilterInbox={setFilterInbox}
             searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
-            onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead}
-            onOpenNewLeadModal={() => handleSelectTab('pipeline')}
+            onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
           />
         )}
 
@@ -118,9 +122,8 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
         {activeTab === 'clikchat' && (
           <VoceroClikChatView
-            tenant={tenant} tenantSlug={tenantSlug} leads={leads} selectedLead={selectedLead}
-            selectedLeadId={selectedLeadId} onSelectLead={setSelectedLeadId} messages={messages}
-            onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateSettings={updateSettings}
+            tenant={tenant} tenantSlug={tenantSlug} leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
+            onSelectLead={setSelectedLeadId} messages={messages} onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateSettings={updateSettings}
           />
         )}
 
@@ -144,12 +147,8 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
         {activeTab === 'faqs' && (
           <VoceroFaqRagView
-            faqs={faqs}
-            unresolved={unresolved}
-            onCreateFaq={createFaq}
-            onUpdateFaq={updateFaq}
-            onDeleteFaq={deleteFaq}
-            onResolveQuery={resolveQuery}
+            faqs={faqs} unresolved={unresolved} onCreateFaq={createFaq}
+            onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onResolveQuery={resolveQuery}
           />
         )}
 
@@ -163,11 +162,8 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
         {activeTab === 'results' && (
           <VoceroResultsView
-            leads={leads}
-            tenantSlug={tenantSlug}
-            currency={tenant?.currency}
-            products={products}
-            onTrackProductEvent={trackProductEvent}
+            leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency}
+            products={products} onTrackProductEvent={trackProductEvent}
           />
         )}
 

@@ -1,21 +1,21 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 21:57 GMT-6
-- **Versión Actual:** 1.86.0 (Telemetría de Clics y Rendimiento en Vivo & Unificación de KPIs en CRM)
+- **Última Actualización:** 2026-10-22 22:55 GMT-6
+- **Versión Actual:** 1.87.0 (Auto-Scroll Local en Bandeja & Unificación de Contraste en Navegación CRM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `89eea11` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Telemetría en Vivo Resultados: Clics comprar, fotos vistas, chat IA, agregados, no agregados, cancelados.
-  - Métricas por Producto: Modal "Ver Métricas" con termómetro de leads (Fríos, Tibios, Calientes) y 7 eventos.
+  - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de pantalla o ventana.
+  - Viewport CRM Bloqueado: Contenedor en `overflow-hidden` durante modo CRM y reset `window.scrollTo(0, 0)`.
+  - Unificación de Contraste en Botones: Estados activos en azul royal `#0d5bff` con texto e íconos blancos.
+  - Homologación de Resultados y Ajustes: Dimensiones, íconos reactivos y tipografía alineados al 100%.
+  - Telemetría y Métricas: Clics comprar, fotos vistas, chat IA, 7 eventos y termómetro de leads.
   - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` y Human-in-the-Loop (`unresolved_queries`).
   - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.
   - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
   - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, 2 Tono, 3 Bienvenida, 4 Prompt/Docs).
   - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2.
-  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; resaltado esmeralda.
-  - Enrutamiento Canónico por Pestaña: Sincronización de URLs (/perfil, /canales, /faqs, /productos) y F5.
-  - Viewport Integral `100dvh` y Auto-Scroll: Desplazamiento tipo WhatsApp sin desbordes de pantalla.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Corrección Integral de Auto-Scroll en Bandeja y Unificación de Contraste en Botones de Navegación CRM
+- **Diagnóstico y Necesidad:**
+  1. *Desajuste de Pantalla en Bandeja:* Al pulsar sobre "Bandeja" en el menú lateral, `endRef.scrollIntoView()` desplazaba hacia abajo todos los contenedores ancestros y el viewport general de la ventana, ocultando la barra superior y descuadrando la vista.
+  2. *Descontraste y Discrepancias en Botones:* Los botones de "Resultados" y "Ajustes" presentaban falta de contraste, desarmonía de colores (ícono de Ajustes no reaccionaba al estado activo con `text-[#7688b0]`, tipografía azul apagada `#6f9eff` sobre fondo azul marino oscuro `#182750`, y padding inconsistente).
+- **Solución Quirúrgica Implementada (ARQMODULAR):**
+  1. *Auto-Scroll Localizado (`VoceroActiveChat.tsx` - 175 líneas):*
+     - Reemplazo de `endRef.scrollIntoView()` por scroll nativo y directo sobre el contenedor interno de mensajes (`messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight`).
+     - Eliminación del elemento DOM sobrante `endRef`, bloqueando de raíz cualquier salto indeseado de la ventana o contenedor padre.
+  2. *Bloqueo de Viewport CRM (`App.tsx` & `VoceroCrmView.tsx` - 179 líneas):*
+     - Contenedor en `App.tsx` fijado a `overflow-hidden` mientras `isVoceroMode` esté activo, eliminando scrollbars parasitarias que desplazaban la pantalla.
+     - Reset preventivo `window.scrollTo(0, 0)` al cambiar de pestaña en `VoceroCrmView.tsx`.
+  3. *Unificación de Contraste y Jerarquía Visual (`VoceroAppNav.tsx` - 158 líneas):*
+     - Botones activos unificados con el azul royal característico `bg-[#0d5bff]`, texto blanco puro `text-white font-bold`, ícono blanco nítido y sombra sutil `shadow-md shadow-[#0d5bff]/25`.
+     - Botones inactivos con contraste elevado `text-[#c2d0f0]`, íconos `text-[#889cc4]` y hover suave `hover:bg-[#132247] hover:text-white`.
+     - Botón "Ajustes" homologado al 100% con las mismas dimensiones (`px-2.5 py-2 rounded-lg text-[13px]`) e ícono reactivo en blanco al estar activo.
+     - Subpestañas en `VoceroResultsView.tsx` y `VoceroSettingsView.tsx` optimizadas con `text-[#334155]` y hover blanco para contraste perfecto.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 13.04s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-BEkWGJ0W.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Telemetría en Vivo de Clics y Rendimiento de Productos & Unificación de KPIs en CRM
 - **Diagnóstico y Necesidad:**
   1. *Telemetría Detallada de Comportamiento:* Se requería analizar en vivo las 7 interacciones críticas por producto: clics al botón comprar, visualización de foto, consultas en chat IA, agregados a la comanda, productos no agregados (descartados) y cancelaciones/abandonos tras dar clic a comprar.

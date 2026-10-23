@@ -142,7 +142,7 @@ export function App() {
         )}
 
         {currentView === 'client' && (
-          <div className="h-full w-full overflow-y-auto bg-[#151414]">
+          <div className={`h-full w-full bg-[#151414] ${isVoceroMode ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {isAuthenticated && isVoceroMode ? (
               <ErrorBoundary fallbackTitle="ClikChat CRM">
                 <VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} onLogout={logout} />
