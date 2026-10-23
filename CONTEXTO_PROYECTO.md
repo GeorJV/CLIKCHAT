@@ -1,11 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 16:35 GMT-6
-- **Versión Actual:** 2.1.1 (Corrección Reglas de Hooks en Modales ProductModal y FAQ)
+- **Última Actualización:** 2026-10-23 16:40 GMT-6
+- **Versión Actual:** 2.1.2 (Check-in Verde de Identidad y Homologación Cerebro & Flow IQ)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Identidad Agente: Check-in verde `4 de 4 campos listos` sustituye al confuso círculo numérico inicial.
+  - Título Homologado: `Cerebro & Flow IQ` coincide exactamente con la opción del menú lateral.
   - Corrección Reglas de Hooks: Erradicado error 'Rendered more hooks' al abrir Nuevo Servicio / Producto.
   - Navegación CRM en 3 Bloques: Operación Diaria (Bandeja, Pipeline, Citas, Clientes) y Mi Asistente IA (4 Pasos).
   - Guía Secuencial Asistente: Identidad, Flow IQ, FAQ IQ, Reglas y Documentos numerados en 6 fases con barra de guía.

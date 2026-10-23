@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Sustitución de Contador Engañoso por Check-In Verde en Identidad y Homologación de Título Cerebro & Flow IQ (v2.1.2)
+- **Diagnóstico y Necesidad:**
+  1. *Confusión con Número "4" Inicial:* En la pestaña de Identidad del Asistente, un círculo azul con el número "4" se mostraba al inicio del tracker (`[ 4 ] Entrenamiento del Agente: 4 de 4 Pasos Completados`), dando la impresión engañosa de que el usuario estaba en un "Paso 4" o botón interactivo, a pesar de estar en la Fase 1.
+  2. *Discrepancia de Nomenclatura:* En la barra lateral el acceso decía `3. Cerebro & Flow IQ`, pero el encabezado decía `Cerebro del Asistente`, generando desconexión conceptual.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `VoceroAgentIdentitySection.tsx` (174 líneas):
+     - Eliminación del círculo numérico aislado al inicio.
+     - Incorporación de un badge circular con icono de check verde (`CheckCircle2`) y fondo verde suave (`bg-emerald-50/70 border-emerald-200`) cuando los 4 campos están listos.
+     - Texto intuitivo y claro: `Campos de Identidad: 4 de 4 campos listos`.
+  2. `VoceroAgentHeader.tsx` (162 líneas):
+     - Homologación del título a `Cerebro & Flow IQ` con subtítulo `Entrenamiento en 6 fases`, alineado al 100% con la opción del menú lateral.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 14.02s con 0 errores TypeScript. Bundle: `dist/assets/index-BayL4jxV.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Corrección de Reglas de Hooks en Modales (ProductModal, FaqModals) — Erradicación de Error "Rendered more hooks" (v2.1.1)
 - **Diagnóstico y Necesidad:**
   1. *Fallo en Apertura de "Nuevo Servicio / Nuevo Producto":* Al pulsar el botón "Nuevo Servicio" en el Catálogo de Servicios del CRM, la pantalla se rompía mostrando el Error Boundary con el mensaje: `Rendered more hooks than during the previous render.`
