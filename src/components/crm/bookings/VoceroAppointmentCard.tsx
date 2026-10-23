@@ -10,24 +10,39 @@ export interface AppointmentItem {
   time: string;
   status: 'confirmed' | 'pending' | 'cancelled';
   channel: 'whatsapp' | 'instagram' | 'web';
+  phone?: string;
+  notes?: string;
+  price?: number;
 }
 
 interface Props {
   appointment: AppointmentItem;
   onToggleStatus?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onSelectAppointment?: (appointment: AppointmentItem) => void;
 }
 
-export const VoceroAppointmentCard: React.FC<Props> = ({ appointment: apt, onToggleStatus, onDelete }) => {
+export const VoceroAppointmentCard: React.FC<Props> = ({
+  appointment: apt,
+  onToggleStatus,
+  onDelete,
+  onSelectAppointment,
+}) => {
   return (
     <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs flex items-center justify-between gap-4 hover:border-[#b8cced] transition font-sans">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-[#ebf1ff] flex items-center justify-center text-[#0d5bff] font-bold text-xs">
+      <div
+        onClick={() => onSelectAppointment && onSelectAppointment(apt)}
+        className="flex items-center gap-3 cursor-pointer group"
+        title="Haz clic para ver el detalle de la cita"
+      >
+        <div className="h-10 w-10 rounded-xl bg-[#ebf1ff] group-hover:bg-[#d8e6ff] transition flex items-center justify-center text-[#0d5bff] font-bold text-xs shrink-0">
           <User className="h-5 w-5" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="text-xs font-bold text-[#0a1730]">{apt.clientName}</h4>
+            <h4 className="text-xs font-bold text-[#0a1730] group-hover:text-[#0d5bff] transition">
+              {apt.clientName}
+            </h4>
             <span className="text-[10px] text-[#8391aa] uppercase font-mono">({apt.channel})</span>
           </div>
           <p className="text-[11px] text-[#62728d]">{apt.serviceName}</p>

@@ -14,7 +14,9 @@ export const VoceroNewBookingModal: React.FC<VoceroNewBookingModalProps> = ({
   onAddBooking,
 }) => {
   const [clientName, setClientName] = useState('');
+  const [phone, setPhone] = useState('');
   const [serviceName, setServiceName] = useState('');
+  const [notes, setNotes] = useState('');
   const [dateKey, setDateKey] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState('10:00');
   const [channel, setChannel] = useState<'whatsapp' | 'instagram' | 'web'>('whatsapp');
@@ -38,6 +40,8 @@ export const VoceroNewBookingModal: React.FC<VoceroNewBookingModalProps> = ({
       time,
       status: 'confirmed',
       channel,
+      phone: phone.trim() || undefined,
+      notes: notes.trim() || undefined,
     };
 
     onAddBooking(newAppointment);

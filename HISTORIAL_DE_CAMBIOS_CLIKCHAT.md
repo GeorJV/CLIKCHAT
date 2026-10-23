@@ -1348,3 +1348,32 @@
 - Filtro 3: Despliegue en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
 
 Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
+
+---
+
+## [Registro #009] — UI/UX: Reubicación de Botón "Mes Completo" & Pop-up Profesional de Detalle de Cita
+
+- **Fecha:** 2026-10-23
+- **Estado:** `ready_for_review`
+- **Versión:** v1.89.0
+- **Requerimiento:**
+  1. Quitar el botón "Mes Completo" de la cabecera (al lado de "Nueva Cita") y reubicarlo en la barra de filtros temporales justo a la par de "Semana Siguiente".
+  2. Implementar un pop-up profesional que se abra al hacer clic en el nombre del cliente de la cita para inspeccionar qué es lo que se va a hacer (servicio, descripción del procedimiento, horario, fecha, canal de origen y acciones directas de confirmación y WhatsApp).
+
+### Cambios Realizados (ARQMODULAR)
+1. **Reubicación Ergonómica de "Mes Completo" (`VoceroBookingsView.tsx` & `bookingConstants.ts`):**
+   - La cabecera superior ahora conserva únicamente la acción principal destacada `+ Nueva Cita`.
+   - El botón interactivo `Mes Completo / Ocultar Mes` ahora forma parte del carrusel de filtros temporales junto a `Semana Siguiente`, unificando todos los controles de navegación por fecha en un solo bloque horizontal.
+2. **Modal Profesional de Detalle de Cita (`VoceroAppointmentDetailModal.tsx`):**
+   - Modal flotante con desenfoque de fondo (`backdrop-blur-xs`), tarjeta de cliente, badge dinámico de estado (`Confirmada` / `Pendiente`), desglose del servicio y notas técnicas del procedimiento (*"Qué es lo que va a hacer"*).
+   - Acciones rápidas de 1-clic: alternar confirmación, abrir chat en WhatsApp con el número del cliente y eliminar cita.
+3. **Interactividad en Ficha de Cita (`VoceroAppointmentCard.tsx`):**
+   - El avatar y el nombre del cliente ahora tienen cursor pointer y transición visual hover para abrir fluidamente el modal de detalle.
+
+### Verificación
+- Filtro 1: Compilación limpia `npm run build` sin errores (0 errores).
+- Filtro 2: Commit registrado en git rama `main`.
+- Filtro 3: Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
+
+Agregado al historial de cambios aplicando el filtro de los tres pasos.

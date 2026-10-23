@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 09:50 GMT-6
-- **Versión Actual:** 1.88.0 (Lead Score 0-100 con Termómetro Visual & Objetivos Comerciales por Casillas)
+- **Última Actualización:** 2026-10-23 09:58 GMT-6
+- **Versión Actual:** 1.89.0 (Agenda: Botón Mes Completo Unificado en Filtros & Pop-up Profesional de Detalle de Cita)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Agenda Citas /agenda: Botón "Mes Completo" alineado junto a "Semana Siguiente" en la barra de filtros.
+  - Pop-up Detalle de Cita `VoceroAppointmentDetailModal`: Muestra qué se va a hacer, notas, WhatsApp y estado.
   - Lead Score Numérico 0-100: Termómetro visual (🔥/☕/❄️) en panel de contacto, bandeja y Kanban.
   - Objetivos Comerciales por Casillas: Subpestaña en Agente con matriz no-code de 6 funciones comerciales.
-  - Sincronización de Prompt: Inyección de directivas comerciales maestras en el bot con 1-clic.
   - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de ventana.
   - Viewport CRM Bloqueado: Contenedor en `overflow-hidden` durante modo CRM y reset `window.scrollTo(0, 0)`.
   - Unificación de Contraste en Botones: Estados activos en azul royal `#0d5bff` con texto e íconos blancos.
-  - Homologación de Resultados y Ajustes: Dimensiones, íconos reactivos y tipografía alineados al 100%.
   - Telemetría y Métricas: Clics comprar, fotos vistas, chat IA, 7 eventos y termómetro de leads.
   - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` y Human-in-the-Loop (`unresolved_queries`).
   - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.

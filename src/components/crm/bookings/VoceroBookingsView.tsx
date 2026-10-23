@@ -3,7 +3,8 @@ import { CalendarDays, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { VoceroCompactCalendar } from './VoceroCompactCalendar';
 import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard';
 import { VoceroNewBookingModal } from './VoceroNewBookingModal';
-import { getInitialAppointments } from './bookingConstants';
+import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
+import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
 
 interface VoceroBookingsViewProps {
   tenantId?: string;
@@ -15,6 +16,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   const [showMonthCalendar, setShowMonthCalendar] = useState(false);
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
 
   const now = new Date();
   const todayKey = now.toISOString().slice(0, 10);
@@ -77,30 +79,12 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
             <Plus className="w-3.5 h-3.5" />
             <span>Nueva Cita</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => { setShowMonthCalendar(!showMonthCalendar); setCalendarSelectedDate(null); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer shadow-xs ${
-              showMonthCalendar ? 'bg-[#0d5bff] border-[#0d5bff] text-white' : 'bg-white border-[#d8e2f0] text-[#0a1730] hover:bg-[#f8fafc]'
-            }`}
-          >
-            <CalendarIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{showMonthCalendar ? 'Cerrar Mes' : 'Mes Completo'}</span>
-          </button>
         </div>
       </header>
 
       {/* Filtros Temporales */}
       <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
-        {[
-          { id: 'all', label: 'Todas' },
-          { id: 'today', label: 'Hoy' },
-          { id: 'tomorrow', label: 'Mañana' },
-          { id: 'after', label: 'Pasado Mañana' },
-          { id: 'this_week', label: 'Esta Semana' },
-          { id: 'next_week', label: 'Semana Siguiente' },
-        ].map((tab) => (
+        {BOOKING_FILTER_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => { setTimeFilter(tab.id as any); setCalendarSelectedDate(null); }}
@@ -113,6 +97,24 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
             {tab.label}
           </button>
         ))}
+
+        <div className="h-4 w-px bg-[#e2e8f0] mx-0.5 shrink-0" />
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowMonthCalendar(!showMonthCalendar);
+            setCalendarSelectedDate(null);
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
+            showMonthCalendar
+              ? 'bg-[#0d5bff] text-white shadow-xs'
+              : 'bg-[#f1f5f9] text-[#42506b] hover:text-[#0a1730] hover:bg-[#e2e8f0]'
+          }`}
+        >
+          <CalendarIcon className="w-3.5 h-3.5" />
+          <span>{showMonthCalendar ? 'Ocultar Mes' : 'Mes Completo'}</span>
+        </button>
       </div>
 
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl w-full mx-auto space-y-3">
@@ -141,6 +143,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
               appointment={apt}
               onToggleStatus={handleToggleStatus}
               onDelete={(id) => setAppointments(prev => prev.filter(a => a.id !== id))}
+              onSelectAppointment={(item) => setSelectedAppointment(item)}
             />
           ))
         )}
@@ -150,6 +153,20 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddBooking={(apt) => setAppointments(prev => [apt, ...prev])}
+      />
+
+      <VoceroAppointmentDetailModal
+        appointment={selectedAppointment}
+        isOpen={Boolean(selectedAppointment)}
+        onClose={() => setSelectedAppointment(null)}
+        onToggleStatus={(id) => {
+          handleToggleStatus(id);
+          setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev);
+        }}
+        onDelete={(id) => {
+          setAppointments(prev => prev.filter(a => a.id !== id));
+          setSelectedAppointment(null);
+        }}
       />
     </div>
   );
