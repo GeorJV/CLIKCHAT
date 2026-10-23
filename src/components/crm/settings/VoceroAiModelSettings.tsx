@@ -11,38 +11,55 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
   tenant,
   onUpdateSettings
 }) => {
-  const [model, setModel] = useState(tenant?.custom_ai_config?.model || '@cf/meta/llama-3.3-70b-instruct-fp8-fast');
-  const [apiKey, setApiKey] = useState(tenant?.custom_ai_config?.apiKey || '');
-  const [cadence, setCadence] = useState(tenant?.response_delay_sec !== undefined ? String(tenant.response_delay_sec) : '0');
-  const [tone, setTone] = useState(tenant?.tone_of_voice || 'Profesional y Cortés');
+  const [model, setModel] = useState('@cf/meta/llama-3.3-70b-instruct-fp8-fast');
+  const [apiKey, setApiKey] = useState('');
+  const [cadence, setCadence] = useState('0');
+  const [tone, setTone] = useState('Profesional y Cortés');
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    if (tenant) {
-      if (tenant.custom_ai_config?.model) setModel(tenant.custom_ai_config.model);
-      if (tenant.custom_ai_config?.apiKey) setApiKey(tenant.custom_ai_config.apiKey);
-      if (tenant.response_delay_sec !== undefined) setCadence(String(tenant.response_delay_sec));
-      if (tenant.tone_of_voice) setTone(tenant.tone_of_voice);
+    if (!tenant) return;
+    let savedKey = (tenant as any)?.custom_ai_config?.apiKey || '';
+    let savedModel = (tenant as any)?.custom_ai_config?.model || '';
+
+    if (!savedKey && tenant.custom_llm_key) {
+      if (tenant.custom_llm_key.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(tenant.custom_llm_key);
+          savedKey = parsed.key || '';
+          savedModel = parsed.model || savedModel;
+        } catch {}
+      } else {
+        savedKey = tenant.custom_llm_key;
+      }
     }
+
+    if (savedKey) setApiKey(savedKey);
+    if (savedModel) setModel(savedModel);
+    if (tenant.response_delay_sec !== undefined) setCadence(String(tenant.response_delay_sec));
+    if (tenant.tone_of_voice) setTone(tenant.tone_of_voice);
   }, [tenant]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setSavedSuccess(false);
+
+    const trimmedKey = apiKey.trim();
+    const isGoogle = model.includes('gemini') || trimmedKey.startsWith('AIza') || trimmedKey.startsWith('AQ.');
+    const provider = model.startsWith('@cf') ? 'cloudflare' : isGoogle ? 'google' : model.includes('gpt') ? 'openai' : 'openrouter';
+
+    const custom_llm_key = trimmedKey ? JSON.stringify({ key: trimmedKey, provider, model }) : '';
+    const custom_ai_config = trimmedKey ? { enabled: true, provider, model, apiKey: trimmedKey, temperature: 0.3 } : undefined;
+
     try {
       const ok = await onUpdateSettings({
         response_delay_sec: Number(cadence) || 0,
         tone_of_voice: tone,
-        custom_ai_config: {
-          enabled: true,
-          provider: model.startsWith('@cf') ? 'cloudflare' : 'openrouter',
-          model,
-          apiKey: apiKey.trim(),
-          temperature: 0.3
-        }
-      });
+        custom_llm_key,
+        custom_ai_config
+      } as any);
       if (ok) {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
@@ -59,21 +76,31 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
           <h3 className="text-sm font-bold text-[#0a1730] flex items-center gap-2">
             <Cpu className="h-4 w-4 text-[#0d5bff]" /> Motor de Inteligencia Artificial
           </h3>
-          <p className="text-xs text-[#62728d]">Selecciona el modelo que procesará las consultas y objeciones de tus clientes.</p>
+          <p className="text-xs text-[#62728d]">Selecciona el modelo LLM que atenderá y cotizará con tus clientes.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-[#42506b] mb-1">Modelo LLM Principal</label>
+            <label className="block text-xs font-semibold text-[#42506b] mb-1">Modelo LLM</label>
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             >
-              <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Nativo / Por Defecto)</option>
-              <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (OpenRouter Floor - Respaldo Económico & Rápido)</option>
-              <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Equilibrado)</option>
-              <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat)</option>
+              <optgroup label="Infraestructura ClikChat (Sin costo de API)">
+                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Por Defecto)</option>
+              </optgroup>
+              <optgroup label="Google AI Studio (Gemini)">
+                <option value="gemini-2.0-flash">Google Gemini 2.0 Flash (Recomendado, Ultra Rápido)</option>
+                <option value="gemini-1.5-pro">Google Gemini 1.5 Pro (Razonamiento Complejo)</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (Floor Económico)</option>
+                <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat Comercial)</option>
+              </optgroup>
+              <optgroup label="OpenAI">
+                <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+              </optgroup>
             </select>
           </div>
 
@@ -94,16 +121,18 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
 
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
-              <Key className="h-3.5 w-3.5 text-[#0d5bff]" /> API Key Propia de OpenRouter / Proveedor (Opcional)
+              <Key className="h-3.5 w-3.5 text-[#0d5bff]" /> API Key Propia (Google AI Studio / OpenRouter / OpenAI)
             </label>
             <input
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-or-v1-... (Dejar vacío para usar la infraestructura de ClikChat)"
+              placeholder="AIzaSy... (Google Studio) o sk-or-v1-... (OpenRouter) o sk-... (OpenAI)"
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs font-mono text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             />
-            <p className="text-[10.5px] text-[#8391aa] mt-1">Si no tienes clave propia, el sistema utiliza el pool de alta velocidad de ClikChat sin interrupciones.</p>
+            <p className="text-[10.5px] text-[#8391aa] mt-1">
+              Dejar vacío para usar la infraestructura de ClikChat. Si colocas tu clave de Google AI Studio o de OpenRouter, el bot consumirá directamente tu propia API.
+            </p>
           </div>
 
           <div className="md:col-span-2">

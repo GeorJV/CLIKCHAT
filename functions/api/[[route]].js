@@ -2950,9 +2950,22 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format, custom_ai_config } = body;
 
-      const hasCustomKey = custom_llm_key !== undefined;
+      let resolvedCustomKey = custom_llm_key;
+      if (resolvedCustomKey === undefined && custom_ai_config) {
+        if (custom_ai_config.apiKey && custom_ai_config.apiKey.trim()) {
+          resolvedCustomKey = JSON.stringify({
+            key: custom_ai_config.apiKey.trim(),
+            provider: custom_ai_config.provider || (custom_ai_config.apiKey.startsWith('AIza') || custom_ai_config.apiKey.startsWith('AQ.') ? 'google' : custom_ai_config.apiKey.startsWith('sk-or') ? 'openrouter' : 'openai'),
+            model: custom_ai_config.model
+          });
+        } else {
+          resolvedCustomKey = null;
+        }
+      }
+
+      const hasCustomKey = resolvedCustomKey !== undefined;
       const keyClause = hasCustomKey ? ', custom_llm_key = ?20' : '';
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
@@ -2966,7 +2979,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         id
       ];
       if (hasCustomKey) {
-        params.push(custom_llm_key || null);
+        params.push(resolvedCustomKey || null);
       }
 
       try {
