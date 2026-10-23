@@ -51,27 +51,31 @@ export const WhatsAppTestChatModal: React.FC<WhatsAppTestChatModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#171616] border border-[#2b2929] w-full max-w-md rounded-2xl p-5 shadow-2xl text-zinc-100 relative">
-        <div className="flex items-center justify-between border-b border-[#262424] pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 border border-[#25D366]/30 flex items-center justify-center text-[#25D366]">
-              <Send className="w-4 h-4" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 font-sans">
+      <div className="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-2xl text-[#0a1730] relative space-y-4">
+        <div className="flex items-start justify-between pb-3 border-b border-[#f1f5f9]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#0d5bff] shadow-2xs shrink-0">
+              <Send className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Probar Conexión WhatsApp en Vivo</h3>
-              <p className="text-[11px] text-zinc-400">Envía un mensaje de prueba a tu propio teléfono.</p>
+              <h3 className="text-sm font-bold text-[#0a1730]">Probar Conexión WhatsApp en Vivo</h3>
+              <p className="text-xs text-[#62728d] mt-0.5">Envía un mensaje de prueba a tu propio teléfono.</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#8391aa] hover:text-[#0a1730] p-1.5 rounded-lg hover:bg-[#f1f5f9] transition cursor-pointer"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSendTest} className="space-y-3.5 text-xs">
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-emerald-400" />
+            <label className="block font-bold text-[#0a1730] mb-1.5 flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-emerald-600" />
               <span>Número de Teléfono Destino (con código de país) *</span>
             </label>
             <input
@@ -80,48 +84,52 @@ export const WhatsAppTestChatModal: React.FC<WhatsAppTestChatModalProps> = ({
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="Ej: 50688888888 o 5215512345678"
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] rounded-xl px-3.5 py-2 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
+            <label className="block font-bold text-[#0a1730] mb-1.5">
               Mensaje de prueba:
             </label>
             <textarea
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl p-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+              className="w-full bg-[#f8fafc] rounded-xl p-3 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition resize-none leading-relaxed"
             />
           </div>
 
           {result && (
-            <div className={`p-3 rounded-xl border flex items-start gap-2 ${
+            <div className={`p-3 rounded-xl flex items-start gap-2 shadow-2xs ${
               result.success
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                ? 'bg-emerald-50 text-emerald-800'
+                : 'bg-rose-50 text-rose-800'
             }`}>
-              {result.success ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" /> : <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />}
-              <span className="text-[11px] leading-tight">{result.message}</span>
+              {result.success ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+              )}
+              <span className="text-[11.5px] font-semibold leading-tight">{result.message}</span>
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#262424]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#f1f5f9]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-[#62728d] hover:text-[#0a1730] hover:bg-[#f1f5f9] transition cursor-pointer"
             >
               Cerrar
             </button>
             <button
               type="submit"
               disabled={loading || !recipient.trim()}
-              className="px-4 py-1.5 rounded-xl font-bold bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 shadow-lg shadow-[#25D366]/20 flex items-center gap-1.5 transition disabled:opacity-50"
+              className="px-5 py-2 rounded-xl font-bold text-xs bg-[#0d5bff] hover:bg-[#0047e1] text-white shadow-sm hover:shadow flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{loading ? 'Enviando...' : 'Enviar Prueba'}</span>
+              <span>{loading ? 'Enviando...' : 'Enviar Mensaje de Prueba'}</span>
             </button>
           </div>
         </form>

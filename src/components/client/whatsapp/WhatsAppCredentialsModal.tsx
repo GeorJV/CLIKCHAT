@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WhatsAppConfig } from '../../../types/whatsapp';
-import { X, CheckCircle, ShieldCheck, Key, Phone, Hash } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Key, Phone, Hash } from 'lucide-react';
 
 interface WhatsAppCredentialsModalProps {
   isOpen: boolean;
@@ -47,28 +47,33 @@ export const WhatsAppCredentialsModal: React.FC<WhatsAppCredentialsModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#171616] border border-[#2b2929] w-full max-w-lg rounded-2xl p-5 shadow-2xl text-zinc-100 relative">
-        <div className="flex items-center justify-between border-b border-[#262424] pb-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 border border-[#25D366]/30 flex items-center justify-center text-[#25D366]">
-              <ShieldCheck className="w-4 h-4" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 font-sans">
+      <div className="bg-white w-full max-w-lg rounded-2xl p-5 sm:p-6 shadow-2xl text-[#0a1730] relative space-y-4">
+        {/* Cabecera del Modal */}
+        <div className="flex items-start justify-between pb-3 border-b border-[#f1f5f9]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-2xs shrink-0">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Credenciales de Meta Cloud API</h3>
-              <p className="text-[11px] text-zinc-400">Vincular tu cuenta oficial de WhatsApp Business a ClikChat.</p>
+              <h3 className="text-sm font-bold text-[#0a1730]">Credenciales de Meta Cloud API</h3>
+              <p className="text-xs text-[#62728d] mt-0.5">Vincula tu cuenta oficial de WhatsApp Business a ClikChat.</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#8391aa] hover:text-[#0a1730] p-1.5 rounded-lg hover:bg-[#f1f5f9] transition cursor-pointer"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1 flex items-center gap-1.5">
-              <Hash className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Phone Number ID (Identificador de Número de Teléfono) *</span>
+            <label className="block font-bold text-[#0a1730] mb-1.5 flex items-center gap-1.5">
+              <Hash className="w-3.5 h-3.5 text-[#0d5bff]" />
+              <span>Phone Number ID (Identificador de Teléfono) *</span>
             </label>
             <input
               type="text"
@@ -76,14 +81,14 @@ export const WhatsAppCredentialsModal: React.FC<WhatsAppCredentialsModalProps> =
               value={phoneNumberId}
               onChange={(e) => setPhoneNumberId(e.target.value)}
               placeholder="Ej: 104928374928174"
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] rounded-xl px-3.5 py-2 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Número de WhatsApp Business *</span>
+            <label className="block font-bold text-[#0a1730] mb-1.5 flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Número de WhatsApp Business Oficial *</span>
             </label>
             <input
               type="text"
@@ -91,13 +96,13 @@ export const WhatsAppCredentialsModal: React.FC<WhatsAppCredentialsModalProps> =
               value={businessPhone}
               onChange={(e) => setBusinessPhone(e.target.value)}
               placeholder="Ej: +506 8888-8888 o +52 1 55 1234 5678"
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] rounded-xl px-3.5 py-2 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1 flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-emerald-400" />
+            <label className="block font-bold text-[#0a1730] mb-1.5 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-[#0d5bff]" />
               <span>Token de Acceso Permanente (System User Token) *</span>
             </label>
             <textarea
@@ -106,12 +111,12 @@ export const WhatsAppCredentialsModal: React.FC<WhatsAppCredentialsModalProps> =
               value={accessToken}
               onChange={(e) => setAccessToken(e.target.value)}
               placeholder="EAABw..."
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl p-2.5 text-white font-mono placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-none"
+              className="w-full bg-[#f8fafc] rounded-xl p-3 text-xs text-[#0a1730] font-mono placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition resize-none leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
+            <label className="block font-bold text-[#0a1730] mb-1.5">
               Token de Verificación Personalizado (Opcional)
             </label>
             <input
@@ -119,24 +124,25 @@ export const WhatsAppCredentialsModal: React.FC<WhatsAppCredentialsModalProps> =
               value={verifyToken}
               onChange={(e) => setVerifyToken(e.target.value)}
               placeholder="clikchat_wa_token"
-              className="w-full bg-[#111010] border border-[#2b2828] rounded-xl px-3 py-1.5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] rounded-xl px-3.5 py-2 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white shadow-2xs transition"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#262424]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#f1f5f9]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              disabled={loading}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-[#62728d] hover:text-[#0a1730] hover:bg-[#f1f5f9] transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="px-4 py-1.5 rounded-xl font-bold bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 shadow-lg shadow-[#25D366]/20 flex items-center gap-1.5 transition disabled:opacity-50"
+              disabled={loading || !phoneNumberId.trim() || !accessToken.trim()}
+              className="px-5 py-2 rounded-xl font-bold text-xs bg-[#0d5bff] hover:bg-[#0047e1] text-white shadow-sm hover:shadow flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             >
-              <CheckCircle className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{loading ? 'Guardando...' : 'Guardar y Vincular'}</span>
             </button>
           </div>

@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Homologación al Tema Claro Oficial en la Ventana de Credenciales de Meta Cloud API y Canales de WhatsApp
+- **Diagnóstico y Necesidad:**
+  1. *Desfase Visual Oscuro en Credenciales Meta:* Al hacer clic en "Configurar Credenciales" en el canal WhatsApp, la ventana "Credenciales de Meta Cloud API" (`WhatsAppCredentialsModal.tsx`) se desplegaba en fondo negro (`#171616`, inputs `#111010`, bordes oscuros), contrastando negativamente con el tema claro institucional del CRM.
+  2. *Módulos Satélite de WhatsApp:* El modal de prueba en vivo (`WhatsAppTestChatModal.tsx`), la tarjeta de conexión (`WhatsAppConnectCard.tsx`) y la guía de vinculación (`WhatsAppSetupGuide.tsx`) también conservaban esquemas oscuros anticuados.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `WhatsAppCredentialsModal.tsx` (154 líneas): Modal en blanco puro, borderless con sombra envolvente `shadow-2xl`, inputs y textarea de token en `bg-[#f8fafc]` con `shadow-2xs`, etiquetas `#0a1730` y botón de guardado en azul royal `#0d5bff`.
+  2. `WhatsAppTestChatModal.tsx` (140 líneas): Modal de prueba adaptado al tema claro con `shadow-2xl` y alertas de estado en verde esmeralda y rose suave.
+  3. `WhatsAppConnectCard.tsx` (140 líneas) & `WhatsAppSetupGuide.tsx` (73 líneas): Tarjetas en blanco institucional con `shadow-sm`, zonas de webhook y verify token en `bg-[#f8fafc]` y reemplazo del ícono de IA por `HelpCircle`.
+  4. `VoceroChannelsSettings.tsx` (158 líneas): Tarjeta del canal WhatsApp adaptada a diseño borderless en `bg-white shadow-sm` con botones limpios y elevados.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 11.77s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-C3T4rzUG.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Reestructuración Visual Profesional del Encabezado y Pestañas en Ajustes del Sistema
 - **Diagnóstico y Necesidad:**
   1. *Colisión y Truncamiento en el Encabezado:* El título "Ajustes del Sistema" se truncaba a "Ajustes del S..." y la palabra "CONFIGURACIÓN" se situaba horizontalmente al lado, chocando y pegándose directamente contra el botón "Perfil del Negocio".

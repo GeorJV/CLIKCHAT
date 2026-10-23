@@ -1,19 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 11:28 GMT-6
-- **Versión Actual:** 1.96.0 (Reestructuración Visual Profesional de Encabezado y Pestañas de Ajustes)
+- **Última Actualización:** 2026-10-23 11:35 GMT-6
+- **Versión Actual:** 1.97.0 (Homologación Tema Claro Credenciales Meta Cloud API & WhatsApp)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Credenciales Meta Cloud: Modal `WhatsAppCredentialsModal` homologado a blanco borderless con shadow-2xl.
+  - Canales WhatsApp: Modales y tarjetas (`WhatsAppTestChatModal`, `WhatsAppConnectCard`) en tema claro oficial.
   - Encabezado Ajustes: Título "Ajustes del Sistema" arriba y "CONFIGURACIÓN" abajo en pequeño.
   - Pestañas Ajustes: Reestructuradas con etiquetas simétricas y espacio generoso, sin recortes.
   - Plantillas de Restricciones: Modal `CreateRulePresetModal` con Nombre, Subtítulo y Descripción guardable.
-  - Tarjetas de Restricción: Componente atómico `RulePresetCardItem` con alternancia 1-clic y borrado.
   - Reglas Operativas & Documentos RAG: Homologados al tema claro oficial (#f8fafc/white/azul #0d5bff).
   - Diseño Borderless & Elevated: Sin bordes duros de caja, resaltados limpios con sombras suaves.
   - FAQ IQ Objeciones & Modal: Totalmente borderless en blanco puro, shadow-2xl e inputs limpios.
-  - Flow IQ & Flow 4 Pasos: Editor atómico con sombras suaves y sin bordes toscos.
   - Cero Íconos de IA: Erradicación universal de Bot/Brain/Sparkles en navegación y vistas.
   - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
