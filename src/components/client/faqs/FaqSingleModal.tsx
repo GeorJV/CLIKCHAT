@@ -15,8 +15,6 @@ export const FaqSingleModal: React.FC<FaqSingleModalProps> = ({
   onSubmit,
   existingCategories
 }) => {
-  if (!isOpen) return null;
-
   const [question, setQuestion] = useState(''), [answer, setAnswer] = useState(''), [category, setCategory] = useState('general');
   const [isSubmitting, setIsSubmitting] = useState(false), [hasSaved, setHasSaved] = useState(false), [saveCount, setSaveCount] = useState(0);
   const [slideState, setSlideState] = useState<'idle' | 'slide-out' | 'slide-in-prep'>('idle');
@@ -46,6 +44,8 @@ export const FaqSingleModal: React.FC<FaqSingleModalProps> = ({
       setTimeout(() => { setSlideState('idle'); questionInputRef.current?.focus(); }, 40);
     }, 220);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto font-sans">

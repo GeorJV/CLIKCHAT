@@ -24,8 +24,6 @@ export const ProductModal: React.FC<Props> = ({
   businessType = 'tienda'
 }) => {
   const { isVoceroMode } = useVoceroMode();
-  if (!isOpen) return null;
-
   const resolvedCurrency = productToEdit?.currency || defaultCurrency || 'CRC';
   const isRestaurant = businessType === 'restaurante', isServices = businessType === 'servicios';
   const [name, setName] = useState(''), [category, setCategory] = useState(isRestaurant ? 'Platos Fuertes' : 'General');
@@ -35,6 +33,7 @@ export const ProductModal: React.FC<Props> = ({
   const [benefits, setBenefits] = useState(''), [details, setDetails] = useState(''), [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (productToEdit) {
       setName(productToEdit.name || '');
       setCategory(productToEdit.details?.category || (isRestaurant ? 'Platos Fuertes' : 'General'));
@@ -78,6 +77,8 @@ export const ProductModal: React.FC<Props> = ({
       onClose();
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/55 backdrop-blur-xs overflow-y-auto font-sans">

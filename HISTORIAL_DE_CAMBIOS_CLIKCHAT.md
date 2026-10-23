@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Corrección de Reglas de Hooks en Modales (ProductModal, FaqModals) — Erradicación de Error "Rendered more hooks" (v2.1.1)
+- **Diagnóstico y Necesidad:**
+  1. *Fallo en Apertura de "Nuevo Servicio / Nuevo Producto":* Al pulsar el botón "Nuevo Servicio" en el Catálogo de Servicios del CRM, la pantalla se rompía mostrando el Error Boundary con el mensaje: `Rendered more hooks than during the previous render.`
+  2. *Causa Raíz:* En `ProductModal.tsx`, la cláusula de guardia `if (!isOpen) return null;` estaba colocada antes de 8 hooks de `useState` y del hook `useEffect`. Al pasar `isOpen` de `false` a `true`, la cantidad de hooks ejecutados variaba entre renders consecutivos, violando las Reglas de Hooks de React. El mismo patrón de riesgo existía en `FaqFileUploadModal.tsx` y `FaqSingleModal.tsx`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `ProductModal.tsx` (173 líneas):
+     - Reubicación de la cláusula `if (!isOpen) return null;` al final del componente, inmediatamente antes del renderizado JSX.
+     - Guarda `if (!isOpen) return;` dentro de `useEffect` para evitar ejecuciones de sincronización innecesarias mientras el modal está cerrado.
+     - Cumplimiento incondicional de orden y cantidad de hooks en el 100% de los ciclos de renderizado.
+  2. `FaqFileUploadModal.tsx` (135 líneas) y `FaqSingleModal.tsx` (134 líneas):
+     - Corrección preventiva del mismo patrón de early return previo a hooks, garantizando estabilidad total en modales de carga masiva y FAQ individual.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) con 0 errores TypeScript. Bundle: `dist/assets/index-BOHSCwgx.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Reestructuración Jerárquica del CRM en 3 Bloques Lógicos y Guía Secuencial de Asistente (v2.1.0)
 - **Diagnóstico y Necesidad:**
   1. *Sobrecarga Cognitiva y Desorden en la Barra:* El menú lateral acumulaba 13 secciones dispersas sin orden cronológico, mezclando tareas operativas de diario con configuraciones iniciales de una sola vez, provocando confusión en el usuario sobre qué hacer primero.

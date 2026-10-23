@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 16:10 GMT-6
-- **Versión Actual:** 2.1.0 (Reestructuración Jerárquica y Guía Secuencial en CRM sin Pérdida de Funciones)
+- **Última Actualización:** 2026-10-23 16:35 GMT-6
+- **Versión Actual:** 2.1.1 (Corrección Reglas de Hooks en Modales ProductModal y FAQ)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Corrección Reglas de Hooks: Erradicado error 'Rendered more hooks' al abrir Nuevo Servicio / Producto.
   - Navegación CRM en 3 Bloques: Operación Diaria (Bandeja, Pipeline, Citas, Clientes) y Mi Asistente IA (4 Pasos).
   - Guía Secuencial Asistente: Identidad, Flow IQ, FAQ IQ, Reglas y Documentos numerados en 6 fases con barra de guía.
   - Botón Flotante Live Lab: Acceso a 1-clic para simular y probar al bot en vivo desde cualquier pantalla del CRM.
