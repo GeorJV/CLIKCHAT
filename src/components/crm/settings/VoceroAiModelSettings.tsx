@@ -91,8 +91,8 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({
                 <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Por Defecto)</option>
               </optgroup>
               <optgroup label="Google AI Studio (Gemini)">
-                <option value="gemini-2.0-flash">Google Gemini 2.0 Flash (Recomendado, Ultra Rápido)</option>
-                <option value="gemini-1.5-pro">Google Gemini 1.5 Pro (Razonamiento Complejo)</option>
+                <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Última Generación Oficial, Ultra Rápido)</option>
+                <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Última Generación Oficial, Máxima Inteligencia)</option>
               </optgroup>
               <optgroup label="OpenRouter">
                 <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (Floor Económico)</option>

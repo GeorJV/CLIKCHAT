@@ -2,20 +2,20 @@
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
 - **Última Actualización:** 2026-10-22 19:10 GMT-6
-- **Versión Actual:** 1.74.0 (Conexión Nativa Google AI Studio & OpenRouter en Producción)
+- **Versión Actual:** 1.75.0 (Google AI Studio Gemini 2.5 Flash / Pro Oficiales & Memoria Protegida)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit bd23b6d)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 02b448c)
 - **Estado Actual del Sistema:**
-  - Conexión Multi-IA Nativa: Integración bidireccional en Ajustes y Backend para Google AI Studio (`generativelanguage`), OpenRouter (`openrouter.ai`) y Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`).
+  - Conexión Multi-IA Nativa: Google AI Studio (`gemini-2.5-flash`, `gemini-2.5-pro`), OpenRouter (`openrouter.ai`) y Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`).
   - Suite de Agente Vocero al 100%: Identidad, Prompt, 4 Pasos, Objeciones Q&A, Reglas Operativas y Docs RAG.
   - Laboratorio y Juez Vocero: 6 personas compradoras, AI Judge scoring (0-100) y guardado de respuestas doradas.
   - Citas & Reservaciones Interactivas: Modal "+ Nueva Cita", toggle confirmada/pendiente y persistencia localStorage.
   - Contactos CRM: Exportación a CSV con 1 clic, filtros por canal (WhatsApp/Web) y enlace directo a WhatsApp.
-  - Verificado con 3 Filtros: Build limpio (`index-LkIZUqO4.js`), commit `bd23b6d` en `main` y 12/12 rutas verificadas.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 12/12 rutas verificadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
-  - Registro en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md únicamente tras confirmación explícita del usuario.
-  - Prohibido modificar funcionalidades registradas en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md (Memoria Protegida).
+  - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
+  - Modelos Google AI Studio: Uso exclusivo de las últimas versiones oficiales (Gemini 2.5 Flash / Pro). Prohibidas versiones obsoletas.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-180 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.

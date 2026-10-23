@@ -14,7 +14,7 @@ const PRESET_MODELS = [
   { id: 'z-ai/glm-5.3-flash', name: 'GLM 5.3 Flash (Económico)' },
   { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1 (Razonamiento)' },
   { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B' },
-  { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash' }
+  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' }
 ];
 
 export const AiBudgetModal: React.FC<Props> = ({ isOpen, onClose, currentSettings, onSaved }) => {

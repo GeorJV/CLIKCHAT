@@ -16,6 +16,21 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Estandarización Exclusiva de Modelos Google AI Studio (Gemini 2.5 Flash / Pro) y Erradicación de Versiones Obsoletas
+- **Diagnóstico y Necesidad:**
+  1. *Regla de Calidad de Modelos Google:* Las versiones previas (como Gemini 2.0 Flash o 1.5 Pro) quedaron obsoletas y fuera del estándar de producción de Google AI Studio. Se requería erradicar cualquier referencia o configuración a versiones antiguas y garantizar que el sistema opere exclusivamente con las mejores y más recientes versiones oficiales de Google.
+- **Solución Implementada (ARQMODULAR & Memoria Protegida):**
+  1. *Ajustes de Modelo del Agente (`VoceroAiModelSettings.tsx`):* Configuración exclusiva de las opciones oficiales de Google AI Studio: `Google Gemini 2.5 Flash (Última Generación Oficial, Ultra Rápido)` y `Google Gemini 2.5 Pro (Última Generación Oficial, Máxima Inteligencia)`.
+  2. *Motor Edge Serverless (`functions/api/[[route]].js`):* Actualización del endpoint de Google AI Studio para resolver por defecto a `gemini-2.5-flash` en peticiones con clave personalizada y consultas del analista.
+  3. *Presets y Catálogo de Modelos (`customAIConfigs.ts` & `AiBudgetModal.tsx`):* Depuración total de opciones obsoletas, estandarizando el pool de Google en `gemini-2.5-flash` y `gemini-2.5-pro`.
+  4. *Regla de Oro en `GEMINI.md` (Regla 9):* Prohibición permanente de invocar o sugerir versiones desactualizadas de Google en todas las sesiones y desarrollo del proyecto.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 19.25s con 0 errores TypeScript (`npm run build`). Bundle activo `index-DPLuhYoc.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit en progreso).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 12/12 rutas activas y 0 errores.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Suite Completa Vocero CRM 100%, Multi-IA Nativa (Google AI Studio & OpenRouter) y Agenda Interactiva
 - **Diagnóstico y Necesidad:**
   1. *Funcionalidades Pendientes de Vocero CRM:* Para alcanzar el 100% de paridad con la suite comercial Vocero CRM, se requería incorporar la agenda interactiva de citas, la exportación de contactos con filtros por canal y el laboratorio de simulación con juez de calidad IA.
