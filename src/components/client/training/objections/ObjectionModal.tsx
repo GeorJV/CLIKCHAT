@@ -46,30 +46,31 @@ export const ObjectionModal: React.FC<ObjectionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#161515] border border-[#2d2a2a] w-full max-w-lg rounded-2xl p-5 shadow-2xl relative text-zinc-100">
-        <div className="flex items-center justify-between border-b border-[#282626] pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+      <div className="bg-white border border-[#e2e8f0] w-full max-w-lg rounded-3xl shadow-2xl relative overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e8edf6] bg-[#f8fafc]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-[#0a1730]">
                 {editingFaq ? 'Editar Regla de Objeción' : 'Nueva Regla de Objeción (Nivel 2)'}
               </h3>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-[#62728d]">
                 Respuesta exacta con $0 costo de IA y menos de 50ms de latencia.
               </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800">
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-[#8391aa] hover:bg-[#e8edf6] hover:text-[#0a1730] transition cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
+            <label className="block text-xs font-semibold text-[#0a1730] mb-1">
               ¿Qué pregunta u objeción tiene el cliente? *
             </label>
             <input
@@ -78,12 +79,12 @@ export const ObjectionModal: React.FC<ObjectionModalProps> = ({
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ej: ¿Hacen envíos hoy? o ¿Aceptan Sinpe Móvil?"
-              className="w-full bg-[#111010] border border-[#2e2b2b] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] border border-[#d8e2f0] rounded-xl px-3 py-2 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:border-[#0d5bff] focus:bg-white transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
+            <label className="block text-xs font-semibold text-[#0a1730] mb-1">
               Respuesta exacta del bot (Regla de Oro) *
             </label>
             <textarea
@@ -92,12 +93,12 @@ export const ObjectionModal: React.FC<ObjectionModalProps> = ({
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Ej: Sí, si ordenas antes de las 3:00 PM enviamos hoy mismo por mensajería privada..."
-              className="w-full bg-[#111010] border border-[#2e2b2b] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500 resize-none"
+              className="w-full bg-[#f8fafc] border border-[#d8e2f0] rounded-xl p-3 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:border-[#0d5bff] focus:bg-white resize-none transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
+            <label className="block text-xs font-semibold text-[#0a1730] mb-1">
               Categoría
             </label>
             <input
@@ -105,22 +106,22 @@ export const ObjectionModal: React.FC<ObjectionModalProps> = ({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="Ej: Pagos, Envíos, Citas, Políticas"
-              className="w-full bg-[#111010] border border-[#2e2b2b] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#f8fafc] border border-[#d8e2f0] rounded-xl px-3 py-1.5 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:border-[#0d5bff] focus:bg-white transition"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#262424]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8edf6]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#62728d] hover:text-[#0a1730] hover:bg-[#f1f5f9] transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30 flex items-center gap-1.5 transition disabled:opacity-50"
+              className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#0d5bff] hover:bg-[#0047e1] text-white shadow-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>{loading ? 'Guardando...' : 'Guardar Regla de Oro'}</span>

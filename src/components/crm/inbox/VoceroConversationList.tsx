@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Inbox, Sparkles } from 'lucide-react';
+import { Search, X, Inbox, Plus } from 'lucide-react';
 import { CrmLead, CrmInboxFilter } from '../../../types/crm';
 import { VoceroConversationItem } from './VoceroConversationItem';
 import { LiveVisitorsBar } from '../presence/LiveVisitorsBar';
@@ -68,7 +68,7 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
               onClick={onOpenNewLeadModal}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ebf1ff] hover:bg-[#d3e2ff] text-[#0038d8] text-[11.5px] font-bold transition cursor-pointer"
             >
-              <Sparkles className="w-3 h-3" />
+              <Plus className="w-3 h-3" />
               <span>Nuevo</span>
             </button>
           </div>

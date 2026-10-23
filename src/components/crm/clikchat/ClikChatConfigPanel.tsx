@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
-import { Bot, Save, CheckCircle2, Sparkles, MessageSquare, Palette } from 'lucide-react';
+import { Bot, Save, CheckCircle2, MessageSquare, Palette } from 'lucide-react';
 
 interface Props {
   tenant: Tenant | null;

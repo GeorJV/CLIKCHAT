@@ -2,7 +2,7 @@ import React from 'react';
 import { Tenant, Product, FAQ } from '../../../types';
 import { VoceroNavTab } from '../VoceroAppNav';
 import {
-  ListChecks, Store, ShoppingBag, Sparkles, MessageSquare,
+  ListChecks, Store, ShoppingBag, UserCog, MessageSquare,
   CheckCircle2, Circle, ArrowRight, ShieldCheck
 } from 'lucide-react';
 
@@ -55,7 +55,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
         ? `Configurado como "${tenant?.bot_name || 'Agente'}" con los 4 pasos de identidad activos.`
         : 'Configura los 4 pasos: 1. Nombre, 2. Tono, 3. Mensaje de bienvenida y 4. System Prompt.',
       isDone: isStep3Done,
-      icon: Sparkles,
+      icon: UserCog,
       targetTab: 'agent' as VoceroNavTab,
       targetSubPath: 'agente',
       btnLabel: isStep3Done ? 'Afinar Agente' : 'Entrenar Agente'

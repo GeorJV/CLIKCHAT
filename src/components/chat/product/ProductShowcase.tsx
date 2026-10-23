@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck, ShoppingBag } from 'lucide-react';
+import { FileText, CreditCard, ChevronLeft, ChevronRight, Maximize2, CheckCircle2, Truck, ShoppingBag } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 import { ThemeStyles } from './productThemes';
 import { formatPriceWithCurrency } from '../../../utils/currency';
@@ -108,7 +108,7 @@ export const ProductShowcase: React.FC<Props> = ({
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-2.5 shrink-0">
           <button type="button" onClick={onOpenBenefits} className={`flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.benefitsBtn}`}>
-            <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors duration-300 shrink-0 relative z-10" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors duration-300 shrink-0 relative z-10" />
             <span className="text-zinc-300 group-hover:text-white transition-colors duration-300 relative z-10 drop-shadow-sm">Beneficios</span>
           </button>
           <button type="button" onClick={onOpenSpecs} className={`flex items-center justify-center gap-1.5 text-xs font-bold transition shadow-sm cursor-pointer active:scale-98 group ${themeStyles.specsBtn}`}>

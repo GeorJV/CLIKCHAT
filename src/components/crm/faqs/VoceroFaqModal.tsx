@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FAQ } from '../../../types';
-import { X, Sparkles, Save } from 'lucide-react';
+import { X, BookOpen, Save } from 'lucide-react';
 
 interface VoceroFaqModalProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export const VoceroFaqModal: React.FC<VoceroFaqModalProps> = ({
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-[#e2e8f0]">
         <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3 mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#0d5bff]" />
+            <BookOpen className="h-4 w-4 text-[#0d5bff]" />
             <h3 className="text-sm font-bold text-[#0a1730]">
               {faq ? 'Editar Pregunta Frecuente (RAG)' : 'Nueva Pregunta Frecuente (RAG)'}
             </h3>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChatMessage, Product } from '../../types';
-import { Sparkles, HelpCircle } from 'lucide-react';
+import { CheckCircle2, HelpCircle } from 'lucide-react';
 import { ChatAudioPlayerBubble } from './audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from './ChatMessageContent';
 import { splitMessageByDeliveryMode, DeliveryMode } from '../../utils/messageSplitter';
@@ -40,7 +40,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         >
           {!isUser && msg.levelLabel && (
             <div className="flex items-center space-x-1 mb-1.5 pb-1 border-b border-slate-700/50">
-              <Sparkles className="w-3 h-3 text-indigo-400 shrink-0" />
+              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
               <span className="text-[10px] font-bold text-indigo-300 truncate">{msg.levelLabel}</span>
               {msg.stoppedEarly && (
                 <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded">
@@ -120,7 +120,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           >
             {isFirst && msg.levelLabel && (
               <div className="flex items-center space-x-1 mb-1.5 pb-1 border-b border-slate-700/50">
-                <Sparkles className="w-3 h-3 text-indigo-400 shrink-0" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
                 <span className="text-[10px] font-bold text-indigo-300 truncate">{msg.levelLabel}</span>
                 {msg.stoppedEarly && (
                   <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded">Verificado</span>

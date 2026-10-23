@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, MessageSquare, Instagram, Facebook, Smartphone, QrCode, ExternalLink, Sparkles } from 'lucide-react';
+import { Copy, Check, MessageSquare, Instagram, Facebook, Smartphone, QrCode, ExternalLink, Target } from 'lucide-react';
 
 interface Props {
   tenantSlug: string;
@@ -19,7 +19,7 @@ export const ClikChatLinksAndTemplates: React.FC<Props> = ({ tenantSlug, storeNa
   const baseUrl = `${crmHost}/chat/${cleanSlug}`;
 
   const LINKS = [
-    { id: 'ad', label: 'Anuncios de Meta & Google', param: 'anuncio', icon: Sparkles, desc: 'Para botones de "Más Información" en campañas de anuncios pagados.' },
+    { id: 'ad', label: 'Anuncios de Meta & Google', param: 'anuncio', icon: Target, desc: 'Para botones de "Más Información" en campañas de anuncios pagados.' },
     { id: 'dm', label: 'Auto-respuesta de Instagram (DM)', param: 'dm', icon: Instagram, desc: 'Para el mensaje automático cuando te escriben por privado en Instagram.' },
     { id: 'post', label: 'Enlace en Bio o Publicaciones', param: 'post', icon: ExternalLink, desc: 'Para poner en el enlace de tu perfil de Instagram o TikTok.' },
     { id: 'sms', label: 'WhatsApp Business / Mensaje de Texto', param: 'sms', icon: Smartphone, desc: 'Para respuestas automáticas de WhatsApp Business o campañas SMS.' },

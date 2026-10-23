@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, MessageCircle } from 'lucide-react';
+import { Layers, MessageCircle } from 'lucide-react';
 import { useVoceroMode } from '../../../hooks/useVoceroMode';
 
 interface VoceroModeTogglePillProps {
@@ -23,7 +23,7 @@ export const VoceroModeTogglePill: React.FC<VoceroModeTogglePillProps> = ({ vari
       <span className="flex items-center gap-1.5">
         {isVoceroMode ? (
           <>
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
             <span className="tracking-tight text-white">Modo ClikChat CRM</span>
             <span className="text-[10px] text-zinc-400 font-normal hidden sm:inline">| Ver Clásico</span>
           </>

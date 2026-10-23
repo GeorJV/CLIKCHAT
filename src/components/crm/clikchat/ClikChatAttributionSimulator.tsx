@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TrafficSource } from '../../../types/crm';
-import { Sparkles, Send, RefreshCw, Layers } from 'lucide-react';
+import { Send, RefreshCw, Layers } from 'lucide-react';
 
 interface Props {
   tenantSlug: string;

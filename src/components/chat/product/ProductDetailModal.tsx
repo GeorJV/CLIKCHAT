@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sparkles, FileText, Check, CreditCard, Receipt } from 'lucide-react';
+import { X, FileText, Check, CreditCard, Receipt } from 'lucide-react';
 import { ProductItem, OrderItem } from '../../../types/productChat';
 import { OrderTicketModalContent } from './OrderTicketModalContent';
 
@@ -39,7 +39,7 @@ export const ProductDetailModal: React.FC<Props> = ({
         <div className="flex items-center justify-between border-b border-[#282626] pb-3">
           <div className="flex items-center gap-2.5">
             <div className={`p-2 rounded-xl border ${isOrderTicket ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
-              {mode === 'benefits' ? <Sparkles className="w-4 h-4" /> : isOrderTicket ? <Receipt className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+              {mode === 'benefits' ? <Check className="w-4 h-4" /> : isOrderTicket ? <Receipt className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">

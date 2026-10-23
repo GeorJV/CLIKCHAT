@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Homologación al Tema Claro Oficial en FAQ IQ & Objeciones y Erradicación Total del Ícono de IA
+- **Diagnóstico y Necesidad:**
+  1. *Desfase Visual en FAQ IQ & Objeciones:* La sección de objeciones y respuestas de alta precisión (`ObjectionsManagerSection`, `ObjectionCard`, `ObjectionModal`) conservaba un tema oscuro anticuado (`#181717`, `#141313`, `#262424`) que desentonaba fuertemente con la interfaz oficial blanca del CRM.
+  2. *Eliminación Obligatoria del Ícono de IA:* Presencia de íconos de chispitas/estrellitas de IA (`Sparkles`) en la cabecera del agente, barra de plantillas rápidas, menús de navegación, modales y escaparates, los cuales debían eliminarse de raíz para lograr una estética profesional, sobria y libre de clichés genéricos de IA.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. *Homologación al Tema Blanco y Azul Royal (#0d5bff):*
+     - `ObjectionsManagerSection.tsx` (174 líneas): Cabecera con fondo `#f8fafc`, bordes `#e2e8f0`, texto principal `#0a1730`, descripción `#62728d`, botón "+ Nueva Regla de Objeción" en azul royal `#0d5bff`, barra de plantillas rápidas en blanco con hover `#f1f5f9` y buscador optimizado.
+     - `ObjectionCard.tsx` (87 líneas): Tarjetas en blanco puro con bordes `#e2e8f0`, textos `#0a1730` / `#334155`, gatillo y respuesta con acentos amigables y botones de acción limpios.
+     - `ObjectionModal.tsx` (133 líneas): Modal con cabecera `#f8fafc`, inputs en fondo claro `#f8fafc`, bordes `#d8e2f0` y botón de guardado en azul royal `#0d5bff`.
+  2. *Erradicación Total del Ícono de IA (`Sparkles`):*
+     - Reemplazado o eliminado en todos los componentes del sistema: `VoceroAgentView` (`UserCog`), `VoceroAppNav` (`UserCog`), `VoceroTopNav` (`FlaskConical`), `VoceroAiSandbox` (`FlaskConical`), `VoceroCommercialOverview` (`Target`), `VoceroOnboardingView` (`UserCog`), `VoceroConversationList` (`Plus`), `ToneMultiSelectDropdown` (`SlidersHorizontal`), `VoceroFaqModal` (`BookOpen`), `VoceroUnresolvedQueriesList` (`BookOpen`), `ProductModalFieldsRight` (`CheckCircle2`), `DesktopProductShowcase` (`CheckCircle2`), `ProductShowcase` (`CheckCircle2`), `ProductDetailModal` (`Check`), `ChatHeader` y `ChatMessageItem` (`CheckCircle2`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 7.52s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-CKYdPOMX.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Telemetría Reactiva Inmediata en Vivo (Zero-Delay) & Métrica de Detalle del Producto
 - **Diagnóstico y Necesidad:**
   1. *Falta de Actualización en Vivo:* Cuando un cliente o visitante interactuaba con un producto en el chat (dando clic a comprar, viendo fotos, abriendo detalles, etc.), el dueño del negocio con el panel o modal de métricas abierto no veía los números actualizarse inmediatamente; requería cerrar y volver a abrir la ventana para que se refrescaran.

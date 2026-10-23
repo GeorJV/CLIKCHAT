@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tenant } from '../../types';
-import { Sparkles, RefreshCw, Store } from 'lucide-react';
+import { RefreshCw, Store } from 'lucide-react';
 
 interface ChatHeaderProps {
   tenant: Tenant | null;
@@ -43,7 +43,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             <h1 className="text-sm font-bold text-white tracking-tight leading-tight">
               {tenant?.bot_name || 'Asistente Virtual'}
             </h1>
-            <Sparkles className="w-3 h-3 text-indigo-400" />
           </div>
           <div className="flex items-center space-x-1.5 text-xs text-slate-400">
             <Store className="w-3 h-3 text-slate-500" />

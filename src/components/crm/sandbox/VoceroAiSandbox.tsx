@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, RefreshCw } from 'lucide-react';
+import { Send, FlaskConical, RefreshCw } from 'lucide-react';
 import { SandboxMsg, PERSONAS } from './sandboxConstants';
 import { LiveLabCorrectionModal } from './LiveLabCorrectionModal';
 import { LiveLabMessageItem } from './LiveLabMessageItem';
@@ -96,7 +96,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#0d5bff]" />
+          <FlaskConical className="h-4 w-4 text-[#0d5bff]" />
           <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Live Lab</h2>
           <span className="vocero-kicker ml-2">Prueba, Corrección & Validación en Vivo</span>
         </div>

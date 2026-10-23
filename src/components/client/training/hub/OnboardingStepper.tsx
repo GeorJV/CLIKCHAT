@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Sparkles, Bot, QrCode, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, UserCog, Bot, QrCode, CheckCircle2 } from 'lucide-react';
 
 export type OnboardingStepId = 'catalog' | 'personality' | 'simulator' | 'qr';
 
@@ -28,7 +28,7 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
     {
       id: 'personality',
       label: '2. Personalidad & Cierre',
-      icon: Sparkles,
+      icon: UserCog,
       done: hasPersonality
     },
     {

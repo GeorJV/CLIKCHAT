@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
 import { GREETING_PRESETS, applyGreetingTemplate } from './greetingPresets';
 import { GreetingDropzone } from './GreetingDropzone';
-import { Sparkles, Save, CheckCircle2, MessageSquare, Bot, RefreshCw } from 'lucide-react';
+import { Save, CheckCircle2, MessageSquare, Bot, RefreshCw } from 'lucide-react';
 
 interface InitialGreetingSectionProps {
   tenant: Tenant | null;
@@ -42,7 +42,7 @@ export const InitialGreetingSection: React.FC<InitialGreetingSectionProps> = ({ 
       {/* 1. Selector de Sugerencias Predefinidas */}
       <div className="onyx-card rounded-2xl p-4 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400" />
+          <MessageSquare className="w-4 h-4 text-emerald-400" />
           <h3 className="text-sm font-bold text-white">Sugerencias y Plantillas Rápidas</h3>
         </div>
         <p className="text-xs text-zinc-400">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
-import { Bot, MessageSquare, Sparkles, User, Save, CheckCircle2 } from 'lucide-react';
+import { Bot, MessageSquare, FileText, User, Save, CheckCircle2 } from 'lucide-react';
 import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
 import { VoceroSystemPromptAttachment } from './VoceroSystemPromptAttachment';
 
@@ -135,7 +135,7 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
       <div>
         <label className="block text-xs font-bold text-[#0a1730] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
           <span className="px-1.5 py-0.2 rounded bg-blue-100 text-[#0d5bff] font-mono text-[10px] font-bold">PASO 4</span>
-          <Sparkles className="w-3.5 h-3.5 text-[#0d5bff]" /> Instrucciones Maestras (System Prompt) & Documentos
+          <FileText className="w-3.5 h-3.5 text-[#0d5bff]" /> Instrucciones Maestras (System Prompt) & Documentos
         </label>
         <textarea
           rows={4}

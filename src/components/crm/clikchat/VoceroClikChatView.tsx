@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CrmLead, CrmMessage } from '../../../types/crm';
 import { Tenant } from '../../../types';
-import { MessageSquareCode, Link2, Settings2, Sparkles, ExternalLink, Cpu } from 'lucide-react';
+import { MessageSquareCode, Link2, Settings2, FlaskConical, ExternalLink, Cpu } from 'lucide-react';
 import { ClikChatConversationsView } from './ClikChatConversationsView';
 import { ClikChatLinksAndTemplates } from './ClikChatLinksAndTemplates';
 import { ClikChatConfigPanel } from './ClikChatConfigPanel';
@@ -52,7 +52,7 @@ export const VoceroClikChatView: React.FC<Props> = ({
     { id: 'spending' as const, label: 'Gasto & Neuronas', icon: Cpu },
     { id: 'links' as const, label: 'Enlaces & Plantillas', icon: Link2 },
     { id: 'config' as const, label: 'Ajustes Web', icon: Settings2 },
-    { id: 'simulator' as const, label: 'Simulador', icon: Sparkles },
+    { id: 'simulator' as const, label: 'Simulador', icon: FlaskConical },
   ];
 
   return (

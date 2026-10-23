@@ -3,7 +3,7 @@ import {
   X,
   Edit3,
   BookOpen,
-  Sparkles,
+  FlaskConical,
   CheckCircle2,
   Send,
   HelpCircle,
@@ -111,7 +111,7 @@ export const LiveLabCorrectionModal: React.FC<LiveLabCorrectionModalProps> = ({
             {[
               { id: 'faq' as const, label: 'FAQ IQ (Memoria RAG)', icon: BookOpen, desc: 'Guardar como FAQ oficial' },
               { id: 'flow_rule' as const, label: 'Flow IQ (Reglas)', icon: TrendingUp, desc: 'Directiva de venta' },
-              { id: 'sandbox_only' as const, label: 'Solo este Chat', icon: Sparkles, desc: 'Prueba local' },
+              { id: 'sandbox_only' as const, label: 'Solo este Chat', icon: FlaskConical, desc: 'Prueba local' },
             ].map((opt) => (
               <button
                 key={opt.id}

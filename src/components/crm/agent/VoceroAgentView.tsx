@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../../types';
-import { Sparkles, TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog, Target } from 'lucide-react';
+import { TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog, Target } from 'lucide-react';
 import { VoceroAgentIdentitySection } from './VoceroAgentIdentitySection';
 import { VoceroCommercialObjectivesSection } from './VoceroCommercialObjectivesSection';
 import { SalesFlowSection } from '../../client/training/SalesFlowSection';
@@ -44,7 +44,7 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
       {/* Header Vocero */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-6 shadow-xs">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#0d5bff]" />
+          <UserCog className="h-4 w-4 text-[#0d5bff]" />
           <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Entrenamiento del Agente</h2>
           <span className="vocero-kicker ml-2">Inteligencia Comercial</span>
         </div>

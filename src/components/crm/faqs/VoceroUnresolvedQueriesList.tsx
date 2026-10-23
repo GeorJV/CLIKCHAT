@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UnresolvedQuery } from '../../../types';
-import { MessageSquare, Send, Sparkles, CheckCircle2, User, Phone, Clock, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Send, BookOpen, CheckCircle2, User, Phone, Clock, ShieldCheck } from 'lucide-react';
 
 interface VoceroUnresolvedQueriesListProps {
   unresolved: UnresolvedQuery[];
@@ -82,7 +82,7 @@ export const VoceroUnresolvedQueriesList: React.FC<VoceroUnresolvedQueriesListPr
                 <div className="mt-3 p-3.5 rounded-xl border border-blue-200 bg-blue-50/40 space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-[#0a1730] flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-[#0d5bff]" /> Respuesta Oficial para el Bot:
+                      <BookOpen className="h-3.5 w-3.5 text-[#0d5bff]" /> Respuesta Oficial para el Bot:
                     </span>
                     <button type="button" onClick={() => setResolvingId(null)} className="text-xs text-[#62728d] hover:text-[#0a1730]">
                       Cancelar
@@ -121,7 +121,7 @@ export const VoceroUnresolvedQueriesList: React.FC<VoceroUnresolvedQueriesListPr
                     onClick={() => { setResolvingId(q.id); setAnswerText(''); }}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] text-white text-xs font-bold transition shadow-xs cursor-pointer"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <BookOpen className="h-3.5 w-3.5" />
                     <span>Responder y Auto-Entrenar Bot</span>
                   </button>
                 </div>

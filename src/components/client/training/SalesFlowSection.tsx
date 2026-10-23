@@ -8,7 +8,7 @@ import {
   parseRulesToFourSteps
 } from './salesFlowPresets';
 import { SalesFlowFourStepsEditor } from './salesflow/SalesFlowFourStepsEditor';
-import { TrendingUp, Save, CheckCircle2, Sparkles, RefreshCw, Code2 } from 'lucide-react';
+import { TrendingUp, Save, CheckCircle2, RefreshCw, Code2 } from 'lucide-react';
 
 interface Props {
   tenant: Tenant | null;
@@ -87,7 +87,7 @@ export const SalesFlowSection: React.FC<Props> = ({ tenant, onUpdateSettings }) 
       {/* Selector de Plantillas */}
       <div>
         <label className="block text-xs font-bold text-[#0a1730] mb-2 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <TrendingUp className="w-3.5 h-3.5 text-[#0d5bff]" />
           <span>Elegir Estrategia Prediseñada según tu Industria:</span>
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CrmLead, CrmMessage, TrafficSource } from '../../../types/crm';
-import { Sparkles, Instagram, ExternalLink, Smartphone, QrCode, Globe, Send, User, Pause, Play, ChevronDown } from 'lucide-react';
+import { Target, Instagram, ExternalLink, Smartphone, QrCode, Globe, Send, User, Pause, Play, ChevronDown } from 'lucide-react';
 
 interface Props {
   leads: CrmLead[];
@@ -24,7 +24,7 @@ export const ClikChatConversationsView: React.FC<Props> = ({
 
   const getSourceBadge = (source?: TrafficSource) => {
     switch (source) {
-      case 'anuncio': return { label: 'Anuncio (Ads)', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Sparkles };
+      case 'anuncio': return { label: 'Anuncio (Ads)', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Target };
       case 'dm': return { label: 'DM Instagram / FB', color: 'bg-pink-100 text-pink-700 border-pink-200', icon: Instagram };
       case 'post': return { label: 'Post / Bio', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: ExternalLink };
       case 'sms': return { label: 'SMS / WhatsApp', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Smartphone };

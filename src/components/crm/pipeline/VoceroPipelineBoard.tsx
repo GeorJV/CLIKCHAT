@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Sparkles, CheckCircle, Zap } from 'lucide-react';
+import { Plus, CheckCircle, Zap } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
 import { VoceroPipelineColumn } from './VoceroPipelineColumn';
 import { VoceroNewLeadModal } from './VoceroNewLeadModal';

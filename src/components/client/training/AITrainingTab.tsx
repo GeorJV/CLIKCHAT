@@ -7,7 +7,7 @@ import { SalesFlowSection } from './SalesFlowSection';
 import { ObjectionsManagerSection } from './objections/ObjectionsManagerSection';
 import { LiveBotSimulator } from './simulator/LiveBotSimulator';
 import { UnresolvedQuery, Tenant, FAQ } from '../../../types';
-import { Brain, HelpCircle, FileText, Sparkles, ShieldAlert, TrendingUp, ShieldCheck, Bot } from 'lucide-react';
+import { Brain, HelpCircle, FileText, MessageSquare, ShieldAlert, TrendingUp, ShieldCheck, Bot } from 'lucide-react';
 
 interface AITrainingTabProps {
   tenantId?: string;
@@ -125,7 +125,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <MessageSquare className="w-3.5 h-3.5" />
             <span>Saludo</span>
           </button>
 

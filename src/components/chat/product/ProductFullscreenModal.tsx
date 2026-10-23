@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Check, ShoppingBag, ShieldCheck, MessageSquare, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { X, Check, ShoppingBag, ShieldCheck, MessageSquare, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { ProductItem } from '../../../types/productChat';
 
 interface Props {
@@ -48,7 +48,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
             <button key={idx} type="button" onClick={() => setSlide(idx)} className={`h-1.5 rounded-full transition-all cursor-pointer ${slide === idx ? 'w-6 bg-emerald-500' : 'w-1.5 bg-[#333] hover:bg-[#555]'}`} />
           ))}
           <button type="button" onClick={() => setSlide(images.length)} className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold transition flex items-center gap-1 cursor-pointer ${isLast ? 'bg-emerald-600 text-white' : 'bg-[#252323] text-zinc-400 hover:text-white'}`}>
-            <Sparkles className="w-2.5 h-2.5 text-amber-300" /><span>Beneficios</span>
+            <Check className="w-2.5 h-2.5 text-emerald-300" /><span>Beneficios</span>
           </button>
         </div>
 
@@ -74,7 +74,7 @@ export const ProductFullscreenModal: React.FC<Props> = ({
             </div>
           ) : (
             <div className="p-3 rounded-xl bg-[#141313] border border-[#242222] space-y-2.5 animate-fade-in">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400"><Sparkles className="w-3.5 h-3.5" /><span>Beneficios Comprobados</span></div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400"><Check className="w-3.5 h-3.5" /><span>Beneficios Comprobados</span></div>
               <div className="space-y-2 text-[11px] text-zinc-300">
                 {(product.benefits && product.benefits.length > 0 ? product.benefits : ['Atención y asesoría 24/7 con IA.', 'Garantía de satisfacción de 30 días.', 'Envío express con seguimiento en vivo.']).map((b, i) => (
                   <div key={i} className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" /><span>{b}</span></div>

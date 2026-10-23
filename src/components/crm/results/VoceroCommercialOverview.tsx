@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VoceroLead } from '../../../types/crm';
-import { TrendingUp, Users, DollarSign, Sparkles, ExternalLink, Copy, Check } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Target, ExternalLink, Copy, Check } from 'lucide-react';
 
 interface VoceroCommercialOverviewProps {
   leads: VoceroLead[];
@@ -69,7 +69,7 @@ export const VoceroCommercialOverview: React.FC<VoceroCommercialOverviewProps> =
         <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between text-[#8391aa] mb-2">
             <span className="text-xs font-semibold">Tasa de Conversión</span>
-            <Sparkles className="h-4 w-4 text-[#00c6f5]" />
+            <Target className="h-4 w-4 text-[#00c6f5]" />
           </div>
           <p className="text-2xl font-bold text-[#0a1730]">{conversionRate}%</p>
           <p className="text-[11px] text-[#62728d] font-medium mt-1">Cierres sobre leads</p>

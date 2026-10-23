@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../../../types';
 import { SimulatorMessage, SimulatorChatBubble } from './SimulatorChatBubble';
 import { CorrectionModal } from './CorrectionModal';
-import { Send, RotateCcw, Bot, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, RotateCcw, Bot, Zap, AlertCircle } from 'lucide-react';
 
 interface LiveBotSimulatorProps {
   tenant: Tenant | null;
@@ -146,7 +146,7 @@ export const LiveBotSimulator: React.FC<LiveBotSimulatorProps> = ({
       {/* Sugerencias Rápidas */}
       <div className="px-3 py-1.5 bg-[#121111] border-t border-[#242222] flex items-center gap-1.5 overflow-x-auto">
         <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-1 shrink-0">
-          <Sparkles className="w-3 h-3 text-amber-400" /> Pruebas rápidas:
+          <Zap className="w-3 h-3 text-amber-400" /> Pruebas rápidas:
         </span>
         {testSuggestions.map(q => (
           <button

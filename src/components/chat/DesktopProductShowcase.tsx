@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { CheckCircle2, ShoppingCart, Sparkles, Info, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, Info, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 import { broadcastProductMetric } from '../../utils/metricsSync';
 
 interface DesktopProductShowcaseProps {
@@ -83,7 +83,7 @@ export const DesktopProductShowcase: React.FC<DesktopProductShowcaseProps> = ({
           }}
           className={`py-2 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-1.5 group cursor-pointer ${activeTab === 'benefits' ? 'cuadro-tornasol active !border-cyan-400/60 shadow-lg text-white' : 'cuadro-tornasol hover:opacity-100 text-zinc-300'}`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors relative z-10" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-300 transition-colors relative z-10" />
           <span className="relative z-10">Beneficios</span>
         </button>
         <button

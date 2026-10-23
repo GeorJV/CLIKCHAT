@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Sparkles } from 'lucide-react';
+import { ChevronDown, Check, SlidersHorizontal } from 'lucide-react';
 
 export interface ToneOption {
   id: string;
@@ -80,7 +80,7 @@ export const ToneMultiSelectDropdown: React.FC<ToneMultiSelectDropdownProps> = (
               {stepBadge}
             </span>
           )}
-          <Sparkles className="h-3.5 w-3.5 text-[#0d5bff]" /> {label}
+          <SlidersHorizontal className="h-3.5 w-3.5 text-[#0d5bff]" /> {label}
           <span className="text-[10px] text-[#8391aa] font-normal lowercase">(Combina 2 o más)</span>
         </label>
       )}

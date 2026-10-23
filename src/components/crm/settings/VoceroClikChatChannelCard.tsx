@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, Check, Copy, ExternalLink, Sparkles } from 'lucide-react';
+import { Bot, Check, Copy, ExternalLink, MessageSquare } from 'lucide-react';
 import { Tenant } from '../../../types';
 
 interface VoceroClikChatChannelCardProps {
@@ -151,7 +151,7 @@ export const VoceroClikChatChannelCard: React.FC<VoceroClikChatChannelCardProps>
           href={chatUrl}
           className="flex items-center justify-center gap-1.5 rounded-xl border border-[#d8e2f0] bg-white px-3.5 py-2 text-xs font-bold text-[#0a1730] hover:bg-[#f6f8fc] cursor-pointer shrink-0 shadow-2xs"
         >
-          <Sparkles className="h-3.5 w-3.5 text-[#0d5bff]" />
+          <MessageSquare className="h-3.5 w-3.5 text-[#0d5bff]" />
           <span>Abrir Chat Agente</span>
           <ExternalLink className="h-3 w-3 text-[#8391aa]" />
         </a>

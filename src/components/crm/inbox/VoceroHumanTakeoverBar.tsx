@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, UserCheck, ShieldAlert, Sparkles, PauseCircle, PlayCircle } from 'lucide-react';
+import { Bot, UserCheck, ShieldAlert, PauseCircle, PlayCircle } from 'lucide-react';
 
 interface VoceroHumanTakeoverBarProps {
   isAiPaused: boolean;

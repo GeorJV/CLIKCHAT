@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CreditCard, Clock, ShoppingBag, Truck, CheckCircle } from 'lucide-react';
+import { Zap, CreditCard, Clock, ShoppingBag, Truck, CheckCircle } from 'lucide-react';
 
 export interface CannedResponse {
   shortcut: string;
@@ -59,7 +59,7 @@ export const CannedResponsesPopover: React.FC<Props> = ({ filter, onSelect, onCl
     <div className="absolute bottom-full left-4 mb-2 w-80 rounded-2xl border border-[#d8e2f0] bg-white p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 font-sans">
       <div className="flex items-center justify-between px-2 py-1 border-b border-[#f1f5f9] mb-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-[#0d5bff]" /> Atajos Rápidos (Tidio / Zolutium)
+          <Zap className="w-3 h-3 text-[#0d5bff]" /> Atajos Rápidos (Tidio / Zolutium)
         </span>
         <button type="button" onClick={onClose} className="text-[10px] text-[#8391aa] hover:text-[#0a1730]">✕</button>
       </div>

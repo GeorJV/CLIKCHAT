@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Kanban, Sparkles, ArrowRightLeft, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Kanban, FlaskConical, ArrowRightLeft, ShieldCheck } from 'lucide-react';
 
 export type VoceroViewTab = 'inbox' | 'pipeline' | 'sandbox';
 
@@ -21,7 +21,7 @@ export const VoceroTopNav: React.FC<VoceroTopNavProps> = ({
   const TABS: { id: VoceroViewTab; label: string; icon: React.ElementType }[] = [
     { id: 'inbox', label: 'Bandeja 3-Col', icon: MessageSquare },
     { id: 'pipeline', label: 'Pipeline Kanban', icon: Kanban },
-    { id: 'sandbox', label: 'AI Sandbox', icon: Sparkles },
+    { id: 'sandbox', label: 'AI Sandbox', icon: FlaskConical },
   ];
 
   return (

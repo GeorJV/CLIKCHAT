@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, HelpCircle, Layers, UserCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, HelpCircle, Layers, UserCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProductRAGTrace } from '../../../types/productChat';
 import { isBusinessAdminViewer } from '../../../utils/adminCheck';
 
@@ -23,7 +23,7 @@ export const ProductRAGBadge: React.FC<Props> = ({ trace }) => {
         return {
           label: 'Nivel 2: Regla / FAQ Estricta',
           color: 'bg-teal-500/10 text-teal-300 border-teal-500/30',
-          icon: Sparkles,
+          icon: Zap,
         };
       case 3:
         return {

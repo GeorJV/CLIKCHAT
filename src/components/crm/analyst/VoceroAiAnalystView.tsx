@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Send, Sparkles, TrendingUp, DollarSign, Users, ShoppingCart, ArrowRight } from 'lucide-react';
+import { Bot, Send, TrendingUp, DollarSign, Users, ShoppingCart, ArrowRight } from 'lucide-react';
 
 interface AiAnalystMessage {
   id: string; sender: 'owner' | 'analyst'; text: string; timestamp: string;
@@ -55,7 +55,7 @@ export const VoceroAiAnalystView: React.FC<VoceroAiAnalystViewProps> = ({ tenant
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-6 shadow-xs">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#0d5bff] border border-blue-200">
-            <Sparkles className="h-4 w-4" />
+            <TrendingUp className="h-4 w-4" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-[#0a1730] flex items-center gap-1.5">
