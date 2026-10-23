@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText } from 'lucide-react';
+import { useVoceroMode } from '../../../hooks/useVoceroMode';
 
 interface RulesDropzoneProps {
   onTextLoaded: (content: string, filename: string) => void;
 }
 
 export const RulesDropzone: React.FC<RulesDropzoneProps> = ({ onTextLoaded }) => {
+  const { isVoceroMode } = useVoceroMode();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedName, setUploadedName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,9 +56,9 @@ export const RulesDropzone: React.FC<RulesDropzoneProps> = ({ onTextLoaded }) =>
       onDrop={handleDrop}
       onClick={() => fileInputRef.current?.click()}
       className={`rounded-2xl p-4 text-center cursor-pointer transition-all shadow-2xs ${
-        isDragging
-          ? 'bg-[#ebf1ff] shadow-xs'
-          : 'bg-[#f8fafc] hover:bg-[#ebf1ff]/50'
+        isVoceroMode
+          ? (isDragging ? 'bg-[#ebf1ff] shadow-xs' : 'bg-[#f8fafc] hover:bg-[#ebf1ff]/50')
+          : (isDragging ? 'bg-emerald-950/20 border border-emerald-500/40' : 'bg-[#121111] hover:bg-[#161515] border border-[#282626]')
       }`}
     >
       <input
@@ -66,17 +68,21 @@ export const RulesDropzone: React.FC<RulesDropzoneProps> = ({ onTextLoaded }) =>
         onChange={handleFileChange}
         className="hidden"
       />
-      <div className="flex items-center justify-center gap-2 text-[#62728d] text-xs">
-        <UploadCloud className={`w-4 h-4 ${isDragging ? 'text-[#0d5bff] animate-bounce' : 'text-[#8391aa]'}`} />
+      <div className={`flex items-center justify-center gap-2 text-xs ${isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'}`}>
+        <UploadCloud className={`w-4 h-4 ${
+          isDragging
+            ? (isVoceroMode ? 'text-[#0d5bff] animate-bounce' : 'text-emerald-400 animate-bounce')
+            : (isVoceroMode ? 'text-[#8391aa]' : 'text-zinc-500')
+        }`} />
         <span>
           {uploadedName ? (
-            <span className="text-[#0d5bff] font-semibold flex items-center gap-1 inline-flex">
+            <span className={`font-semibold flex items-center gap-1 inline-flex ${isVoceroMode ? 'text-[#0d5bff]' : 'text-emerald-400'}`}>
               <FileText className="w-3.5 h-3.5" />
               Cargado: {uploadedName} (clic para cambiar)
             </span>
           ) : (
             <>
-              <span className="font-semibold text-[#0a1730]">Cargar archivo de reglas</span> o arrástralo aquí (.txt, .md)
+              <span className={`font-semibold ${isVoceroMode ? 'text-[#0a1730]' : 'text-white'}`}>Cargar archivo de reglas</span> o arrástralo aquí (.txt, .md)
             </>
           )}
         </span>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { FAQ } from '../../../../types';
 import { Zap, HelpCircle, CheckCircle2, Trash2, Edit2 } from 'lucide-react';
+import { useVoceroMode } from '../../../../hooks/useVoceroMode';
 
 interface ObjectionCardProps {
   faq: FAQ;
@@ -15,17 +16,27 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
   onDelete,
   onTestInSimulator
 }) => {
+  const { isVoceroMode } = useVoceroMode();
+
   return (
-    <div className="bg-white hover:shadow-md shadow-sm rounded-2xl p-4 sm:p-5 transition-all duration-200 group font-sans">
+    <div className={`rounded-2xl p-4 sm:p-5 transition-all duration-200 group font-sans ${
+      isVoceroMode
+        ? 'bg-white hover:shadow-md shadow-sm'
+        : 'bg-[#181717] hover:bg-[#1d1c1c] border border-[#282626] shadow-md text-white'
+    }`}>
       {/* Encabezado: Categoría & Badge Nivel 2 */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 flex items-center gap-1 shadow-2xs">
-            <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600/30" />
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs ${
+            isVoceroMode ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+          }`}>
+            <Zap className={`w-3 h-3 ${isVoceroMode ? 'text-emerald-600 fill-emerald-600/30' : 'text-emerald-400'}`} />
             <span>Nivel 2 · $0 Costo</span>
           </span>
           {faq.category && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#f1f5f9] text-[#475569]">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+              isVoceroMode ? 'bg-[#f1f5f9] text-[#475569]' : 'bg-[#141313] text-zinc-400 border border-[#262424]'
+            }`}>
               {faq.category}
             </span>
           )}
@@ -38,7 +49,9 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
               type="button"
               onClick={() => onTestInSimulator(faq.question)}
               title="Probar en el Simulador"
-              className="text-[11px] font-semibold text-[#0d5bff] hover:text-[#0047e1] px-2 py-1 rounded-lg hover:bg-blue-50 transition cursor-pointer"
+              className={`text-[11px] font-semibold px-2 py-1 rounded-lg transition cursor-pointer ${
+                isVoceroMode ? 'text-[#0d5bff] hover:text-[#0047e1] hover:bg-blue-50' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+              }`}
             >
               Probar
             </button>
@@ -47,7 +60,9 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
             type="button"
             onClick={() => onEdit(faq)}
             title="Editar Regla"
-            className="p-1 text-[#8391aa] hover:text-[#0a1730] hover:bg-[#f1f5f9] rounded-lg transition cursor-pointer"
+            className={`p-1 rounded-lg transition cursor-pointer ${
+              isVoceroMode ? 'text-[#8391aa] hover:text-[#0a1730] hover:bg-[#f1f5f9]' : 'text-zinc-500 hover:text-white hover:bg-[#222020]'
+            }`}
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>
@@ -55,7 +70,9 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
             type="button"
             onClick={() => onDelete(faq.id)}
             title="Eliminar Regla"
-            className="p-1 text-[#8391aa] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+            className={`p-1 rounded-lg transition cursor-pointer ${
+              isVoceroMode ? 'text-[#8391aa] hover:text-rose-600 hover:bg-rose-50' : 'text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10'
+            }`}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -64,12 +81,14 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
 
       {/* Gatillo (Si el cliente pregunta) */}
       <div className="mb-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[#62728d] flex items-center gap-1.5 mb-1">
+        <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${
+          isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'
+        }`}>
           <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
           <span>Si el cliente pregunta:</span>
         </div>
-        <div className="bg-[#f8fafc] rounded-xl p-2.5">
-          <p className="text-xs font-bold text-[#0a1730] leading-snug">
+        <div className={`rounded-xl p-2.5 ${isVoceroMode ? 'bg-[#f8fafc]' : 'bg-[#141313] border border-[#262424]'}`}>
+          <p className={`text-xs font-bold leading-snug ${isVoceroMode ? 'text-[#0a1730]' : 'text-white'}`}>
             "{faq.question}"
           </p>
         </div>
@@ -77,12 +96,14 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
 
       {/* Respuesta Exacta (El bot responde de inmediato) */}
       <div>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[#62728d] flex items-center gap-1.5 mb-1">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+        <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${
+          isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'
+        }`}>
+          <CheckCircle2 className={`w-3.5 h-3.5 ${isVoceroMode ? 'text-emerald-600' : 'text-emerald-400'}`} />
           <span>El bot responde exactamente:</span>
         </div>
-        <div className="bg-[#f0fdf4] rounded-xl p-2.5">
-          <p className="text-xs text-[#166534] leading-relaxed font-medium">
+        <div className={`rounded-xl p-2.5 ${isVoceroMode ? 'bg-[#f0fdf4]' : 'bg-[#121111] border border-[#222]'}`}>
+          <p className={`text-xs leading-relaxed font-medium ${isVoceroMode ? 'text-[#166534]' : 'text-emerald-300'}`}>
             {faq.answer}
           </p>
         </div>

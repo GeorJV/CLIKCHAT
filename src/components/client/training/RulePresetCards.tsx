@@ -3,6 +3,7 @@ import { RulePreset, RULE_PRESETS, isRulePresetActive, toggleRulePreset } from '
 import { CreateRulePresetModal } from './CreateRulePresetModal';
 import { RulePresetCardItem } from './RulePresetCardItem';
 import { ShieldAlert, Plus, CheckCircle2 } from 'lucide-react';
+import { useVoceroMode } from '../../../hooks/useVoceroMode';
 
 interface RulePresetCardsProps {
   rulesText: string;
@@ -19,6 +20,7 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
   onApplyPreset,
   isGlobalSaving
 }) => {
+  const { isVoceroMode } = useVoceroMode();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'add' | 'remove' } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,15 +82,15 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 sm:p-6 space-y-3.5 font-sans shadow-sm">
+    <div className={`rounded-2xl p-5 sm:p-6 space-y-3.5 font-sans ${isVoceroMode ? 'bg-white shadow-sm' : 'bg-[#181717] border border-[#282626] shadow-lg'}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-2xs">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-2xs ${isVoceroMode ? 'bg-rose-50 text-rose-600' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
             <ShieldAlert className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#0a1730]">Plantillas Rápidas de Restricciones & Anti-Alucinación</h3>
-            <p className="text-[11px] text-[#62728d]">Reglas prearmadas y personalizadas para blindar precios, citas y políticas</p>
+            <h3 className={`text-sm font-bold ${isVoceroMode ? 'text-[#0a1730]' : 'text-white'}`}>Plantillas Rápidas de Restricciones & Anti-Alucinación</h3>
+            <p className={`text-[11px] ${isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'}`}>Reglas prearmadas y personalizadas para blindar precios, citas y políticas</p>
           </div>
         </div>
 
@@ -96,26 +98,32 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] text-white text-xs font-bold transition shadow-xs hover:shadow cursor-pointer"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-bold transition shadow-xs hover:shadow cursor-pointer ${
+              isVoceroMode ? 'bg-[#0d5bff] hover:bg-[#0047e1]' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/40'
+            }`}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Agregar Restricción</span>
           </button>
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 shadow-2xs">
+          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shadow-2xs ${
+            isVoceroMode ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          }`}>
             {activeCount} de {allPresets.length} activas
           </span>
         </div>
       </div>
 
-      <p className="text-xs text-[#62728d]">
-        Haz clic en <strong className="text-[#0d5bff]">+ Añadir al Bot</strong> para blindar instantáneamente al asistente. Puedes agregar nuevas plantillas personalizadas con el botón superior.
+      <p className={`text-xs ${isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'}`}>
+        Haz clic en <strong className={isVoceroMode ? 'text-[#0d5bff]' : 'text-emerald-400'}>+ Añadir al Bot</strong> para blindar instantáneamente al asistente. Puedes agregar nuevas plantillas personalizadas con el botón superior.
       </p>
 
       {toast && (
         <div className={`p-3 rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs ${
-          toast.type === 'add' ? 'bg-emerald-50 text-emerald-800' : 'bg-[#f8fafc] text-[#475569]'
+          toast.type === 'add'
+            ? (isVoceroMode ? 'bg-emerald-50 text-emerald-800' : 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30')
+            : (isVoceroMode ? 'bg-[#f8fafc] text-[#475569]' : 'bg-[#141313] text-zinc-300 border border-[#282626]')
         }`}>
-          <CheckCircle2 className={`w-4 h-4 shrink-0 ${toast.type === 'add' ? 'text-emerald-600' : 'text-[#8391aa]'}`} />
+          <CheckCircle2 className={`w-4 h-4 shrink-0 ${toast.type === 'add' ? 'text-emerald-500' : (isVoceroMode ? 'text-[#8391aa]' : 'text-zinc-500')}`} />
           <span className="font-semibold">{toast.message}</span>
         </div>
       )}

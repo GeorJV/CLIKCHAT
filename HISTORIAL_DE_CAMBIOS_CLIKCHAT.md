@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Homologación Integral de Temas y Cohesión Visual entre ClikChat Clásico y Modo ClikChat CRM (v1.98.0)
+- **Diagnóstico y Necesidad:**
+  1. *Desfase y Choque Visual entre Experiencias:* Al alternar entre el botón de "ClikChat Clásico" y "Modo ClikChat CRM", los componentes compartidos (Reglas Operativas, Documentos RAG, Flow IQ, FAQ IQ/Objeciones, Canales Meta Cloud/WhatsApp, Catálogo/Productos y Saludo Inicial) presentaban cajas y tarjetas con fondos claros forzados dentro del panel Clásico oscuro (`#151414`), o fondos oscuros dentro del CRM claro institucional (`#f6f8fc`), rompiendo la coherencia estética requerida por el usuario.
+  2. *Requerimiento del Usuario:* *"el botón que dice eh click chat clásico y modo click chat CRM cuando uno le da cambia de tema, tiene que cambiar y ajustarse al tema, todos los elementos, las cajas, los colores. Entonces, si estoy en click chat clásico, tiene que ajustarse el tema de click chat clásico, todas las cajas y todos los colores. Y si le doy a click chat CRM, aparece con los colores del click chat CRM para que no tenga diferencias de contrastes y colores y cajas."*
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `useVoceroMode.ts` (58 líneas): Sincronización en 0ms mediante eventos (`vocero-mode-change`) y atributo HTML `data-theme="crm|classic"`, proveyendo `{ isVoceroMode, isCrm, isClassic, setVoceroMode, toggleVoceroMode }`.
+  2. `VoceroModeTogglePill.tsx` (49 líneas): Píldora de alternancia reactiva que adapta su fondo, borde, badge y botón interactivo según el tema activo (CRM: blanco institucional con azul `#0d5bff`; Clásico: onyx `#181717` con acento verde esmeralda).
+  3. `App.tsx` (163 líneas): Alternancia suave de contenedor principal, navbar y vistas según `isVoceroMode`.
+  4. `ClientDashboard.tsx` (169 líneas): Enlace directo desde el ítem "ClikChat CRM (3-Col & Kanban)" del sidebar para activar `isVoceroMode = true` sin desincronizaciones de ruta.
+  5. *Reglas Operativas & Anti-Alucinación:* `OperationalRulesSection.tsx` (123 líneas), `RulePresetCards.tsx` (141 líneas), `RulePresetCardItem.tsx` (114 líneas), `CreateRulePresetModal.tsx` (155 líneas) y `RulesDropzone.tsx` (85 líneas) adaptados dinámicamente con clases duales (onyx/esmeralda en Clásico, blanco borderless/azul `#0d5bff` en CRM).
+  6. *Documentos RAG (Nivel 3):* `DocumentsManagerTab.tsx` (164 líneas), `DocumentUploadForm.tsx` (64 líneas), `DocumentViewerModal.tsx` (166 líneas) y `DocumentDropzone.tsx` (145 líneas) con esquemas de color adaptables al modo seleccionado.
+  7. *FAQ IQ & Objeciones (Nivel 2):* `ObjectionsManagerSection.tsx` (163 líneas), `ObjectionCard.tsx` (107 líneas) y `ObjectionModal.tsx` (145 líneas) con adaptación total a ambos temas.
+  8. *Canal WhatsApp Oficial & Meta Cloud:* `WhatsAppConnectCard.tsx` (146 líneas), `WhatsAppCredentialsModal.tsx` (161 líneas), `WhatsAppTestChatModal.tsx` (148 líneas) y `WhatsAppSetupGuide.tsx` (80 líneas) en diseño dual sin bordes duros.
+  9. *Catálogo & Menú / Servicios:* `ProductModal.tsx` (163 líneas), `ProductModalFieldsLeft.tsx` (128 líneas) y `ProductModalFieldsRight.tsx` (94 líneas) con inputs, selectores y textarea condicionados dinámicamente.
+  10. *Flow IQ (Flujos de Ventas en 4 Pasos):* `SalesFlowSection.tsx` (165 líneas) y `SalesFlowFourStepsEditor.tsx` (86 líneas) integrando selectores, tarjetas de industria y prompt compilado dual.
+  11. *Saludo Inicial:* `InitialGreetingSection.tsx` (171 líneas) y `GreetingDropzone.tsx` (83 líneas) completamente adaptados al tema de fondo, inputs y previsualización de burbuja.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 13.14s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-BHcTLtAN.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Homologación al Tema Claro Oficial en la Ventana de Credenciales de Meta Cloud API y Canales de WhatsApp
 - **Diagnóstico y Necesidad:**
   1. *Desfase Visual Oscuro en Credenciales Meta:* Al hacer clic en "Configurar Credenciales" en el canal WhatsApp, la ventana "Credenciales de Meta Cloud API" (`WhatsAppCredentialsModal.tsx`) se desplegaba en fondo negro (`#171616`, inputs `#111010`, bordes oscuros), contrastando negativamente con el tema claro institucional del CRM.

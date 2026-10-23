@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText } from 'lucide-react';
+import { useVoceroMode } from '../../../hooks/useVoceroMode';
 
 interface GreetingDropzoneProps {
   onTextLoaded: (content: string, filename: string) => void;
 }
 
 export const GreetingDropzone: React.FC<GreetingDropzoneProps> = ({ onTextLoaded }) => {
+  const { isVoceroMode } = useVoceroMode();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedName, setUploadedName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,17 +49,17 @@ export const GreetingDropzone: React.FC<GreetingDropzoneProps> = ({ onTextLoaded
     }
   };
 
+  const dropzoneBg = isVoceroMode
+    ? isDragging ? 'bg-[#ebf1ff] ring-2 ring-[#0d5bff]' : 'bg-[#f8fafc] hover:bg-[#ebf1ff]/50'
+    : isDragging ? 'bg-emerald-950/40 ring-2 ring-emerald-500' : 'bg-[#121111] hover:bg-[#1a1919] border border-dashed border-[#333]';
+
   return (
     <div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={() => fileInputRef.current?.click()}
-      className={`rounded-2xl p-4 text-center cursor-pointer transition-all shadow-2xs hover:shadow-xs ${
-        isDragging
-          ? 'bg-[#ebf1ff] ring-2 ring-[#0d5bff]'
-          : 'bg-[#f8fafc] hover:bg-[#ebf1ff]/50'
-      }`}
+      className={`rounded-2xl p-4 text-center cursor-pointer transition-all shadow-2xs hover:shadow-xs ${dropzoneBg}`}
     >
       <input
         ref={fileInputRef}
@@ -66,17 +68,21 @@ export const GreetingDropzone: React.FC<GreetingDropzoneProps> = ({ onTextLoaded
         onChange={handleFileChange}
         className="hidden"
       />
-      <div className="flex items-center justify-center gap-2 text-[#62728d] text-xs font-sans">
-        <UploadCloud className={`w-4 h-4 ${isDragging ? 'text-[#0d5bff] animate-bounce' : 'text-[#8391aa]'}`} />
+      <div className={`flex items-center justify-center gap-2 text-xs font-sans ${isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'}`}>
+        <UploadCloud className={`w-4 h-4 ${
+          isDragging
+            ? (isVoceroMode ? 'text-[#0d5bff] animate-bounce' : 'text-emerald-400 animate-bounce')
+            : (isVoceroMode ? 'text-[#8391aa]' : 'text-zinc-500')
+        }`} />
         <span>
           {uploadedName ? (
-            <span className="text-[#0d5bff] font-bold flex items-center gap-1 inline-flex">
+            <span className={`${isVoceroMode ? 'text-[#0d5bff]' : 'text-emerald-400'} font-bold flex items-center gap-1 inline-flex`}>
               <FileText className="w-3.5 h-3.5" />
               Cargado: {uploadedName} (clic para cambiar)
             </span>
           ) : (
             <>
-              <strong className="text-[#0a1730]">Arrastra un archivo aquí</strong> o haz clic para subir (.txt, .md)
+              <strong className={isVoceroMode ? 'text-[#0a1730]' : 'text-zinc-200'}>Arrastra un archivo aquí</strong> o haz clic para subir (.txt, .md)
             </>
           )}
         </span>

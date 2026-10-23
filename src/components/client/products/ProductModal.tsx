@@ -4,6 +4,7 @@ import { Product } from '../../../types';
 import { parsePriceNumber } from '../../../utils/orderPriceExtractor';
 import { ProductModalFieldsLeft } from './ProductModalFieldsLeft';
 import { ProductModalFieldsRight } from './ProductModalFieldsRight';
+import { useVoceroMode } from '../../../hooks/useVoceroMode';
 
 interface Props {
   isOpen: boolean;
@@ -22,24 +23,16 @@ export const ProductModal: React.FC<Props> = ({
   defaultCurrency = 'CRC',
   businessType = 'tienda'
 }) => {
+  const { isVoceroMode } = useVoceroMode();
   if (!isOpen) return null;
 
   const resolvedCurrency = productToEdit?.currency || defaultCurrency || 'CRC';
-  const isRestaurant = businessType === 'restaurante';
-  const isServices = businessType === 'servicios';
-
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState(isRestaurant ? 'Platos Fuertes' : 'General');
-  const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState(resolvedCurrency);
-  const [sku, setSku] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [externalUrl, setExternalUrl] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [benefits, setBenefits] = useState('');
-  const [details, setDetails] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isRestaurant = businessType === 'restaurante', isServices = businessType === 'servicios';
+  const [name, setName] = useState(''), [category, setCategory] = useState(isRestaurant ? 'Platos Fuertes' : 'General');
+  const [price, setPrice] = useState(''), [currency, setCurrency] = useState(resolvedCurrency);
+  const [sku, setSku] = useState(''), [description, setDescription] = useState(''), [imageUrl, setImageUrl] = useState('');
+  const [externalUrl, setExternalUrl] = useState(''), [isActive, setIsActive] = useState(true);
+  const [benefits, setBenefits] = useState(''), [details, setDetails] = useState(''), [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (productToEdit) {
@@ -55,23 +48,11 @@ export const ProductModal: React.FC<Props> = ({
       setBenefits(productToEdit.benefits?.map(b => b.startsWith('•') ? b : `• ${b}`).join('\n') || '');
       setDetails(productToEdit.details?.specifications || '');
     } else {
-      setName('');
-      setCategory(isRestaurant ? 'Platos Fuertes' : 'General');
-      setPrice('');
-      setCurrency(defaultCurrency || 'CRC');
-      setSku(`SKU-${Date.now().toString().slice(-6)}`);
-      setDescription('');
-      setImageUrl('');
-      setExternalUrl('');
-      setIsActive(true);
-      setBenefits(isRestaurant
-        ? '• 100% Carne fresca y jugosa de primera calidad\n• Pan artesanal tostado al momento\n• Queso fundido y aderezo exclusivo de la casa'
-        : '• Garantía oficial y envío inmediato\n• Materiales de alta resistencia\n• Soporte prioritario'
-      );
-      setDetails(isRestaurant
-        ? '• Tiempo de cocina estimado: 15-20 min\n• Acompañamiento: Incluye papas o ensalada\n• Alérgenos: Contiene lácteos y gluten'
-        : '• Especificaciones técnicas completas\n• Contenido del paquete original\n• Compatible con estándares universales'
-      );
+      setName(''); setCategory(isRestaurant ? 'Platos Fuertes' : 'General'); setPrice('');
+      setCurrency(defaultCurrency || 'CRC'); setSku(`SKU-${Date.now().toString().slice(-6)}`);
+      setDescription(''); setImageUrl(''); setExternalUrl(''); setIsActive(true);
+      setBenefits(isRestaurant ? '• Carne fresca de primera calidad\n• Pan artesanal\n• Aderezo exclusivo' : '• Garantía oficial y envío inmediato\n• Materiales de alta resistencia\n• Soporte prioritario');
+      setDetails(isRestaurant ? '• Tiempo estimado: 15-20 min\n• Incluye papas o ensalada\n• Alérgenos: lácteos y gluten' : '• Especificaciones técnicas completas\n• Contenido del paquete original\n• Compatible con estándares universales');
     }
   }, [productToEdit, isOpen, defaultCurrency, isRestaurant]);
 
@@ -99,28 +80,36 @@ export const ProductModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/45 backdrop-blur-xs overflow-y-auto font-sans">
-      <div className="w-full max-w-4xl bg-white border border-[#e2e8f0] rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
-        {/* Encabezado Tema Web Vocero */}
-        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5 border-b border-[#e8edf6] bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/55 backdrop-blur-xs overflow-y-auto font-sans">
+      <div className={`w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh] ${
+        isVoceroMode ? 'bg-white border border-[#e2e8f0]' : 'bg-[#181717] border border-[#282626] text-white'
+      }`}>
+        {/* Encabezado */}
+        <div className={`flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5 border-b ${
+          isVoceroMode ? 'border-[#e8edf6] bg-white' : 'border-[#262424] bg-[#141313]'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#ebf1ff] border border-[#d3e2ff] flex items-center justify-center text-[#0d5bff] shrink-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+              isVoceroMode ? 'bg-[#ebf1ff] border border-[#d3e2ff] text-[#0d5bff]' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+            }`}>
               <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-[#0a1730] tracking-tight leading-none">
+              <h3 className={`text-sm sm:text-base font-bold tracking-tight leading-none ${isVoceroMode ? 'text-[#0a1730]' : 'text-white'}`}>
                 {productToEdit
                   ? (isServices ? 'Editar servicio' : 'Editar producto')
                   : (isServices ? 'Crear nuevo servicio' : 'Crear nuevo producto')}
               </h3>
-              <p className="text-[11px] text-[#62728d] mt-1 leading-none">
+              <p className={`text-[11px] mt-1 leading-none ${isVoceroMode ? 'text-[#62728d]' : 'text-zinc-400'}`}>
                 Configura datos comerciales, foto, beneficios y especificaciones oficiales para tu catálogo.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#8391aa] hover:text-[#0a1730] p-1.5 rounded-lg hover:bg-[#f6f8fc] transition cursor-pointer"
+            className={`p-1.5 rounded-lg transition cursor-pointer ${
+              isVoceroMode ? 'text-[#8391aa] hover:text-[#0a1730] hover:bg-[#f6f8fc]' : 'text-zinc-400 hover:text-white hover:bg-[#222020]'
+            }`}
             aria-label="Cerrar"
           >
             <X className="w-4 h-4" />
@@ -129,7 +118,7 @@ export const ProductModal: React.FC<Props> = ({
 
         {/* Cuerpo del formulario con 2 columnas bien distribuidas */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-5 overflow-y-auto flex-1 bg-white">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-5 overflow-y-auto flex-1 ${isVoceroMode ? 'bg-white' : 'bg-[#181717]'}`}>
             <div className="lg:col-span-7">
               <ProductModalFieldsLeft
                 name={name} setName={setName} category={category} setCategory={setCategory}
@@ -151,19 +140,25 @@ export const ProductModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Botones de acción Footer Vocero */}
-          <div className="flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-3 border-t border-[#e8edf6] bg-[#f8fafc]">
+          {/* Botones de acción Footer */}
+          <div className={`flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-3 border-t ${
+            isVoceroMode ? 'border-[#e8edf6] bg-[#f8fafc]' : 'border-[#262424] bg-[#141313]'
+          }`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white hover:bg-[#f6f8fc] border border-[#dde5f1] text-[#42506b] font-semibold text-xs transition cursor-pointer"
+              className={`px-4 py-2 rounded-xl font-semibold text-xs transition cursor-pointer ${
+                isVoceroMode ? 'bg-white hover:bg-[#f6f8fc] border border-[#dde5f1] text-[#42506b]' : 'bg-[#222020] hover:bg-[#282626] border border-[#383535] text-zinc-300 hover:text-white'
+              }`}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-4 py-2 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              className={`px-4 py-2 rounded-xl disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer ${
+                isVoceroMode ? 'bg-[#0d5bff] hover:bg-[#0047e1]' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/40'
+              }`}
             >
               <Check className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Guardando...' : (isServices ? 'Guardar servicio' : 'Guardar producto')}</span>

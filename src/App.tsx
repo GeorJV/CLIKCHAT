@@ -34,9 +34,7 @@ export function App() {
   const productId = routeProductId || params?.get('p') || null;
 
   const isSuperAdmin = Boolean(
-    user?.role === 'superadmin' || currentView === 'admin' ||
-    (typeof window !== 'undefined' && localStorage.getItem('clikchat_role') === 'superadmin') ||
-    params?.has('admin') || params?.get('role') === 'superadmin'
+    user?.role === 'superadmin' || currentView === 'admin' || (typeof window !== 'undefined' && localStorage.getItem('clikchat_role') === 'superadmin') || params?.has('admin') || params?.get('role') === 'superadmin'
   );
 
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => (
@@ -53,24 +51,26 @@ export function App() {
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));
 
   return (
-    <div className="flex flex-col h-[100dvh] max-h-[100dvh] w-full max-w-full bg-[#151414] text-slate-100 overflow-hidden font-sans">
+    <div className={`flex flex-col h-[100dvh] max-h-[100dvh] w-full max-w-full ${isVoceroMode ? 'bg-[#f6f8fc] text-[#0a1730]' : 'bg-[#151414] text-slate-100'} overflow-hidden font-sans`}>
       {!hideTopBar && isSuperAdmin && (
-        <nav className="h-12 shrink-0 bg-[#151414] border-b border-[#282626] flex items-center justify-between px-3 md:px-6 z-40">
+        <nav className={`h-12 shrink-0 border-b flex items-center justify-between px-3 md:px-6 z-40 ${isVoceroMode ? 'bg-white border-[#e8edf6]' : 'bg-[#151414] border-[#282626]'}`}>
           <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}>
-            <div className="w-7 h-7 rounded-lg bg-[#1a1919] border border-[#2e2b2b] flex items-center justify-center font-mono font-black text-emerald-400 text-xs shadow-sm">
+            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center font-mono font-black text-xs shadow-sm ${isVoceroMode ? 'bg-blue-50 border-blue-200 text-[#0d5bff]' : 'bg-[#1a1919] border-[#2e2b2b] text-emerald-400'}`}>
               CK
             </div>
-            <span className="font-bold text-sm tracking-tight text-white">
-              ClikChat <span className="text-[10px] text-zinc-400 font-mono uppercase px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 ml-1">SaaS Multi-Tenant</span>
+            <span className={`font-bold text-sm tracking-tight ${isVoceroMode ? 'text-[#0a1730]' : 'text-white'}`}>
+              ClikChat <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border ml-1 ${isVoceroMode ? 'bg-slate-100 text-[#62728d] border-slate-200' : 'bg-white/[0.05] text-zinc-400 border-white/10'}`}>SaaS Multi-Tenant</span>
             </span>
           </div>
 
-          <div className="flex items-center space-x-1 bg-[#111010] p-1 rounded-xl border border-[#282626]">
+          <div className={`flex items-center space-x-1 p-1 rounded-xl border ${isVoceroMode ? 'bg-[#f1f5f9] border-[#e2e8f0]' : 'bg-[#111010] border-[#282626]'}`}>
             {NAV_VIEWS.map(({ id, label, icon: Icon, path }) => (
               <button
                 key={id} onClick={() => navigate(id === 'client' ? getTenantTabPath(selectedTenantSlug, 'business') : path)}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  currentView === id ? 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm' : 'text-zinc-400 hover:text-white'
+                  currentView === id
+                    ? (isVoceroMode ? 'bg-white text-[#0d5bff] shadow-xs' : 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm')
+                    : (isVoceroMode ? 'text-[#62728d] hover:text-[#0a1730]' : 'text-zinc-400 hover:text-white')
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{label}</span>
@@ -81,7 +81,7 @@ export function App() {
       )}
 
       {/* Main Container */}
-      <main className="flex-1 overflow-hidden relative bg-[#151414]">
+      <main className={`flex-1 overflow-hidden relative ${isVoceroMode ? 'bg-[#f6f8fc]' : 'bg-[#151414]'}`}>
         {currentView === 'landing' && (
           <div className="h-full w-full overflow-y-auto bg-[#0a0a0c]">
             <LandingPage
@@ -142,7 +142,7 @@ export function App() {
         )}
 
         {currentView === 'client' && (
-          <div className={`h-full w-full bg-[#151414] ${isVoceroMode ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className={`h-full w-full ${isVoceroMode ? 'bg-[#f6f8fc] text-[#0a1730] overflow-hidden' : 'bg-[#151414] text-slate-100 overflow-y-auto'}`}>
             {isAuthenticated && isVoceroMode ? (
               <ErrorBoundary fallbackTitle="ClikChat CRM">
                 <VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} onLogout={logout} />

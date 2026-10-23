@@ -44,6 +44,9 @@ export function useVoceroMode() {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, active ? 'vocero_crm' : 'clikchat_classic');
     setIsVoceroMode(active);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', active ? 'crm' : 'classic');
+    }
     window.dispatchEvent(new Event('vocero-mode-change'));
   }, []);
 
@@ -51,8 +54,16 @@ export function useVoceroMode() {
     setVoceroMode(!isVoceroMode);
   }, [isVoceroMode, setVoceroMode]);
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', isVoceroMode ? 'crm' : 'classic');
+    }
+  }, [isVoceroMode]);
+
   return {
     isVoceroMode,
+    isCrm: isVoceroMode,
+    isClassic: !isVoceroMode,
     setVoceroMode,
     toggleVoceroMode,
   };
