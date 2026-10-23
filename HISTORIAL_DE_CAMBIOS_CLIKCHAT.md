@@ -1377,3 +1377,40 @@ Agregado al historial de cambios aplicando el filtro de los tres pasos.
 - Filtro 3: Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
 
 Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
+
+---
+
+## [Registro #010] — Arquitectura Modular: Tríada Insignia FAQ IQ, Flow IQ y Live Lab
+
+- **Fecha:** 2026-10-23
+- **Estado:** `ready_for_review`
+- **Versión:** v1.90.0
+- **Requerimiento:**
+  Implementar los tres módulos insignia de inteligencia comercial:
+  1. **FAQ IQ:** El agente aprende supervisadamente cuando no sabe, con cero respuestas falsas, detección automática de preguntas sin respuesta y registro a RAG Nivel 2.
+  2. **Flow IQ:** Constructor inteligente de flujos conversacionales con 3 estrategias optimizadas por industria (Asesor Consultivo B2B, Venta Directa/Catálogo y Captación/Agendamiento).
+  3. **Live Lab:** Entorno de pruebas y validación en vivo con botón interactivo *«Modificar respuesta»* directamente en las respuestas del bot, permitiendo guardar correcciones en FAQ IQ, Flow IQ o probar con paráfrasis con *«Comprobar respuesta agregada»*.
+
+### Cambios Realizados (ARQMODULAR)
+1. **FAQ IQ (`VoceroFaqRagView.tsx` & `VoceroAppNav.tsx`):**
+   - Nueva identidad en barra lateral y cabecera como **FAQ IQ (Memoria RAG & Aprendizaje Supervisado)**.
+   - Pestañas de Preguntas Aprobadas y Consultas Pendientes (HITL) con indexación automática en la base de conocimiento para todas las conversaciones futuras.
+2. **Flow IQ (`SalesFlowSection.tsx`, `salesFlowPresets.ts`, `VoceroAgentView.tsx`):**
+   - 3 Estrategias prediseñadas listas para 1-clic:
+     - *Asesor Consultivo B2B / Clínicas / Alto Valor* (Diagnóstico, calificación de requisitos, solución y cierre).
+     - *Venta Directa & Catálogo* (Intención, catálogo, promociones autorizadas y comanda WhatsApp).
+     - *Captación & Agendamiento* (Servicio, datos del paciente, disponibilidad real y confirmación oficial).
+   - Metodología persuasiva adaptable con garantía secuencial estricta.
+3. **Live Lab (`VoceroAiSandbox.tsx`, `LiveLabCorrectionModal.tsx`, `LiveLabMessageItem.tsx`):**
+   - Entorno interactivo de prueba en tiempo real con selector de personas comerciales.
+   - Botón *«Modificar respuesta»* en cada intervención del asistente.
+   - Modal de corrección in-line con opciones: *Guardar como FAQ oficial en FAQ IQ*, *Ajustar regla de Flow IQ* o *Prueba local*.
+   - Botón *«Comprobar respuesta agregada»* que envía automáticamente una pregunta equivalente para verificar que la IA recuperó el nuevo conocimiento sin alucinaciones.
+
+### Verificación
+- Filtro 1: Compilación limpia `npm run build` sin errores (0 errores).
+- Filtro 2: Commit registrado en git rama `main`.
+- Filtro 3: Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
+
+Agregado al historial de cambios aplicando el filtro de los tres pasos.

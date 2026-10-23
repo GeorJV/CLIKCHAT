@@ -44,12 +44,12 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       ]
     },
     {
-      title: 'Agente',
+      title: 'Agente & Inteligencia',
       items: [
         { id: 'onboarding' as VoceroNavTab, label: 'Guía de inicio', icon: ListChecks },
-        { id: 'agent' as VoceroNavTab, label: 'Agente', icon: Sparkles },
-        { id: 'faqs' as VoceroNavTab, label: 'Memoria RAG & FAQs', icon: BookOpen, badge: unresolvedCount },
-        { id: 'lab' as VoceroNavTab, label: 'Laboratorio', icon: FlaskConical },
+        { id: 'agent' as VoceroNavTab, label: 'Flow IQ (Agente)', icon: Sparkles },
+        { id: 'faqs' as VoceroNavTab, label: 'FAQ IQ (Memoria RAG)', icon: BookOpen, badge: unresolvedCount },
+        { id: 'lab' as VoceroNavTab, label: 'Live Lab (Pruebas)', icon: FlaskConical },
       ]
     },
     {

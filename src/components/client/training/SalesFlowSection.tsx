@@ -74,11 +74,11 @@ export const SalesFlowSection: React.FC<Props> = ({ tenant, onUpdateSettings }) 
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#0a1730] flex items-center gap-2">
-              <span>Flujo de Conversión en 4 Pasos Obligatorios</span>
+              <span>Flow IQ — Constructor de Flujos de Venta</span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#0d5bff] uppercase tracking-wider">Activo</span>
             </h3>
             <p className="text-xs text-[#62728d] mt-0.5">
-              La IA seguirá este orden estricto desde el saludo inicial hasta el cierre oficial por WhatsApp.
+              Plantillas por industria con metodología persuasiva: Asesor Consultivo, Venta Directa o Citas.
             </p>
           </div>
         </div>

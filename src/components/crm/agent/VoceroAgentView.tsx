@@ -33,8 +33,8 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
   const TABS = [
     { id: 'identidad' as const, label: 'Identidad (4 Pasos)', icon: UserCog },
     { id: 'objetivos' as const, label: 'Objetivos Comerciales', icon: Target },
-    { id: 'flujo' as const, label: 'Flujo de Ventas (4 Pasos)', icon: TrendingUp },
-    { id: 'objeciones' as const, label: 'Objeciones & FAQs', icon: ShieldCheck, badge: faqs.length },
+    { id: 'flujo' as const, label: 'Flow IQ (Flujos)', icon: TrendingUp },
+    { id: 'objeciones' as const, label: 'FAQ IQ & Objeciones', icon: ShieldCheck, badge: faqs.length },
     { id: 'reglas' as const, label: 'Reglas Operativas', icon: ShieldAlert },
     { id: 'docs' as const, label: 'Documentos RAG', icon: FileText },
   ];

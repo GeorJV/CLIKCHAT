@@ -27,6 +27,120 @@ export function compileFourStepsToRules(steps: SalesFlowStep[]): string {
 
 export const SALES_FLOW_PRESETS: SalesFlowPreset[] = [
   {
+    id: 'flow_iq_consultivo',
+    name: 'Flow IQ: Asesor Consultivo B2B',
+    businessType: 'servicios',
+    icon: '💼',
+    description: 'Para consultorías, clínicas y servicios de alto valor: diagnóstico, valor y cierre.',
+    steps: [
+      {
+        step: 1,
+        title: 'Saludo & Diagnóstico de Necesidades',
+        badge: 'Paso 1',
+        instruction: 'Saluda con profesionalismo, genera confianza e indaga qué reto o necesidad busca solucionar el cliente. PROHIBIDO vender o presionar en este paso.'
+      },
+      {
+        step: 2,
+        title: 'Calificación & Diagnóstico de Requisitos',
+        badge: 'Paso 2',
+        instruction: 'Formula preguntas breves y pertinentes para conocer su presupuesto aproximado, urgencia e intención real antes de presentar la solución.'
+      },
+      {
+        step: 3,
+        title: 'Presentación de Solución & Valor Real',
+        badge: 'Paso 3',
+        instruction: 'Presenta el servicio o paquete ideal vinculando características con beneficios concretos. Resuelve objeciones con respeto y muestra garantías.'
+      },
+      {
+        step: 4,
+        title: 'Cierre Comercial & Siguiente Paso',
+        badge: 'Paso 4',
+        instruction: 'Propón el siguiente paso claro: agendar una llamada de valoración, enviar propuesta formal o canalizar directamente a WhatsApp.'
+      }
+    ],
+    rules: `[FLOW IQ · ESTRATEGIA 1: ASESOR COMERCIAL CONSULTIVO]:
+PASO 1 (Saludo & Diagnóstico): Saluda con calidez y genera confianza. Indaga qué reto o necesidad busca solucionar el prospecto.
+PASO 2 (Calificación de Requisitos): Pregunta presupuesto, urgencia e intención sin interrogar.
+PASO 3 (Solución & Demostración de Valor): Presenta la solución ideal, aclara objeciones y demuestra garantías autorizadas.
+PASO 4 (Cierre & Siguiente Paso): Define el siguiente paso (reunión, cotización o canalizar a WhatsApp para contratación).`
+  },
+  {
+    id: 'flow_iq_directa',
+    name: 'Flow IQ: Venta Directa & Catálogo',
+    businessType: 'tienda',
+    icon: '🛍️',
+    description: 'Para tiendas, retail y e-commerce: recomendación de catálogo, promociones y comanda.',
+    steps: [
+      {
+        step: 1,
+        title: 'Detección de Intención de Compra',
+        badge: 'Paso 1',
+        instruction: 'Saluda amigablemente y detecta qué producto o categoría le interesa al cliente. PROHIBIDO cobrar en este paso.'
+      },
+      {
+        step: 2,
+        title: 'Recomendación de Catálogo & Beneficios',
+        badge: 'Paso 2',
+        instruction: 'Recomienda el producto idóneo del catálogo con precio autorizado, especificaciones y disponibilidad real sin inventar.'
+      },
+      {
+        step: 3,
+        title: 'Promociones Autorizadas & Cross-Selling',
+        badge: 'Paso 3',
+        instruction: 'Ofrece complementos, accesorios o promociones autorizadas por el negocio si el cliente está interesado.'
+      },
+      {
+        step: 4,
+        title: 'Armado de Pedido & Cierre en WhatsApp',
+        badge: 'Paso 4',
+        instruction: 'Resume el pedido con el total a pagar y canaliza con un enlace directo a WhatsApp para pago y envío.'
+      }
+    ],
+    rules: `[FLOW IQ · ESTRATEGIA 2: VENTA DIRECTA Y CIERRE]:
+PASO 1 (Detección de Intención): Saluda y detecta qué busca el cliente.
+PASO 2 (Recomendación & Catálogo): Muestra productos disponibles con precios reales y fotos si corresponde.
+PASO 3 (Promociones & Accesorios): Presenta promociones autorizadas y resuelve dudas de despacho o pago.
+PASO 4 (Cierre & WhatsApp): Resume el pedido y canaliza al WhatsApp oficial para completar el cobro.`
+  },
+  {
+    id: 'flow_iq_agendamiento',
+    name: 'Flow IQ: Citas & Agendamiento',
+    businessType: 'citas',
+    icon: '📅',
+    description: 'Para dentistas, médicos, spas y salones: captación, disponibilidad y confirmación.',
+    steps: [
+      {
+        step: 1,
+        title: 'Identificar Servicio & Urgencia',
+        badge: 'Paso 1',
+        instruction: 'Saluda con empatía, consulta el servicio deseado o motivo de la visita y evalúa si es una urgencia o atención regular.'
+      },
+      {
+        step: 2,
+        title: 'Recopilar Datos Pertinentes',
+        badge: 'Paso 2',
+        instruction: 'Solicita el nombre del titular y día de preferencia de forma ágil y natural.'
+      },
+      {
+        step: 3,
+        title: 'Verificar Disponibilidad & Horarios',
+        badge: 'Paso 3',
+        instruction: 'Ofrece 2 o 3 opciones de horario reales disponibles para que el paciente o cliente elija la más conveniente.'
+      },
+      {
+        step: 4,
+        title: 'Reserva & Confirmación Oficial',
+        badge: 'Paso 4',
+        instruction: 'Confirma la cita con fecha, hora, ubicación y envía el recordatorio por WhatsApp con políticas de asistencia.'
+      }
+    ],
+    rules: `[FLOW IQ · ESTRATEGIA 3: CAPTACIÓN Y AGENDAMIENTO]:
+PASO 1 (Identificar Necesidad): Saluda y pregunta el motivo de la cita o servicio requerido.
+PASO 2 (Recopilar Datos): Solicita nombre del paciente/cliente y día preferido.
+PASO 3 (Disponibilidad Real): Presenta opciones concretas de horario para evitar idas y vueltas.
+PASO 4 (Confirmar Reserva): Confirma el turno agendado y canaliza a WhatsApp para registro y recordatorio.`
+  },
+  {
     id: 'restaurante_upsell',
     name: 'Restaurante & Comida (Cross-selling)',
     businessType: 'restaurante',

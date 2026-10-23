@@ -1,21 +1,20 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 09:58 GMT-6
-- **Versión Actual:** 1.89.0 (Agenda: Botón Mes Completo Unificado en Filtros & Pop-up Profesional de Detalle de Cita)
+- **Última Actualización:** 2026-10-23 10:11 GMT-6
+- **Versión Actual:** 1.90.0 (Tríada Insignia: FAQ IQ, Flow IQ y Live Lab con Modificar Respuesta)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Agenda Citas /agenda: Botón "Mes Completo" alineado junto a "Semana Siguiente" en la barra de filtros.
-  - Pop-up Detalle de Cita `VoceroAppointmentDetailModal`: Muestra qué se va a hacer, notas, WhatsApp y estado.
+  - FAQ IQ /faqs: Aprendizaje supervisado cuando la IA no sabe, HITL y guardado directo a RAG Nivel 2.
+  - Flow IQ /agente: 3 Estrategias listas (Asesor Consultivo B2B, Venta Directa y Citas/Agendamiento).
+  - Live Lab /lab: Entorno de pruebas con "Modificar respuesta" in-line y comprobación de aprendizaje.
+  - Agenda Citas /agenda: Botón "Mes Completo" en barra de filtros y pop-up profesional de detalle.
   - Lead Score Numérico 0-100: Termómetro visual (🔥/☕/❄️) en panel de contacto, bandeja y Kanban.
-  - Objetivos Comerciales por Casillas: Subpestaña en Agente con matriz no-code de 6 funciones comerciales.
   - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de ventana.
   - Viewport CRM Bloqueado: Contenedor en `overflow-hidden` durante modo CRM y reset `window.scrollTo(0, 0)`.
   - Unificación de Contraste en Botones: Estados activos en azul royal `#0d5bff` con texto e íconos blancos.
   - Telemetría y Métricas: Clics comprar, fotos vistas, chat IA, 7 eventos y termómetro de leads.
-  - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` y Human-in-the-Loop (`unresolved_queries`).
-  - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.
   - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**

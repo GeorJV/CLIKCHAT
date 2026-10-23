@@ -31,10 +31,8 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
   const { setVoceroMode } = useVoceroMode();
 
   const {
-    tenant, products, faqs, unresolved, updateSettings,
-    createProduct, updateProduct, deleteProduct,
-    createFaq, updateFaq, deleteFaq, resolveQuery,
-    trackProductEvent
+    tenant, products, faqs, unresolved, updateSettings, createProduct, updateProduct,
+    deleteProduct, createFaq, updateFaq, deleteFaq, resolveQuery, trackProductEvent
   } = useClientPortal(tenantSlug);
 
   const pendingUnresolvedCount = (unresolved || []).filter(u => u.status === 'pending').length;
@@ -153,7 +151,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         )}
 
         {activeTab === 'lab' && (
-          <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} />
+          <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />
         )}
 
         {activeTab === 'analyst' && (

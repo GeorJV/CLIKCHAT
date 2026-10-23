@@ -45,9 +45,9 @@ export const VoceroFaqRagView: React.FC<VoceroFaqRagViewProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <BookOpen className="h-4 w-4 text-[#0d5bff] shrink-0" />
           <h2 className="text-base sm:text-[17px] font-bold tracking-tight text-[#0a1730] truncate">
-            Memoria RAG & Preguntas Frecuentes
+            FAQ IQ — Memoria RAG & Aprendizaje
           </h2>
-          <span className="vocero-kicker ml-1 hidden sm:inline">Nivel 2 • RAG Activo</span>
+          <span className="vocero-kicker ml-1 hidden sm:inline">Aprendizaje Supervisado</span>
         </div>
 
         <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl">
