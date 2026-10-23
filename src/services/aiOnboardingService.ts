@@ -29,6 +29,14 @@ export interface InterviewMessage {
   timestamp: string;
 }
 
+export function sanitizeInterviewText(raw: string): string {
+  if (!raw) return '';
+  let clean = raw.split('[SETUP_PAYLOAD]')[0];
+  clean = clean.split('```json')[0];
+  clean = clean.replace(/\[SETUP_PAYLOAD\][\s\S]*?(\[\/SETUP_PAYLOAD\]|$)/g, '');
+  return clean.trim();
+}
+
 export async function sendInterviewMessage(
   messages: InterviewMessage[],
   tenantName?: string,
@@ -48,7 +56,7 @@ export async function sendInterviewMessage(
   }
   const data = await res.json();
   return {
-    message: data.message,
+    message: sanitizeInterviewText(data.message || ''),
     payload: data.payload || null,
     provider: data.provider
   };

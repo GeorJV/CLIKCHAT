@@ -5454,7 +5454,9 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
       if (env?.AI) {
         try {
           const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-            messages: formattedMessages
+            messages: formattedMessages,
+            max_tokens: 2048,
+            temperature: 0.3
           });
           if (cfResp?.response) {
             rawResponse = cfResp.response;
@@ -5477,7 +5479,11 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
                 contents: messages.map(m => ({
                   role: m.role === 'assistant' ? 'model' : 'user',
                   parts: [{ text: m.content }]
-                }))
+                })),
+                generationConfig: {
+                  maxOutputTokens: 2048,
+                  temperature: 0.3
+                }
               })
             });
             const gData = await gResp.json();
@@ -5496,14 +5502,69 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
       let cleanMessage = rawResponse;
       let setupPayload = null;
 
-      const payloadMatch = rawResponse.match(/\[SETUP_PAYLOAD\]([\s\S]*?)\[\/SETUP_PAYLOAD\]/);
-      if (payloadMatch) {
-        try {
-          setupPayload = JSON.parse(payloadMatch[1].trim());
-          cleanMessage = rawResponse.replace(/\[SETUP_PAYLOAD\][\s\S]*?\[\/SETUP_PAYLOAD\]/, '').trim();
-        } catch (e) {
-          console.error('Error parseando setup payload:', e);
+      // Extracción y blindaje: cleanMessage JAMÁS mostrará [SETUP_PAYLOAD] ni JSON técnico al usuario
+      if (rawResponse.includes('[SETUP_PAYLOAD]')) {
+        const parts = rawResponse.split('[SETUP_PAYLOAD]');
+        cleanMessage = parts[0].trim();
+        let payloadRaw = parts[1] || '';
+        if (payloadRaw.includes('[/SETUP_PAYLOAD]')) {
+          payloadRaw = payloadRaw.split('[/SETUP_PAYLOAD]')[0].trim();
+        } else {
+          payloadRaw = payloadRaw.trim();
         }
+        payloadRaw = payloadRaw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+
+        try {
+          setupPayload = JSON.parse(payloadRaw);
+        } catch (parseErr) {
+          // Intento de rescate tolerante si el JSON vino con pequeñas anomalías
+          try {
+            const nameM = payloadRaw.match(/"name"\s*:\s*"([^"]+)"/);
+            const btypeM = payloadRaw.match(/"business_type"\s*:\s*"([^"]+)"/);
+            const descM = payloadRaw.match(/"description"\s*:\s*"([^"]+)"/);
+            const phoneM = payloadRaw.match(/"phone"\s*:\s*"([^"]+)"/);
+            const botM = payloadRaw.match(/"bot_name"\s*:\s*"([^"]+)"/);
+            const welcomeM = payloadRaw.match(/"welcome_message"\s*:\s*"([^"]+)"/);
+
+            const rescuedProducts = [];
+            const prodRegex = /\{\s*"name"\s*:\s*"([^"]+)"\s*,\s*"price"\s*:\s*([0-9.]+)/g;
+            let pM;
+            while ((pM = prodRegex.exec(payloadRaw)) !== null) {
+              rescuedProducts.push({ name: pM[1], price: Number(pM[2]) || 0 });
+            }
+
+            const rescuedFaqs = [];
+            const faqRegex = /\{\s*"question"\s*:\s*"([^"]+)"\s*,\s*"answer"\s*:\s*"([^"]+)"/g;
+            let fM;
+            while ((fM = faqRegex.exec(payloadRaw)) !== null) {
+              rescuedFaqs.push({ question: fM[1], answer: fM[2] });
+            }
+
+            if (nameM || rescuedProducts.length > 0) {
+              setupPayload = {
+                is_complete: true,
+                tenant: {
+                  name: nameM ? nameM[1] : (tenantName || 'Mi Negocio'),
+                  business_type: btypeM ? btypeM[1] : (businessType || 'tienda'),
+                  description: descM ? descM[1] : '',
+                  phone: phoneM ? phoneM[1] : '',
+                  bot_name: botM ? botM[1] : 'Asesor Virtual',
+                  welcome_message: welcomeM ? welcomeM[1] : '¡Hola! Bienvenido.',
+                  tone_of_voice: 'Cercano y Amigable'
+                },
+                products: rescuedProducts,
+                faqs: rescuedFaqs
+              };
+            }
+          } catch (rescueErr) {
+            console.error('Error en rescate de setup payload:', rescueErr);
+          }
+        }
+      }
+
+      // Asegurar que si cleanMessage quedó vacío por venir solo el payload, se dé una respuesta humana
+      if (!cleanMessage) {
+        cleanMessage = '¡Excelente! Tu negocio y tu bot inteligente han quedado configurados con éxito.';
       }
 
       return jsonResponse({

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Send, Bot, User, Sparkles, Loader2, Copy, Check } from 'lucide-react';
-import { InterviewMessage } from '../../../services/aiOnboardingService';
+import { InterviewMessage, sanitizeInterviewText } from '../../../services/aiOnboardingService';
 
 interface Props {
   messages: InterviewMessage[];
@@ -61,11 +61,11 @@ export const VoceroAiInterviewChat: React.FC<Props> = ({
                   ? 'bg-white text-[#0a1730] border border-[#e2e8f0]'
                   : 'bg-[#0d5bff] text-white rounded-tr-xs'
               }`}>
-                <p className="whitespace-pre-line select-text cursor-text">{m.content}</p>
+                <p className="whitespace-pre-line select-text cursor-text">{isAi ? sanitizeInterviewText(m.content) : m.content}</p>
                 {isAi && (
                   <button
                     type="button"
-                    onClick={() => handleCopy(m.id, m.content)}
+                    onClick={() => handleCopy(m.id, sanitizeInterviewText(m.content))}
                     className="absolute -bottom-2 right-2 px-1.5 py-0.5 rounded bg-white border border-[#e2e8f0] text-[10px] text-[#62728d] hover:text-[#0d5bff] shadow-xs opacity-0 group-hover:opacity-100 transition flex items-center gap-1 cursor-pointer select-none"
                     title="Copiar texto del asistente"
                   >
