@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Chat Humanizado: Signo de Cierre Exclusivo (?), Cadencia 1-3s y Selector de 3 Modos de Envío de Mensaje
+- **Diagnóstico y Necesidad:**
+  1. *Preguntas no Humanizadas con Signo de Apertura:* El bot empleaba signos de apertura formales (`¿`), lo que resultaba artificial en WhatsApp y redes sociales donde los humanos redactan exclusivamente con signos de cierre (`?`).
+  2. *Bloques de Texto Masivos en Respuestas Largas:* Cuando la IA generaba respuestas con varias oraciones o platillos, se desplegaban en un solo bloque denso en lugar de distribuirse en mensajes separados secuenciales como chatea una persona real.
+  3. *Cadencia Rígida y Falta de Control de Envío:* Se requería calibrar la cadencia de respuesta en 1, 2 o 3 segundos y proporcionar un selector interactivo con 3 modos de distribución: Mensaje por mensaje (micro-burbujas), Intercalado moderado (cada 2 renglones) o Mensaje único.
+- **Solución Implementada (ARQMODULAR & UX WhatsApp Real):**
+  1. *Sanitización y Directiva Conversacional Humana (`messageSplitter.ts` & `functions/api/[[route]].js`):*
+     - Erradicación universal de signos de apertura (`¿` y `¡`) en el prompt del sistema y mediante filtro automático `sanitizeAiResponse` y en frontend.
+     - Instrucción de estilo conversacional natural WhatsApp donde las preguntas usan estrictamente solo el signo de cierre `?`.
+  2. *Selector Atómico de Tipo de Envío de Mensaje (`MessageDeliveryModeSelector.tsx`):*
+     - Componente modular (81 líneas) con 3 botones interactivos de alta fidelidad:
+       - 💬 **Mensaje por mensaje (Micro-burbujas):** Divide la respuesta en oraciones y mensajes breves secuenciales simulando el ritmo real de tipeo.
+       - ⚖️ **Mensaje intercalado (Moderado - cada 2 renglones):** Agrupa el contenido cada ~2 renglones en 2 a 3 bloques medianos equilibrados.
+       - 📦 **Mensaje único (Completo):** Entrega la respuesta completa en una sola burbuja unificada.
+  3. *Control de Cadencia de Respuesta (1, 2 o 3 segundos):*
+     - Selector con opciones de 1s (Respuesta rápida), 2s (Pausa natural recomendada), 3s (Humanizada realista) y 0s (Inmediata) en `VoceroAiModelSettings.tsx`.
+  4. *Renderizado Multi-Burbuja Nativo (`ChatMessageItem.tsx` y `VoceroActiveChat.tsx`):*
+     - Distribución visual de burbujas apiladas con estética WhatsApp (`space-y-1.5`), manteniendo la insignia RAG en la primera burbuja y las acciones rápidas/botones de compra en la última.
+  5. *Persistencia Resiliente:*
+     - Almacenamiento en `localStorage` (`clikchat_delivery_mode`), sincronización con `tenants` y persistencia en D1.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 12.62s con 0 errores TypeScript (`npm run build`). Bundle activo `index--tPACeCw.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `2c7468e`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 12/12 rutas activas y 0 errores en Chrome headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Selector Desplegable Multiselección de Tonos de Comunicación (7 Mejores Modos Combinables)
 - **Diagnóstico y Necesidad:**
   1. *Limitación de Selección Única o Campo de Texto:* El tono de comunicación se configuraba mediante texto libre o selector rígido de una sola opción, impidiendo a los comerciantes calibrar la personalidad del bot mediante combinaciones estratégicas de alta conversión (por ejemplo, combinar empatía y cercanía con enfoque directo de cierre de ventas).

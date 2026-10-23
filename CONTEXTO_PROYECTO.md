@@ -1,22 +1,23 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 19:48 GMT-6
-- **Versión Actual:** 1.76.0 (Selector Desplegable Multiselección de 7 Tonos de Comunicación)
+- **Última Actualización:** 2026-10-22 20:05 GMT-6
+- **Versión Actual:** 1.77.0 (Chat Humanizado, Signo de Cierre Exclusivo ?, Cadencia 1-3s y 3 Modos de Envío)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit en progreso)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `2c7468e` en `main`)
 - **Estado Actual del Sistema:**
-  - Selector de Tonos Multiselección: Dropdown interactivo con 7 modos comerciales combinables con checkboxes múltiples (`ToneMultiSelectDropdown.tsx`).
-  - Conexión Multi-IA Nativa: Google AI Studio (`gemini-2.5-flash`, `gemini-2.5-pro`), OpenRouter (`openrouter.ai`) y Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`).
-  - Suite de Agente Vocero al 100%: Identidad, Prompt, 4 Pasos, Objeciones Q&A, Reglas Operativas y Docs RAG.
-  - Laboratorio y Juez Vocero: 6 personas compradoras, AI Judge scoring (0-100) y guardado de respuestas doradas.
-  - Citas & Reservaciones Interactivas: Modal "+ Nueva Cita", toggle confirmada/pendiente y persistencia localStorage.
-  - Contactos CRM: Exportación a CSV con 1 clic, filtros por canal (WhatsApp/Web) y enlace directo a WhatsApp.
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 12/12 rutas verificadas.
+  - Chat Humanizado: Preguntas formuladas exclusivamente con signo de cierre `?` (cero `¿` o `¡`), simulando WhatsApp real.
+  - Selector de 3 Modos de Envío: Mensaje por mensaje (micro-burbujas), Intercalado moderado (cada 2 renglones) y Mensaje único (`MessageDeliveryModeSelector.tsx`).
+  - Cadencia de Respuesta: Configuración interactiva de 1s, 2s (lectura natural), 3s (humanizada realista) y 0s en CRM.
+  - Renderizado Multi-Burbuja: Apilamiento visual nativo WhatsApp en `ChatMessageItem.tsx` y bandeja CRM `VoceroActiveChat.tsx`.
+  - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes (`ToneMultiSelectDropdown.tsx`).
+  - Modelos Google AI Studio: Estandarización exclusiva en `gemini-2.5-flash` y `gemini-2.5-pro` (cero versiones obsoletas).
+  - Suite Vocero CRM 100%: Pipeline, Inbox, Citas & Reservaciones, Contactos CSV, Laboratorio y Juez IA con scoring.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 12/12 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
-  - Modelos Google AI Studio: Uso exclusivo de las últimas versiones oficiales (Gemini 2.5 Flash / Pro). Prohibidas versiones obsoletas.
+  - Modelos Google AI Studio: Uso exclusivo de las últimas versiones oficiales (Gemini 2.5 Flash / Pro).
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
   - Respetar el límite de 150-180 líneas por archivo en todo el frontend (ARQMODULAR).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.
