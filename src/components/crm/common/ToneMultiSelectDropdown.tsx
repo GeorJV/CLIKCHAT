@@ -22,12 +22,14 @@ interface ToneMultiSelectDropdownProps {
   value: string;
   onChange: (newValue: string) => void;
   label?: string;
+  stepBadge?: string;
 }
 
 export const ToneMultiSelectDropdown: React.FC<ToneMultiSelectDropdownProps> = ({
   value,
   onChange,
-  label = 'Tono de Comunicación'
+  label = 'Tono de Comunicación',
+  stepBadge,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,9 +74,14 @@ export const ToneMultiSelectDropdown: React.FC<ToneMultiSelectDropdownProps> = (
   return (
     <div className="relative font-sans" ref={containerRef}>
       {label && (
-        <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
+        <label className="block text-xs font-bold text-[#0a1730] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          {stepBadge && (
+            <span className="px-1.5 py-0.2 rounded bg-blue-100 text-[#0d5bff] font-mono text-[10px] font-bold">
+              {stepBadge}
+            </span>
+          )}
           <Sparkles className="h-3.5 w-3.5 text-[#0d5bff]" /> {label}
-          <span className="text-[10px] text-[#8391aa] font-normal">(Combina 2 o más)</span>
+          <span className="text-[10px] text-[#8391aa] font-normal lowercase">(Combina 2 o más)</span>
         </label>
       )}
 

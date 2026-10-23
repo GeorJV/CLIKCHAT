@@ -30,8 +30,8 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
   const [subTab, setSubTab] = useState<'identidad' | 'flujo' | 'objeciones' | 'reglas' | 'docs'>('identidad');
 
   const TABS = [
-    { id: 'identidad' as const, label: 'Identidad & Prompt', icon: UserCog },
-    { id: 'flujo' as const, label: 'Flujo en 4 Pasos', icon: TrendingUp },
+    { id: 'identidad' as const, label: 'Identidad (4 Pasos)', icon: UserCog },
+    { id: 'flujo' as const, label: 'Flujo de Ventas (4 Pasos)', icon: TrendingUp },
     { id: 'objeciones' as const, label: 'Objeciones & FAQs', icon: ShieldCheck, badge: faqs.length },
     { id: 'reglas' as const, label: 'Reglas Operativas', icon: ShieldAlert },
     { id: 'docs' as const, label: 'Documentos RAG', icon: FileText },

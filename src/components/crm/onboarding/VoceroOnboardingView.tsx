@@ -21,7 +21,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
 }) => {
   const isStep1Done = Boolean(tenant?.name && tenant?.business_type);
   const isStep2Done = products.length > 0;
-  const isStep3Done = Boolean(tenant?.sales_flow_rules?.includes('PASO 1') || faqs.length > 0);
+  const isStep3Done = Boolean(tenant?.bot_name && tenant?.welcome_message && (tenant?.system_prompt || tenant?.sales_flow_rules));
   const isStep4Done = Boolean(tenant?.phone);
 
   const completedCount = [isStep1Done, isStep2Done, isStep3Done, isStep4Done].filter(Boolean).length;
@@ -49,7 +49,9 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
     {
       num: 3,
       title: 'Entrenamiento del Agente (4 Pasos)',
-      desc: isStep3Done ? 'Estrategia comercial y objeciones activas.' : 'Define el flujo secuencial en 4 pasos y respuestas a objeciones frecuentes.',
+      desc: isStep3Done
+        ? `Configurado como "${tenant?.bot_name || 'Agente'}" con los 4 pasos de identidad activos.`
+        : 'Configura los 4 pasos: 1. Nombre, 2. Tono, 3. Mensaje de bienvenida y 4. System Prompt.',
       isDone: isStep3Done,
       icon: Sparkles,
       targetTab: 'agent' as VoceroNavTab,
