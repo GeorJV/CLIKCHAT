@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Optimización de Cabecera en Cerebro del Asistente, Subtítulo Inferior, Flechas de Navegación y Menú Desplegable Anti-Cortes (v2.1.3)
+- **Diagnóstico y Necesidad:**
+  1. *Botones Entrecortados:* Las pestañas `5. Documentos RAG` y `6. Metas` se cortaban o quedaban invisibles en pantallas de laptops y tablets debido al ancho horizontal excesivo del título ("Cerebro del Asistente" y "Entrenamiento en 6 Fases" en la misma línea).
+  2. *Requerimiento del Usuario:* Hacer el título más pequeño, ubicar "Entrenamiento en seis fases" debajo de "Cerebro del Asistente" para liberar espacio horizontal y correr el menú de pestañas. Incorporar flechas de navegación y un menú desplegable de tres rayas para acceder a cualquier fase sin entrecortes.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `VoceroAgentHeader.tsx` (162 líneas):
+     - Reducción del tamaño del título "Cerebro del Asistente" a `text-[13px] font-bold`.
+     - Reubicación de "Entrenamiento en 6 fases" como subtítulo vertical inmediatamente debajo del título (`text-[10px] text-[#8391aa]`), liberando más de 160px de espacio horizontal.
+     - Etiquetas responsivas adaptativas: nombres completos en pantallas amplias (`1. Identidad & Tono`, `2. Flow IQ (Venta)`, etc.) y versiones compactas legibles (`1. Identidad`, `2. Flow IQ`, `3. FAQ IQ`, `4. Reglas`, `5. Docs RAG`, `6. Metas`) en pantallas medianas.
+     - Contenedor con scroll suave horizontal y flechas laterales de navegación (`ChevronLeft` / `ChevronRight`).
+     - Menú popup desplegable de tres rayas (`Menu`) al final de la barra, que lista con checkmark todas las 6 fases garantizando acceso instantáneo en 1-clic a `Documentos RAG` y `Metas`.
+  2. `VoceroAgentView.tsx` (108 líneas):
+     - Refactorización modular integrando `VoceroAgentHeader` y manteniendo la sub-barra de guía por fases y las 6 vistas principales sin sobrepasar las 110 líneas.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) con 0 errores TypeScript. Bundle: `dist/assets/index-BayL4jxV.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `9dcc7af`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Sustitución de Contador Engañoso por Check-In Verde en Identidad y Homologación de Título Cerebro & Flow IQ (v2.1.2)
 - **Diagnóstico y Necesidad:**
   1. *Confusión con Número "4" Inicial:* En la pestaña de Identidad del Asistente, un círculo azul con el número "4" se mostraba al inicio del tracker (`[ 4 ] Entrenamiento del Agente: 4 de 4 Pasos Completados`), dando la impresión engañosa de que el usuario estaba en un "Paso 4" o botón interactivo, a pesar de estar en la Fase 1.

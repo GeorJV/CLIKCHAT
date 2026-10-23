@@ -1,21 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 16:40 GMT-6
-- **Versión Actual:** 2.1.2 (Check-in Verde de Identidad y Homologación Cerebro & Flow IQ)
+- **Última Actualización:** 2026-10-23 16:45 GMT-6
+- **Versión Actual:** 2.1.3 (Cabecera Compacta en Cerebro, Subtítulo Inferior, Flechas de Navegación y Menú Anti-Cortes)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 9dcc7af)
 - **Estado Actual del Sistema:**
-  - Identidad Agente: Check-in verde `4 de 4 campos listos` sustituye al confuso círculo numérico inicial.
-  - Título Homologado: `Cerebro & Flow IQ` coincide exactamente con la opción del menú lateral.
-  - Corrección Reglas de Hooks: Erradicado error 'Rendered more hooks' al abrir Nuevo Servicio / Producto.
-  - Navegación CRM en 3 Bloques: Operación Diaria (Bandeja, Pipeline, Citas, Clientes) y Mi Asistente IA (4 Pasos).
-  - Guía Secuencial Asistente: Identidad, Flow IQ, FAQ IQ, Reglas y Documentos numerados en 6 fases con barra de guía.
-  - Botón Flotante Live Lab: Acceso a 1-clic para simular y probar al bot en vivo desde cualquier pantalla del CRM.
-  - Pipeline Kanban Dividido: Botones centrados "Etapa 1" (Tablas 1-3) y "Etapa 2" (Tablas 4-6) con animación suave.
-  - FAQ IQ Modal Carrusel: Flujo secuencial; "Guardar en memoria" transmuta en "Agregar otra pregunta".
-  - Tema Dual Homologado: Sincronización en 0ms entre ClikChat Clásico (Onyx/Emerald) y ClikChat CRM (Blanco/Azul #0d5bff).
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
+  - Cabecera Cerebro Compacta: "Cerebro del Asistente" reducido y "Entrenamiento en 6 fases" ubicado debajo liberando >160px.
+  - Sub-tabs Responsivas: Etiquetas cortas adaptativas (`1. Identidad`, `2. Flow IQ`, `3. FAQ IQ`, `4. Reglas`, `5. Docs RAG`, `6. Metas`).
+  - Navegación con Flechas: Botones Chevron laterales para desplazamiento horizontal fluido sin entrecortes.
+  - Menú Desplegable 3 Rayas: Selector popup desplegable con todas las 6 fases garantizando acceso total a Documentos y Metas.
+  - Identidad Agente: Check-in verde `4 de 4 campos listos` y corrección de reglas de hooks en catálogo.
+  - Verificado con 3 Filtros: Build limpio (`index-BayL4jxV.js`), push en `main` y 17/17 rutas aprobadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
