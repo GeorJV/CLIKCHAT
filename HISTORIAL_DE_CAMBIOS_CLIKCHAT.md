@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Creación Dinámica y Guardado Persistente de Plantillas Rápidas de Restricciones & Anti-Alucinación
+- **Diagnóstico y Necesidad:**
+  1. *Limitación a Plantillas Estáticas:* En la sección de "Plantillas Rápidas de Restricciones & Anti-Alucinación", el sistema contaba únicamente con las 5 reglas predefinidas en código, sin permitir al usuario crear sus propias plantillas personalizadas.
+  2. *Requerimiento del Usuario:* Añadir un botón para agregar restricciones adicionales donde el usuario pueda especificar: Nombre, Subtítulo y Descripción de la regla, guardándose de forma persistente y permitiendo añadirla o quitarla del bot al instante.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `CreateRulePresetModal.tsx` (172 líneas): Modal en tema claro oficial, borderless con sombra profunda `shadow-2xl`, campos de Nombre, Subtítulo/Categoría con botones de sugerencias rápidas, Textarea para reglas detalladas y casilla para activar y añadir directamente al bot en Cloudflare D1.
+  2. `RulePresetCardItem.tsx` (101 líneas): Componente atómico desacoplado para renderizar cada tarjeta de plantilla con badges interactivos ("Activa" / "✓ Activa en el Bot"), botón de alternancia dinámica y botón de eliminación (`Trash2`) para reglas personalizadas.
+  3. `RulePresetCards.tsx` (147 líneas): Incorporación del botón "+ Agregar Restricción" en la cabecera, persistencia reactiva en `localStorage` por tenant (`clikchat_custom_rules_${tenantId}`), sincronización bidireccional con `rulesText` y guardado automático en `tenants.operational_rules` en Cloudflare D1.
+  4. `OperationalRulesSection.tsx` (127 líneas): Paso de `tenantId` para aislar las plantillas creadas por comercio.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 17.08s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-DidH_SUX.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Homologación Integral al Tema Claro en Reglas Operativas, Documentos RAG y Diseño Borderless & Elevated
 - **Diagnóstico y Necesidad:**
   1. *Desfase Visual y Fondos Negros:* Las secciones de "Reglas Operativas", "Documentos RAG" y el modal de objeciones conservaban fondos oscuros y negros (`#141313`, `#181717`, `#262424`, `onyx-card`), rompiendo la armonía estética con el resto de la plataforma CRM blanca oficial.

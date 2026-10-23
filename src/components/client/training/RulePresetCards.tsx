@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { RulePreset, RULE_PRESETS, applyRuleTemplate, isRulePresetActive, toggleRulePreset } from './rulesPresets';
-import { ShieldAlert, Plus, Check, X, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { RulePreset, RULE_PRESETS, isRulePresetActive, toggleRulePreset } from './rulesPresets';
+import { CreateRulePresetModal } from './CreateRulePresetModal';
+import { RulePresetCardItem } from './RulePresetCardItem';
+import { ShieldAlert, Plus, CheckCircle2 } from 'lucide-react';
 
 interface RulePresetCardsProps {
   rulesText: string;
   tenantName: string;
+  tenantId?: string;
   onApplyPreset: (nextRules: string, presetTitle: string, isNowActive: boolean) => Promise<void>;
   isGlobalSaving?: boolean;
 }
@@ -12,13 +15,27 @@ interface RulePresetCardsProps {
 export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
   rulesText,
   tenantName,
+  tenantId,
   onApplyPreset,
   isGlobalSaving
 }) => {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'add' | 'remove' } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const activeCount = RULE_PRESETS.filter(p => isRulePresetActive(rulesText, p)).length;
+  const storageKey = `clikchat_custom_rules_${tenantId || 'global'}`;
+  const [customPresets, setCustomPresets] = useState<RulePreset[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const allPresets = [...RULE_PRESETS, ...customPresets];
+  const activeCount = allPresets.filter(p => isRulePresetActive(rulesText, p)).length;
 
   const handleToggle = async (preset: RulePreset) => {
     if (togglingId) return;
@@ -36,6 +53,32 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
     setTimeout(() => setToast(null), 4000);
   };
 
+  const handleSaveCustom = async (newPreset: RulePreset, activateNow: boolean) => {
+    const updated = [...customPresets, newPreset];
+    setCustomPresets(updated);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    if (activateNow) {
+      await handleToggle(newPreset);
+    } else {
+      setToast({ message: `¡Plantilla "${newPreset.title}" guardada!`, type: 'add' });
+      setTimeout(() => setToast(null), 4000);
+    }
+  };
+
+  const handleDeleteCustom = (id: string) => {
+    const updated = customPresets.filter(p => p.id !== id);
+    setCustomPresets(updated);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl p-5 sm:p-6 space-y-3.5 font-sans shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -45,23 +88,32 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#0a1730]">Plantillas Rápidas de Restricciones & Anti-Alucinación</h3>
-            <p className="text-[11px] text-[#62728d]">Reglas prearmadas para blindar precios, citas y políticas</p>
+            <p className="text-[11px] text-[#62728d]">Reglas prearmadas y personalizadas para blindar precios, citas y políticas</p>
           </div>
         </div>
-        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 shadow-2xs">
-          {activeCount} de {RULE_PRESETS.length} activas
-        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] text-white text-xs font-bold transition shadow-xs hover:shadow cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Agregar Restricción</span>
+          </button>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 shadow-2xs">
+            {activeCount} de {allPresets.length} activas
+          </span>
+        </div>
       </div>
 
       <p className="text-xs text-[#62728d]">
-        Haz clic en <strong className="text-[#0d5bff]">+ Añadir al Bot</strong> para blindar instantáneamente al asistente. Se guarda y activa de forma automática en Cloudflare D1.
+        Haz clic en <strong className="text-[#0d5bff]">+ Añadir al Bot</strong> para blindar instantáneamente al asistente. Puedes agregar nuevas plantillas personalizadas con el botón superior.
       </p>
 
       {toast && (
         <div className={`p-3 rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs ${
-          toast.type === 'add'
-            ? 'bg-emerald-50 text-emerald-800'
-            : 'bg-[#f8fafc] text-[#475569]'
+          toast.type === 'add' ? 'bg-emerald-50 text-emerald-800' : 'bg-[#f8fafc] text-[#475569]'
         }`}>
           <CheckCircle2 className={`w-4 h-4 shrink-0 ${toast.type === 'add' ? 'text-emerald-600' : 'text-[#8391aa]'}`} />
           <span className="font-semibold">{toast.message}</span>
@@ -69,72 +121,26 @@ export const RulePresetCards: React.FC<RulePresetCardsProps> = ({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-        {RULE_PRESETS.map((p) => {
-          const isActive = isRulePresetActive(rulesText, p);
-          const isCurrentLoading = togglingId === p.id;
-
-          return (
-            <div
-              key={p.id}
-              className={`rounded-2xl p-4 flex flex-col justify-between transition shadow-xs hover:shadow-sm ${
-                isActive ? 'bg-[#f0fdf4]' : 'bg-[#f8fafc] hover:bg-white'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-1.5">
-                  <span className="text-[10px] font-mono uppercase text-[#0d5bff] font-bold tracking-wider">
-                    {p.category}
-                  </span>
-                  {isActive && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-0.5 shadow-2xs">
-                      <Check className="w-2.5 h-2.5" /> Activa
-                    </span>
-                  )}
-                </div>
-                <h4 className="text-xs font-bold text-[#0a1730] mb-1">{p.title}</h4>
-                <p className="text-[11px] text-[#475569] line-clamp-3 leading-relaxed">
-                  {applyRuleTemplate(p.template, tenantName)}
-                </p>
-              </div>
-
-              <div className="mt-3.5">
-                {isCurrentLoading ? (
-                  <button
-                    disabled
-                    className="w-full py-1.5 px-3 rounded-xl bg-[#f1f5f9] text-[#8391aa] text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-wait"
-                  >
-                    <RefreshCw className="w-3 h-3 animate-spin text-[#0d5bff]" />
-                    <span>Guardando en el bot...</span>
-                  </button>
-                ) : isActive ? (
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(p)}
-                    disabled={isGlobalSaving}
-                    title="Regla activa. Haz clic para desactivarla"
-                    className="w-full py-1.5 px-3 rounded-xl bg-emerald-100 hover:bg-rose-50 text-emerald-800 hover:text-rose-700 text-[11px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer group shadow-2xs"
-                  >
-                    <Check className="w-3.5 h-3.5 text-emerald-600 group-hover:hidden" />
-                    <span className="group-hover:hidden">✓ Activa en el Bot</span>
-                    <X className="w-3.5 h-3.5 text-rose-600 hidden group-hover:inline" />
-                    <span className="hidden group-hover:inline">Desactivar</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(p)}
-                    disabled={isGlobalSaving}
-                    className="w-full py-1.5 px-3 rounded-xl bg-[#ebf1ff] hover:bg-[#d8e5ff] text-[#0d5bff] text-[11px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-98"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-[#0d5bff]" />
-                    <span>+ Añadir al Bot</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {allPresets.map((p) => (
+          <RulePresetCardItem
+            key={p.id}
+            preset={p}
+            isActive={isRulePresetActive(rulesText, p)}
+            isLoading={togglingId === p.id}
+            isGlobalSaving={isGlobalSaving}
+            tenantName={tenantName}
+            onToggle={handleToggle}
+            onDelete={handleDeleteCustom}
+          />
+        ))}
       </div>
+
+      <CreateRulePresetModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveCustom}
+        tenantName={tenantName}
+      />
     </div>
   );
 };

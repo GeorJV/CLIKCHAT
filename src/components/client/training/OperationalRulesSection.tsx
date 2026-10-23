@@ -50,6 +50,7 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
       <RulePresetCards
         rulesText={rulesText}
         tenantName={tenant?.name || 'Mi Negocio'}
+        tenantId={tenant?.id || tenant?.slug}
         onApplyPreset={handleApplyPreset}
         isGlobalSaving={isSaving}
       />
