@@ -5396,6 +5396,124 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
       }
       return jsonResponse({ success: true, count: faqsList.length }, 201);
     }
+    // ONBOARDING AI INTERVIEW: POST /api/onboarding/interview
+    if (segments[0] === 'onboarding' && segments[1] === 'interview' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { messages = [], tenantName = '', businessType = '' } = body;
+
+      const systemPrompt = `Eres el Asistente Experto de Configuración y Onboarding de ClikChat CRM.
+Tu misión es entrevistar cálidamente al dueño del negocio en una conversación breve de exactamente 4 pasos clave para dejar su negocio listo:
+1. Nombre oficial del negocio y a qué se dedica (tipo de negocio: tienda física/online, servicios profesionales o restaurante).
+2. WhatsApp oficial de atención a clientes y horario habitual de servicio.
+3. De 1 a 3 productos, platillos o servicios principales con su precio aproximado.
+4. La duda o pregunta más frecuente que le hacen sus clientes (ej. métodos de pago, envíos, políticas de reserva).
+
+REGLAS DE INTERACCIÓN:
+- Sé empático, cercano, conciso y motivador.
+- Haz solo una pregunta a la vez para no abrumar al usuario.
+- Si el usuario ya dio parte de la información, agradécelo brevemente y avanza al siguiente paso pendiente.
+
+REGLA CRUCIAL DE FINALIZACIÓN Y EXTRACCIÓN JSON:
+Cuando el usuario haya completado los 4 temas (o indique que ya es todo):
+- Dale una felicitación entusiasta anunciándole que su negocio y su bot inteligente ya están configurados.
+- AL FINAL DE TU MENSAJE, DEBES AGREGAR OBLIGATORIAMENTE EL BLOQUE JSON ESTRICTO con la etiqueta [SETUP_PAYLOAD]...[/SETUP_PAYLOAD]:
+[SETUP_PAYLOAD]
+{
+  "is_complete": true,
+  "tenant": {
+    "name": "Nombre del negocio",
+    "business_type": "tienda",
+    "description": "Breve descripción comercial",
+    "phone": "Número de WhatsApp",
+    "bot_name": "Asesor Virtual",
+    "welcome_message": "¡Hola! Bienvenido. ¿En qué te podemos asesorar hoy?",
+    "tone_of_voice": "Cercano y Amigable"
+  },
+  "products": [
+    { "name": "Producto o servicio", "price": 0, "category": "General", "short_description": "Descripción breve" }
+  ],
+  "faqs": [
+    { "question": "¿Pregunta frecuente?", "answer": "Respuesta clara y oficial", "category": "general" }
+  ]
+}
+[/SETUP_PAYLOAD]
+Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. Solo conversa amistosamente.`;
+
+      const formattedMessages = [
+        { role: 'system', content: systemPrompt },
+        ...messages.map(m => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content
+        }))
+      ];
+
+      let rawResponse = '';
+      let providerUsed = 'cloudflare_workers_ai_meta_llama_3_3';
+
+      if (env?.AI) {
+        try {
+          const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: formattedMessages
+          });
+          if (cfResp?.response) {
+            rawResponse = cfResp.response;
+          }
+        } catch (cfErr) {
+          console.warn('Fallo en Cloudflare Workers AI Meta Llama 3.3:', cfErr.message);
+        }
+      }
+
+      if (!rawResponse) {
+        try {
+          const googleKey = env?.GOOGLE_API_KEY || '';
+          if (googleKey) {
+            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`;
+            const gResp = await fetch(gUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                system_instruction: { parts: [{ text: systemPrompt }] },
+                contents: messages.map(m => ({
+                  role: m.role === 'assistant' ? 'model' : 'user',
+                  parts: [{ text: m.content }]
+                }))
+              })
+            });
+            const gData = await gResp.json();
+            rawResponse = gData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            providerUsed = 'google_gemini_2_5_flash_backup';
+          }
+        } catch (gErr) {
+          console.warn('Fallo en respaldo Google Gemini:', gErr.message);
+        }
+      }
+
+      if (!rawResponse) {
+        rawResponse = '¡Hola! Qué gusto saludarte. Cuéntame, ¿cómo se llama tu negocio y qué productos o servicios ofreces para empezar a configurar tu asistente?';
+      }
+
+      let cleanMessage = rawResponse;
+      let setupPayload = null;
+
+      const payloadMatch = rawResponse.match(/\[SETUP_PAYLOAD\]([\s\S]*?)\[\/SETUP_PAYLOAD\]/);
+      if (payloadMatch) {
+        try {
+          setupPayload = JSON.parse(payloadMatch[1].trim());
+          cleanMessage = rawResponse.replace(/\[SETUP_PAYLOAD\][\s\S]*?\[\/SETUP_PAYLOAD\]/, '').trim();
+        } catch (e) {
+          console.error('Error parseando setup payload:', e);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        message: cleanMessage,
+        payload: setupPayload,
+        provider: providerUsed
+      });
+    }
+
 
     // DOCUMENTS: GET /api/documents
     if (segments[0] === 'documents' && segments.length === 1 && request.method === 'GET') {

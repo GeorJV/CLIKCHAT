@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 16:45 GMT-6
-- **Versión Actual:** 2.1.3 (Cabecera Compacta en Cerebro, Subtítulo Inferior, Flechas de Navegación y Menú Anti-Cortes)
+- **Última Actualización:** 2026-10-23 17:15 GMT-6
+- **Versión Actual:** 2.2.0 (Onboarding Conversacional con IA de Meta Llama 3 en Cloudflare Edge)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit 9dcc7af)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Cabecera Cerebro Compacta: "Cerebro del Asistente" reducido y "Entrenamiento en 6 fases" ubicado debajo liberando >160px.
-  - Sub-tabs Responsivas: Etiquetas cortas adaptativas (`1. Identidad`, `2. Flow IQ`, `3. FAQ IQ`, `4. Reglas`, `5. Docs RAG`, `6. Metas`).
-  - Navegación con Flechas: Botones Chevron laterales para desplazamiento horizontal fluido sin entrecortes.
-  - Menú Desplegable 3 Rayas: Selector popup desplegable con todas las 6 fases garantizando acceso total a Documentos y Metas.
-  - Identidad Agente: Check-in verde `4 de 4 campos listos` y corrección de reglas de hooks en catálogo.
-  - Verificado con 3 Filtros: Build limpio (`index-BayL4jxV.js`), push en `main` y 17/17 rutas aprobadas en Chrome Headless.
+  - Onboarding Asistido con IA: Entrevista en 4 preguntas con Meta Llama 3 en Cloudflare Workers AI (Neuronas).
+  - Carga Estructurada Sin Fallas: Extracción JSON estricta y autocompletado en BD de perfil, productos y FAQs.
+  - Cabecera Cerebro Compacta: Título reducido y "Entrenamiento en 6 fases" ubicado debajo liberando >160px.
+  - Sub-tabs Responsivas: Etiquetas cortas adaptativas, flechas de scroll y menú popup desplegable de 3 rayas.
+  - Identidad Agente: Check-in verde `4 de 4 campos listos` y reglas de hooks homologadas sin excepciones.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas aprobadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

@@ -107,7 +107,15 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           <VoceroProductsView products={products} tenant={tenant} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
         )}
         {activeTab === 'onboarding' && (
-          <VoceroOnboardingView tenant={tenant} products={products} faqs={faqs} onNavigateTab={handleSelectTab} />
+          <VoceroOnboardingView
+            tenant={tenant}
+            products={products}
+            faqs={faqs}
+            onNavigateTab={handleSelectTab}
+            onUpdateSettings={updateSettings}
+            onCreateProduct={createProduct}
+            onCreateFaq={createFaq}
+          />
         )}
         {activeTab === 'agent' && (
           <VoceroAgentView

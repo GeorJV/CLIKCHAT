@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Sistema de Onboarding Conversacional con IA de Meta Llama 3 (Cloudflare Edge con Neuronas) y Carga Estructurada Sin Fallas (v2.2.0)
+- **Diagnóstico y Necesidad:**
+  1. *Fricción en Onboarding Manual:* Los nuevos usuarios debían navegar por múltiples pestañas para rellenar a mano formularios en blanco (perfil, catálogo, FAQs, reglas), generando sobrecarga y lentitud para arrancar el bot.
+  2. *Requerimiento del Usuario:* Implementar la Idea 2: un asistente conversacional tipo entrevista con IA de Meta Llama 3 (Cloudflare Workers AI medido en neuronas) que haga 4 preguntas clave (nombre/giro, horario/WhatsApp, catálogo inicial y dudas comunes) y autocomplete los módulos de la plataforma sin fallas de formato.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `functions/api/[[route]].js` (+118 líneas):
+     - Nuevo endpoint nativo de borde `POST /api/onboarding/interview`.
+     - Ejecución nativa en Cloudflare Workers AI con el modelo `@cf/meta/llama-3.3-70b-instruct-fp8-fast` usando `env.AI.run` (con fallback de seguridad a `gemini-2.5-flash`).
+     - Protocolo estricto `[SETUP_PAYLOAD]...[/SETUP_PAYLOAD]` para extracción precisa de JSON estructurado sin romper la conversación amigable del chat.
+  2. `src/services/aiOnboardingService.ts` (56 líneas):
+     - Servicio de tipado y transporte HTTP cliente para la entrevista con IA.
+  3. `src/components/crm/onboarding/VoceroAiInterviewModal.tsx` (167 líneas):
+     - Modal inmersivo que gestiona la conversación, coordina la persistencia en base de datos (`updateSettings`, `createProduct`, `createFaq`) y alterna entre chat y confirmación.
+  4. `src/components/crm/onboarding/VoceroAiInterviewChat.tsx` (120 líneas):
+     - Interfaz de mensajería fluida, auto-scroll, chips de sugerencia rápida y feedback de procesamiento en el Edge de Cloudflare.
+  5. `src/components/crm/onboarding/VoceroAiInterviewSuccess.tsx` (81 líneas):
+     - Pantalla de celebración visual con resumen de ítems configurados (perfil, productos con precios oficiales, FAQs en memoria RAG y bot calibrado).
+  6. `src/components/crm/onboarding/VoceroOnboardingView.tsx` (162 líneas) y `VoceroCrmView.tsx` (165 líneas):
+     - Integración del banner hero destacado "Configuración Express con IA (Meta Llama 3)" con botón para abrir la entrevista.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 23.85s con 0 errores TypeScript. Bundle: `dist/assets/index-DDnL0m33.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Optimización de Cabecera en Cerebro del Asistente, Subtítulo Inferior, Flechas de Navegación y Menú Desplegable Anti-Cortes (v2.1.3)
 - **Diagnóstico y Necesidad:**
   1. *Botones Entrecortados:* Las pestañas `5. Documentos RAG` y `6. Metas` se cortaban o quedaban invisibles en pantallas de laptops y tablets debido al ancho horizontal excesivo del título ("Cerebro del Asistente" y "Entrenamiento en 6 Fases" en la misma línea).

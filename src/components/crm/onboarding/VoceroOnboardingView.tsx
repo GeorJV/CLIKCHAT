@@ -1,74 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tenant, Product, FAQ } from '../../../types';
 import { VoceroNavTab } from '../VoceroAppNav';
 import {
   ListChecks, Store, ShoppingBag, UserCog, MessageSquare,
-  CheckCircle2, Circle, ArrowRight, ShieldCheck
+  CheckCircle2, Circle, ArrowRight, ShieldCheck, Sparkles
 } from 'lucide-react';
+import { VoceroAiInterviewModal } from './VoceroAiInterviewModal';
 
 interface VoceroOnboardingViewProps {
   tenant: Tenant | null;
   products: Product[];
   faqs: FAQ[];
   onNavigateTab: (tab: VoceroNavTab, subPath?: string) => void;
+  onUpdateSettings?: (updates: Partial<Tenant>) => Promise<boolean>;
+  onCreateProduct?: (data: Partial<Product> & { name: string; price: number }) => Promise<boolean>;
+  onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
 }
 
 export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
   tenant,
   products,
   faqs,
-  onNavigateTab
+  onNavigateTab,
+  onUpdateSettings,
+  onCreateProduct,
+  onCreateFaq
 }) => {
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const isStep1Done = Boolean(tenant?.name && tenant?.business_type);
   const isStep2Done = products.length > 0;
   const isStep3Done = Boolean(tenant?.bot_name && tenant?.welcome_message && (tenant?.system_prompt || tenant?.sales_flow_rules));
   const isStep4Done = Boolean(tenant?.phone);
-
   const completedCount = [isStep1Done, isStep2Done, isStep3Done, isStep4Done].filter(Boolean).length;
   const progressPercent = Math.round((completedCount / 4) * 100);
 
   const STEPS = [
     {
-      num: 1,
-      title: 'Perfil & Modalidad del Negocio',
+      num: 1, title: 'Perfil & Modalidad del Negocio', isDone: isStep1Done, icon: Store,
       desc: isStep1Done ? `Configurado como "${tenant?.name}" (${tenant?.business_type})` : 'Define nombre, teléfono, horarios y si vendes productos o servicios.',
-      isDone: isStep1Done,
-      icon: Store,
-      targetTab: 'settings' as VoceroNavTab,
-      targetSubPath: 'perfil',
-      btnLabel: isStep1Done ? 'Revisar Perfil' : 'Configurar Perfil'
+      targetTab: 'settings' as VoceroNavTab, targetSubPath: 'perfil', btnLabel: isStep1Done ? 'Revisar Perfil' : 'Configurar Perfil'
     },
     {
-      num: 2,
-      title: 'Catálogo de Productos o Menú',
+      num: 2, title: 'Catálogo de Productos o Menú', isDone: isStep2Done, icon: ShoppingBag,
       desc: isStep2Done ? `${products.length} productos/servicios cargados y listos.` : 'Agrega tus productos o servicios con precios y fotos para que la IA cotice.',
-      isDone: isStep2Done,
-      icon: ShoppingBag,
-      targetTab: 'products' as VoceroNavTab,
-      targetSubPath: 'productos',
-      btnLabel: isStep2Done ? 'Gestionar Ítems' : 'Cargar Productos'
+      targetTab: 'products' as VoceroNavTab, targetSubPath: 'productos', btnLabel: isStep2Done ? 'Gestionar Ítems' : 'Cargar Productos'
     },
     {
-      num: 3,
-      title: 'Entrenamiento del Agente (4 Pasos)',
-      desc: isStep3Done
-        ? `Configurado como "${tenant?.bot_name || 'Agente'}" con los 4 pasos de identidad activos.`
-        : 'Configura los 4 pasos: 1. Nombre, 2. Tono, 3. Mensaje de bienvenida y 4. System Prompt.',
-      isDone: isStep3Done,
-      icon: UserCog,
-      targetTab: 'agent' as VoceroNavTab,
-      targetSubPath: 'agente',
-      btnLabel: isStep3Done ? 'Afinar Agente' : 'Entrenar Agente'
+      num: 3, title: 'Entrenamiento del Agente (4 Pasos)', isDone: isStep3Done, icon: UserCog,
+      desc: isStep3Done ? `Configurado como "${tenant?.bot_name || 'Agente'}" con identidad activa.` : 'Configura los 4 pasos: Nombre, Tono, Mensaje de bienvenida y System Prompt.',
+      targetTab: 'agent' as VoceroNavTab, targetSubPath: 'agente', btnLabel: isStep3Done ? 'Afinar Agente' : 'Entrenar Agente'
     },
     {
-      num: 4,
-      title: 'Conectar Canales (WhatsApp Oficial & ClikChat)',
+      num: 4, title: 'Conectar Canales (WhatsApp & ClikChat)', isDone: isStep4Done, icon: MessageSquare,
       desc: isStep4Done ? 'Canales de mensajería vinculados.' : 'Conecta tu WhatsApp Cloud API o activa el Chat Agente ClikChat nativo sin API.',
-      isDone: isStep4Done,
-      icon: MessageSquare,
-      targetTab: 'settings' as VoceroNavTab,
-      targetSubPath: 'canales',
-      btnLabel: isStep4Done ? 'Ver Canales' : 'Conectar Canales'
+      targetTab: 'settings' as VoceroNavTab, targetSubPath: 'canales', btnLabel: isStep4Done ? 'Ver Canales' : 'Conectar Canales'
     }
   ];
 
@@ -89,10 +74,30 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
       </header>
 
       <main className="flex-1 overflow-y-auto p-6 max-w-4xl w-full mx-auto space-y-4">
+        {/* Banner Hero de Entrevista con IA */}
+        <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/90 via-white to-blue-50/50 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0d5bff]/10 text-[#0d5bff] text-[10.5px] font-bold">
+              <Sparkles className="w-3 h-3" /> Configuración Express con IA (Meta Llama 3)
+            </div>
+            <h3 className="text-base font-bold text-[#0a1730]">¿Prefieres que la IA configure todo por ti?</h3>
+            <p className="text-xs text-[#62728d] max-w-xl">
+              Nuestra IA de Meta Llama 3 en Cloudflare te hace 4 preguntas breves y autocompleta tu perfil, catálogo y respuestas en 2 minutos.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Iniciar Entrevista IA</span>
+          </button>
+        </div>
+
         <div className="rounded-2xl border border-[#d8e2f0] bg-white p-5 shadow-xs">
-          <h3 className="text-base font-bold text-[#0a1730] mb-1">¡Bienvenido a ClikChat CRM!</h3>
+          <h3 className="text-base font-bold text-[#0a1730] mb-1">Guía Manual en 4 Pasos</h3>
           <p className="text-xs text-[#62728d]">
-            Sigue estos 4 pasos para poner a tu agente de inteligencia artificial a atender, cotizar y vender en piloto automático.
+            O si prefieres, configura cada sección manualmente paso a paso a continuación.
           </p>
         </div>
 
@@ -142,6 +147,15 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
           })}
         </div>
       </main>
+
+      <VoceroAiInterviewModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        tenant={tenant}
+        onUpdateSettings={onUpdateSettings}
+        onCreateProduct={onCreateProduct}
+        onCreateFaq={onCreateFaq}
+      />
     </div>
   );
 };
