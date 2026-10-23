@@ -1,12 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 22:55 GMT-6
-- **Versión Actual:** 1.87.0 (Auto-Scroll Local en Bandeja & Unificación de Contraste en Navegación CRM)
+- **Última Actualización:** 2026-10-23 09:50 GMT-6
+- **Versión Actual:** 1.88.0 (Lead Score 0-100 con Termómetro Visual & Objetivos Comerciales por Casillas)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de pantalla o ventana.
+  - Lead Score Numérico 0-100: Termómetro visual (🔥/☕/❄️) en panel de contacto, bandeja y Kanban.
+  - Objetivos Comerciales por Casillas: Subpestaña en Agente con matriz no-code de 6 funciones comerciales.
+  - Sincronización de Prompt: Inyección de directivas comerciales maestras en el bot con 1-clic.
+  - Auto-Scroll Aislado en Bandeja: Chat usa `messagesContainerRef` interno; cero saltos de ventana.
   - Viewport CRM Bloqueado: Contenedor en `overflow-hidden` durante modo CRM y reset `window.scrollTo(0, 0)`.
   - Unificación de Contraste en Botones: Estados activos en azul royal `#0d5bff` con texto e íconos blancos.
   - Homologación de Resultados y Ajustes: Dimensiones, íconos reactivos y tipografía alineados al 100%.
@@ -14,8 +17,6 @@
   - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` y Human-in-the-Loop (`unresolved_queries`).
   - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.
   - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
-  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, 2 Tono, 3 Bienvenida, 4 Prompt/Docs).
-  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

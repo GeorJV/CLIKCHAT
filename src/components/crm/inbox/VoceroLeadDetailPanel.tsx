@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ExternalLink, DollarSign, FileText, Check, Zap } from 'lucide-react';
+import { ChevronRight, ExternalLink, Zap, Check } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
 import { LeadReactivationModal } from '../pipeline/LeadReactivationModal';
+import { VoceroLeadScoreMeter } from './VoceroLeadScoreMeter';
 
 interface VoceroLeadDetailPanelProps {
   lead: CrmLead | null;
@@ -85,6 +86,9 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
           <Zap className="w-3.5 h-3.5 text-amber-600" />
           <span>Reactivar Lead (1-Clic)</span>
         </button>
+
+        {/* Lead Score Termómetro */}
+        <VoceroLeadScoreMeter lead={lead} />
 
         {/* Etapa del Embudo (Pills de Vocero) */}
         <div className="space-y-1.5">

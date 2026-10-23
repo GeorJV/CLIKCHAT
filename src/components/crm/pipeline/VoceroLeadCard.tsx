@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageSquareText, ChevronRight, ChevronLeft } from 'lucide-react';
 import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
+import { VoceroLeadScorePill } from '../common/VoceroLeadScorePill';
 
 interface VoceroLeadCardProps {
   lead: CrmLead;
@@ -48,11 +49,16 @@ export const VoceroLeadCard: React.FC<VoceroLeadCardProps> = ({
         </button>
       </div>
 
-      {/* Monto y Botones de Etapa */}
+      {/* Score, Monto y Botones de Etapa */}
       <div className="flex items-center justify-between border-t border-[#f0f4fa] pt-1.5 text-xs">
-        <span className="font-mono text-[11px] font-bold text-[#0038d8]">
-          {lead.deal_value > 0 ? `$${lead.deal_value.toLocaleString()} MXN` : '+ monto'}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <VoceroLeadScorePill lead={lead} />
+          {lead.deal_value > 0 && (
+            <span className="font-mono text-[11px] font-bold text-[#0038d8] truncate">
+              ${lead.deal_value.toLocaleString()} MXN
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-1">
           {stageIndex > 0 && (

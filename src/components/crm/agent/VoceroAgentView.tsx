@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../../types';
-import { Sparkles, TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog } from 'lucide-react';
+import { Sparkles, TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog, Target } from 'lucide-react';
 import { VoceroAgentIdentitySection } from './VoceroAgentIdentitySection';
+import { VoceroCommercialObjectivesSection } from './VoceroCommercialObjectivesSection';
 import { SalesFlowSection } from '../../client/training/SalesFlowSection';
 import { ObjectionsManagerSection } from '../../client/training/objections/ObjectionsManagerSection';
 import { OperationalRulesSection } from '../../client/training/OperationalRulesSection';
@@ -27,10 +28,11 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
   onUpdateFaq,
   onDeleteFaq,
 }) => {
-  const [subTab, setSubTab] = useState<'identidad' | 'flujo' | 'objeciones' | 'reglas' | 'docs'>('identidad');
+  const [subTab, setSubTab] = useState<'identidad' | 'objetivos' | 'flujo' | 'objeciones' | 'reglas' | 'docs'>('identidad');
 
   const TABS = [
     { id: 'identidad' as const, label: 'Identidad (4 Pasos)', icon: UserCog },
+    { id: 'objetivos' as const, label: 'Objetivos Comerciales', icon: Target },
     { id: 'flujo' as const, label: 'Flujo de Ventas (4 Pasos)', icon: TrendingUp },
     { id: 'objeciones' as const, label: 'Objeciones & FAQs', icon: ShieldCheck, badge: faqs.length },
     { id: 'reglas' as const, label: 'Reglas Operativas', icon: ShieldAlert },
@@ -80,6 +82,12 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
         {subTab === 'identidad' && (
           <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
             <VoceroAgentIdentitySection tenant={tenant} onUpdateSettings={onUpdateSettings} />
+          </div>
+        )}
+
+        {subTab === 'objetivos' && (
+          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
+            <VoceroCommercialObjectivesSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
           </div>
         )}
 

@@ -1310,3 +1310,41 @@
 - Deploy exitoso en Cloudflare Pages CDN.
 - Bundle en producción: `index-CHcMzEKo.js`.
 - **Deploy en Vivo:** `https://clikchat.pages.dev`
+
+
+---
+
+## [Registro #008] — Feat: Lead Score Numérico 0-100 con Termómetro Visual + Módulo de Objetivos Comerciales por Casillas
+
+- **Fecha:** 2026-10-23
+- **Estado:** `ready_for_review`
+- **Versión:** v1.88.0
+- **Requerimiento:**
+  1. Implementación de Lead Score numérico de 0 a 100 con termómetro visual y clasificación de temperatura (🔥 Caliente $\ge 70$, ☕ Tibio $40-69$, ❄️ Frío $< 40$) en el CRM: panel de detalles del contacto, lista de conversaciones y tarjetas Kanban.
+  2. Implementación del módulo de Objetivos Comerciales sin código mediante matriz de casillas interactivas en el entrenador del Agente, con sincronización automática de directivas al System Prompt.
+
+### Cambios Realizados (ARQMODULAR)
+
+#### 1. Lead Score 0-100 & Termómetro Visual
+- **Cálculo Inteligente (`src/utils/leadScoring.ts`):** Evalúa objetivamente etapa del pipeline (ganado: 100, negociación: 85, comanda/propuesta: 70, calificación: 45, inicial: 25, perdido: 10) + teléfono validado (+10) + email capturado (+5) + valor del trato (+10) + notas de contexto (+5) + canal WhatsApp (+5).
+- **Medidor en Detalle de Contacto (`VoceroLeadScoreMeter.tsx` & `VoceroLeadDetailPanel.tsx`):** Barra de progreso gradiente fluida, indicador de puntaje numérico `/ 100 pts`, badge de temperatura y desglose de motivos identificados.
+- **Micro-Pill en Conversaciones y Kanban (`VoceroLeadScorePill.tsx`, `VoceroConversationItem.tsx`, `VoceroLeadCard.tsx`):** Indicador visual compacto con emoji térmico y puntaje (`🔥 85`, `☕ 55`, `❄️ 25`) sin sobrecargar la interfaz.
+
+#### 2. Módulo de Objetivos Comerciales por Casillas (No-Code Agent Builder)
+- **Matriz de Objetivos (`src/utils/commercialObjectives.ts`):** 6 objetivos comerciales modulares:
+  1. *Atención al Cliente & FAQs* (RAG Nivel 2)
+  2. *Venta Activa & Recomendación de Catálogo* (RAG Nivel 3)
+  3. *Calificación de Prospectos (Lead Scoring)*
+  4. *Agendamiento de Citas & Reservas*
+  5. *Cotizaciones Personalizadas*
+  6. *Seguimiento & Cierre Directo en WhatsApp*
+- **Sección Modular (`VoceroCommercialObjectivesSection.tsx`):** Tarjetas interactivas con checkbox, tags, descripción detallada y contador dinámico de objetivos activos.
+- **Pestaña en Agente (`VoceroAgentView.tsx`):** Subtab dedicada `Objetivos Comerciales` con icono `Target`.
+- **Sincronización con System Prompt:** Botón de 1-clic que inyecta limpiamente las directivas correspondientes en el prompt maestro del agente.
+
+### Verificación
+- Filtro 1: `npm run build` compilado con éxito (0 errores).
+- Filtro 2: Commit registrado en git rama `main`.
+- Filtro 3: Despliegue en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) y verificación de rutas.
+
+Agregado al historial de cambios aplicando el filtro de los tres pasos.

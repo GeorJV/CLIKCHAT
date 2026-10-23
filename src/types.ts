@@ -65,6 +65,7 @@ export interface Tenant {
   business_type?: string;
   currency?: string;
   sales_flow_rules?: string;
+  commercial_objectives?: string | string[];
   clikchat_channel_active?: boolean;
   order_ticket_format?: string;
   created_at?: string;

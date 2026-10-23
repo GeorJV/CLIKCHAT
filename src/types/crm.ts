@@ -22,6 +22,7 @@ export interface CrmLead {
   created_at: string;
   updated_at: string;
   unread_count?: number;
+  lead_score?: number;
   source?: TrafficSource;
   source_detail?: string;
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { CrmLead } from '../../../types/crm';
+import { VoceroLeadScorePill } from '../common/VoceroLeadScorePill';
 
 interface VoceroConversationItemProps {
   lead: CrmLead;
@@ -79,11 +80,14 @@ export const VoceroConversationItem: React.FC<VoceroConversationItemProps> = ({
               {isWhatsApp ? 'ventana abierta (24h)' : lead.phone || 'chat web'}
             </span>
 
-            {lead.deal_value > 0 && (
-              <span className="font-mono font-bold text-[#0038d8]">
-                ${lead.deal_value.toLocaleString()} MXN
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <VoceroLeadScorePill lead={lead} />
+              {lead.deal_value > 0 && (
+                <span className="font-mono font-bold text-[#0038d8]">
+                  ${lead.deal_value.toLocaleString()} MXN
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
