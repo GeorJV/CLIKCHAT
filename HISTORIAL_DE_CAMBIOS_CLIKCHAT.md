@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Integración de Memoria RAG & Preguntas Frecuentes con Sistema Human-in-the-Loop (HITL) y Auto-Entrenamiento de Consultas Pendientes
+- **Diagnóstico y Necesidad:**
+  1. *Preguntas Frecuentes con Memoria RAG:* Se requería una sección dedicada y de primer nivel en el panel CRM para gestionar las Preguntas Frecuentes (FAQs) que alimentan el Nivel 2 del motor RAG, permitiendo respuestas instantáneas a costo $0 y latencia en milisegundos.
+  2. *Anti-Alucinaciones & Human-in-the-Loop (HITL):* Blindaje estricto de la marca comercial para que la IA nunca invente información ni alucine respuestas falsas. Si un cliente formula una pregunta específica fuera del catálogo o conocimiento oficial:
+     - El bot responde con cortesía y honestidad sin mentirle al cliente.
+     - Registra automáticamente la consulta en estado pendiente (`unresolved_queries`) en el panel del dueño.
+     - El administrador responde la consulta directamente desde el panel con un solo clic.
+     - Al guardar, el sistema resuelve la consulta y la auto-entrena inmediatamente insertándola en la tabla `faqs` (Memoria RAG Nivel 2), de modo que para futuros clientes la respuesta sea 100% automática y precisa.
+- **Solución Implementada (ARQMODULAR & Edge D1):**
+  1. *Componentes Atómicos en Frontend (`src/components/crm/faqs/`):*
+     - `VoceroFaqRagView.tsx` (161 líneas): Vista principal con selector de subpestañas entre "Preguntas Frecuentes" y "Consultas Pendientes (HITL)", buscador en vivo y badge con contador de pendientes.
+     - `VoceroUnresolvedQueriesList.tsx` (127 líneas): Lista interactiva de consultas pendientes con datos del lead/cliente, formulario de respuesta humana y acción "Guardar en FAQs & Auto-Entrenar".
+     - `VoceroFaqModal.tsx` (108 líneas): Modal accesible para crear y editar preguntas y respuestas oficiales con asignación de categoría.
+  2. *Navegación & Enrutamiento Canónico (`VoceroAppNav.tsx`, `routerConstants.ts`, `VoceroCrmView.tsx`):*
+     - Pestaña `Memoria RAG & FAQs` bajo la sección "Agente" con badge dinámico de consultas pendientes.
+     - Subruta canónica `/user/mi-negocio/:slug/faqs` con persistencia ante recarga (F5) y alias `faq`, `preguntas`, `consultas`, `rag`.
+  3. *Endpoints en Cloudflare Worker & D1 (`functions/api/[[route]].js`):*
+     - `GET /api/audit/unresolved`: Consulta de preguntas pendientes y resueltas del tenant en Cloudflare D1.
+     - `POST /api/audit/resolve/:id`: Actualiza `unresolved_queries` con la respuesta humana y ejecuta `INSERT INTO faqs (source: 'hitl_resolved')` para auto-entrenar la memoria RAG del bot al instante.
+     - Detección HITL en chat: Inyección de directriz anti-alucinaciones en el prompt y captura técnica `<!--UNRESOLVED_QUERY-->` para registrar consultas sin respuesta en D1.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 18.53s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-D5L5ABYM.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `9e6c32e` y posteriores).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Reestructuración Integral de Lógica y Enrutamiento entre Perfil de Negocio (Paso 1) y Canales de WhatsApp (Paso 4)
 - **Diagnóstico y Necesidad:**
   1. *Inversión Confusa de Vistas:* Al hacer clic en el Paso 1 de la Guía de Inicio Rápido ("Perfil y Modalidad del Negocio" -> "Revisar Perfil"), el sistema abría por defecto la pestaña de Canales de WhatsApp / Meta, en lugar de mostrar la información de identidad comercial (giro, nombre, teléfono, horarios).

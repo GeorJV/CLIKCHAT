@@ -1,25 +1,25 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 21:11 GMT-6
-- **Versión Actual:** 1.84.0 (Alineación Canónica Perfil en Paso 1 y Canales en Paso 4 con /perfil y /canales)
+- **Última Actualización:** 2026-10-22 21:30 GMT-6
+- **Versión Actual:** 1.85.0 (Memoria RAG & FAQs con Human-in-the-Loop y Auto-Entrenamiento)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `e8368b5` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `9e6c32e` en `main`)
 - **Estado Actual del Sistema:**
-  - Desacople Perfil (Paso 1) y Canales (Paso 4): Paso 1 abre Perfil del Negocio (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
-  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, Paso 2 Tono, Paso 3 Bienvenida, Paso 4 Prompt/Docs) con tracker.
-  - Adjuntos System Prompt: Carga y Drag & Drop de archivos de texto (.txt, .md), PDF (.pdf) y Word (.docx, .doc) con extracción directa.
-  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio.
-  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto y resaltado esmeralda.
-  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/perfil`, `/canales`, `/productos`, `/agente`) y persistencia ante F5.
-  - Auto-Scroll Reactivo: Desplazamiento automático multi-tick hacia el último mensaje tipo WhatsApp sin desbordes.
-  - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen`, área conversacional y elementos 100% visibles.
-  - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 16/16 rutas verificadas en Chrome Headless.
+  - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` de primer nivel en sección Agente del CRM.
+  - Human-in-the-Loop (HITL): Consultas fuera de catálogo registradas como pendientes en D1 (`unresolved_queries`).
+  - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.
+  - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
+  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, 2 Tono, 3 Bienvenida, 4 Prompt/Docs) con tracker.
+  - Adjuntos System Prompt: Carga y Drag & Drop de archivos (.txt, .md, .pdf, .docx, .doc) con extracción directa.
+  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2.
+  - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; resaltado esmeralda.
+  - Enrutamiento Canónico por Pestaña: Sincronización de URLs (/perfil, /canales, /faqs, /productos) y F5.
+  - Viewport Integral `100dvh` y Auto-Scroll: Desplazamiento tipo WhatsApp sin desbordes de pantalla.
+  - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
   - Modelos Google AI Studio: Uso exclusivo de las últimas versiones oficiales (Gemini 2.5 Flash / Pro).
-  - Prohibido modificar archivos en `lockedFiles` sin autorización explícita.
-  - Respetar el límite de 150-180 líneas por archivo en todo el frontend (ARQMODULAR).
+  - Prohibido modificar archivos en `lockedFiles` sin autorización explícita (<150-180 líneas por archivo).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.

@@ -106,7 +106,7 @@ function testSingleRoute(url, label) {
                 method: 'Runtime.evaluate',
                 params: { expression: 'document.getElementById("root") ? document.getElementById("root").innerHTML.trim() : ""' }
               }));
-            }, 2500);
+            }, 4000);
           };
 
           ws.onmessage = (event) => {
