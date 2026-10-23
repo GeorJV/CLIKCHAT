@@ -3093,6 +3093,60 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       return jsonResponse({ success: true, message: 'FAQ eliminada exitosamente de Cloudflare D1' });
     }
 
+    // AUDIT UNRESOLVED: GET /api/audit/unresolved
+    if (segments[0] === 'audit' && segments[1] === 'unresolved' && request.method === 'GET') {
+      const tenantId = url.searchParams.get('tenantId');
+      if (!tenantId) return jsonResponse({ error: 'tenantId requerido' }, 400);
+      try {
+        const rows = await executeD1(
+          'SELECT * FROM unresolved_queries WHERE tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1) ORDER BY created_at DESC LIMIT 100',
+          [tenantId]
+        );
+        const formatted = rows.map(r => ({
+          ...r,
+          user_lead_info: typeof r.user_lead_info === 'string' ? JSON.parse(r.user_lead_info || '{}') : (r.user_lead_info || {})
+        }));
+        return jsonResponse({ unresolved: formatted });
+      } catch (e) {
+        return jsonResponse({ unresolved: [] });
+      }
+    }
+
+    // AUDIT RESOLVE: POST /api/audit/resolve/:id
+    if (segments[0] === 'audit' && segments[1] === 'resolve' && segments.length === 3 && request.method === 'POST') {
+      const queryId = segments[2];
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { answer, category, autoInjectToFaq = true } = body;
+      if (!answer || !answer.trim()) return jsonResponse({ error: 'La respuesta es requerida' }, 400);
+
+      try {
+        const rows = await executeD1('SELECT * FROM unresolved_queries WHERE id = ?1', [queryId]);
+        if (rows.length === 0) return jsonResponse({ error: 'Consulta no encontrada' }, 404);
+        const item = rows[0];
+
+        if (autoInjectToFaq) {
+          const faqId = 'faq_' + Date.now();
+          await executeD1(
+            'INSERT INTO faqs (id, tenant_id, question, answer, category, confidence_threshold, source) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+            [faqId, item.tenant_id, item.user_question, answer.trim(), category || 'consultas_resueltas', 0.65, 'hitl_resolved']
+          );
+        }
+
+        await executeD1(
+          'UPDATE unresolved_queries SET status = ?1, human_answer = ?2, resolved_at = datetime(\'now\'), auto_trained_to_faq = ?3 WHERE id = ?4',
+          ['resolved', answer.trim(), autoInjectToFaq ? 1 : 0, queryId]
+        );
+
+        return jsonResponse({
+          success: true,
+          message: 'Consulta resuelta y guardada en base de datos. Bot auto-entrenado en memoria RAG (Nivel 2).'
+        });
+      } catch (err) {
+        return jsonResponse({ error: err.message }, 500);
+      }
+    }
+
     // ORDERS: GET /api/orders
     if (segments[0] === 'orders' && request.method === 'GET') {
       const tenantId = url.searchParams.get('tenantId');
@@ -4890,6 +4944,13 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" SOLO DEBE SALIR cuando el usuario YA agregó o solicitó agregar algo a su compra. Si el usuario no ha agregado nada aún (solo saluda, pregunta precios, ingredientes o consulta opciones), queda TERMINANTEMENTE PROHIBIDO sugerir bebidas o más papas. Solo después de que el usuario ya agregó o solicitó agregar algo a su orden sale esa sugerencia.`;
         }
 
+        // Regla Estricta de Anti-Alucinaciones & Human-in-the-Loop (HITL)
+        contextBlock += `\n\n[REGLA ESTRICTA DE ANTI-ALUCINACIÓN & CONSULTAS NO RESUELTAS (HITL)]:
+Si el cliente formula una pregunta específica sobre un tema, servicio, producto, ingrediente o política que NO está presente en el catálogo, menú, FAQs ni en los documentos oficiales proporcionados:
+1) NUNCA inventes información, precios, políticas ni detalles falsos para proteger la marca del negocio.
+2) Responde amablemente con un tono sublime y honesto: "Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo/administrador te responda con todos los detalles. ¿Te gustaría dejar tu nombre o WhatsApp para avisarte al instante?"
+3) Si no conoces la respuesta o no tienes datos para responder con certeza absoluta, agrega obligatoriamente al final de tu respuesta la etiqueta técnica: <!--UNRESOLVED_QUERY-->`;
+
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
 
         const llmResult = await callEdgeLLM({
@@ -4909,6 +4970,27 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
             : '¡Hola! Con mucho gusto te atiendo. ¿En qué te puedo asesorar o qué producto estás buscando el día de hoy?'
         );
         llmResult.text = adaptTemporalGreetings(llmResult.text, timePeriod);
+
+        // Detección Human-in-the-Loop: Si no conoce la respuesta, registrar en unresolved_queries en D1
+        const isUnresolvedQuery = Boolean(
+          llmResult.text && (
+            llmResult.text.includes('<!--UNRESOLVED_QUERY-->') ||
+            /no\s+quiero\s+darte\s+informaci[oó]n\s+inexacta|he\s+registrado\s+tu\s+duda|consulta\s+muy\s+puntual/i.test(llmResult.text)
+          )
+        );
+
+        if (isUnresolvedQuery) {
+          llmResult.text = llmResult.text.replace(/<!--UNRESOLVED_QUERY-->/g, '').trim();
+          const unresId = 'unres_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+          try {
+            await executeD1(
+              'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+              [unresId, actualTenantId, currentSessionId, message, JSON.stringify(leadInfo || {}), 'pending']
+            );
+          } catch (uErr) {
+            console.warn('Error inserting unresolved query D1:', uErr.message);
+          }
+        }
 
         const botMsgId = 'msg_' + Date.now() + '_b';
         const msgMetadata = JSON.stringify({

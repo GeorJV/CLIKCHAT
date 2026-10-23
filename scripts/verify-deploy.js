@@ -26,6 +26,7 @@ const ROUTES = [
   { path: '/user/mi-negocio/comida-callejera-xl/ajustes', label: 'Panel: Ajustes del Sistema' },
   { path: '/user/mi-negocio/comida-callejera-xl/perfil', label: 'Panel: Perfil del Negocio (Ajustes)' },
   { path: '/user/mi-negocio/comida-callejera-xl/canales', label: 'Panel: Canales de Chat (Ajustes)' },
+  { path: '/user/mi-negocio/comida-callejera-xl/faqs', label: 'Panel: Memoria RAG & FAQs' },
   { path: '/super-admin', label: 'Panel: Super Admin' },
   { path: '/dashboard', label: 'Redirección Canónica /dashboard' }
 ];

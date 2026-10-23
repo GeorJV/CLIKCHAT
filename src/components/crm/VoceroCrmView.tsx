@@ -16,6 +16,7 @@ import { VoceroResultsView } from './results/VoceroResultsView';
 import { VoceroClikChatView } from './clikchat/VoceroClikChatView';
 import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
 import { VoceroProductsView } from './products/VoceroProductsView';
+import { VoceroFaqRagView } from './faqs/VoceroFaqRagView';
 
 interface VoceroCrmViewProps {
   tenantId?: string;
@@ -30,10 +31,12 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
   const { setVoceroMode } = useVoceroMode();
 
   const {
-    tenant, products, faqs, updateSettings,
+    tenant, products, faqs, unresolved, updateSettings,
     createProduct, updateProduct, deleteProduct,
-    createFaq, updateFaq, deleteFaq,
+    createFaq, updateFaq, deleteFaq, resolveQuery
   } = useClientPortal(tenantSlug);
+
+  const pendingUnresolvedCount = (unresolved || []).filter(u => u.status === 'pending').length;
 
   const {
     leads, selectedLeadId, setSelectedLeadId, selectedLead, messages,
@@ -79,6 +82,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         unreadCount={leads.filter(l => l.stage === 'lead').length}
+        unresolvedCount={pendingUnresolvedCount}
         userName={tenant?.name || tenantName || tenantSlug}
         onSwitchToClassic={() => setVoceroMode(false)}
         onLogout={onLogout}
@@ -134,6 +138,17 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           <VoceroAgentView
             tenant={tenant} tenantSlug={tenantSlug} faqs={faqs} onUpdateSettings={updateSettings}
             onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq}
+          />
+        )}
+
+        {activeTab === 'faqs' && (
+          <VoceroFaqRagView
+            faqs={faqs}
+            unresolved={unresolved}
+            onCreateFaq={createFaq}
+            onUpdateFaq={updateFaq}
+            onDeleteFaq={deleteFaq}
+            onResolveQuery={resolveQuery}
           />
         )}
 

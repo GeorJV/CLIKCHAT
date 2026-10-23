@@ -1,16 +1,17 @@
 import React from 'react';
 import {
   Inbox, Kanban, Users, CalendarDays, ListChecks, ShoppingBag,
-  Sparkles, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, Bot, LogOut
+  Sparkles, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, Bot, LogOut, BookOpen
 } from 'lucide-react';
 import { VoceroBrandLogo } from './VoceroBrandLogo';
 
-export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'lab' | 'analyst' | 'results' | 'settings';
+export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'faqs' | 'lab' | 'analyst' | 'results' | 'settings';
 
 interface VoceroAppNavProps {
   activeTab: VoceroNavTab;
   onSelectTab: (tab: VoceroNavTab) => void;
   unreadCount?: number;
+  unresolvedCount?: number;
   userName?: string;
   onSwitchToClassic: () => void;
   onLogout?: () => void;
@@ -20,6 +21,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
   activeTab,
   onSelectTab,
   unreadCount = 0,
+  unresolvedCount = 0,
   userName = 'Admin',
   onSwitchToClassic,
   onLogout,
@@ -46,6 +48,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       items: [
         { id: 'onboarding' as VoceroNavTab, label: 'Guía de inicio', icon: ListChecks },
         { id: 'agent' as VoceroNavTab, label: 'Agente', icon: Sparkles },
+        { id: 'faqs' as VoceroNavTab, label: 'Memoria RAG & FAQs', icon: BookOpen, badge: unresolvedCount },
         { id: 'lab' as VoceroNavTab, label: 'Laboratorio', icon: FlaskConical },
       ]
     },
