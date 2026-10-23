@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useVoceroCrm } from '../../hooks/useVoceroCrm';
 import { useVoceroMode } from '../../hooks/useVoceroMode';
 import { useClientPortal } from '../../hooks/useClientPortal';
+import { useAppRouter, getVoceroTabPath } from '../../hooks/useAppRouter';
 import { VoceroAppNav, VoceroNavTab } from './VoceroAppNav';
 import { VoceroInbox } from './inbox/VoceroInbox';
 import { VoceroPipelineBoard } from './pipeline/VoceroPipelineBoard';
@@ -23,7 +24,8 @@ interface VoceroCrmViewProps {
 }
 
 export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSlug, tenantName, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<VoceroNavTab>('inbox');
+  const { pathname, navigate, currentVoceroTab } = useAppRouter();
+  const [activeTab, setActiveTab] = useState<VoceroNavTab>(() => currentVoceroTab || 'inbox');
   const { setVoceroMode } = useVoceroMode();
 
   const {
@@ -39,16 +41,39 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     sendAgentMessage, updateLead, createLead,
   } = useVoceroCrm(tenant?.id || tenantId);
 
+  // Sincronizar pestaña si cambia la URL (Back/Forward del navegador o enlace directo)
+  useEffect(() => {
+    if (currentVoceroTab && currentVoceroTab !== activeTab) {
+      setActiveTab(currentVoceroTab);
+    }
+  }, [currentVoceroTab]);
+
+  // Al montar, normalizar URL canónica si no tiene subruta específica
+  useEffect(() => {
+    const canonical = getVoceroTabPath(tenantSlug, activeTab);
+    if (pathname !== canonical && !pathname.endsWith(`/${activeTab}`) && !pathname.includes(`/${activeTab}`)) {
+      navigate(canonical, { replace: true });
+    }
+  }, [tenantSlug]);
+
+  const handleSelectTab = (tab: VoceroNavTab) => {
+    setActiveTab(tab);
+    const targetPath = getVoceroTabPath(tenantSlug, tab);
+    if (pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
+
   const handleSelectLeadFromPipeline = (leadId: string) => {
     setSelectedLeadId(leadId);
-    setActiveTab('inbox');
+    handleSelectTab('inbox');
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f6f8fc] font-sans">
+    <div className="flex h-full w-full max-h-[100dvh] overflow-hidden bg-[#f6f8fc] font-sans">
       <VoceroAppNav
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         unreadCount={leads.filter(l => l.stage === 'lead').length}
         userName={tenant?.name || tenantName || tenantSlug}
         onSwitchToClassic={() => setVoceroMode(false)}
@@ -63,7 +88,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             isLoadingMessages={isLoadingMessages} filterInbox={filterInbox} onSetFilterInbox={setFilterInbox}
             searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
             onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead}
-            onOpenNewLeadModal={() => setActiveTab('pipeline')}
+            onOpenNewLeadModal={() => handleSelectTab('pipeline')}
           />
         )}
 
@@ -91,7 +116,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         )}
 
         {activeTab === 'onboarding' && (
-          <VoceroOnboardingView tenant={tenant} products={products} faqs={faqs} onNavigateTab={setActiveTab} />
+          <VoceroOnboardingView tenant={tenant} products={products} faqs={faqs} onNavigateTab={handleSelectTab} />
         )}
 
         {activeTab === 'agent' && (

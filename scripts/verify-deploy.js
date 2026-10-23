@@ -22,6 +22,7 @@ const ROUTES = [
   { path: '/user/mi-negocio/comida-callejera-xl/productos', label: 'Panel: Productos' },
   { path: '/user/mi-negocio/comida-callejera-xl/conversaciones', label: 'Panel: Conversaciones' },
   { path: '/user/mi-negocio/comida-callejera-xl/mi-cuenta', label: 'Panel: Mi Cuenta' },
+  { path: '/user/mi-negocio/comida-callejera-xl/agente', label: 'Panel: Agente Vocero (Ruta Específica)' },
   { path: '/super-admin', label: 'Panel: Super Admin' },
   { path: '/dashboard', label: 'Redirección Canónica /dashboard' }
 ];
