@@ -1,13 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 20:47 GMT-6
-- **Versión Actual:** 1.80.0 (Canal 'Chat Agente ClikChat' Interno sin API con Selector por Defecto)
+- **Última Actualización:** 2026-10-22 20:54 GMT-6
+- **Versión Actual:** 1.81.0 (Vista Canónica y Enrutamiento de Catálogo de Productos /productos)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `bd87ae8` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `4f2e0e7` en `main`)
 - **Estado Actual del Sistema:**
+  - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio ("Cargar Productos").
   - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto, resaltado esmeralda y enlaces directos.
-  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/agente`, `/citas`, `/ajustes`, etc.) y persistencia 100% independiente ante recargas F5.
+  - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/productos`, `/agente`, `/citas`, `/ajustes`) y persistencia total ante F5.
   - Auto-Scroll Reactivo: Desplazamiento automático multi-tick hacia el último mensaje tipo WhatsApp sin desbordes.
   - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen`, área conversacional y elementos 100% visibles.
   - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.

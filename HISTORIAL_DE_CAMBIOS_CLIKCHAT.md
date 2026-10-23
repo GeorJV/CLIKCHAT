@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Enrutamiento y Vista Canónica del Catálogo de Productos/Servicios (/productos) desde Guía de Inicio (Paso 2)
+- **Diagnóstico y Necesidad:**
+  1. *Redirección Duplicada a Ajustes:* Al pulsar "Cargar Productos" o "Gestionar Ítems" en el Paso 2 de la Guía de Inicio Rápido, el sistema enviaba al usuario a la pestaña general de Ajustes (`settings`) sin alterar la subvista, aterrizando en la misma ventana de Perfil/Canales que en el Paso 1.
+  2. *Ausencia de Pestaña y URL Canónica para Catálogo:* No existía una ruta independiente dedicada al catálogo de productos en el enrutador del CRM Vocero, lo cual impedía abrir directamente el gestor de productos y persistir en él ante recargas.
+- **Solución Implementada (ARQMODULAR & Enrutamiento Canónico):**
+  1. *Pestaña Vocero Canónica `products` (`VoceroAppNav.tsx` & `routerConstants.ts`):*
+     - Incorporación del identificador de pestaña `products` al tipo `VoceroNavTab`.
+     - Inclusión del acceso directo "Productos / Menú" con ícono `ShoppingBag` en la sección de navegación "Canal Propio".
+     - Mapeo bidireccional en el enrutador: `products` <-> `/productos`, con alias para `catalogo`, `catalog` y `menu`.
+  2. *Vista Modular de Catálogo (`VoceroProductsView.tsx` - 45 líneas):*
+     - Cabecera dedicada con contador reactivo de ítems registrados y contexto comercial (productos/menú o servicios según el giro del negocio).
+     - Integración del gestor completo `VoceroCatalogSettings`: alta y edición mediante modal, carga de fotografías, precios, categorías y buscador reactivo.
+  3. *Actualización de la Guía de Inicio (`VoceroOnboardingView.tsx`):*
+     - Enrutamiento directo del Paso 2 hacia `targetTab: 'products'`. Al pulsar "Cargar Productos", la URL en la barra de direcciones cambia de inmediato a `/user/mi-negocio/:slug/productos` y despliega el gestor de catálogo.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 7.66s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-CTo9xeGL.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `4f2e0e7`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 14/14 rutas activas y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Integración de Canal 'Chat Agente ClikChat' Interno sin API con Selector Activo por Defecto
 - **Diagnóstico y Necesidad:**
   1. *Dependencia Exclusiva de APIs Externas:* En Ajustes del Sistema (sección Canales, accesible desde el paso 1 de Guía de Inicio Rápido tras 'Revisar Perfil'), únicamente figuraban WhatsApp Business Cloud API, Instagram Direct y Facebook Messenger, requiriendo credenciales y webhooks de Meta.
