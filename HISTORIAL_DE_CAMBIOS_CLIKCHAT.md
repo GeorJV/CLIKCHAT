@@ -16,6 +16,35 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Homologación Integral al Tema Claro en Reglas Operativas, Documentos RAG y Diseño Borderless & Elevated
+- **Diagnóstico y Necesidad:**
+  1. *Desfase Visual y Fondos Negros:* Las secciones de "Reglas Operativas", "Documentos RAG" y el modal de objeciones conservaban fondos oscuros y negros (`#141313`, `#181717`, `#262424`, `onyx-card`), rompiendo la armonía estética con el resto de la plataforma CRM blanca oficial.
+  2. *Diseño Borderless con Elevación Limpia:* El usuario requirió explícitamente: *"las cajitas esas no tienen que tener ningún borde. No tienen que tener ningún borde, tienen que ser limpias y verse así como resaltaditas"*, exigiendo erradicar los bordes duros de caja y lograr jerarquía visual con sombras suaves (`shadow-sm`, `shadow-md`, `shadow-2xs`).
+  3. *Desbordamiento Responsivo en Pestañas de Ajustes:* En anchos intermedios de pantalla, las pestañas de Ajustes se truncaban en el extremo derecho ("Zernio Mul...") y comprimían el título principal.
+  4. *Erradicación Total de Íconos de IA:* Eliminación obligatoria de íconos de bot/IA (`Bot`, `Brain`) en la navegación lateral del CRM y vistas de configuración.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. *Reglas Operativas Borderless en Tema Claro:*
+     - `OperationalRulesSection.tsx` (126 líneas): Eliminadas clases oscuras `onyx-card`. Contenedor en blanco puro con `shadow-sm`, textarea manual en `bg-[#f8fafc]` con `shadow-2xs` sin bordes toscos.
+     - `RulePresetCards.tsx` (141 líneas): Tarjetas de restricciones prearmadas en `bg-[#f8fafc] hover:bg-white shadow-2xs hover:shadow-xs` sin bordes.
+     - `RulesDropzone.tsx` (87 líneas) & `GreetingDropzone.tsx` (87 líneas): Zonas drag & drop limpias en `bg-[#f8fafc]` con `shadow-2xs` sin bordes.
+  2. *Documentos RAG Borderless en Tema Claro:*
+     - `DocumentsManagerTab.tsx` (192 líneas): Cabecera blanca con `shadow-sm`, editor manual con `shadow-md` y lista de documentos en tarjetas `bg-white shadow-sm hover:shadow-md` sin bordes.
+     - `DocumentDropzone.tsx` (145 líneas): Zona drag & drop en `bg-white shadow-sm hover:shadow-md rounded-2xl` sin bordes oscuros.
+     - `DocumentViewerModal.tsx` (156 líneas): Modal en blanco puro con `shadow-2xl` y tarjetas de chunk en `bg-[#f8fafc]` con `shadow-2xs` sin bordes.
+  3. *Modal y Tarjetas de Objeción:*
+     - `ObjectionModal.tsx` (139 líneas): Modal en blanco puro sin bordes de caja, sombra `shadow-2xl`, inputs en `bg-[#f8fafc] shadow-2xs` y botón verde esmeralda.
+     - `ObjectionsManagerSection.tsx` (182 líneas) & `ObjectionCard.tsx` (93 líneas): Tarjetas borderless en `bg-white shadow-sm hover:shadow-md` con gatillo y respuesta en fondos suaves diferenciados.
+  4. *Pestañas del Agente & Navegación Sin Dobles Contenedores:*
+     - `VoceroAgentView.tsx` (119 líneas), `VoceroAgentIdentitySection.tsx` (166 líneas), `SalesFlowSection.tsx` (174 líneas), `SalesFlowFourStepsEditor.tsx` (80 líneas): Eliminados los contenedores dobles y bordes de pestañas. Remplazados íconos de IA por `User` y `TrendingUp`.
+     - `VoceroAppNav.tsx` (159 líneas): Reemplazado ícono de Bot por `TrendingUp` en "Analista".
+     - `VoceroSettingsView.tsx` (177 líneas): Pestañas de Ajustes con nombres concisos responsivos (`Perfil`, `Canales`, `Catálogo`, `Motor IA`, `Zernio`), título `Ajustes` sin recorte y barra con `overflow-x-auto [scrollbar-width:none]` para erradicar cualquier desbordamiento lateral.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 7.58s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-zCboVAhz.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Homologación al Tema Claro Oficial en FAQ IQ & Objeciones y Erradicación Total del Ícono de IA
 - **Diagnóstico y Necesidad:**
   1. *Desfase Visual en FAQ IQ & Objeciones:* La sección de objeciones y respuestas de alta precisión (`ObjectionsManagerSection`, `ObjectionCard`, `ObjectionModal`) conservaba un tema oscuro anticuado (`#181717`, `#141313`, `#262424`) que desentonaba fuertemente con la interfaz oficial blanca del CRM.

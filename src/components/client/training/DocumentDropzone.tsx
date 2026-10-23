@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw, FileSpreadsheet, FileCode, X } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw, FileSpreadsheet, FileCode } from 'lucide-react';
 import { parseDocumentFile } from '../../../utils/documentParser';
 
 interface Props {
@@ -17,7 +17,6 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
   const effectiveTenantId = tenantId || 'a0000000-0000-0000-0000-000000000001';
 
   const handleFiles = async (fileList: FileList | null) => {
-    // Filtrar únicamente archivos reales con tamaño > 0 bytes para evitar falsos positivos
     const validFiles = Array.from(fileList || []).filter(f => f && f.size > 0);
     if (validFiles.length === 0) {
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -77,7 +76,7 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 font-sans">
       <input
         ref={fileInputRef}
         type="file"
@@ -92,60 +91,52 @@ export const DocumentDropzone: React.FC<Props> = ({ tenantId, onUploadSuccess })
         onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => !isProcessing && fileInputRef.current?.click()}
-        className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition flex flex-col items-center justify-center text-center cursor-pointer select-none ${
-          isDragging ? 'border-emerald-500 bg-emerald-500/[0.08] scale-[1.01]' : 'border-[#333030] bg-[#141212] hover:border-emerald-500/50 hover:bg-[#181616]'
+        className={`p-6 sm:p-8 rounded-2xl transition flex flex-col items-center justify-center text-center cursor-pointer select-none shadow-sm hover:shadow-md ${
+          isDragging ? 'bg-[#ebf1ff] scale-[1.01]' : 'bg-white hover:bg-[#f8fafc]'
         } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
       >
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-lg pointer-events-none">
+        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#0d5bff] mb-3 shadow-xs pointer-events-none">
           {isProcessing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <UploadCloud className="w-6 h-6" />}
         </div>
 
-        <h4 className="text-sm font-bold text-white mb-1 pointer-events-none">
+        <h4 className="text-sm font-bold text-[#0a1730] mb-1 pointer-events-none">
           {isDragging ? '¡Suelta tus archivos aquí!' : 'Arrastra y suelta tus documentos o haz clic para explorar tu PC'}
         </h4>
-        <p className="text-xs text-zinc-400 max-w-md mb-3 pointer-events-none">
+        <p className="text-xs text-[#62728d] max-w-md mb-3 pointer-events-none">
           Sube manuales, términos, políticas o tablas de datos para que la IA responda consultas con certeza total.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-2 pointer-events-none select-none">
-          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
-            <FileText className="w-3 h-3 text-rose-400" /> PDF (.PDF)
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#f8fafc] text-[#475569] shadow-2xs">
+            <FileText className="w-3 h-3 text-rose-500" /> PDF (.PDF)
           </span>
-          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
-            <FileText className="w-3 h-3 text-sky-400" /> .TXT / .MD / .CSV
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#f8fafc] text-[#475569] shadow-2xs">
+            <FileText className="w-3 h-3 text-[#0d5bff]" /> .TXT / .MD / .CSV
           </span>
-          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
-            <FileCode className="w-3 h-3 text-indigo-400" /> Word (.DOCX, .DOC)
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#f8fafc] text-[#475569] shadow-2xs">
+            <FileCode className="w-3 h-3 text-indigo-500" /> Word (.DOCX, .DOC)
           </span>
-          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1a1818] border border-[#2e2c2c] text-zinc-300">
-            <FileSpreadsheet className="w-3 h-3 text-emerald-400" /> Excel (.XLSX, .XLS)
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#f8fafc] text-[#475569] shadow-2xs">
+            <FileSpreadsheet className="w-3 h-3 text-emerald-600" /> Excel (.XLSX, .XLS)
           </span>
         </div>
       </div>
 
       {isProcessing && (
-        <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-center gap-2 font-medium">
+        <div className="p-3.5 rounded-xl bg-blue-50 text-[#0d5bff] text-xs flex items-center gap-2 font-medium shadow-2xs">
           <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
           <span>{progressMsg}</span>
         </div>
       )}
 
       {status && (
-        <div className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 font-medium animate-fade-in ${
-          status.type === 'ok' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+        <div className={`p-3.5 rounded-xl text-xs flex items-center justify-between gap-2 font-medium animate-fade-in shadow-xs ${
+          status.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'
         }`}>
           <div className="flex items-center gap-2">
-            {status.type === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            {status.type === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" /> : <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />}
             <span>{status.msg}</span>
           </div>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setStatus(null); }}
-            className="text-zinc-400 hover:text-white p-0.5 rounded transition cursor-pointer"
-            title="Cerrar aviso"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
         </div>
       )}
     </div>

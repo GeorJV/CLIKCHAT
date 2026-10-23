@@ -1,21 +1,19 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 10:55 GMT-6
-- **Versión Actual:** 1.93.0 (Tema Claro en FAQ IQ Objeciones & Erradicación de Íconos de IA)
+- **Última Actualización:** 2026-10-23 11:15 GMT-6
+- **Versión Actual:** 1.94.0 (Tema Claro en Reglas Operativas & Documentos RAG Borderless)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - FAQ IQ Objeciones: Homologado 100% al tema claro oficial (#f8fafc/white/azul royal #0d5bff).
-  - Cero Íconos de IA: Eliminación universal de Sparkles en CRM, entrenamiento, modales y escaparates.
-  - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent + Polling 4s.
-  - Métrica "Vio Detalle del Producto": Columna D1 `detail_views` y tarjeta simétrica en modal de 8 KPIs.
-  - Modal Producto/Servicio `ProductModal`: Homologado 100% al tema claro oficial y azul royal #0d5bff.
-  - FAQ IQ /faqs: Aprendizaje supervisado cuando la IA no sabe, HITL y guardado directo a RAG Nivel 2.
-  - Flow IQ /agente: 3 Estrategias listas (Asesor Consultivo B2B, Venta Directa y Citas/Agendamiento).
-  - Live Lab /lab: Entorno de pruebas con "Modificar respuesta" in-line y comprobación de aprendizaje.
-  - Agenda Citas /agenda: Botón "Mes Completo" en barra de filtros y pop-up profesional de detalle.
-  - Lead Score Numérico 0-100: Termómetro visual (🔥/☕/❄️) en panel de contacto, bandeja y Kanban.
+  - Reglas Operativas & Documentos RAG: Homologados al tema claro oficial (#f8fafc/white/azul #0d5bff).
+  - Diseño Borderless & Elevated: Sin bordes duros de caja, resaltados limpios con shadow suave.
+  - FAQ IQ Objeciones & Modal: Totalmente borderless en blanco puro, shadow-2xl e inputs limpios.
+  - Flow IQ & Flow 4 Pasos: Editor atómico con sombras suaves y sin bordes toscos.
+  - Cero Íconos de IA: Erradicación universal de Bot/Brain/Sparkles en navegación y vistas.
+  - Pestañas Ajustes: Adaptadas responsivamente sin desbordamiento ni recortes laterales.
+  - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent.
+  - Métrica "Vio Detalle del Producto": Columna D1 `detail_views` y tarjeta simétrica de 8 KPIs.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

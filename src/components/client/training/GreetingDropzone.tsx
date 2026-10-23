@@ -53,10 +53,10 @@ export const GreetingDropzone: React.FC<GreetingDropzoneProps> = ({ onTextLoaded
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={() => fileInputRef.current?.click()}
-      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+      className={`rounded-2xl p-4 text-center cursor-pointer transition-all shadow-2xs hover:shadow-xs ${
         isDragging
-          ? 'border-emerald-500 bg-emerald-500/10'
-          : 'border-[#2c2a2a] hover:border-emerald-500/50 bg-[#141313]'
+          ? 'bg-[#ebf1ff] ring-2 ring-[#0d5bff]'
+          : 'bg-[#f8fafc] hover:bg-[#ebf1ff]/50'
       }`}
     >
       <input
@@ -66,17 +66,17 @@ export const GreetingDropzone: React.FC<GreetingDropzoneProps> = ({ onTextLoaded
         onChange={handleFileChange}
         className="hidden"
       />
-      <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs">
-        <UploadCloud className={`w-4 h-4 ${isDragging ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
+      <div className="flex items-center justify-center gap-2 text-[#62728d] text-xs font-sans">
+        <UploadCloud className={`w-4 h-4 ${isDragging ? 'text-[#0d5bff] animate-bounce' : 'text-[#8391aa]'}`} />
         <span>
           {uploadedName ? (
-            <span className="text-emerald-400 font-semibold flex items-center gap-1 inline-flex">
+            <span className="text-[#0d5bff] font-bold flex items-center gap-1 inline-flex">
               <FileText className="w-3.5 h-3.5" />
               Cargado: {uploadedName} (clic para cambiar)
             </span>
           ) : (
             <>
-              <strong className="text-white">Arrastra un archivo aquí</strong> o haz clic para subir (.txt, .md)
+              <strong className="text-[#0a1730]">Arrastra un archivo aquí</strong> o haz clic para subir (.txt, .md)
             </>
           )}
         </span>

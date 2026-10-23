@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Inbox, Kanban, Users, CalendarDays, ListChecks, ShoppingBag,
-  UserCog, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, Bot, LogOut, BookOpen
+  UserCog, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, TrendingUp, LogOut, BookOpen
 } from 'lucide-react';
 import { VoceroBrandLogo } from './VoceroBrandLogo';
 
@@ -55,7 +55,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
     {
       title: 'Inteligencia',
       items: [
-        { id: 'analyst' as VoceroNavTab, label: 'Analista IA', icon: Bot },
+        { id: 'analyst' as VoceroNavTab, label: 'Analista', icon: TrendingUp },
         { id: 'results' as VoceroNavTab, label: 'Resultados', icon: BarChart3 },
       ]
     }

@@ -9,10 +9,10 @@ interface SalesFlowFourStepsEditorProps {
 
 const STEP_ICONS = [MessageSquare, Tag, ShoppingCart, CheckCircle];
 const STEP_COLORS = [
-  { border: 'border-emerald-200', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', tip: 'Saluda y detecta la necesidad sin presionar.' },
-  { border: 'border-blue-200', badge: 'bg-blue-50 text-blue-700 border-blue-200', tip: 'Presenta el producto o servicio con precio oficial.' },
-  { border: 'border-amber-200', badge: 'bg-amber-50 text-amber-700 border-amber-200', tip: 'Upsell (bebida/adicional) o 2 opciones de horario.' },
-  { border: 'border-purple-200', badge: 'bg-purple-50 text-purple-700 border-purple-200', tip: 'Comanda final, resumen y canalización a WhatsApp.' }
+  { badge: 'bg-emerald-50 text-emerald-700', tip: 'Saluda y detecta la necesidad sin presionar.' },
+  { badge: 'bg-blue-50 text-blue-700', tip: 'Presenta el producto o servicio con precio oficial.' },
+  { badge: 'bg-amber-50 text-amber-700', tip: 'Upsell (bebida/adicional) o 2 opciones de horario.' },
+  { badge: 'bg-purple-50 text-purple-700', tip: 'Comanda final, resumen y canalización a WhatsApp.' }
 ];
 
 export const SalesFlowFourStepsEditor: React.FC<SalesFlowFourStepsEditorProps> = ({
@@ -30,7 +30,7 @@ export const SalesFlowFourStepsEditor: React.FC<SalesFlowFourStepsEditorProps> =
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {steps.map((st, idx) => {
           const Icon = STEP_ICONS[idx] || MessageSquare;
           const meta = STEP_COLORS[idx] || STEP_COLORS[0];
@@ -38,12 +38,12 @@ export const SalesFlowFourStepsEditor: React.FC<SalesFlowFourStepsEditorProps> =
           return (
             <div
               key={st.step}
-              className={`p-3.5 rounded-xl bg-[#f8fafc] border ${meta.border} space-y-2.5 flex flex-col justify-between shadow-xs`}
+              className="p-4 rounded-2xl bg-[#f8fafc] space-y-2.5 flex flex-col justify-between shadow-xs hover:shadow-sm transition-shadow"
             >
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${meta.badge}`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${meta.badge}`}>
                       Paso {st.step}
                     </span>
                     <Icon className="w-3.5 h-3.5 text-[#62728d]" />
@@ -62,11 +62,11 @@ export const SalesFlowFourStepsEditor: React.FC<SalesFlowFourStepsEditorProps> =
                   value={st.instruction}
                   onChange={(e) => onChangeStep(idx, { instruction: e.target.value })}
                   placeholder={`Instrucción para el Paso ${st.step}...`}
-                  className="w-full bg-white border border-[#d8e2f0] rounded-xl p-2.5 text-xs text-[#0a1730] placeholder-[#94a3b8] focus:outline-none focus:border-[#0d5bff] leading-relaxed font-sans resize-none shadow-xs"
+                  className="w-full bg-white rounded-xl p-3 text-xs text-[#0a1730] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 leading-relaxed font-sans resize-none shadow-xs"
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 text-[10.5px] text-[#62728d] pt-1.5 border-t border-[#e2e8f0]">
+              <div className="flex items-center gap-1.5 text-[10.5px] text-[#62728d] pt-2">
                 <Lightbulb className="w-3 h-3 text-amber-500 shrink-0" />
                 <span className="truncate">{meta.tip}</span>
               </div>

@@ -45,8 +45,8 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
   };
 
   return (
-    <div className="space-y-4 max-w-4xl text-slate-100 font-sans">
-      {/* 1. Selector de Plantillas de Restricciones Interactivas */}
+    <div className="space-y-4 max-w-4xl text-[#0a1730] font-sans">
+      {/* 1. Selector de Plantillas de Restricciones Interactivas - Sin bordes */}
       <RulePresetCards
         rulesText={rulesText}
         tenantName={tenant?.name || 'Mi Negocio'}
@@ -54,14 +54,19 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
         isGlobalSaving={isSaving}
       />
 
-      {/* 2. Editor de Reglas Personalizadas */}
-      <div className="onyx-card rounded-2xl p-4 sm:p-5 space-y-3.5">
+      {/* 2. Editor de Reglas Personalizadas - Sin bordes, limpio y resaltadito */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-white">Reglas Estrictas de Operación (Inyección de Alta Prioridad)</h3>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-2xs">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[#0a1730]">Reglas Estrictas de Operación</h3>
+              <p className="text-[11px] text-[#62728d]">Inyección de alta prioridad para blindar el comportamiento del bot</p>
+            </div>
           </div>
-          <span className="text-[10px] text-zinc-500 font-mono">
+          <span className="text-[10px] text-[#62728d] font-mono bg-[#f8fafc] px-2 py-0.5 rounded-lg shadow-2xs">
             {rulesText.length} caracteres
           </span>
         </div>
@@ -74,7 +79,7 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
 
         {/* Textarea Manual */}
         <div>
-          <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-bold text-[#0a1730] uppercase tracking-wider mb-1.5">
             Directivas y Restricciones Específicas para tu Asistente
           </label>
           <textarea
@@ -84,23 +89,23 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
               isDirtyRef.current = true;
               setRulesText(e.target.value);
             }}
-            placeholder="Ejemplo:&#10;- Jamás inventes descuentos que no estén en el catálogo.&#10;- Si te preguntan por la marca competidora XYZ, indica que solo asesoras sobre nuestros productos oficiales.&#10;- No aceptes pagos con cheques ni plazos sin autorización..."
-            className="w-full bg-[#111010] border border-[#282626] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500 leading-relaxed font-sans"
+            placeholder="Ejemplo:&#10;- Jamás inventes descuentos que no estén en el catálogo.&#10;- Si te preguntan por la marca competidora XYZ, indica que solo asesoras sobre nuestros productos oficiales.&#10;- No aceptes pagos con cheques ni plazos sin autorización previa."
+            className="w-full bg-[#f8fafc] rounded-xl p-3.5 text-xs text-[#0a1730] placeholder-[#8391aa] focus:outline-none focus:ring-2 focus:ring-[#0d5bff]/20 focus:bg-white leading-relaxed font-sans shadow-2xs transition"
           />
         </div>
 
         {/* Banner de Protección Activa */}
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-amber-50 text-amber-900 text-xs flex items-start gap-2.5 shadow-2xs">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-relaxed">
-            <strong className="font-bold">Prioridad Inviolable en Producción:</strong> Cualquier regla escrita o seleccionada arriba se inyecta en el System Prompt del bot con máxima prioridad, anulando alucinaciones sobre precios o políticas no oficiales.
+            <strong className="font-bold text-amber-900">Prioridad Inviolable en Producción:</strong> Cualquier regla escrita o seleccionada arriba se inyecta en el System Prompt del bot con máxima prioridad, anulando alucinaciones sobre precios o políticas no oficiales.
           </div>
         </div>
 
         {/* Botón de Guardado Manual */}
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#262424]">
+        <div className="flex items-center justify-end gap-3 pt-2">
           {saveSuccess && (
-            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 animate-fade-in">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 animate-fade-in">
               <CheckCircle2 className="w-3.5 h-3.5" /> Reglas guardadas y activas en el bot
             </span>
           )}
@@ -108,7 +113,7 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#0d5bff] hover:bg-[#0047e1] active:scale-98 text-white text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Guardando en D1...' : 'Guardar Reglas de Operación'}</span>

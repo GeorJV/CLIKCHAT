@@ -80,45 +80,37 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
       {/* Main Container */}
       <main className="flex-1 overflow-y-auto p-6 max-w-5xl w-full mx-auto">
         {subTab === 'identidad' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm">
             <VoceroAgentIdentitySection tenant={tenant} onUpdateSettings={onUpdateSettings} />
           </div>
         )}
 
         {subTab === 'objetivos' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm">
             <VoceroCommercialObjectivesSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
           </div>
         )}
 
         {subTab === 'flujo' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
-            <SalesFlowSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
-          </div>
+          <SalesFlowSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
         )}
 
         {subTab === 'objeciones' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
-            <ObjectionsManagerSection
-              tenant={tenant}
-              faqs={faqs}
-              onCreateFaq={onCreateFaq}
-              onUpdateFaq={onUpdateFaq}
-              onDeleteFaq={onDeleteFaq}
-            />
-          </div>
+          <ObjectionsManagerSection
+            tenant={tenant}
+            faqs={faqs}
+            onCreateFaq={onCreateFaq}
+            onUpdateFaq={onUpdateFaq}
+            onDeleteFaq={onDeleteFaq}
+          />
         )}
 
         {subTab === 'reglas' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
-            <OperationalRulesSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
-          </div>
+          <OperationalRulesSection tenant={tenant} onUpdateSettings={onUpdateSettings} />
         )}
 
         {subTab === 'docs' && (
-          <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
-            <DocumentsManagerTab tenantId={tenant?.id} />
-          </div>
+          <DocumentsManagerTab tenantId={tenant?.id} />
         )}
       </main>
     </div>

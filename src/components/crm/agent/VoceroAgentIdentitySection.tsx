@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant } from '../../../types';
-import { Bot, MessageSquare, FileText, User, Save, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, FileText, User, Save, CheckCircle2 } from 'lucide-react';
 import { ToneMultiSelectDropdown } from '../common/ToneMultiSelectDropdown';
 import { VoceroSystemPromptAttachment } from './VoceroSystemPromptAttachment';
 
@@ -75,7 +75,7 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
       </div>
 
       {/* Tracker de 4 Pasos de Identidad */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="rounded-xl bg-blue-50/70 shadow-xs p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0d5bff] text-white text-[10px] font-bold">
             {completedSteps}
@@ -96,7 +96,7 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
         <div>
           <label className="block text-xs font-bold text-[#0a1730] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
             <span className="px-1.5 py-0.2 rounded bg-blue-100 text-[#0d5bff] font-mono text-[10px] font-bold">PASO 1</span>
-            <Bot className="w-3.5 h-3.5 text-[#0d5bff]" /> Nombre del Asistente Virtual
+            <User className="w-3.5 h-3.5 text-[#0d5bff]" /> Nombre del Asistente Virtual
           </label>
           <input
             type="text"

@@ -16,16 +16,16 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
   onTestInSimulator
 }) => {
   return (
-    <div className="bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-xs rounded-2xl p-4 transition-all duration-200 group font-sans">
+    <div className="bg-white hover:shadow-md shadow-sm rounded-2xl p-4 sm:p-5 transition-all duration-200 group font-sans">
       {/* Encabezado: Categoría & Badge Nivel 2 */}
-      <div className="flex items-center justify-between gap-2 mb-2.5">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 flex items-center gap-1 shadow-2xs">
             <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600/30" />
             <span>Nivel 2 · $0 Costo</span>
           </span>
           {faq.category && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#f1f5f9] text-[#475569]">
               {faq.category}
             </span>
           )}
@@ -63,14 +63,16 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
       </div>
 
       {/* Gatillo (Si el cliente pregunta) */}
-      <div className="mb-2.5">
+      <div className="mb-3">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[#62728d] flex items-center gap-1.5 mb-1">
           <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
           <span>Si el cliente pregunta:</span>
         </div>
-        <p className="text-xs font-bold text-[#0a1730] pl-3.5 border-l-2 border-amber-500">
-          "{faq.question}"
-        </p>
+        <div className="bg-[#f8fafc] rounded-xl p-2.5">
+          <p className="text-xs font-bold text-[#0a1730] leading-snug">
+            "{faq.question}"
+          </p>
+        </div>
       </div>
 
       {/* Respuesta Exacta (El bot responde de inmediato) */}
@@ -79,9 +81,11 @@ export const ObjectionCard: React.FC<ObjectionCardProps> = ({
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
           <span>El bot responde exactamente:</span>
         </div>
-        <p className="text-xs text-[#334155] pl-3.5 border-l-2 border-emerald-500 leading-relaxed font-medium">
-          {faq.answer}
-        </p>
+        <div className="bg-[#f0fdf4] rounded-xl p-2.5">
+          <p className="text-xs text-[#166534] leading-relaxed font-medium">
+            {faq.answer}
+          </p>
+        </div>
       </div>
     </div>
   );

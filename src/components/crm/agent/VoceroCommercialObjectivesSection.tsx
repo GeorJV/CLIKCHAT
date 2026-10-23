@@ -98,7 +98,7 @@ export const VoceroCommercialObjectivesSection: React.FC<VoceroCommercialObjecti
         </div>
         <div className="flex items-center gap-2">
           {savedSuccess && (
-            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200">
+            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg shadow-2xs">
               <CheckCircle2 className="w-3.5 h-3.5" /> Guardado
             </span>
           )}
@@ -108,7 +108,7 @@ export const VoceroCommercialObjectivesSection: React.FC<VoceroCommercialObjecti
         </div>
       </div>
 
-      {/* Grid de Objetivos por Casillas */}
+      {/* Grid de Objetivos por Casillas - Sin bordes, limpios y resaltaditos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {COMMERCIAL_OBJECTIVES.map((obj) => {
           const isChecked = selectedIds.includes(obj.id);
@@ -118,10 +118,10 @@ export const VoceroCommercialObjectivesSection: React.FC<VoceroCommercialObjecti
             <div
               key={obj.id}
               onClick={() => toggleObjective(obj.id)}
-              className={`p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3.5 ${
+              className={`p-4 rounded-xl transition-all cursor-pointer select-none flex items-start gap-3.5 shadow-sm hover:shadow-md ${
                 isChecked
-                  ? 'border-[#0d5bff] bg-[#ebf1ff]/40 shadow-xs'
-                  : 'border-[#dde5f1] bg-white hover:border-[#b0c4de] hover:bg-[#fafcff]'
+                  ? 'bg-[#ebf1ff]/70 ring-2 ring-[#0d5bff]'
+                  : 'bg-white hover:bg-[#fafcff]'
               }`}
             >
               <input

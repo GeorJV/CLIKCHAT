@@ -7,7 +7,7 @@ import { SalesFlowSection } from './SalesFlowSection';
 import { ObjectionsManagerSection } from './objections/ObjectionsManagerSection';
 import { LiveBotSimulator } from './simulator/LiveBotSimulator';
 import { UnresolvedQuery, Tenant, FAQ } from '../../../types';
-import { Brain, HelpCircle, FileText, MessageSquare, ShieldAlert, TrendingUp, ShieldCheck, Bot } from 'lucide-react';
+import { HelpCircle, FileText, MessageSquare, ShieldAlert, TrendingUp, ShieldCheck, UserCog } from 'lucide-react';
 
 interface AITrainingTabProps {
   tenantId?: string;
@@ -49,7 +49,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#242323] pb-3.5">
         <div>
           <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-            <Brain className="w-5 h-5 text-emerald-400" />
+            <UserCog className="w-5 h-5 text-emerald-400" />
             <span>Entrenamiento AI & Calibración</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
@@ -81,7 +81,7 @@ export const AITrainingTab: React.FC<AITrainingTabProps> = ({
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <Bot className="w-3.5 h-3.5 text-emerald-300" />
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
             <span>💬 Simulador en Vivo</span>
           </button>
 
