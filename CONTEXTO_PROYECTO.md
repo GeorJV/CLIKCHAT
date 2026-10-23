@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 21:30 GMT-6
-- **Versión Actual:** 1.85.0 (Memoria RAG & FAQs con Human-in-the-Loop y Auto-Entrenamiento)
+- **Última Actualización:** 2026-10-22 21:57 GMT-6
+- **Versión Actual:** 1.86.0 (Telemetría de Clics y Rendimiento en Vivo & Unificación de KPIs en CRM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `9e6c32e` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `89eea11` en `main`)
 - **Estado Actual del Sistema:**
-  - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` de primer nivel en sección Agente del CRM.
-  - Human-in-the-Loop (HITL): Consultas fuera de catálogo registradas como pendientes en D1 (`unresolved_queries`).
+  - Telemetría en Vivo Resultados: Clics comprar, fotos vistas, chat IA, agregados, no agregados, cancelados.
+  - Métricas por Producto: Modal "Ver Métricas" con termómetro de leads (Fríos, Tibios, Calientes) y 7 eventos.
+  - Memoria RAG & FAQs /faqs: Vista modular `VoceroFaqRagView` y Human-in-the-Loop (`unresolved_queries`).
   - Auto-Entrenamiento RAG: Al responder el dueño en el panel, se inserta en `faqs` (Nivel 2) respondiendo a futuros clientes.
   - Desacople Perfil y Canales: Paso 1 abre Perfil (/perfil) y Paso 4 abre Canales WhatsApp (/canales).
-  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, 2 Tono, 3 Bienvenida, 4 Prompt/Docs) con tracker.
-  - Adjuntos System Prompt: Carga y Drag & Drop de archivos (.txt, .md, .pdf, .docx, .doc) con extracción directa.
+  - 4 Pasos de Identidad del Agente: Enumeración canónica (Paso 1 Nombre, 2 Tono, 3 Bienvenida, 4 Prompt/Docs).
   - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2.
   - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; resaltado esmeralda.
   - Enrutamiento Canónico por Pestaña: Sincronización de URLs (/perfil, /canales, /faqs, /productos) y F5.

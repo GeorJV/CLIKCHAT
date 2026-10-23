@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Telemetría en Vivo de Clics y Rendimiento de Productos & Unificación de KPIs en CRM
+- **Diagnóstico y Necesidad:**
+  1. *Telemetría Detallada de Comportamiento:* Se requería analizar en vivo las 7 interacciones críticas por producto: clics al botón comprar, visualización de foto, consultas en chat IA, agregados a la comanda, productos no agregados (descartados) y cancelaciones/abandonos tras dar clic a comprar.
+  2. *Integración con el Modelo Anterior:* Unificar las métricas históricas de temperatura de leads (Fríos, Tibios, Calientes) y preguntas/objeciones resueltas por el bot con las nuevas métricas de telemetría por evento.
+- **Solución Implementada (ARQMODULAR & Cloudflare D1):**
+  1. *Subpestaña en Resultados (`VoceroResultsView.tsx` - 76 líneas, `VoceroClickPerformanceReport.tsx` - 152 líneas, `VoceroProductMetricsTable.tsx` - 72 líneas, `VoceroCommercialOverview.tsx` - 144 líneas):*
+     - Vista dual entre "Clics & Rendimiento" y "Resumen Comercial".
+     - Desglose producto por producto con indicadores de estado (🔥 Alta Demanda, 👁️ Interés Visual, ⚠️ Alto Abandono).
+     - Simulador interactivo en vivo para auditar telemetría de clics en tiempo real.
+  2. *Modal de Métricas en Catálogo de Productos (`VoceroProductMetricsModal.tsx` - 149 líneas & `VoceroCatalogSettings.tsx` - 160 líneas):*
+     - Botón "Métricas" en cada tarjeta de producto para auditar sus 7 KPIs de comportamiento, temperatura de leads y enlace directo.
+  3. *Endpoints en Cloudflare Worker & D1 (`functions/api/[[route]].js`):*
+     - Extensión de `product_metrics` con columnas `photo_views`, `chat_interactions`, `added_to_cart`, `not_added`, `removed_from_cart`.
+     - `POST /api/products/:id/track` ampliado para registrar eventos en milisegundos con actualización optimista en UI.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 31.01s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-B6JJKgAQ.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `89eea11` y posteriores).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Integración de Memoria RAG & Preguntas Frecuentes con Sistema Human-in-the-Loop (HITL) y Auto-Entrenamiento de Consultas Pendientes
 - **Diagnóstico y Necesidad:**
   1. *Preguntas Frecuentes con Memoria RAG:* Se requería una sección dedicada y de primer nivel en el panel CRM para gestionar las Preguntas Frecuentes (FAQs) que alimentan el Nivel 2 del motor RAG, permitiendo respuestas instantáneas a costo $0 y latencia en milisegundos.
