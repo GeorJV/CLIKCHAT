@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Carga y Drag & Drop de Documentos (Texto, PDF y Word) para Instrucciones Maestras (System Prompt)
+- **Diagnóstico y Necesidad:**
+  1. *Entrada Manual Limitada:* En la sección de Identidad & Personalidad del Agente Vocero (`VoceroAgentIdentitySection.tsx`), el campo de Instrucciones Maestras del Sistema (`system_prompt`) requería escribir o pegar texto de forma manual.
+  2. *Requerimiento de Carga Directa de Archivos y Drag & Drop:* Permitir adjuntar o arrastrar documentos en formatos de texto plano (`.txt`, `.md`, `.json`, `.csv`), documentos de Microsoft Word (`.docx`, `.doc`) y documentos PDF (`.pdf`), extrayendo su conocimiento en el navegador sin costo de tokens e integrándolo automáticamente al System Prompt del agente.
+- **Solución Implementada (ARQMODULAR & Extracción Directa en Cliente):**
+  1. *Componente Atómico `VoceroSystemPromptAttachment.tsx` (160 líneas):*
+     - Zona interactiva de Drag & Drop con feedback táctil y visual (`isDragging` con iluminación de borde azul y fondo suave).
+     - Botón directo "Adjuntar" con selector de archivos nativo multi-formato.
+     - Extracción asíncrona de texto mediante `extractTextFromFile` con barra de progreso en vivo por documento.
+     - Formato de inyección canónica en el System Prompt: `--- INICIO DOCUMENTO: [nombre] --- [contenido] --- FIN DOCUMENTO: [nombre] ---`.
+     - Fichas/Chips de documentos adjuntos con indicación de tamaño, ícono temático según extensión (rojo para PDF, azul para Word, gris para texto) y botón para desincorporar el documento del prompt.
+  2. *Compatibilidad Universal Word y PDF (`documentExtractor.ts`):*
+     - Soporte ampliado para `.docx` y documentos legacy `.doc` con motor Mammoth y fallback binario por decodificación UTF-8.
+     - Extracción página a página de documentos PDF vía PDF.js.
+  3. *Integración en `VoceroAgentIdentitySection.tsx` (133 líneas):*
+     - Inclusión reactiva debajo del área de texto de Instrucciones Maestras, respetando el límite estricto de <150-180 líneas por archivo de ARQMODULAR.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 12.14s con 0 errores TypeScript (`npm run build`). Bundle activo: `index-B9KDSiDJ.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `f4ad82a`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 14/14 rutas activas y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Enrutamiento y Vista Canónica del Catálogo de Productos/Servicios (/productos) desde Guía de Inicio (Paso 2)
 - **Diagnóstico y Necesidad:**
   1. *Redirección Duplicada a Ajustes:* Al pulsar "Cargar Productos" o "Gestionar Ítems" en el Paso 2 de la Guía de Inicio Rápido, el sistema enviaba al usuario a la pestaña general de Ajustes (`settings`) sin alterar la subvista, aterrizando en la misma ventana de Perfil/Canales que en el Paso 1.

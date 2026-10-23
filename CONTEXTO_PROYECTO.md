@@ -1,11 +1,12 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 20:54 GMT-6
-- **Versión Actual:** 1.81.0 (Vista Canónica y Enrutamiento de Catálogo de Productos /productos)
+- **Última Actualización:** 2026-10-22 20:59 GMT-6
+- **Versión Actual:** 1.82.0 (Carga y Drag & Drop de Documentos para Instrucciones Maestras / System Prompt)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `4f2e0e7` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `f4ad82a` en `main`)
 - **Estado Actual del Sistema:**
+  - Adjuntos System Prompt: Carga y Drag & Drop de archivos de texto (.txt, .md), PDF (.pdf) y Word (.docx, .doc) con extracción e inyección directa.
   - Catálogo Canónico /productos: Vista modular independiente `VoceroProductsView` vinculada al Paso 2 de Guía de inicio ("Cargar Productos").
   - Canal Chat Agente ClikChat: Canal nativo interno sin API ni Meta Cloud API; selector interactivo por defecto, resaltado esmeralda y enlaces directos.
   - Enrutamiento Canónico por Pestaña: Sincronización de URL (`/productos`, `/agente`, `/citas`, `/ajustes`) y persistencia total ante F5.
@@ -14,7 +15,6 @@
   - Chat Humanizado: Preguntas solo con signo de cierre `?`, cadencia 1-3s y selector de 3 modos de envío.
   - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes.
   - Modelos Google AI Studio: Estandarización exclusiva en `gemini-2.5-flash` y `gemini-2.5-pro`.
-  - Suite Vocero CRM 100%: Pipeline, Inbox, Citas, Contactos CSV, Laboratorio y Juez IA con scoring.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 14/14 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
