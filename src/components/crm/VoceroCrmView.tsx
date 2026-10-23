@@ -15,6 +15,7 @@ import { VoceroBookingsView } from './bookings/VoceroBookingsView';
 import { VoceroResultsView } from './results/VoceroResultsView';
 import { VoceroClikChatView } from './clikchat/VoceroClikChatView';
 import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
+import { VoceroProductsView } from './products/VoceroProductsView';
 
 interface VoceroCrmViewProps {
   tenantId?: string;
@@ -112,6 +113,13 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             tenant={tenant} tenantSlug={tenantSlug} leads={leads} selectedLead={selectedLead}
             selectedLeadId={selectedLeadId} onSelectLead={setSelectedLeadId} messages={messages}
             onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateSettings={updateSettings}
+          />
+        )}
+
+        {activeTab === 'products' && (
+          <VoceroProductsView
+            products={products} tenant={tenant} onCreateProduct={createProduct}
+            onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct}
           />
         )}
 

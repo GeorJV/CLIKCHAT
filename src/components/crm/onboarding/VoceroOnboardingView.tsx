@@ -43,7 +43,7 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
       desc: isStep2Done ? `${products.length} productos/servicios cargados y listos.` : 'Agrega tus productos o servicios con precios y fotos para que la IA cotice.',
       isDone: isStep2Done,
       icon: ShoppingBag,
-      targetTab: 'settings' as VoceroNavTab,
+      targetTab: 'products' as VoceroNavTab,
       btnLabel: isStep2Done ? 'Gestionar Ítems' : 'Cargar Productos'
     },
     {
