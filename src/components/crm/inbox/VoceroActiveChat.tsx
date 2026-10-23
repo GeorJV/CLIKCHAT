@@ -93,13 +93,13 @@ export const VoceroActiveChat: React.FC<VoceroActiveChatProps> = ({
               {!isUser && bubbles.length > 1 ? (
                 <div className="flex flex-col items-end space-y-1 max-w-[78%]">
                   {bubbles.map((b, i) => (
-                    <div key={i} className="rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-xs bg-[#0d5bff] text-white rounded-br-sm">
+                    <div key={i} className="rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-xs bg-[#0d5bff] text-white rounded-br-sm select-text cursor-text">
                       {b}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-xs ${
+                <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-xs select-text cursor-text ${
                   isUser ? 'bg-white border border-[#dde5f1] text-[#0a1730] rounded-bl-sm' : 'bg-[#0d5bff] text-white rounded-br-sm'
                 }`}>
                   {bubbles[0] || m.message}

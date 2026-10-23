@@ -19,7 +19,7 @@ export const VoceroAiInterviewSuccess: React.FC<Props> = ({ payload, onFinish })
 
       <div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-1.5">
-          <Sparkles className="w-3.5 h-3.5" /> Procesado con Meta Llama 3 (Cloudflare Edge)
+          <Sparkles className="w-3.5 h-3.5" /> Configurado con CLICKCHAT y GeoSoft.LAt
         </div>
         <h3 className="text-lg font-bold text-[#0a1730]">¡Tu Negocio y tu Bot Están Listos!</h3>
         <p className="text-xs text-[#62728d] max-w-md mx-auto mt-1">

@@ -7,7 +7,7 @@ import { ClientDashboard } from './components/client/ClientDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Briefcase, ShieldCheck, Smartphone, ShoppingBag, Calendar, Globe, UtensilsCrossed, Truck } from 'lucide-react';
 import { useProductResolver } from './hooks/useProductResolver';
-import { useAppRouter, AppView, getTenantTabPath } from './hooks/useAppRouter';
+import { useAppRouter, AppView, getTenantTabPath, getVoceroTabPath } from './hooks/useAppRouter';
 import { useAuth } from './hooks/useAuth';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { useVoceroMode } from './hooks/useVoceroMode';
@@ -54,7 +54,7 @@ export function App() {
     <div className={`flex flex-col h-[100dvh] max-h-[100dvh] w-full max-w-full ${isVoceroMode ? 'bg-[#f6f8fc] text-[#0a1730]' : 'bg-[#151414] text-slate-100'} overflow-hidden font-sans`}>
       {!hideTopBar && isSuperAdmin && (
         <nav className={`h-12 shrink-0 border-b flex items-center justify-between px-3 md:px-6 z-40 ${isVoceroMode ? 'bg-white border-[#e8edf6]' : 'bg-[#151414] border-[#282626]'}`}>
-          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))}>
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigate(isVoceroMode ? getVoceroTabPath(selectedTenantSlug, 'settings') : getTenantTabPath(selectedTenantSlug, 'business'))}>
             <div className={`w-7 h-7 rounded-lg border flex items-center justify-center font-mono font-black text-xs shadow-sm ${isVoceroMode ? 'bg-blue-50 border-blue-200 text-[#0d5bff]' : 'bg-[#1a1919] border-[#2e2b2b] text-emerald-400'}`}>
               CK
             </div>
@@ -66,7 +66,7 @@ export function App() {
           <div className={`flex items-center space-x-1 p-1 rounded-xl border ${isVoceroMode ? 'bg-[#f1f5f9] border-[#e2e8f0]' : 'bg-[#111010] border-[#282626]'}`}>
             {NAV_VIEWS.map(({ id, label, icon: Icon, path }) => (
               <button
-                key={id} onClick={() => navigate(id === 'client' ? getTenantTabPath(selectedTenantSlug, 'business') : path)}
+                key={id} onClick={() => navigate(id === 'client' ? (isVoceroMode ? getVoceroTabPath(selectedTenantSlug, 'settings') : getTenantTabPath(selectedTenantSlug, 'business')) : path)}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                   currentView === id
                     ? (isVoceroMode ? 'bg-white text-[#0d5bff] shadow-xs' : 'bg-[#222020] text-emerald-400 border border-[#383535] shadow-sm')
@@ -88,7 +88,7 @@ export function App() {
               onGoToDashboard={(targetSlug) => {
                 const active = targetSlug || localStorage.getItem('clikchat_active_tenant_slug') || selectedTenantSlug || 'comida-callejera-xl';
                 setSelectedTenantSlug(active);
-                navigate(getTenantTabPath(active, 'business'));
+                navigate(isVoceroMode ? getVoceroTabPath(active, 'settings') : getTenantTabPath(active, 'business'));
               }}
               onGoToAdmin={() => navigate('/super-admin')}
             />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useClientPortal } from '../../hooks/useClientPortal';
-import { useAppRouter, getTenantTabPath } from '../../hooks/useAppRouter';
+import { useAppRouter, getTenantTabPath, getVoceroTabPath } from '../../hooks/useAppRouter';
 import { ClientTab } from '../../types/client';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientLogin } from './ClientLogin';
@@ -45,8 +45,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const {
     tenantSlug: currentSlug, setTenantSlug, tenant, products, faqs, unresolved,
     availableTenants, isLoading, saveSuccess, resolveQuery, createFaq, updateFaq,
-    deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct,
-    updateSettings, loadTenantData
+    deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings, loadTenantData
   } = useClientPortal(activeSlug);
 
   useEffect(() => {
@@ -61,7 +60,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         navigate('/super-admin', { replace: true });
         return;
       }
-      navigate(getTenantTabPath(activeSlug, activeTab), { replace: true });
+      const target = isVoceroMode ? getVoceroTabPath(activeSlug, 'settings') : getTenantTabPath(activeSlug, 'business');
+      navigate(target, { replace: true });
     }
   }, [isAuthenticated, activeSlug, isPanelUrl, pathname, activeTab, navigate, user?.role]);
 
@@ -74,10 +74,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   }
 
   if (!isAuthenticated) {
-    if (isRegisterView) {
-      return <ClientRegister onRegister={register} onSwitchToLogin={() => setIsRegisterView(false)} error={authError} />;
-    }
-    return <ClientLogin onLogin={login} onSwitchToRegister={() => setIsRegisterView(true)} error={authError} />;
+    return isRegisterView
+      ? <ClientRegister onRegister={register} onSwitchToLogin={() => setIsRegisterView(false)} error={authError} />
+      : <ClientLogin onLogin={login} onSwitchToRegister={() => setIsRegisterView(true)} error={authError} />;
   }
 
   const pendingCount = unresolved.filter(u => u.status === 'pending').length;

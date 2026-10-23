@@ -93,8 +93,8 @@ export const ROUTE_VOCERO_TAB_MAP: Record<string, VoceroNavTab> = {
   perfil: 'settings',
   canales: 'settings',
   chatbot: 'clikchat',
-  'mi-negocio': 'agent',
-  dashboard: 'inbox',
+  'mi-negocio': 'settings',
+  dashboard: 'settings',
 };
 
 export function getTenantTabPath(slug?: string, tab: ClientTab = 'business'): string {

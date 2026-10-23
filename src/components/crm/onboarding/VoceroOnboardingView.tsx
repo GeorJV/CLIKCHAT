@@ -78,11 +78,11 @@ export const VoceroOnboardingView: React.FC<VoceroOnboardingViewProps> = ({
         <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/90 via-white to-blue-50/50 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0d5bff]/10 text-[#0d5bff] text-[10.5px] font-bold">
-              <Sparkles className="w-3 h-3" /> Configuración Express con IA (Meta Llama 3)
+              <Sparkles className="w-3 h-3" /> Configuración Express Inteligente
             </div>
             <h3 className="text-base font-bold text-[#0a1730]">¿Prefieres que la IA configure todo por ti?</h3>
             <p className="text-xs text-[#62728d] max-w-xl">
-              Nuestra IA de Meta Llama 3 en Cloudflare te hace 4 preguntas breves y autocompleta tu perfil, catálogo y respuestas en 2 minutos.
+              Nuestro asistente de configuración inteligente te hace 4 preguntas breves y autocompleta tu perfil, catálogo y respuestas en 2 minutos.
             </p>
           </div>
           <button

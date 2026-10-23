@@ -22,7 +22,7 @@ export const VoceroAiInterviewModal: React.FC<Props> = ({
   onCreateProduct,
   onCreateFaq
 }) => {
-  const initialGreeting = `¡Hola! 👋 Soy tu Asistente de Configuración Inteligente impulsado por Meta Llama 3 en Cloudflare.
+  const initialGreeting = `¡Hola! 👋 Soy tu Asistente de Configuración Inteligente impulsado por CLICKCHAT Y GeoSoft.LAt
 
 En solo 4 preguntas rápidas voy a dejar tu negocio y tu bot listos para vender. Para empezar:
 ¿Cómo se llama tu negocio y qué productos o servicios ofreces?`;
@@ -131,7 +131,7 @@ En solo 4 preguntas rápidas voy a dejar tu negocio y tu bot listos para vender.
               <h3 className="text-sm sm:text-base font-bold text-[#0a1730] flex items-center gap-1.5">
                 <span>Entrevista Asistida con IA</span>
                 <span className="text-[10px] bg-blue-50 text-[#0d5bff] font-mono px-2 py-0.2 rounded-full font-bold">
-                  Meta Llama 3
+                  CLICKCHAT & GeoSoft.LAt
                 </span>
               </h3>
               <p className="text-[11px] text-[#62728d]">

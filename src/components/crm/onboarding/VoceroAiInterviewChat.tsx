@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, Bot, User, Sparkles, Loader2, Copy, Check } from 'lucide-react';
 import { InterviewMessage } from '../../../services/aiOnboardingService';
 
 interface Props {
@@ -25,10 +25,17 @@ export const VoceroAiInterviewChat: React.FC<Props> = ({
   isLoading
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,12 +56,32 @@ export const VoceroAiInterviewChat: React.FC<Props> = ({
               }`}>
                 {isAi ? <Bot className="w-4 h-4" /> : <User className="w-3.5 h-3.5" />}
               </div>
-              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs ${
+              <div className={`group relative max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs select-text cursor-text ${
                 isAi
                   ? 'bg-white text-[#0a1730] border border-[#e2e8f0]'
                   : 'bg-[#0d5bff] text-white rounded-tr-xs'
               }`}>
-                <p className="whitespace-pre-line">{m.content}</p>
+                <p className="whitespace-pre-line select-text cursor-text">{m.content}</p>
+                {isAi && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(m.id, m.content)}
+                    className="absolute -bottom-2 right-2 px-1.5 py-0.5 rounded bg-white border border-[#e2e8f0] text-[10px] text-[#62728d] hover:text-[#0d5bff] shadow-xs opacity-0 group-hover:opacity-100 transition flex items-center gap-1 cursor-pointer select-none"
+                    title="Copiar texto del asistente"
+                  >
+                    {copiedId === m.id ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-600 font-semibold">Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -67,7 +94,7 @@ export const VoceroAiInterviewChat: React.FC<Props> = ({
             </div>
             <div className="bg-white border border-[#e2e8f0] rounded-2xl px-3.5 py-2.5 text-xs text-[#62728d] flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0d5bff]" />
-              <span>Procesando en Cloudflare Edge con Meta Llama 3...</span>
+              <span>Procesando con CLICKCHAT & GeoSoft.LAt...</span>
             </div>
           </div>
         )}

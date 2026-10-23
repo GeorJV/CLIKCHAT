@@ -28,7 +28,7 @@ interface VoceroCrmViewProps {
 
 export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSlug, tenantName, onLogout }) => {
   const { pathname, navigate, currentVoceroTab } = useAppRouter();
-  const [activeTab, setActiveTab] = useState<VoceroNavTab>(() => currentVoceroTab || 'inbox');
+  const [activeTab, setActiveTab] = useState<VoceroNavTab>(() => currentVoceroTab || 'settings');
   const { setVoceroMode } = useVoceroMode();
 
   const {
