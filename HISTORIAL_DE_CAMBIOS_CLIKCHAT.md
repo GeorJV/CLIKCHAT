@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Segmentación Dinámica de Pipeline Kanban en Etapas 1 y 2 con Animación Fluida (v2.0.0)
+- **Diagnóstico y Necesidad:**
+  1. *Sobrecarga Horizontal del Pipeline:* El tablero Kanban mostraba simultáneamente las 6 columnas del ciclo comercial, generando compresión visual o scroll horizontal excesivo.
+  2. *Requerimiento del Usuario:* Incorporar dos botones centrados en la barra superior del Pipeline: "Etapa 1" (muestra las primeras 3 tablas: Nuevo Lead, En Calificación, Comanda/Cita) y "Etapa 2" (muestra las otras 3 tablas: Esperando Pago, Cerrado Ganado, Perdido). Al presionar cada botón, las 3 tablas visibles deben correrse hacia la derecha de la pantalla ocultándose, y seguidamente aparecer las otras tres etapas de derecha a izquierda colocándose en su posición con animación suave y fluida.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `VoceroPipelineBoard.tsx` (158 líneas):
+     - Selector segmentado y centrado en la barra superior con los botones "En Etapa 1 (1 - 3)" y "Etapa 2 (4 - 6)" con badges y puntos de pulso.
+     - Coreografía de animación suave con aceleración por hardware (`transitionPhase`: `slide-out-right` hacia la derecha `translate-x-[110%]` a 280ms -> cambio de etapa instantáneo -> entrada fluida de derecha a izquierda con curva `cubic-bezier(0.16, 1, 0.3, 1)` a 400ms).
+     - Contenedor con `overflow-x-auto overflow-y-hidden` que erradica barras de desplazamiento involuntarias durante la animación.
+     - Soporte completo a `useVoceroMode` para fondos y contrastes óptimos en ClikChat CRM y ClikChat Clásico.
+  2. `VoceroPipelineColumn.tsx` (54 líneas):
+     - Soporte para prop `className` opcional permitiendo a las 3 columnas tomar `flex-1 min-w-[260px] h-full` para una distribución simétrica y ejecutiva en pantalla completa.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 11.96s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-DdF2M0rC.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Transición Carrusel y Flujo Secuencial "Guardar en memoria" y "Agregar otra pregunta" en FAQ IQ (v1.99.0)
 - **Diagnóstico y Necesidad:**
   1. *Cierre Forzado tras Guardar:* Al agregar una pregunta frecuente, el botón decía "Guardar en Memoria RAG" o "Guardar Pregunta" y cerraba el modal de inmediato, obligando al usuario a volver a hacer clic en "+ Nueva Pregunta" para ingresar otra duda frecuente.
