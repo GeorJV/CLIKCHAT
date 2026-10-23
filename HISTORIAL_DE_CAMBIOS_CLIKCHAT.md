@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Enrutamiento Dinámico Independiente por Pestaña de Menú CRM y Persistencia ante Recargas
+- **Diagnóstico y Necesidad:**
+  1. *URL Fija al Navegar entre Pestañas:* Al hacer clic en los botones del menú de navegación (ej: Agente, Pipeline, Contactos, Citas, Laboratorio), la URL en la barra del navegador permanecía estática.
+  2. *Pérdida de Contexto al Recargar (F5):* Si el usuario se encontraba en la pestaña "Agente" o cualquier otra y presionaba refrescar en el navegador, el sistema reiniciaba el estado local por defecto y lo devolvía a "Bandeja", rompiendo la experiencia de navegación independiente y el guardado de pestañas en marcadores.
+- **Solución Implementada (ARQMODULAR & Enrutamiento SPA):**
+  1. *Catálogo de Rutas Canónicas Vocero CRM (`routerConstants.ts`):*
+     - Definición y mapeo bidireccional entre identificadores de pestaña (`VoceroNavTab`) y URLs específicas:
+       - `/bandeja` -> Bandeja (Inbox)
+       - `/pipeline` -> Pipeline Kanban
+       - `/contactos` -> Contactos CRM
+       - `/citas` -> Agenda de Citas & Reservaciones
+       - `/clikchat` -> ClikChat Web
+       - `/onboarding` -> Guía de inicio
+       - `/agente` -> Ficha de Identidad & Ajustes del Agente
+       - `/laboratorio` -> Simulador IA & Juez Vocero
+       - `/analista` -> Analista IA
+       - `/resultados` -> Resultados y Métricas
+       - `/ajustes` -> Configuración del Negocio
+  2. *Enrutamiento Reactivo en `VoceroCrmView.tsx` & `useAppRouter.ts`:*
+     - Actualización inmediata de la barra de direcciones del navegador mediante `window.history.pushState` al pulsar cualquier elemento del menú de navegación lateral.
+     - Lectura e inicialización automática de la pestaña activa directamente desde el segmento de la URL al cargar o recargar la página (`popstate` y carga inicial).
+     - Persistencia total: Si el usuario está en `/user/mi-negocio/:slug/agente` y refresca (F5), el sistema permanece exactamente en la pantalla de "Agente" de forma 100% independiente.
+  3. *Auditoría de Ruta en Suite de Producción (`verify-deploy.js`):*
+     - Incorporación de la ruta específica `/user/mi-negocio/comida-callejera-xl/agente` a la batería de pruebas de Chrome Headless (13/13 rutas operativas con 0 errores).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 8.00s con 0 errores TypeScript (`npm run build`). Bundle activo `index-CLj9Cj0D.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `1fff9db`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 13/13 rutas activas y 0 errores en Chrome headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Auto-Scroll Reactivo Estilo WhatsApp y Ajuste Responsivo Integral de Pantalla Completa
 - **Diagnóstico y Necesidad:**
   1. *Falta de Desplazamiento Automático al Seleccionar Preguntas:* Al pulsar cualquier pregunta o sugerencia rápida (pills o botones de acción), el contenedor del chat no bajaba automáticamente hacia el último mensaje, obligando al usuario a realizar scroll manual para visualizar la respuesta.
