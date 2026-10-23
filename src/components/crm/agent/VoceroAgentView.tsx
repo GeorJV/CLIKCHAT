@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../../types';
-import { TrendingUp, ShieldCheck, ShieldAlert, FileText, UserCog, Target, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { VoceroAgentHeader, VoceroAgentSubTab } from './VoceroAgentHeader';
 import { VoceroAgentIdentitySection } from './VoceroAgentIdentitySection';
 import { VoceroCommercialObjectivesSection } from './VoceroCommercialObjectivesSection';
 import { SalesFlowSection } from '../../client/training/SalesFlowSection';
@@ -22,15 +23,15 @@ interface VoceroAgentViewProps {
 export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
   tenant, tenantSlug, faqs, onUpdateSettings, onCreateFaq, onUpdateFaq, onDeleteFaq
 }) => {
-  const [subTab, setSubTab] = useState<'identidad' | 'flujo' | 'objeciones' | 'reglas' | 'docs' | 'objetivos'>('identidad');
+  const [subTab, setSubTab] = useState<VoceroAgentSubTab>('identidad');
 
   const TABS = [
-    { id: 'identidad' as const, label: '1. Identidad & Tono', icon: UserCog, desc: 'Nombre, saludo inicial y bienvenida del bot' },
-    { id: 'flujo' as const, label: '2. Flow IQ (Venta)', icon: TrendingUp, desc: 'Estrategia comercial y flujo persuasivo en 4 pasos' },
-    { id: 'objeciones' as const, label: '3. FAQ IQ (Dudas)', icon: ShieldCheck, badge: faqs.length, desc: 'Respuestas exactas a objeciones y preguntas frecuentes' },
-    { id: 'reglas' as const, label: '4. Reglas de Seguridad', icon: ShieldAlert, desc: 'Restricciones estrictas para evitar alucinaciones' },
-    { id: 'docs' as const, label: '5. Documentos RAG', icon: FileText, desc: 'Manuales y archivos PDF indexados para consulta' },
-    { id: 'objetivos' as const, label: '6. Metas', icon: Target, desc: 'Objetivos comerciales y métricas clave' },
+    { id: 'identidad' as const, label: '1. Identidad & Tono', desc: 'Nombre, saludo inicial y bienvenida del bot' },
+    { id: 'flujo' as const, label: '2. Flow IQ (Venta)', desc: 'Estrategia comercial y flujo persuasivo en 4 pasos' },
+    { id: 'objeciones' as const, label: '3. FAQ IQ (Dudas)', desc: 'Respuestas exactas a objeciones y preguntas frecuentes' },
+    { id: 'reglas' as const, label: '4. Reglas de Seguridad', desc: 'Restricciones estrictas para evitar alucinaciones' },
+    { id: 'docs' as const, label: '5. Documentos RAG', desc: 'Manuales y archivos PDF indexados para consulta' },
+    { id: 'objetivos' as const, label: '6. Metas', desc: 'Objetivos comerciales y métricas clave' },
   ];
 
   const currentTabInfo = TABS.find(t => t.id === subTab) || TABS[0];
@@ -38,43 +39,17 @@ export const VoceroAgentView: React.FC<VoceroAgentViewProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
-      {/* Header Vocero con Sub-tabs Ordenadas y Numeradas */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-4 sm:px-6 shadow-xs gap-3">
-        <div className="flex items-center gap-2 shrink-0">
-          <UserCog className="h-4 w-4 text-[#0d5bff]" />
-          <h2 className="text-base sm:text-[17px] font-bold tracking-tight text-[#0a1730]">Cerebro del Asistente</h2>
-          <span className="vocero-kicker ml-1 hidden md:inline">Entrenamiento en 6 Fases</span>
-        </div>
-
-        <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl overflow-x-auto [scrollbar-width:none]">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = subTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setSubTab(tab.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
-                  active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#62728d] hover:text-[#0a1730]'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="whitespace-nowrap">{tab.label}</span>
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="ml-0.5 rounded-full bg-[#e8edf6] px-1.5 py-0.2 text-[10px] font-bold text-[#42506b]">
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </header>
+      {/* Header Vocero con Sub-tabs Compactas, Flechas y Menú de Tres Rayas */}
+      <VoceroAgentHeader
+        activeTab={subTab}
+        onSelectTab={setSubTab}
+        faqCount={faqs.length}
+      />
 
       {/* Sub-barra de Guía y Contexto del Paso Actual */}
-      <div className="bg-[#ebf1ff]/80 border-b border-[#d8e2f0] px-6 py-2 flex items-center justify-between text-xs shrink-0">
+      <div className="bg-[#ebf1ff]/80 border-b border-[#d8e2f0] px-4 sm:px-6 py-2 flex items-center justify-between text-xs shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="px-2 py-0.5 bg-[#0d5bff] text-white rounded font-mono text-[10px] font-bold uppercase">
+          <span className="px-2 py-0.5 bg-[#0d5bff] text-white rounded font-mono text-[10px] font-bold uppercase shrink-0">
             Fase {currentIndex + 1} de 6
           </span>
           <p className="text-xs text-[#0a1730] truncate">

@@ -74,14 +74,22 @@ export const VoceroAgentIdentitySection: React.FC<VoceroAgentIdentitySectionProp
         )}
       </div>
 
-      {/* Tracker de 4 Pasos de Identidad */}
-      <div className="rounded-xl bg-blue-50/70 shadow-xs p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      {/* Tracker de Campos de Identidad */}
+      <div className={`rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition border ${
+        completedSteps === 4 ? 'bg-emerald-50/70 border-emerald-200' : 'bg-blue-50/70 border-blue-100'
+      }`}>
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0d5bff] text-white text-[10px] font-bold">
-            {completedSteps}
-          </span>
+          {completedSteps === 4 ? (
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white shrink-0 shadow-2xs">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </div>
+          ) : (
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0d5bff] text-white text-[9.5px] font-bold shrink-0">
+              {completedSteps}/4
+            </div>
+          )}
           <h4 className="text-xs font-bold text-[#0a1730]">
-            Entrenamiento del Agente: {completedSteps} de 4 Pasos Completados
+            Campos de Identidad: <span className={completedSteps === 4 ? 'text-emerald-700' : 'text-[#0d5bff]'}>{completedSteps === 4 ? '4 de 4 campos listos' : `${completedSteps} de 4 completados`}</span>
           </h4>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
