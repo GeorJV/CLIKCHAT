@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Reestructuración Jerárquica del CRM en 3 Bloques Lógicos y Guía Secuencial de Asistente (v2.1.0)
+- **Diagnóstico y Necesidad:**
+  1. *Sobrecarga Cognitiva y Desorden en la Barra:* El menú lateral acumulaba 13 secciones dispersas sin orden cronológico, mezclando tareas operativas de diario con configuraciones iniciales de una sola vez, provocando confusión en el usuario sobre qué hacer primero.
+  2. *Requerimiento del Usuario:* Organizar y dar guía paso a paso al CRM sin perder ninguna funcionalidad existente.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. `VoceroAppNav.tsx` (144 líneas):
+     - Navegación lateral estructurada en 3 universos ultra claros:
+       - **OPERACIÓN DIARIA:** Bandeja de Entrada, Pipeline de Ventas (Etapas 1 y 2), Agenda & Citas, Directorio de Clientes.
+       - **MI ASISTENTE IA (4 PASOS):** 1. Guía Paso a Paso, 2. Catálogo & Menú, 3. Cerebro & Flow IQ, 4. Memoria & FAQ IQ.
+       - **PRUEBAS & MÉTRICAS:** Live Lab (Pruebas), Métricas & Clics, Canal Web ClikChat.
+       - Pie con Ajustes del Sistema (Canales WhatsApp Meta Cloud) y Perfil.
+  2. `VoceroAgentView.tsx` (118 líneas):
+     - Cerebro del asistente estructurado en 6 fases numeradas con sub-barra de contexto (`Fase X de 6` con propósito explícito y botón rápido para avanzar a la siguiente fase).
+  3. `VoceroCrmView.tsx` (143 líneas):
+     - Botón flotante permanente `🧪 Probar Asistente` en la esquina inferior derecha para abrir el Live Lab de simulación desde cualquier pantalla con 1 clic.
+     - Preservación íntegra del 100% de las rutas, hooks y vistas sin alteración de datos ni componentes bloqueados.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 43.98s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-ZorYdv30.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Segmentación Dinámica de Pipeline Kanban en Etapas 1 y 2 con Animación Fluida (v2.0.0)
 - **Diagnóstico y Necesidad:**
   1. *Sobrecarga Horizontal del Pipeline:* El tablero Kanban mostraba simultáneamente las 6 columnas del ciclo comercial, generando compresión visual o scroll horizontal excesivo.

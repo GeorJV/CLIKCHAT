@@ -28,35 +28,29 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
 }) => {
   const GROUPS = [
     {
-      title: 'Trabajo',
+      title: 'OPERACIÓN DIARIA',
       items: [
-        { id: 'inbox' as VoceroNavTab, label: 'Bandeja', icon: Inbox, badge: unreadCount },
-        { id: 'pipeline' as VoceroNavTab, label: 'Pipeline', icon: Kanban },
-        { id: 'contacts' as VoceroNavTab, label: 'Contactos', icon: Users },
-        { id: 'bookings' as VoceroNavTab, label: 'Citas', icon: CalendarDays },
+        { id: 'inbox' as VoceroNavTab, label: 'Bandeja de Entrada', icon: Inbox, badge: unreadCount },
+        { id: 'pipeline' as VoceroNavTab, label: 'Pipeline de Ventas', icon: Kanban },
+        { id: 'bookings' as VoceroNavTab, label: 'Agenda & Citas', icon: CalendarDays },
+        { id: 'contacts' as VoceroNavTab, label: 'Directorio de Clientes', icon: Users },
       ]
     },
     {
-      title: 'Canal Propio',
+      title: 'MI ASISTENTE IA (4 PASOS)',
       items: [
-        { id: 'clikchat' as VoceroNavTab, label: 'ClikChat Web', icon: MessageSquareCode },
-        { id: 'products' as VoceroNavTab, label: 'Productos / Menú', icon: ShoppingBag },
+        { id: 'onboarding' as VoceroNavTab, label: '1. Guía Paso a Paso', icon: ListChecks },
+        { id: 'products' as VoceroNavTab, label: '2. Catálogo & Menú', icon: ShoppingBag },
+        { id: 'agent' as VoceroNavTab, label: '3. Cerebro & Flow IQ', icon: UserCog },
+        { id: 'faqs' as VoceroNavTab, label: '4. Memoria & FAQ IQ', icon: BookOpen, badge: unresolvedCount },
       ]
     },
     {
-      title: 'Agente & Inteligencia',
+      title: 'PRUEBAS & MÉTRICAS',
       items: [
-        { id: 'onboarding' as VoceroNavTab, label: 'Guía de inicio', icon: ListChecks },
-        { id: 'agent' as VoceroNavTab, label: 'Flow IQ (Agente)', icon: UserCog },
-        { id: 'faqs' as VoceroNavTab, label: 'FAQ IQ (Memoria RAG)', icon: BookOpen, badge: unresolvedCount },
         { id: 'lab' as VoceroNavTab, label: 'Live Lab (Pruebas)', icon: FlaskConical },
-      ]
-    },
-    {
-      title: 'Inteligencia',
-      items: [
-        { id: 'analyst' as VoceroNavTab, label: 'Analista', icon: TrendingUp },
-        { id: 'results' as VoceroNavTab, label: 'Resultados', icon: BarChart3 },
+        { id: 'results' as VoceroNavTab, label: 'Métricas & Clics', icon: BarChart3 },
+        { id: 'clikchat' as VoceroNavTab, label: 'Canal Web ClikChat', icon: MessageSquareCode },
       ]
     }
   ];

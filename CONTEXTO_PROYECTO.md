@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 12:40 GMT-6
-- **Versión Actual:** 2.0.0 (Segmentación Etapas 1 y 2 con Animación Fluida en Pipeline Kanban)
+- **Última Actualización:** 2026-10-23 16:10 GMT-6
+- **Versión Actual:** 2.1.0 (Reestructuración Jerárquica y Guía Secuencial en CRM sin Pérdida de Funciones)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Pipeline Kanban Dividido: Botones centrados "Etapa 1" (Tablas 1-3) y "Etapa 2" (Tablas 4-6).
-  - Animación Fluida: Desplazamiento hacia la derecha al ocultarse y entrada suave de derecha a izquierda con spring curve.
-  - FAQ IQ Modal Carrusel: Flujo secuencial fluido; "Guardar en memoria" se reemplaza por "Agregar otra pregunta".
+  - Navegación CRM en 3 Bloques: Operación Diaria (Bandeja, Pipeline, Citas, Clientes) y Mi Asistente IA (4 Pasos).
+  - Guía Secuencial Asistente: Identidad, Flow IQ, FAQ IQ, Reglas y Documentos numerados en 6 fases con barra de guía.
+  - Botón Flotante Live Lab: Acceso a 1-clic para simular y probar al bot en vivo desde cualquier pantalla del CRM.
+  - Pipeline Kanban Dividido: Botones centrados "Etapa 1" (Tablas 1-3) y "Etapa 2" (Tablas 4-6) con animación suave.
+  - FAQ IQ Modal Carrusel: Flujo secuencial; "Guardar en memoria" transmuta en "Agregar otra pregunta".
   - Tema Dual Homologado: Sincronización en 0ms entre ClikChat Clásico (Onyx/Emerald) y ClikChat CRM (Blanco/Azul #0d5bff).
-  - Credenciales Meta Cloud & WhatsApp: Modales y guías en temas adaptativos borderless y sombras limpias.
-  - Cero Íconos de IA: Erradicación universal de Bot/Brain/Sparkles en navegación y vistas.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
