@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 17:15 GMT-6
-- **Versión Actual:** 2.2.0 (Onboarding Conversacional con IA de Meta Llama 3 en Cloudflare Edge)
+- **Última Actualización:** 2026-10-23 17:40 GMT-6
+- **Versión Actual:** 2.2.1 (Redirección a Negocio, Copiado Libre de Respuestas y Homologación CLICKCHAT & GeoSoft.LAt)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Onboarding Asistido con IA: Entrevista en 4 preguntas con Meta Llama 3 en Cloudflare Workers AI (Neuronas).
-  - Carga Estructurada Sin Fallas: Extracción JSON estricta y autocompletado en BD de perfil, productos y FAQs.
-  - Cabecera Cerebro Compacta: Título reducido y "Entrenamiento en 6 fases" ubicado debajo liberando >160px.
-  - Sub-tabs Responsivas: Etiquetas cortas adaptativas, flechas de scroll y menú popup desplegable de 3 rayas.
-  - Identidad Agente: Check-in verde `4 de 4 campos listos` y reglas de hooks homologadas sin excepciones.
-  - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas aprobadas en Chrome Headless.
+  - Redirección Post-Login: Conexión directa al panel de configuración del negocio (settings / perfil).
+  - Copiado de Respuestas Habilitado: Erradicado select-none global y añadida selección/botón de 1-clic.
+  - Asistente Homologado: Presentación oficial "CLICKCHAT Y GeoSoft.LAt" sin menciones a Meta.
+  - Onboarding Inteligente: Extracción JSON estructurada sin fallas autocompletando perfil, catálogo y FAQs.
+  - Cabecera Cerebro Compacta: Título reducido, entrenamiento por fases y menú popup desplegable.
+  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

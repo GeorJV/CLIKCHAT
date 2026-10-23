@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Redirección Post-Login a Panel de Negocio, Habilitación de Copia de Respuestas y Homologación de Asistente CLICKCHAT & GeoSoft.LAt (v2.2.1)
+- **Diagnóstico y Necesidad:**
+  1. *Redirección Post-Login:* Tras iniciar sesión, el usuario debe ser transportado directamente al panel de configuración del negocio (settings / perfil del negocio).
+  2. *Copia de Respuestas Bloqueada:* La presencia de clases globales select-none impedía a los usuarios seleccionar o copiar los textos generados por el asistente.
+  3. *Mención Indeseada a Meta:* En saludos, loaders y prompts del sistema aparecía "impulsado por Meta Llama 3", debiendo sustituirse de forma estricta por: "Hola, soy tu asistente de configuración inteligente impulsado por CLICKCHAT Y GeoSoft.LAt".
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. index.html & Componentes de Chat:
+     - Erradicada la clase select-none global del body.
+     - Incorporada clase select-text cursor-text y botón de copiado en 1-clic con feedback visual en burbujas del asistente (VoceroAiInterviewChat, VoceroActiveChat, ChatMessageItem).
+  2. routerConstants.ts, App.tsx & ClientDashboard.tsx:
+     - Redirección automática post-autenticación al panel de Ajustes / Perfil del Negocio (settings) tanto en modo CRM Vocero como en portal de cliente.
+  3. functions/api/[[route]].js, VoceroAiInterviewModal.tsx, VoceroAiInterviewSuccess.tsx & VoceroOnboardingView.tsx:
+     - Homologado el saludo oficial del sistema: "¡Hola! 👋 Soy tu Asistente de Configuración Inteligente impulsado por CLICKCHAT Y GeoSoft.LAt".
+     - Actualizados loaders, badges y el systemPrompt en Cloudflare Workers sin menciones a Meta.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-DW1UVtsF.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commits 0ded62d y 15df8de).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Sistema de Onboarding Conversacional con IA de Meta Llama 3 (Cloudflare Edge con Neuronas) y Carga Estructurada Sin Fallas (v2.2.0)
 - **Diagnóstico y Necesidad:**
   1. *Fricción en Onboarding Manual:* Los nuevos usuarios debían navegar por múltiples pestañas para rellenar a mano formularios en blanco (perfil, catálogo, FAQs, reglas), generando sobrecarga y lentitud para arrancar el bot.
