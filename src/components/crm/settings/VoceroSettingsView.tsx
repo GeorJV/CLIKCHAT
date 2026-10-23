@@ -125,8 +125,14 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
       </header>
 
       <main className="flex-1 overflow-y-auto p-6 max-w-5xl w-full mx-auto">
-        {subTab === 'canales' && <VoceroChannelsSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
-        {subTab === 'zernio' && <VoceroZernioSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
+        {subTab === 'canales' && (
+          <VoceroChannelsSettings
+            tenant={tenant}
+            tenantSlug={tenantSlug}
+            onUpdateSettings={onUpdateSettings}
+          />
+        )}
+        {subTab === 'zernio' && <VoceroZernioSettings tenantSlug={tenantSlug} />}
         {subTab === 'perfil' && <VoceroBusinessProfileSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
         {subTab === 'catalogo' && (
           <VoceroCatalogSettings

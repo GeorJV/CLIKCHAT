@@ -3,21 +3,30 @@ import { Tenant } from '../../../types';
 import { WhatsAppConfig } from '../../../types/whatsapp';
 import { WhatsAppCredentialsModal } from '../../client/whatsapp/WhatsAppCredentialsModal';
 import { WhatsAppTestChatModal } from '../../client/whatsapp/WhatsAppTestChatModal';
-import { MessageSquare, Instagram, Facebook, Copy, Check, ShieldCheck, KeyRound, Play } from 'lucide-react';
+import { VoceroClikChatChannelCard } from './VoceroClikChatChannelCard';
+import { VoceroMetaChannelsGrid } from './VoceroMetaChannelsGrid';
+import { MessageSquare, Copy, Check, KeyRound, Play } from 'lucide-react';
 
 interface VoceroChannelsSettingsProps {
   tenant: Tenant | null;
   tenantSlug: string;
+  onUpdateSettings?: (updates: Partial<Tenant>) => Promise<boolean>;
 }
 
-export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ tenantSlug }) => {
+export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({
+  tenant,
+  tenantSlug,
+  onUpdateSettings
+}) => {
+  const effectiveSlug = tenantSlug || tenant?.slug || 'mi-negocio';
+
   const [config, setConfig] = useState<WhatsAppConfig>({
     phone_number_id: '',
     business_phone: '',
-    verify_token: `clikchat_wa_${tenantSlug}`,
+    verify_token: `clikchat_wa_${effectiveSlug}`,
     access_token: '',
     status: 'disconnected',
-    webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${tenantSlug}`
+    webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${effectiveSlug}`
   });
   const [isCredsOpen, setIsCredsOpen] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
@@ -26,14 +35,14 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/whatsapp/config?tenantSlug=${tenantSlug}`);
+        const res = await fetch(`/api/whatsapp/config?tenantSlug=${effectiveSlug}`);
         if (res.ok) {
           const data = await res.json();
           if (data?.config) {
             setConfig(prev => ({
               ...prev,
               ...data.config,
-              webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${tenantSlug}`
+              webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${effectiveSlug}`
             }));
           }
         }
@@ -42,7 +51,7 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ 
       }
     }
     load();
-  }, [tenantSlug]);
+  }, [effectiveSlug]);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -55,7 +64,7 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ 
       const res = await fetch('/api/whatsapp/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, ...newConfig })
+        body: JSON.stringify({ tenantSlug: effectiveSlug, ...newConfig })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -70,7 +79,14 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ 
 
   return (
     <div className="space-y-6 font-sans">
-      {/* WhatsApp Cloud API Oficial */}
+      {/* 1. Chat Agente ClikChat (Nativo Interno • Sin API) */}
+      <VoceroClikChatChannelCard
+        tenantSlug={effectiveSlug}
+        tenant={tenant}
+        onUpdateSettings={onUpdateSettings}
+      />
+
+      {/* 2. WhatsApp Cloud API Oficial */}
       <div className="rounded-2xl border border-[#e2e8f0] bg-white p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#f1f5f9] pb-4">
           <div className="flex items-center gap-3">
@@ -131,49 +147,11 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({ 
         </div>
       </div>
 
-      {/* Canales Meta: Instagram & Facebook */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white">
-              <Instagram className="h-4 w-4" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#0a1730]">Instagram Direct (Meta Graph)</h4>
-              <span className="text-[11px] font-semibold text-[#0d5bff] bg-[#ebf1ff] px-2 py-0.5 rounded-full">Listo para Webhook</span>
-            </div>
-          </div>
-          <p className="text-xs text-[#62728d] mb-2">Responde DMs de Instagram automáticamente con la IA.</p>
-          <div className="flex items-center justify-between bg-[#f8fafc] p-2 rounded-lg border border-[#e2e8f0] font-mono text-[11px]">
-            <span className="truncate">https://clikchat.pages.dev/api/whatsapp/webhook?channel=instagram&tenant={tenantSlug}</span>
-            <button onClick={() => handleCopy(`https://clikchat.pages.dev/api/whatsapp/webhook?channel=instagram&tenant=${tenantSlug}`, 'ig_url')} className="text-[#0d5bff] cursor-pointer shrink-0 ml-1">
-              {copiedKey === 'ig_url' ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0084ff] text-white">
-              <Facebook className="h-4 w-4" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#0a1730]">Facebook Messenger (Meta Graph)</h4>
-              <span className="text-[11px] font-semibold text-[#0d5bff] bg-[#ebf1ff] px-2 py-0.5 rounded-full">Listo para Webhook</span>
-            </div>
-          </div>
-          <p className="text-xs text-[#62728d] mb-2">Atiende chats de Messenger con el embudo comercial.</p>
-          <div className="flex items-center justify-between bg-[#f8fafc] p-2 rounded-lg border border-[#e2e8f0] font-mono text-[11px]">
-            <span className="truncate">https://clikchat.pages.dev/api/whatsapp/webhook?channel=messenger&tenant={tenantSlug}</span>
-            <button onClick={() => handleCopy(`https://clikchat.pages.dev/api/whatsapp/webhook?channel=messenger&tenant=${tenantSlug}`, 'fb_url')} className="text-[#0d5bff] cursor-pointer shrink-0 ml-1">
-              {copiedKey === 'fb_url' ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* 3. Canales Meta: Instagram Direct & Facebook Messenger */}
+      <VoceroMetaChannelsGrid tenantSlug={effectiveSlug} />
 
       <WhatsAppCredentialsModal isOpen={isCredsOpen} onClose={() => setIsCredsOpen(false)} config={config} onSave={handleSaveConfig} />
-      <WhatsAppTestChatModal isOpen={isTestOpen} onClose={() => setIsTestOpen(false)} tenantSlug={tenantSlug} defaultPhone={config.business_phone} />
+      <WhatsAppTestChatModal isOpen={isTestOpen} onClose={() => setIsTestOpen(false)} tenantSlug={effectiveSlug} defaultPhone={config.business_phone} />
     </div>
   );
 };
