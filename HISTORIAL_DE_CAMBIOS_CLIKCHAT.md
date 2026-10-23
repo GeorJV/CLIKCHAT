@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Transición Carrusel y Flujo Secuencial "Guardar en memoria" y "Agregar otra pregunta" en FAQ IQ (v1.99.0)
+- **Diagnóstico y Necesidad:**
+  1. *Cierre Forzado tras Guardar:* Al agregar una pregunta frecuente, el botón decía "Guardar en Memoria RAG" o "Guardar Pregunta" y cerraba el modal de inmediato, obligando al usuario a volver a hacer clic en "+ Nueva Pregunta" para ingresar otra duda frecuente.
+  2. *Requerimiento del Usuario:* Los botones deben ser "Cancelar" y "Guardar en memoria" (eliminando "RAG"). Al hacer clic en "Guardar en memoria", la pregunta se guarda y en ese mismo espacio el botón se reemplaza por "Agregar otra pregunta". Al hacer clic en "Agregar otra pregunta", el formulario superior se desplaza fluidamente como un carrusel, retirando la pregunta guardada y dando paso a un espacio en blanco animado listo para escribir la siguiente sin cerrar la ventana.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Emil Kowalski Fluid Transitions):**
+  1. `VoceroFaqModal.tsx` (135 líneas):
+     - Botón principal renombrado exactamente a `Guardar en memoria` (con estado de carga `Guardando...`).
+     - Al guardar con éxito, en ese mismo espacio desaparece "Guardar en memoria" y emerge de forma interactiva el botón `Agregar otra pregunta` con ícono `Plus`, acompañado de un indicador visual `✓ Guardada en memoria`.
+     - Al presionar `Agregar otra pregunta`, se dispara una transición carrusel fluida en 3 etapas (`slide-out` hacia la izquierda a 200ms -> limpieza de campos -> `slide-in` con entrada suave desde la derecha a 250ms con foco automático en el campo de pregunta).
+     - El botón de cancelación conmuta inteligentemente a `Listo / Cerrar` tras haber registrado preguntas, permitiendo cerrar cuando se haya terminado.
+     - Total compatibilidad con `useVoceroMode` (CRM claro borderless vs Clásico onyx oscuro).
+  2. `FaqSingleModal.tsx` (121 líneas):
+     - Replicado el mismo flujo fluido secuencial con animación carrusel y reemplazo dinámico de botones.
+     - Erradicado el ícono de IA (`Sparkles`) reemplazándolo por `BookOpen`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 10.63s con 0 errores TypeScript (`npm run build`). Bundle activo: `dist/assets/index-DCh-HX9G.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas al 100% y 0 errores en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Homologación Integral de Temas y Cohesión Visual entre ClikChat Clásico y Modo ClikChat CRM (v1.98.0)
 - **Diagnóstico y Necesidad:**
   1. *Desfase y Choque Visual entre Experiencias:* Al alternar entre el botón de "ClikChat Clásico" y "Modo ClikChat CRM", los componentes compartidos (Reglas Operativas, Documentos RAG, Flow IQ, FAQ IQ/Objeciones, Canales Meta Cloud/WhatsApp, Catálogo/Productos y Saludo Inicial) presentaban cajas y tarjetas con fondos claros forzados dentro del panel Clásico oscuro (`#151414`), o fondos oscuros dentro del CRM claro institucional (`#f6f8fc`), rompiendo la coherencia estética requerida por el usuario.

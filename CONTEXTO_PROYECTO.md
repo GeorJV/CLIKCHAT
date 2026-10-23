@@ -1,18 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 12:15 GMT-6
-- **Versión Actual:** 1.98.0 (Cohesión de Temas ClikChat Clásico vs ClikChat CRM)
+- **Última Actualización:** 2026-10-23 12:25 GMT-6
+- **Versión Actual:** 1.99.0 (Flujo Secuencial Carrusel "Guardar en memoria" y "Agregar otra pregunta" en FAQ IQ)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - FAQ IQ Modal Carrusel: Flujo secuencial fluido; "Guardar en memoria" se reemplaza por "Agregar otra pregunta".
+  - Transición de Formulario: Animación fluida tipo carrusel que desliza la pregunta guardada e inserta un espacio en blanco.
   - Tema Dual Homologado: Sincronización en 0ms entre ClikChat Clásico (Onyx/Emerald) y ClikChat CRM (Blanco/Azul #0d5bff).
   - Componentes Compartidos Adaptados: Reglas Operativas, RAG Docs, FAQ IQ, Saludo, Productos, WhatsApp y Flow IQ.
-  - Alternador Reactivo: `VoceroModeTogglePill` y menú lateral conectados con sincronización bidireccional instantánea.
   - Credenciales Meta Cloud & WhatsApp: Modales y guías en temas adaptativos borderless y sombras limpias.
   - Restricciones & Anti-Alucinación: Modal `CreateRulePresetModal` con Nombre, Subtítulo y Descripción guardable en D1.
   - Cero Íconos de IA: Erradicación universal de Bot/Brain/Sparkles en navegación y vistas.
-  - Telemetría Reactiva Inmediata: Sincronización a 0ms vía BroadcastChannel + CustomEvent.
   - Verificado con 3 Filtros: Build limpio, commit en `main` y 17/17 rutas verificadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
