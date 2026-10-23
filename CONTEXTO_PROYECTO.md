@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-22 20:05 GMT-6
-- **Versión Actual:** 1.77.0 (Chat Humanizado, Signo de Cierre Exclusivo ?, Cadencia 1-3s y 3 Modos de Envío)
+- **Última Actualización:** 2026-10-22 20:23 GMT-6
+- **Versión Actual:** 1.78.0 (Auto-Scroll Nativo Estilo WhatsApp y Ajuste Integral de Viewport)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `2c7468e` en `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (commit `f316071` en `main`)
 - **Estado Actual del Sistema:**
+  - Auto-Scroll Reactivo: Desplazamiento automático multi-tick hacia el último mensaje al seleccionar preguntas, enviar mensajes o expandir burbujas.
+  - Viewport Integral `100dvh`: Eliminación de desbordes `h-screen w-screen`, impidiendo que los mensajes o botones queden cortados fuera de pantalla.
+  - Escaparate Móvil Compacto: Altura balanceada con toggle colapsable para otorgar máxima visibilidad al área conversacional.
   - Chat Humanizado: Preguntas formuladas exclusivamente con signo de cierre `?` (cero `¿` o `¡`), simulando WhatsApp real.
-  - Selector de 3 Modos de Envío: Mensaje por mensaje (micro-burbujas), Intercalado moderado (cada 2 renglones) y Mensaje único (`MessageDeliveryModeSelector.tsx`).
-  - Cadencia de Respuesta: Configuración interactiva de 1s, 2s (lectura natural), 3s (humanizada realista) y 0s en CRM.
-  - Renderizado Multi-Burbuja: Apilamiento visual nativo WhatsApp en `ChatMessageItem.tsx` y bandeja CRM `VoceroActiveChat.tsx`.
+  - Selector de 3 Modos de Envío: Mensaje por mensaje (micro-burbujas), Intercalado moderado (cada 2 renglones) y Mensaje único.
   - Selector de 7 Tonos Multiselección: Dropdown interactivo con combinaciones múltiples por checkboxes (`ToneMultiSelectDropdown.tsx`).
   - Modelos Google AI Studio: Estandarización exclusiva en `gemini-2.5-flash` y `gemini-2.5-pro` (cero versiones obsoletas).
   - Suite Vocero CRM 100%: Pipeline, Inbox, Citas & Reservaciones, Contactos CSV, Laboratorio y Juez IA con scoring.

@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-22] Auto-Scroll Reactivo Estilo WhatsApp y Ajuste Responsivo Integral de Pantalla Completa
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Desplazamiento Automático al Seleccionar Preguntas:* Al pulsar cualquier pregunta o sugerencia rápida (pills o botones de acción), el contenedor del chat no bajaba automáticamente hacia el último mensaje, obligando al usuario a realizar scroll manual para visualizar la respuesta.
+  2. *Desbordamiento y Elementos Cortados Fuera de Pantalla:* El contenedor raíz utilizaba dimensiones fijas `h-screen w-screen` y rellenos descalibrados que, combinados con la barra de navegación del navegador o la altura del carrusel móvil, provocaban que los mensajes inferiores, el campo de texto y botones quedaran cortados o fuera del área visible de la pantalla.
+- **Solución Implementada (ARQMODULAR & UX WhatsApp Real):**
+  1. *Motor de Auto-Scroll Multi-Tick Reactivo (`ChatMessagesList.tsx` & `VoceroAiSandbox.tsx`):*
+     - Desplazamiento automático suave (`smooth`) y forzado inmediato (`auto`) al detectar nuevos mensajes, cambios en el estado de carga o clics en píldoras y botones de acción.
+     - Implementación de `MutationObserver` en el contenedor de mensajes para acompañar de forma fluida la expansión de burbujas, tickets de comandas o imágenes en tiempo real.
+     - Espaciador y relleno inferior preventivo (`pb-8`) que garantiza que el último mensaje descanse siempre visible sobre las píldoras y barra de entrada.
+  2. *Ajuste Responsivo y Blindaje de Viewport (`App.tsx` & `ProductCarousel.tsx`):*
+     - Reemplazo de dimensiones rígidas por `h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden`, adaptándose con precisión milimétrica al alto real dinámico en dispositivos móviles y de escritorio.
+     - Reducción compacta del escaparate móvil (`max-h-52` y tarjetas optimizadas) con botón interactivo de alternancia (*Ocultar / Ver catálogo*), liberando más de 150px de altura vertical para la conversación.
+     - Ajuste del ancho máximo de las burbujas a `max-w-[92%] sm:max-w-[84%]` con quiebre estricto de palabras (`break-words min-w-0`), impidiendo desbordes horizontales.
+  3. *Sincronización de Preguntas Rápidas Humanizadas (`ChatQuickPills.tsx` & `QuickActionButtons.tsx`):*
+     - Disparo del evento global `clikchat:scroll-bottom` al seleccionar cualquier pregunta o botón rápido para un descenso instantáneo.
+     - Erradicación de signos de apertura (`¿`) en los textos de las preguntas sugeridas para consistencia total con el estilo WhatsApp.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 9.85s con 0 errores TypeScript (`npm run build`). Bundle activo `index-Dm_E8yQu.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `f316071`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 12/12 rutas activas y 0 errores en Chrome headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-22] Chat Humanizado: Signo de Cierre Exclusivo (?), Cadencia 1-3s y Selector de 3 Modos de Envío de Mensaje
 - **Diagnóstico y Necesidad:**
   1. *Preguntas no Humanizadas con Signo de Apertura:* El bot empleaba signos de apertura formales (`¿`), lo que resultaba artificial en WhatsApp y redes sociales donde los humanos redactan exclusivamente con signos de cierre (`?`).
