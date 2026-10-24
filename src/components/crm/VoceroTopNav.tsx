@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Kanban, FlaskConical, ArrowRightLeft, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Kanban, FlaskConical, ArrowRightLeft } from 'lucide-react';
 
 export type VoceroViewTab = 'inbox' | 'pipeline' | 'sandbox';
 
@@ -12,11 +12,7 @@ interface VoceroTopNavProps {
 }
 
 export const VoceroTopNav: React.FC<VoceroTopNavProps> = ({
-  activeTab,
-  onSelectTab,
-  tenantName,
-  tenantSlug,
-  onSwitchToClassic,
+  activeTab, onSelectTab, tenantName, tenantSlug, onSwitchToClassic,
 }) => {
   const TABS: { id: VoceroViewTab; label: string; icon: React.ElementType }[] = [
     { id: 'inbox', label: 'Bandeja 3-Col', icon: MessageSquare },
@@ -64,16 +60,15 @@ export const VoceroTopNav: React.FC<VoceroTopNavProps> = ({
         ))}
       </div>
 
-      {/* Selector de Modo Visual (Vocero vs ClikChat Clásico) */}
-      <div className="flex items-center gap-2">
+      {/* Selector de Modo Visual (Oculto en celular para no estorbar) */}
+      <div className="hidden md:flex items-center gap-2">
         <button
           onClick={onSwitchToClassic}
           title="Ver versión ClikChat Clásico"
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 text-xs font-semibold transition cursor-pointer"
         >
           <ArrowRightLeft className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="hidden md:inline">Modo ClikChat Clásico</span>
-          <span className="md:hidden">Clásico</span>
+          <span>Modo ClikChat Clásico</span>
         </button>
       </div>
     </header>

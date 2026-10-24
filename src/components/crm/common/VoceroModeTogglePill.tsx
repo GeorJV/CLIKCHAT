@@ -43,11 +43,12 @@ export const VoceroModeTogglePill: React.FC<VoceroModeTogglePillProps> = ({ vari
   );
 
   if (variant === 'inline') {
-    return buttonContent;
+    return <div className="hidden md:inline-block">{buttonContent}</div>;
   }
 
+  // Oculto al 100% en vista móvil/celular para no estorbar el chat ni la navegación
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-bounce-subtle">
+    <div className="hidden md:block fixed bottom-4 right-4 z-50 animate-bounce-subtle">
       {buttonContent}
     </div>
   );
