@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Creación de Perfil Real de GeoSoft en Base de Datos D1, Agente GeoSoft y Catálogo de Servicios (v2.2.5)
+- **Diagnóstico y Necesidad:**
+  1. *Requerimiento del Usuario:* Creación de cuenta y perfil 100% real para GeoSoft en la base de datos de producción con correo soporte@geosoft.lat, contraseña Agentegs y agente oficial Agente GeoSoft.
+  2. *Configuración Completa de Servicios:* Alta de catálogo de servicios profesionales de software, IA y apps móviles con precios, descripciones, beneficios y memoria RAG con 5 FAQs oficiales.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. Cloudflare D1 Native Database:
+     - Tenant geosoft (ten_geosoft_prod) insertado en D1 con bot Agente GeoSoft, business_type servicios, WhatsApp oficial (+506 7293-5612), reglas operativas y flujo de venta estructurado.
+     - Usuario soporte@geosoft.lat con salt PBKDF2 y password_hash seguro insertado en D1 y verificado con login HTTP 200 en vivo.
+     - 4 Servicios de desarrollo insertados en la tabla products: Desarrollo Web & SaaS ($1,200), Agentes de IA & Bots 24/7 ($450), Apps Móviles iOS/Android ($1,800) y Consultoría Tecnológica ($250).
+     - 5 Preguntas frecuentes insertadas en la tabla faqs para entrenamiento RAG inmediato.
+  2. functions/api/[[route]].js:
+     - Inclusión de soporte@geosoft.lat en memoryUsers para respuesta de login ultrarrápida en Edge.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-DG6gGyjQ.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit a8d95fa).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Ampliación Holgada a 8192 Tokens de Salida en Inferencia Edge y Prevención Total de Cortes (v2.2.4)
 - **Diagnóstico y Necesidad:**
   1. *Riesgo en Catálogos Extensos:* Al calibrar el bot con catálogos amplios (10+ productos, variantes de precio, políticas extensas y múltiples FAQs), un límite de 2048 tokens representaba un riesgo latente de truncado.
