@@ -5455,7 +5455,7 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
         try {
           const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
             messages: formattedMessages,
-            max_tokens: 2048,
+            max_tokens: 8192,
             temperature: 0.3
           });
           if (cfResp?.response) {
@@ -5481,7 +5481,7 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
                   parts: [{ text: m.content }]
                 })),
                 generationConfig: {
-                  maxOutputTokens: 2048,
+                  maxOutputTokens: 8192,
                   temperature: 0.3
                 }
               })
