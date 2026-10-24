@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { ProductItem } from '../types/productChat';
 import { Product } from '../types';
+import { ServiceItem } from '../types/serviceChat';
 import { DEFAULT_PRODUCT } from '../components/chat/product/productChatMock';
 import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
 
@@ -15,11 +16,17 @@ export function toProductItem(p: Partial<Product> & { id: string; name: string; 
   };
 }
 
-function synthesizeFallbackProduct(idOrSlug: string, isRestaurant: boolean, currency: string = 'CRC'): ProductItem {
+export function toServiceItem(p: any): ServiceItem {
+  const images = Array.isArray(p.images) ? p.images.filter(Boolean) : (p.image ? [p.image] : []);
+  const details = p.details || p.specifications || {};
   return {
-    id: idOrSlug, title: '', slug: idOrSlug, category: '',
-    price: 0, currency, image: '', images: [], stock: 0, inStock: true,
-    benefits: [], description: '', specifications: {}
+    id: p.id, tenantId: p.tenant_id || p.tenantId, title: p.name || p.title || 'Servicio Profesional',
+    slug: p.slug, category: details.category || p.category || 'Servicios Especializados',
+    price: Number(p.price) || 0, currency: p.currency || 'USD', duration: details.duration || '45 min',
+    serviceModality: (details.modality || 'online') as any, image: images[0] || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+    images, benefits: Array.isArray(p.benefits) && p.benefits.length > 0 ? p.benefits : ['Atención personalizada', 'Garantía y soporte'],
+    requirements: Array.isArray(details.requirements) ? details.requirements : ['Dispositivo con navegador web'],
+    description: p.full_description || p.short_description || p.description || '', rating: 5.0
   };
 }
 
@@ -30,7 +37,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
   const initialBotName = tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : (cached.bot_name || '');
 
   const [productItem, setProductItem] = useState<ProductItem | null>(() => {
-    if (!productId || typeof window === 'undefined') return null;
+    if (!productId || typeof window !== 'undefined') return null;
     try {
       const keys = tenantSlug === 'comida-callejera-xl' ? [`clikchat_products_${tenantSlug}`, 'clikchat_products'] : [`clikchat_products_${tenantSlug}`];
       for (const k of keys) {
@@ -45,6 +52,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
     return null;
   });
 
+  const [productsList, setProductsList] = useState<ProductItem[]>([]);
   const [storeName, setStoreName] = useState<string>(initialStoreName);
   const [agentName, setAgentName] = useState<string>(initialBotName);
   const [agentAvatar, setAgentAvatar] = useState<string>(cached.avatar_url || '');
@@ -63,18 +71,12 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
     async function resolve() {
       if (!productItem) setIsLoading(true);
 
-      // 1. Si no hay productId, resolver catálogo general de la tienda
+      // 1. Resolver catálogo general si no hay productId
       if (!productId) {
-        let defaultItem: ProductItem = {
-          ...DEFAULT_PRODUCT,
-          title: 'Catálogo Oficial',
-          description: `Bienvenido a la tienda de ${initialStoreName}.`,
-          currency: cached.currency || 'CRC'
-        };
+        let defaultItem: ProductItem = { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', description: `Bienvenido a la tienda de ${initialStoreName}.`, currency: cached.currency || 'CRC' };
         try {
           const tRes = await fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' });
-          const ct = tRes.headers.get('content-type') || '';
-          if (tRes.ok && ct.includes('application/json')) {
+          if (tRes.ok && (tRes.headers.get('content-type') || '').includes('application/json')) {
             const tData = await tRes.json();
             if (tData.tenant && isMounted) {
               const t = tData.tenant;
@@ -85,19 +87,18 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
             }
             if (tData.products && tData.products.length > 0) {
               const clean = tData.products.filter((p: any) => p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
-              if (clean.length > 0) defaultItem = toProductItem(clean[0]);
+              if (clean.length > 0) {
+                defaultItem = toProductItem(clean[0]);
+                if (isMounted) setProductsList(clean.map(toProductItem));
+              }
             }
           }
         } catch (e) {}
-
-        if (isMounted) {
-          setProductItem(defaultItem);
-          setIsLoading(false);
-        }
+        if (isMounted) { setProductItem(defaultItem); setIsLoading(false); }
         return;
       }
 
-      // 2. Comprobar caché local multi-fuente (prioridad instantánea sin latencia)
+      // 2. Caché local multi-fuente
       let resolvedItem: ProductItem | null = productItem;
       try {
         const localKeys = tenantSlug === 'comida-callejera-xl' ? [`clikchat_products_${tenantSlug}`, 'clikchat_products'] : [`clikchat_products_${tenantSlug}`];
@@ -105,67 +106,43 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
           const saved = localStorage.getItem(key);
           if (saved) {
             const list: Product[] = JSON.parse(saved);
-            let found = list.find((p) => (p.id === productId || p.slug === productId) && p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
-            if (!found && !productId.startsWith('prod_')) {
-              found = list.find((p) => p.name?.toLowerCase() === productId.replace(/-/g, ' ').toLowerCase() && p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
-            }
-            if (found) {
-              resolvedItem = toProductItem(found);
-              break;
-            }
+            const found = list.find((p) => (p.id === productId || p.slug === productId) && p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
+            if (found) { resolvedItem = toProductItem(found); break; }
           }
         }
       } catch (e) {}
+      if (resolvedItem && isMounted) setProductItem(resolvedItem);
 
-      if (resolvedItem && isMounted) {
-        setProductItem(resolvedItem);
-      }
-
-      // 3. Consulta de red resiliente con verificación estricta de Content-Type
+      // 3. Consulta de red
       try {
-        const prodPromise = fetch('/api/products/' + encodeURIComponent(productId), { cache: 'no-store' })
-          .then(async res => {
-            const ct = res.headers.get('content-type') || '';
-            if (res.ok && ct.includes('application/json')) return res.json();
-            return null;
-          }).catch(() => null);
+        const [prodRes, tenantRes] = await Promise.all([
+          fetch('/api/products/' + encodeURIComponent(productId), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
 
-        const tenantPromise = fetch('/api/tenants/' + encodeURIComponent(tenantSlug), { cache: 'no-store' })
-          .then(async res => {
-            const ct = res.headers.get('content-type') || '';
-            if (res.ok && ct.includes('application/json')) return res.json();
-            return null;
-          }).catch(() => null);
-
-        const [prodData, tenantData] = await Promise.all([prodPromise, tenantPromise]);
-
-        if (prodData?.product && isMounted) {
-          resolvedItem = toProductItem(prodData.product);
-          setProductItem(resolvedItem);
-        }
-
-        if (tenantData?.tenant && isMounted) {
-          const t = tenantData.tenant;
+        if (prodRes?.product && isMounted) { resolvedItem = toProductItem(prodRes.product); setProductItem(resolvedItem); }
+        if (tenantRes?.tenant && isMounted) {
+          const t = tenantRes.tenant;
           if (t.name) setStoreName(t.name);
           if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
-          if (t.avatar_url) setAgentAvatar(t.avatar_url);
-          if (t.welcome_message) setWelcomeMessage(t.welcome_message);
-          if (t.business_type) setBusinessType(t.business_type);
+          if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
           saveCachedTenant(t);
         }
-
-        if (!resolvedItem && tenantData?.products && Array.isArray(tenantData.products)) {
-          const cleanProds = tenantData.products.filter((p: Product) => p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
-          const found = cleanProds.find((p: Product) => p.id === productId || p.slug === productId);
-          if (found && isMounted) { resolvedItem = toProductItem(found); setProductItem(resolvedItem); }
+        if (tenantRes?.products && Array.isArray(tenantRes.products) && isMounted) {
+          const clean = tenantRes.products.filter((p: any) => p.id !== 'prod_1789447247688' && !p.images?.[0]?.includes('cornell.edu'));
+          setProductsList(clean.map(toProductItem));
+          if (!resolvedItem) {
+            const f = clean.find((p: any) => p.id === productId || p.slug === productId);
+            if (f) { resolvedItem = toProductItem(f); setProductItem(resolvedItem); }
+          }
         }
       } catch (err) {}
-      if (!resolvedItem && isMounted) setProductItem(synthesizeFallbackProduct(productId, isRestaurant, cached.currency || 'CRC'));
+      if (!resolvedItem && isMounted) setProductItem({ ...DEFAULT_PRODUCT, id: productId, slug: productId });
       if (isMounted) setIsLoading(false);
     }
     resolve();
     return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
-  return { productItem, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec, businessType };
+  return { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec, businessType };
 }

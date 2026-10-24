@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, RefreshCw } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -11,9 +11,60 @@ interface Appointment {
   price: number;
 }
 
-export const AgendaTab: React.FC<{ tenantId?: string }> = () => {
-  const [appointments] = useState<Appointment[]>([]);
+export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
+  const activeSlug = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+  const storageKey = `clikchat_bookings_${activeSlug}`;
+
+  const [appointments, setAppointments] = useState<Appointment[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/bookings?tenant=${encodeURIComponent(activeSlug)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.bookings && Array.isArray(data.bookings)) {
+          const apiApts: Appointment[] = data.bookings.map((b: any) => ({
+            id: b.id,
+            clientName: b.customer_name || 'Cliente',
+            serviceName: b.service_name || 'Servicio Profesional',
+            date: b.booking_date || '',
+            time: b.booking_time || '',
+            status: (b.status || 'confirmed') as any,
+            price: Number(b.price) || 0
+          }));
+          setAppointments((prev) => {
+            const seen = new Set(prev.map(p => p.id));
+            const fresh = apiApts.filter(a => !seen.has(a.id));
+            const merged = [...prev, ...fresh];
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch (e) {}
+            }
+            return merged;
+          });
+        }
+      }
+    } catch (e) {} finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [activeSlug]);
 
   const filtered = appointments.filter(a => filter === 'all' || a.status === filter);
 
@@ -29,6 +80,15 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = () => {
           <p className="text-xs text-zinc-400 mt-0.5">Gestión de citas reales agendadas por tus clientes a través del bot</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={fetchBookings}
+            disabled={isLoading}
+            className="p-1.5 rounded-xl border border-[#2d2b2b] text-zinc-400 hover:text-white bg-[#201e1e] transition cursor-pointer"
+            title="Actualizar agenda"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
+          </button>
           {(['all', 'confirmed', 'pending'] as const).map(tab => (
             <button
               key={tab}
@@ -85,9 +145,9 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = () => {
                 <span className="text-xs font-bold text-emerald-400">
                   {apt.price > 0 ? `$${apt.price} USD` : 'Gratis'}
                 </span>
-                <button className="px-3 py-1 rounded-xl bg-[#222020] hover:bg-[#2c2929] text-zinc-200 text-xs font-semibold border border-[#363333] transition cursor-pointer">
-                  Gestionar
-                </button>
+                <span className="px-3 py-1 rounded-xl bg-[#222020] text-emerald-400 text-xs font-semibold border border-[#363333]">
+                  Sincronizado
+                </span>
               </div>
             </div>
           ))}

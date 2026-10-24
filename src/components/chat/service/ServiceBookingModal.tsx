@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { X, Calendar, Clock, Globe, User, Phone, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Calendar, Clock, User, Phone, FileText } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 
 interface Props {
@@ -10,10 +10,7 @@ interface Props {
 }
 
 export const ServiceBookingModal: React.FC<Props> = ({
-  service,
-  storeName,
-  onClose,
-  onConfirmBooking,
+  service, storeName, onClose, onConfirmBooking,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const tomorrow = new Date();
@@ -48,21 +45,17 @@ export const ServiceBookingModal: React.FC<Props> = ({
     setIsSubmitting(true);
     setTimeout(() => {
       onConfirmBooking({
-        service,
-        date: selectedDate,
-        timeSlot: selectedSlot,
-        customerName,
-        customerPhone,
-        notes,
+        service, date: selectedDate, timeSlot: selectedSlot,
+        customerName: customerName.trim(), customerPhone: customerPhone.trim(), notes: notes.trim(),
       });
       setIsSubmitting(false);
       onClose();
-    }, 400);
+    }, 300);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-md bg-[#181717] border border-[#282626] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
+      <div className="relative w-full max-w-md bg-[#181717] border border-[#282626] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#282626] bg-[#141313] shrink-0">
           <div className="flex items-center gap-2">
@@ -80,7 +73,7 @@ export const ServiceBookingModal: React.FC<Props> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 overscroll-contain">
           <div className="p-3 rounded-xl bg-[#141313] border border-[#242222] flex items-center gap-3">
             <img src={service.images?.[0] || service.image} alt={service.title} className="w-12 h-12 rounded-lg object-cover border border-[#2e2b2b]" />
             <div className="min-w-0 flex-1">

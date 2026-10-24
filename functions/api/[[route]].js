@@ -2329,6 +2329,85 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       });
     }
 
+    // ==============================================================================
+    // BOOKINGS & CITAS: POST /api/bookings & GET /api/bookings
+    // ==============================================================================
+    if (segments[0] === 'bookings') {
+      await executeD1(`CREATE TABLE IF NOT EXISTS bookings (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        customer_phone TEXT NOT NULL,
+        service_id TEXT,
+        service_name TEXT NOT NULL,
+        booking_date TEXT NOT NULL,
+        booking_time TEXT NOT NULL,
+        modality TEXT DEFAULT 'online',
+        status TEXT DEFAULT 'confirmed',
+        price REAL DEFAULT 0,
+        currency TEXT DEFAULT 'USD',
+        notes TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )`).catch(() => {});
+
+      if (request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        let tenantId = body.tenantId || '';
+        const tenantSlug = body.tenantSlug || '';
+        if (!tenantId && tenantSlug) {
+          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantSlug]).catch(() => []);
+          if (tRows.length > 0) tenantId = tRows[0].id;
+        }
+        if (!tenantId) tenantId = 'ten_geosoft_prod';
+
+        const id = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        const customerName = (body.customerName || body.clientName || 'Cliente').trim();
+        const customerPhone = (body.customerPhone || body.phone || '').trim();
+        const serviceName = body.serviceName || body.serviceTitle || 'Servicio Profesional';
+        const serviceId = body.serviceId || 'srv_gen';
+        const bookingDate = body.bookingDate || body.date || new Date().toISOString().slice(0, 10);
+        const bookingTime = body.bookingTime || body.timeSlot || body.time || '10:00 AM';
+        const modality = body.modality || 'online';
+        const price = Number(body.price) || 0;
+        const currency = body.currency || 'USD';
+        const notes = body.notes || '';
+
+        await executeD1(
+          'INSERT INTO bookings (id, tenant_id, customer_name, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
+          [id, tenantId, customerName, customerPhone, serviceId, serviceName, bookingDate, bookingTime, modality, 'confirmed', price, currency, notes]
+        ).catch(() => {});
+
+        return jsonResponse({
+          success: true,
+          booking: {
+            id, tenant_id: tenantId, customer_name: customerName, customer_phone: customerPhone,
+            service_name: serviceName, booking_date: bookingDate, booking_time: bookingTime,
+            modality, status: 'confirmed', price, currency, notes
+          }
+        }, 201);
+      }
+
+      if (request.method === 'GET') {
+        const tenantParam = url.searchParams.get('tenantId') || url.searchParams.get('tenant') || '';
+        let tenantId = tenantParam;
+        if (tenantParam) {
+          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+          if (tRows.length > 0) tenantId = tRows[0].id;
+        }
+
+        let query = 'SELECT * FROM bookings';
+        const params = [];
+        if (tenantId) {
+          query += ' WHERE tenant_id = ?1';
+          params.push(tenantId);
+        }
+        query += ' ORDER BY created_at DESC LIMIT 100';
+
+        const rows = await executeD1(query, params).catch(() => []);
+        return jsonResponse({ success: true, bookings: rows });
+      }
+    }
+
     // ADMIN: GET /api/admin/metrics
     if (segments[0] === 'admin' && segments[1] === 'metrics' && request.method === 'GET') {
       const tenants = await executeD1('SELECT id, name, slug, plan, monthly_price, status, created_at FROM tenants');
