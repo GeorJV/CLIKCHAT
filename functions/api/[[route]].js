@@ -4454,6 +4454,28 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
               ? `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. En qué te puedo colaborar hoy o qué se te antoja ordenar?`
               : `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. En qué te puedo colaborar hoy?`);
 
+        // Auto-rescate tolerante de tarjeta visual de cita si el LLM confirmó en texto pero omitió el tag
+        if (isBookingQuery && llmResult.text && !llmResult.text.includes('[BOOKING_CARD:')) {
+          const isConfirming = /registrado\s+tu\s+(?:nombre|informaci[oó]n|cita)|cita\s+del|cita\s+para\s+el|qued[oó]\s+agendad|reserva\s+confirmad|cita\s+est[aá]\s+confirmada/i.test(llmResult.text);
+          if (isConfirming) {
+            const dateMatch = llmResult.text.match(/(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|[0-9]{1,2}\s+de\s+[a-záéíóú]+|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
+            const timeMatch = llmResult.text.match(/([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm|AM|PM)|[0-9]{1,2}:[0-9]{2})/);
+            const nameMatch = llmResult.text.match(/(?:Genial|Excelente|Perfecto|Gracias|Hola),?\s*([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
+            const phoneMatch = message.match(/(\+?[0-9\s\-]{8,15})/);
+
+            const cardData = {
+              service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Especializado'),
+              date: dateMatch ? dateMatch[0].replace(/^el\s+/i, '').trim() : '25 de Octubre',
+              time: timeMatch ? timeMatch[0].trim() : '10:00 AM',
+              customerName: nameMatch ? nameMatch[1].trim() : 'Cliente',
+              customerPhone: phoneMatch ? phoneMatch[0].trim() : (targetTenant.phone || '+506 7293-5612'),
+              modality: 'online',
+              price: 1200
+            };
+            llmResult.text += '\n\n[BOOKING_CARD: ' + JSON.stringify(cardData) + ']';
+          }
+        }
+
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
