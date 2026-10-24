@@ -1017,6 +1017,18 @@ const memoryUsers = new Map([
       name: 'Super Administrador',
       role: 'superadmin'
     }
+  ],
+  [
+    'soporte@geosoft.lat',
+    {
+      id: 'usr_geosoft_prod',
+      tenant_id: 'ten_geosoft_prod',
+      email: 'soporte@geosoft.lat',
+      password_hash: 'f6b63686b6a9c76b08663c82db7aad506cd2c00804808825d4b4a07b80e69dfd', // Agentegs
+      salt: '064e780ab39e500a2604063870891b03',
+      name: 'GeoSoft',
+      role: 'tenant_owner'
+    }
   ]
 ]);
 
