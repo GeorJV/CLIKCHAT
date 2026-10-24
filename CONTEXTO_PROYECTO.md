@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 22:22 GMT-6
-- **Versión Actual:** 2.2.5 (Perfil Real de GeoSoft en BD de Producción D1 con Agente GeoSoft y 4 Servicios)
+- **Última Actualización:** 2026-10-23 22:55 GMT-6
+- **Versión Actual:** 2.2.6 (Agendamiento de Citas desde el Chat, Adaptabilidad Móvil 100% y Persistencia en D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Agendamiento de Citas en Chat: Bot y usuario agendan citas con selector de fecha, hora, modal optimizado y confirmación inmediata.
+  - Adaptabilidad Móvil Mobile-First: Switcher de pestañas táctiles (Chat / Servicio), ajuste viewport 100dvh y cero desbordes.
+  - Persistencia D1 Real: Endpoints POST y GET /api/bookings activos y tabla bookings en D1 en producción.
+  - Sincronización Automática con CRM: AgendaTab y VoceroBookingsView reflejan citas agendadas por el bot en tiempo real.
   - Perfil Real GeoSoft: soporte@geosoft.lat con credenciales y tenant geosoft activos en Cloudflare D1.
-  - Agente GeoSoft Configurado: Bot de IA con bienvenida, tono vanguardista, reglas y 5 FAQs en memoria RAG.
-  - Catálogo de Servicios Completo: 4 soluciones tecnológicas profesionales creadas con precios y CTAs.
-  - Ventana Holgada a 8192 Tokens: max_tokens 8192 en Edge con auto-rescate tolerante y sin fugas de payload.
-  - Redirección Post-Login: Conexión directa a ajustes del negocio (settings / perfil).
-  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` y 17/17 rutas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` (commit 394a0b8) y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

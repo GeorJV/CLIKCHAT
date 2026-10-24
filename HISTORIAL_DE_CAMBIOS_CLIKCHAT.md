@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Agendamiento de Citas desde la Ventana de Chat, Adaptabilidad Móvil Integral y Persistencia en D1 (v2.2.6)
+- **Diagnóstico y Necesidad:**
+  1. *Agendamiento de Citas desde el Chat:* El agente comercial y el cliente deben poder agendar y confirmar citas y reservaciones directamente desde la interfaz del chat, con selección de fecha, hora y datos de contacto, persistiendo en base de datos real.
+  2. *Adaptabilidad Móvil Completa (Mobile-First):* En celulares, la pantalla de chat sufría de desbordes o squishing vertical debido al apilamiento de columnas (chat + showcase). Se requería que la ventana de chat se adapte al 100% a la pantalla del usuario (100dvh, controles táctiles y alternancia fluida entre Chat y Servicio).
+  3. *Sincronización con el CRM:* Las citas agendadas por el bot deben reflejarse de inmediato en la Agenda de Citas del panel del negocio y en el CRM.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js (+85 líneas):
+     - Creación de tabla nativa `bookings` en Cloudflare D1 (`id`, `tenant_id`, `customer_name`, `customer_phone`, `service_id`, `service_name`, `booking_date`, `booking_time`, `modality`, `status`, `price`, `currency`, `notes`).
+     - Endpoints Edge `POST /api/bookings` para inserción directa en D1 y `GET /api/bookings?tenant=...` para consulta y sincronización en vivo.
+  2. ServiceChatView.tsx & ServiceChatColumn.tsx (ARQMODULAR <180 líneas):
+     - Botón de acción directa "📅 Agendar Cita" tanto en la cabecera como en las píldoras de acción rápida (quick pills) del chat.
+     - Switcher táctil superior en móviles (`[💬 Chat] [⭐ Servicio]`) para visualización a pantalla completa (100dvh) sin peleas de espacio ni scrollbars dobles.
+     - Confirmación interactiva en el hilo del chat con desglose de la cita agendada.
+  3. ServiceBookingModal.tsx:
+     - Formulario ergonómico tipo bottom-sheet para smartphones con selector de días y franjas horarias touch-friendly.
+  4. AgendaTab.tsx & VoceroBookingsView.tsx:
+     - Sincronización híbrida inmediata con localStorage y consulta al endpoint `/api/bookings` para visualización en tiempo real en la agenda del negocio.
+  5. useProductResolver.ts & App.tsx:
+     - Exportación de `toServiceItem` y `productsList`, permitiendo que negocios de giro servicios (como GeoSoft) carguen automáticamente su catálogo en la vista especializada de servicios y citas.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-BV6YattE.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit 394a0b8).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless y verificación exitosa de `POST /api/bookings` en vivo.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-23] Creación de Perfil Real de GeoSoft en Base de Datos D1, Agente GeoSoft y Catálogo de Servicios (v2.2.5)
 - **Diagnóstico y Necesidad:**
   1. *Requerimiento del Usuario:* Creación de cuenta y perfil 100% real para GeoSoft en la base de datos de producción con correo soporte@geosoft.lat, contraseña Agentegs y agente oficial Agente GeoSoft.
