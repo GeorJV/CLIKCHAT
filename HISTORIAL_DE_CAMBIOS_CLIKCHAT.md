@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Agendamiento Guiado Dato por Dato, Tarjeta Visual Interactiva en Chat, Confirmación y Consulta de Citas (v2.2.8)
+- **Diagnóstico y Necesidad:**
+  1. *Agendamiento Conversacional Dato por Dato:* El usuario requería que el agente comercial guiara el agendamiento solicitando los datos en orden estricto, uno a uno (Servicio -> Fecha/Día -> Horario con 2-3 opciones -> Nombre y WhatsApp), para posteriormente confirmar disponibilidad con certeza.
+  2. *Tarjeta Visual de Resumen en la Ventana de Chat:* Al concluir los datos, el asistente debía generar una tarjeta visual estructurada con el resumen de la cita (servicio, día, hora, cliente y teléfono).
+  3. *Botón Interactivo Destacado "Confirmo cita y guardar":* Justo en la misma ventana de chat, un botón grande para confirmar y guardar la cita en base de datos D1 real (POST /api/bookings), guardar en almacenamiento local y abrir WhatsApp del negocio con el resumen pre-redactado listo para enviar y quedar registrado en el teléfono del usuario.
+  4. *Mutación Visual del Botón de Agendar y Consulta de Cita:* El botón de agendar en la cabecera muta a color esmeralda brillante con check (✅ Cita: {slot}) y permite al usuario, con un solo clic, abrir un modal para ver los detalles de la cita marcada ese día para él.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. BookingCardBubble.tsx (99 líneas):
+     - Tarjeta visual interactiva con micro-animación fluida en el flujo del chat. Renderiza el resumen ordenado de la cita, badge de estado dinámico y botón grande "📅 Confirmo cita y guardar". Al pulsar, dispara la inserción en D1, persistencia local y abre la API de WhatsApp con el mensaje formateado.
+  2. BookedAppointmentModal.tsx (109 líneas):
+     - Modal de consulta centrado y ergonómico que se activa al hacer clic en el botón de la cabecera cuando la cita está agendada. Muestra la fecha, franja horaria reservada, datos del cliente, estado en vivo y acceso directo a WhatsApp.
+  3. ServiceChatColumn.tsx (174 líneas):
+     - Parser tolerante para capturar la emisión de tags [BOOKING_CARD: {...}] del LLM y renderizar la tarjeta interactiva inline. Integración en el header del botón mutado a estado confirmado con badge de check.
+  4. ServiceChatView.tsx (177 líneas):
+     - Gestión del estado confirmedBooking con caché reactivo localStorage, sincronización con D1 y botón adaptativo móvil en la barra superior (✅ Mi Cita).
+  5. functions/api/[[route]].js:
+     - Directiva conversacional reforzada en Edge para tenants de servicios: protocolo dato por dato en 4 pasos, validación de disponibilidad y emisión estructurada de [BOOKING_CARD: {...}]. Configuración oficial de GeoSoft en fallback tenant.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-Bd0mAau7.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit 6173165).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-23] Ocultación de Selectores 'Clásico' y Botón Flotante en Vista Celular (v2.2.7)
 - **Diagnóstico y Necesidad:**
   1. *Obstrucción Visual en Celulares:* El botón flotante inferior de cambio de modo ("Ver Clásico" / "Ver ClikChat CRM") y el botón "Clásico" en la barra de navegación se superponían directamente sobre el chat y la entrada de texto en pantallas móviles, estorbando la experiencia de usuario.
