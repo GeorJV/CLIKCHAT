@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 17:51 GMT-6
-- **Versión Actual:** 2.2.2 (Blindaje Integral Anti-Fuga de SETUP_PAYLOAD y Aumento a 2048 Tokens)
+- **Última Actualización:** 2026-10-23 19:38 GMT-6
+- **Versión Actual:** 2.2.4 (Ampliación Holgada a 8192 Tokens en Edge y Aislamiento Infalible)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Blindaje Anti-Fuga de SETUP_PAYLOAD: Aislamiento estricto de JSON técnico tanto en Edge como en UI.
-  - Generación Completa Sin Cortes: max_tokens 2048 en Cloudflare Edge con auto-rescate tolerante.
-  - Transición Instantánea a Éxito: El usuario pasa directamente a la pantalla de módulos completados.
+  - Ventana Holgada a 8192 Tokens: max_tokens 8192 en Cloudflare Edge para catálogos extensos y múltiples FAQs.
+  - Cero Riesgo de Truncado: Margen total para JSONs de gran volumen y auto-rescate tolerante activo.
+  - Blindaje Anti-Fuga de SETUP_PAYLOAD: Aislamiento estricto de código técnico tanto en Edge como en UI.
   - Redirección Post-Login: Conexión directa a ajustes del negocio (settings / perfil).
   - Copiado de Respuestas Habilitado: Selección nativa y botón de 1-clic con feedback visual.
   - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` y 17/17 rutas en Chrome Headless.

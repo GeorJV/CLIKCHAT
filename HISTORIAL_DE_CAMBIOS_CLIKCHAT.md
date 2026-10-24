@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Ampliación Holgada a 8192 Tokens de Salida en Inferencia Edge y Prevención Total de Cortes (v2.2.4)
+- **Diagnóstico y Necesidad:**
+  1. *Riesgo en Catálogos Extensos:* Al calibrar el bot con catálogos amplios (10+ productos, variantes de precio, políticas extensas y múltiples FAQs), un límite de 2048 tokens representaba un riesgo latente de truncado.
+  2. *Requerimiento del Usuario:* Maximizar la capacidad de salida para garantizar que la IA pueda configurar cualquier volumen de inventario y datos sin riesgo alguno de corte.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js:
+     - Ampliación de max_tokens a 8192 en el motor nativo de Cloudflare Workers AI.
+     - Ampliación de maxOutputTokens a 8192 en las llamadas de respaldo del servidor.
+     - Mantenimiento del parser tolerante de rescate regex y del corte estricto antes de [SETUP_PAYLOAD] en la respuesta humana.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-DG6gGyjQ.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit e96b3f6).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Erradicación Total de Versiones de IA Descontinuadas y Homologación de Reglas (v2.2.3)
 - **Diagnóstico y Necesidad:**
   1. *Instrucción Estricta del Usuario:* Prohibición terminante de mencionar o utilizar modelos descontinuados de Google (específicamente la versión 2.5).
