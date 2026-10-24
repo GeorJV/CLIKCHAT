@@ -19,20 +19,22 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
 
   const now = new Date();
   const todayKey = now.toISOString().slice(0, 10);
-  const storageKey = `clikchat_bookings_${tenantId || 'default'}`;
+  const tId = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
+  const storageKey = `clikchat_bookings_${tId}`;
+  const bookingSwitchKey = `clikchat_allow_chat_booking_${tId}`;
+
+  const [allowAgentBooking, setAllowAgentBooking] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') { const s = localStorage.getItem(bookingSwitchKey); if (s !== null) return s === 'true'; }
+    return true;
+  });
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : getInitialAppointments();
-    } catch {
-      return getInitialAppointments();
-    }
+    try { const saved = localStorage.getItem(storageKey); return saved ? JSON.parse(saved) : getInitialAppointments(); } catch { return getInitialAppointments(); }
   });
 
   useEffect(() => {
     let isMounted = true;
-    fetch(`/api/bookings?tenant=${encodeURIComponent(tenantId || 'default')}`)
+    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.bookings && Array.isArray(d.bookings) && isMounted) {
@@ -41,19 +43,27 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
             dateKey: b.booking_date || todayKey, displayDate: b.booking_date || todayKey, time: b.booking_time || '10:00 AM',
             status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
           }));
-          setAppointments(prev => {
-            const seen = new Set(prev.map(p => p.id));
-            const fresh = apiApts.filter(a => !seen.has(a.id));
-            return [...fresh, ...prev];
-          });
+          setAppointments(prev => { const seen = new Set(prev.map(p => p.id)); return [...apiApts.filter(a => !seen.has(a.id)), ...prev]; });
         }
       }).catch(() => {});
     return () => { isMounted = false; };
-  }, [tenantId, todayKey]);
+  }, [tId, todayKey]);
 
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(appointments)); } catch (e) {}
   }, [appointments, storageKey]);
+
+  const handleToggleAgentBooking = async () => {
+    const nextVal = !allowAgentBooking;
+    setAllowAgentBooking(nextVal);
+    if (typeof window !== 'undefined') { try { localStorage.setItem(bookingSwitchKey, String(nextVal)); } catch (e) {} }
+    try {
+      await fetch('/api/tenant/booking-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: tId, allowAgentBooking: nextVal })
+      });
+    } catch (e) {}
+  };
 
   const handleToggleStatus = (id: string) => {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: a.status === 'confirmed' ? 'pending' : 'confirmed' } : a));
@@ -88,6 +98,24 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           <Plus className="w-3.5 h-3.5" /><span>Nueva Cita</span>
         </button>
       </header>
+
+      {/* Switch Agendamiento en Chat */}
+      <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${allowAgentBooking ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+          <span className="font-bold text-[#0a1730]">Permitir al agente agendar citas en el chat</span>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${allowAgentBooking ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'}`}>
+            {allowAgentBooking ? 'Activo' : 'Inactivo'}
+          </span>
+        </div>
+        <button
+          type="button" onClick={handleToggleAgentBooking}
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allowAgentBooking ? 'bg-[#0d5bff]' : 'bg-slate-300'}`}
+          role="switch" aria-checked={allowAgentBooking}
+        >
+          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allowAgentBooking ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+      </div>
 
       {/* Filtros Temporales */}
       <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">

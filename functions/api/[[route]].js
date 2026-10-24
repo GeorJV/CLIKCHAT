@@ -2431,6 +2431,26 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       }
     }
 
+    // BOOKING SETTINGS: POST /api/tenant/booking-settings
+    if (segments[0] === 'tenant' && segments[1] === 'booking-settings' && request.method === 'POST') {
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const { tenantId, allowAgentBooking } = body;
+      const tId = tenantId || 'ten_geosoft_prod';
+      try {
+        await executeD1("ALTER TABLE tenants ADD COLUMN allow_agent_booking INTEGER DEFAULT 1");
+      } catch (e) {}
+      try {
+        await executeD1(
+          'UPDATE tenants SET allow_agent_booking = ?1, updated_at = datetime(\'now\') WHERE id = ?2 OR slug = ?2',
+          [allowAgentBooking ? 1 : 0, tId]
+        );
+      } catch (e) {
+        console.warn('Booking settings D1 note:', e.message);
+      }
+      return jsonResponse({ success: true, allowAgentBooking: Boolean(allowAgentBooking) });
+    }
+
     // ADMIN: GET /api/admin/metrics
     if (segments[0] === 'admin' && segments[1] === 'metrics' && request.method === 'GET') {
       const tenants = await executeD1('SELECT id, name, slug, plan, monthly_price, status, created_at FROM tenants');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Sparkles, Calendar, CalendarCheck } from 'lucide-react';
+import { MessageSquare, Sparkles } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceChatColumn } from './ServiceChatColumn';
@@ -142,15 +142,6 @@ export const ServiceChatView: React.FC<Props> = ({
             <Sparkles className="w-3.5 h-3.5" /><span>Servicio</span>
           </button>
         </div>
-        {confirmedBooking ? (
-          <button type="button" onClick={() => setViewConfirmedModal(true)} className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 font-extrabold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer ring-1 ring-emerald-400/30">
-            <CalendarCheck className="w-3.5 h-3.5 text-emerald-400" /><span>✅ Mi Cita</span>
-          </button>
-        ) : (
-          <button type="button" onClick={() => setBookingOpen(true)} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
-            <Calendar className="w-3.5 h-3.5" /><span>Agendar</span>
-          </button>
-        )}
       </div>
       <div className="flex-1 w-full h-full flex lg:grid lg:grid-cols-2 overflow-hidden min-h-0">
         <div className={`h-full w-full ${mobileTab === 'chat' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
