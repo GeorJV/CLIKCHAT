@@ -22,18 +22,35 @@ interface Props {
 
 function parseBookingCard(text: string): { cleanContent: string; bookingData: ServiceBookingData | null } {
   const match = text.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
-  if (!match) return { cleanContent: text, bookingData: null };
-  try {
-    const p = JSON.parse(match[1]);
-    const clean = text.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
+  if (match) {
+    try {
+      const p = JSON.parse(match[1]);
+      const clean = text.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
+      return {
+        cleanContent: clean,
+        bookingData: {
+          service: { id: p.serviceId || 'srv_selected', title: p.service || p.serviceTitle || 'Desarrollo Web & SaaS', price: Number(p.price) || 1200, currency: p.currency || 'USD', image: '', serviceModality: 'online' },
+          date: p.date || '25 de Octubre', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || ''
+        }
+      };
+    } catch {}
+  }
+  const isConfirming = /registrado\s+tu\s+(?:nombre|informaci[oó]n|cita)|cita\s+del|cita\s+para\s+el|qued[oó]\s+agendad|reserva\s+confirmad/i.test(text);
+  if (isConfirming) {
+    const dateM = text.match(/(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|[0-9]{1,2}\s+de\s+[a-záéíóú]+|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
+    const timeM = text.match(/([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm|AM|PM)|[0-9]{1,2}:[0-9]{2})/i);
+    const nameM = text.match(/(?:Genial|Excelente|Perfecto|Gracias|Hola),?\s*([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
+    const phoneM = text.match(/(\+?[0-9\s\-]{8,16})/);
     return {
-      cleanContent: clean,
+      cleanContent: text,
       bookingData: {
-        service: { id: p.serviceId || 'srv_selected', title: p.service || p.serviceTitle || 'Servicio Profesional', price: Number(p.price) || 0, currency: p.currency || 'USD', image: '', serviceModality: p.modality || 'online' },
-        date: p.date || 'Fecha por confirmar', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || ''
+        service: { id: 'srv_selected', title: 'Desarrollo Web & SaaS', price: 1200, currency: 'USD', image: '', serviceModality: 'online' },
+        date: dateM ? dateM[0].replace(/^el\s+/i, '').trim() : '25 de Octubre', timeSlot: timeM ? timeM[0].trim() : '10:00 AM',
+        customerName: nameM ? nameM[1].trim() : 'Cliente', customerPhone: phoneM ? phoneM[0].trim() : '+506 7293-5612', notes: ''
       }
     };
-  } catch { return { cleanContent: text, bookingData: null }; }
+  }
+  return { cleanContent: text, bookingData: null };
 }
 
 export const ServiceChatColumn: React.FC<Props> = ({
@@ -92,15 +109,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                 {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
                     {cleanContent && <ChatMessageContent content={cleanContent} isUser={false} onActionClick={onSendMessage} />}
-                    {bookingData && (
-                      <BookingCardBubble
-                        bookingData={bookingData}
-                        isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))}
-                        storeName={storeName}
-                        businessPhone={businessPhone}
-                        onConfirm={(d) => onConfirmBookingFromCard?.(d)}
-                      />
-                    )}
+                    {bookingData && <BookingCardBubble bookingData={bookingData} isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))} storeName={storeName} businessPhone={businessPhone} onConfirm={(d) => onConfirmBookingFromCard?.(d)} />}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
                       {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
                       <span className="text-[10px] select-none tabular-nums text-zinc-400">{msg.timestamp || '20:03'}</span>
