@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Blindaje de Agendamiento en Chat, Switch en Citas y Erradicación de Botones Superiores (v2.2.9)
+- **Diagnóstico y Necesidad:**
+  1. *Desvío No Deseado a WhatsApp:* El bot comercial estaba enviando el número de WhatsApp oficial en lugar de pedir los datos y agendar directamente en el chat, debido a instrucciones legadas en operational_rules y sales_flow_rules en base de datos.
+  2. *Duplicación de Botones Superiores:* En la parte superior de la ventana de chat existían dos botones de "Agendar" (uno en la barra móvil y otro en la cabecera) que saturaban la pantalla. El usuario requirió eliminarlos y dejar únicamente el botón de abajo.
+  3. *Switch de Configuración en Citas:* Se requería un switch toggle en la sección de citas (Agenda y CRM) para activar o desactivar la facultad del agente de agendar citas directamente en el chat.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. ServiceChatColumn.tsx (175 líneas) & ServiceChatView.tsx (168 líneas):
+     - Eliminados por completo los botones "Agendar" de la cabecera superior y de la barra móvil. Se preservó exclusivamente el botón inferior en los quick action pills.
+     - Parser inteligente híbrido en ServiceChatColumn: detecta tanto el bloque explícito [BOOKING_CARD: {...}] como confirmaciones en lenguaje natural del bot, garantizando el renderizado infalible de la tarjeta visual en el chat.
+  2. AgendaTab.tsx (153 líneas) & VoceroBookingsView.tsx (156 líneas):
+     - Incorporado control tipo switch: "Permitir al agente agendar citas en el chat" con estado activo/inactivo, persistencia en localStorage y sincronización con el nuevo endpoint POST /api/tenant/booking-settings.
+  3. functions/api/[[route]].js:
+     - Regla inquebrantable de agendamiento conversacional en Edge: prohibición estricta de canalizar o dar números de teléfono antes de completar los datos en el chat.
+     - Lógica de auto-rescate en Edge para asegurar la tarjeta visual de cita.
+     - Actualizadas las reglas operativas y de ventas de GeoSoft en Cloudflare D1 en producción.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-D9ycJYdb.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit 3f07a5e).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-23] Agendamiento Guiado Dato por Dato, Tarjeta Visual Interactiva en Chat, Confirmación y Consulta de Citas (v2.2.8)
 - **Diagnóstico y Necesidad:**
   1. *Agendamiento Conversacional Dato por Dato:* El usuario requería que el agente comercial guiara el agendamiento solicitando los datos en orden estricto, uno a uno (Servicio -> Fecha/Día -> Horario con 2-3 opciones -> Nombre y WhatsApp), para posteriormente confirmar disponibilidad con certeza.
