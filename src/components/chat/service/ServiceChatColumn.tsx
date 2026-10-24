@@ -1,24 +1,44 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, LogOut, Calendar } from 'lucide-react';
+import { Send, LogOut, Calendar, CalendarCheck } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
+import { ServiceBookingData } from '../../../types/serviceChat';
 import { ProductRAGBadge } from '../product/ProductRAGBadge';
 import { isBusinessAdminViewer } from '../../../utils/adminCheck';
 import { FlyingPaperPlane } from '../FlyingPaperPlane';
 import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from '../ChatMessageContent';
+import { BookingCardBubble } from './BookingCardBubble';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string; serviceTitle: string;
   messages: ProductChatMessage[]; inputValue: string; isLoading: boolean;
+  confirmedBooking?: ServiceBookingData | null; businessPhone?: string;
   onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
   onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
-  onOpenBooking?: () => void;
+  onOpenBooking?: () => void; onOpenConfirmedModal?: () => void;
+  onConfirmBookingFromCard?: (data: ServiceBookingData) => void;
+}
+
+function parseBookingCard(text: string): { cleanContent: string; bookingData: ServiceBookingData | null } {
+  const match = text.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
+  if (!match) return { cleanContent: text, bookingData: null };
+  try {
+    const p = JSON.parse(match[1]);
+    const clean = text.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
+    return {
+      cleanContent: clean,
+      bookingData: {
+        service: { id: p.serviceId || 'srv_selected', title: p.service || p.serviceTitle || 'Servicio Profesional', price: Number(p.price) || 0, currency: p.currency || 'USD', image: '', serviceModality: p.modality || 'online' },
+        date: p.date || 'Fecha por confirmar', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || ''
+      }
+    };
+  } catch { return { cleanContent: text, bookingData: null }; }
 }
 
 export const ServiceChatColumn: React.FC<Props> = ({
-  storeName, agentName, agentAvatar, serviceTitle, messages, inputValue,
-  isLoading, onInputChange, onSendMessage, onAudioRecorded, onExit, onOpenBooking
+  storeName, agentName, agentAvatar, serviceTitle, messages, inputValue, isLoading, confirmedBooking, businessPhone = '50672935612',
+  onInputChange, onSendMessage, onAudioRecorded, onExit, onOpenBooking, onOpenConfirmedModal, onConfirmBookingFromCard
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -35,17 +55,11 @@ export const ServiceChatColumn: React.FC<Props> = ({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onInputChange(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-    }
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`; }
   };
 
   const handleSend = () => {
-    if (inputValue.trim() && !isLoading) {
-      setFlightKey(Date.now());
-      onSendMessage(inputValue);
-    }
+    if (inputValue.trim() && !isLoading) { setFlightKey(Date.now()); onSendMessage(inputValue); }
   };
 
   return (
@@ -63,11 +77,15 @@ export const ServiceChatColumn: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {onOpenBooking && (
+          {confirmedBooking ? (
+            <button type="button" onClick={onOpenConfirmedModal} className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 font-bold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-sm shadow-emerald-500/20 transition active:scale-95 cursor-pointer ring-1 ring-emerald-400/30" title="Ver cita agendada">
+              <CalendarCheck className="w-3.5 h-3.5 text-emerald-400" /><span>✅ Cita: {confirmedBooking.timeSlot}</span>
+            </button>
+          ) : onOpenBooking ? (
             <button type="button" onClick={onOpenBooking} className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] sm:text-xs flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
               <Calendar className="w-3.5 h-3.5" /><span>Agendar Cita</span>
             </button>
-          )}
+          ) : null}
           {onExit && <button type="button" onClick={onExit} className="text-xs font-bold p-1 cursor-pointer text-zinc-400 hover:text-white transition" title="Salir"><LogOut className="w-3.5 h-3.5" /></button>}
         </div>
       </header>
@@ -76,18 +94,26 @@ export const ServiceChatColumn: React.FC<Props> = ({
         {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
+          const { cleanContent, bookingData } = isAssistant ? parseBookingCard(msg.content) : { cleanContent: msg.content, bookingData: null };
           return (
             <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
-              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
-                {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant && msg.ragTrace && isBusinessAdminViewer() ? (
+              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[92%] sm:max-w-[85%] px-3.5 py-2 text-xs sm:text-sm' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? 'bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
+                {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]"><ProductRAGBadge trace={msg.ragTrace} /><span className="text-[10px] text-zinc-400 shrink-0 self-end select-none">{msg.timestamp || '20:03'}</span></div>
-                  </div>
-                ) : isAssistant ? (
-                  <div className="space-y-1 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
-                    <div className="flex justify-end"><span className="text-[10px] select-none tabular-nums text-zinc-400">{msg.timestamp || '20:03'}</span></div>
+                    {cleanContent && <ChatMessageContent content={cleanContent} isUser={false} onActionClick={onSendMessage} />}
+                    {bookingData && (
+                      <BookingCardBubble
+                        bookingData={bookingData}
+                        isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))}
+                        storeName={storeName}
+                        businessPhone={businessPhone}
+                        onConfirm={(d) => onConfirmBookingFromCard?.(d)}
+                      />
+                    )}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
+                      {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
+                      <span className="text-[10px] select-none tabular-nums text-zinc-400">{msg.timestamp || '20:03'}</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="flow-root leading-snug"><span className="whitespace-pre-wrap break-words select-text">{msg.content}</span><span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">{msg.timestamp || '20:03'}</span></div>
@@ -106,11 +132,16 @@ export const ServiceChatColumn: React.FC<Props> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Action Pills */}
       <div className="px-2.5 py-1.5 bg-[#141313] border-t border-[#262424] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-        <button type="button" onClick={onOpenBooking} className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold shrink-0 flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm">
-          <Calendar className="w-3 h-3 text-emerald-400" /><span>📅 Agendar Cita</span>
-        </button>
+        {confirmedBooking ? (
+          <button type="button" onClick={onOpenConfirmedModal} className="px-2.5 py-1 rounded-lg bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 text-[11px] font-bold shrink-0 flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
+            <CalendarCheck className="w-3 h-3 text-emerald-400" /><span>✅ Mi Cita Agendada</span>
+          </button>
+        ) : (
+          <button type="button" onClick={onOpenBooking} className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold shrink-0 flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm">
+            <Calendar className="w-3 h-3 text-emerald-400" /><span>📅 Agendar Cita</span>
+          </button>
+        )}
         <button type="button" onClick={() => onSendMessage('¿Cuáles son los horarios disponibles para agendar una cita?')} className="px-2.5 py-1 rounded-lg bg-[#1c1b1b] hover:bg-[#252424] text-zinc-300 border border-[#2a2828] text-[11px] font-medium shrink-0 transition cursor-pointer">
           ⏰ Horarios disponibles
         </button>

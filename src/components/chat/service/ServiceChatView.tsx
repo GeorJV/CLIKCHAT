@@ -1,38 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Sparkles, Calendar } from 'lucide-react';
+import { MessageSquare, Sparkles, Calendar, CalendarCheck } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceChatColumn } from './ServiceChatColumn';
 import { ServiceShowcase } from './ServiceShowcase';
 import { ServiceDetailModal } from './ServiceDetailModal';
 import { ServiceBookingModal } from './ServiceBookingModal';
+import { BookedAppointmentModal } from './BookedAppointmentModal';
 import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 
 interface Props {
-  storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string;
+  storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
   services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
-  services = [], initialService, responseDelaySec, onExit,
+  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || { ...DEFAULT_SERVICE, title: 'Servicio Especializado', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'service'>('chat');
   const servKey = selectedService?.id || initialService?.id || services[0]?.id || 'default';
   const storageKey = `clik_sess_serv_${servKey}`;
   const msgStorageKey = `clik_msgs_serv_${tenantSlug || 'default'}_${servKey}`;
+  const confirmKey = `clik_confirmed_booking_${tenantSlug || 'default'}`;
 
+  const [confirmedBooking, setConfirmedBooking] = useState<ServiceBookingData | null>(() => {
+    if (typeof window !== 'undefined') { try { const c = localStorage.getItem(confirmKey); if (c) return JSON.parse(c); } catch (e) {} }
+    return null;
+  });
+  const [viewConfirmedModal, setViewConfirmedModal] = useState(false);
   const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem(msgStorageKey);
-        if (cached) { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed; }
-      } catch (e) {}
-    }
+    if (typeof window !== 'undefined') { try { const c = localStorage.getItem(msgStorageKey); if (c) { const p = JSON.parse(c); if (Array.isArray(p) && p.length > 0) return p; } } catch (e) {} }
     return [];
   });
   const [inputValue, setInputValue] = useState('');
@@ -58,21 +60,16 @@ export const ServiceChatView: React.FC<Props> = ({
   }, [initialService, services]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && messages.length > 0) {
-      try { localStorage.setItem(msgStorageKey, JSON.stringify(messages)); } catch (e) {}
-    }
+    if (typeof window !== 'undefined' && messages.length > 0) { try { localStorage.setItem(msgStorageKey, JSON.stringify(messages)); } catch (e) {} }
   }, [messages, msgStorageKey]);
 
   useEffect(() => {
-    setMessages((prev) => {
-      if (prev.length > 0) return prev;
-      return [{
-        id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
-        content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
-      }];
-    });
+    setMessages((prev) => prev.length > 0 ? prev : [{
+      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
+      content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
+    }]);
   }, [selectedService.id, sessId, agentName, storeName, selectedService.title, selectedService.duration]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
@@ -98,10 +95,7 @@ export const ServiceChatView: React.FC<Props> = ({
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
-          setMessages((prev) => [...prev, {
-            id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100, modelUsed: fb.provider, reasoning: fb.levelLabel }
-          }]);
+          setMessages((prev) => [...prev, { id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100, modelUsed: fb.provider, reasoning: fb.levelLabel } }]);
         } catch {
           setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te podemos colaborar hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
         }
@@ -113,25 +107,22 @@ export const ServiceChatView: React.FC<Props> = ({
     const text = (customText || inputValue).trim();
     if (!text) return;
     setInputValue('');
-    if (!fromVoice) { sendBatchedMessage(text); } else { sendVoiceQuery(text); }
+    if (!fromVoice) sendBatchedMessage(text); else sendVoiceQuery(text);
   };
 
   const handleConfirmBooking = (data: ServiceBookingData) => {
+    setConfirmedBooking(data);
+    try { localStorage.setItem(confirmKey, JSON.stringify(data)); } catch (e) {}
     fetch('/api/bookings', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tenantSlug, tenantId: (selectedService as any).tenant_id || (selectedService as any).tenantId, customerName: data.customerName, customerPhone: data.customerPhone,
-        serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || ''
-      })
+      body: JSON.stringify({ tenantSlug, tenantId: (selectedService as any).tenant_id || (selectedService as any).tenantId, customerName: data.customerName, customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' })
     }).catch(() => {});
-    if (typeof window !== 'undefined') {
-      try {
-        const k = `clikchat_bookings_${tenantSlug || 'default'}`;
-        const prev = JSON.parse(localStorage.getItem(k) || '[]');
-        const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
-        localStorage.setItem(k, JSON.stringify([apt, ...prev]));
-      } catch (e) {}
-    }
+    try {
+      const k = `clikchat_bookings_${tenantSlug || 'default'}`;
+      const prev = JSON.parse(localStorage.getItem(k) || '[]');
+      const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
+      localStorage.setItem(k, JSON.stringify([apt, ...prev]));
+    } catch (e) {}
     setMessages((prev) => [...prev, {
       id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
       content: `📅 **¡Cita Agendada con Éxito!**\n\n- **Servicio:** ${data.service.title}\n- **Fecha:** ${data.date} a las ${data.timeSlot}\n- **Cliente:** ${data.customerName} (${data.customerPhone})\n- **Modalidad:** ${data.service.serviceModality === 'presencial' ? 'Presencial' : 'Online (Google Meet / Zoom)'}\n\nTe enviamos los datos de acceso a tu WhatsApp. ¡Nos vemos en la sesión!`,
@@ -151,17 +142,26 @@ export const ServiceChatView: React.FC<Props> = ({
             <Sparkles className="w-3.5 h-3.5" /><span>Servicio</span>
           </button>
         </div>
-        <button type="button" onClick={() => setBookingOpen(true)} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
-          <Calendar className="w-3.5 h-3.5" /><span>Agendar</span>
-        </button>
+        {confirmedBooking ? (
+          <button type="button" onClick={() => setViewConfirmedModal(true)} className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 font-extrabold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer ring-1 ring-emerald-400/30">
+            <CalendarCheck className="w-3.5 h-3.5 text-emerald-400" /><span>✅ Mi Cita</span>
+          </button>
+        ) : (
+          <button type="button" onClick={() => setBookingOpen(true)} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
+            <Calendar className="w-3.5 h-3.5" /><span>Agendar</span>
+          </button>
+        )}
       </div>
       <div className="flex-1 w-full h-full flex lg:grid lg:grid-cols-2 overflow-hidden min-h-0">
         <div className={`h-full w-full ${mobileTab === 'chat' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
           <ServiceChatColumn
             storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title}
-            messages={messages} inputValue={inputValue} isLoading={isLoading} onInputChange={setInputValue} onSendMessage={handleSendMessage}
+            messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking}
+            businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'}
+            onInputChange={setInputValue} onSendMessage={handleSendMessage}
             onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
-            onExit={onExit} onOpenBooking={() => setBookingOpen(true)}
+            onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)}
+            onConfirmBookingFromCard={handleConfirmBooking}
           />
         </div>
         <div className={`h-full w-full ${mobileTab === 'service' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
@@ -171,6 +171,7 @@ export const ServiceChatView: React.FC<Props> = ({
       {detailModal && <ServiceDetailModal service={selectedService} mode={detailModal} onClose={() => setDetailModal(null)} onBookService={() => { setDetailModal(null); setBookingOpen(true); }} />}
       {fullscreenOpen && <ProductFullscreenModal product={selectedService as any} storeName={storeName} onClose={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); handleSendMessage(`¿Requisitos de ${p.title}?`); }} onDirectCheckout={() => { setFullscreenOpen(false); setBookingOpen(true); }} />}
       {bookingOpen && <ServiceBookingModal service={selectedService} storeName={storeName} onClose={() => setBookingOpen(false)} onConfirmBooking={handleConfirmBooking} />}
+      {viewConfirmedModal && confirmedBooking && <BookedAppointmentModal booking={confirmedBooking} storeName={storeName} businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} onClose={() => setViewConfirmedModal(false)} />}
     </div>
   );
 };

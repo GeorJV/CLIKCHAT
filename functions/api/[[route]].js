@@ -355,6 +355,29 @@ function getFallbackTenant(slug = '') {
       phone: '+506 8888-8888'
     };
   }
+  if (slug === 'geosoft' || slug === 'ten_geosoft_prod') {
+    return {
+      id: 'ten_geosoft_prod',
+      slug: 'geosoft',
+      name: 'GeoSoft',
+      owner_name: 'GeoSoft Tech',
+      owner_email: 'soporte@geosoft.lat',
+      bot_name: 'Agente GeoSoft',
+      avatar_url: '',
+      plan: 'pro',
+      status: 'active',
+      business_type: 'servicios',
+      currency: 'USD',
+      business_hours: 'Lunes a Viernes de 8:00 AM a 6:00 PM',
+      cta_text: 'Agendar Asesoría',
+      cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20deseo%20agendar%20una%20cita',
+      welcome_message: '¡Hola! 🚀 Soy Agente GeoSoft, tu asesor de soluciones de software e inteligencia artificial. ¿Deseas cotizar un proyecto o agendar una cita?',
+      system_prompt: 'Eres el Agente GeoSoft oficial de GeoSoft. Asesoras con excelencia en desarrollo de software, apps móviles e IA, y agendas citas de asesoría técnica paso a paso en el chat.',
+      sales_flow_rules: 'PASO 1: Diagnóstico de proyecto. PASO 2: Presentar servicio y precio. PASO 3: Agendar pidiendo dato por dato (Servicio -> Fecha -> Hora con opciones -> Nombre y WhatsApp). PASO 4: Confirmar disponibilidad y emitir [BOOKING_CARD: {...}].',
+      order_ticket_format: '',
+      phone: '+506 7293-5612'
+    };
+  }
   if (slug === 'comida-callejera-xl' || slug === 'ten_1790438865714_53ytu') {
     return {
       id: 'ten_1790438865714_53ytu',
