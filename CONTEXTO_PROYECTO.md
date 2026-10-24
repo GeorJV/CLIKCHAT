@@ -7,7 +7,7 @@
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
   - Blindaje Anti-Fuga de SETUP_PAYLOAD: Aislamiento estricto de JSON técnico tanto en Edge como en UI.
-  - Generación Completa Sin Cortes: max_tokens 2048 en Cloudflare Edge y Gemini 2.5 Flash con auto-rescate.
+  - Generación Completa Sin Cortes: max_tokens 2048 en Cloudflare Edge con auto-rescate tolerante.
   - Transición Instantánea a Éxito: El usuario pasa directamente a la pantalla de módulos completados.
   - Redirección Post-Login: Conexión directa a ajustes del negocio (settings / perfil).
   - Copiado de Respuestas Habilitado: Selección nativa y botón de 1-clic con feedback visual.
@@ -15,6 +15,6 @@
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
-  - Modelos Google AI Studio: Uso exclusivo de las últimas versiones oficiales (Gemini 2.5 Flash / Pro).
+  - Modelos de IA: Empleo exclusivo de infraestructura oficial vigente y prohibición total de versiones descontinuadas.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita (<150-180 líneas por archivo).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.

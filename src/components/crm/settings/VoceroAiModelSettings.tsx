@@ -88,9 +88,9 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
               <optgroup label="Infraestructura ClikChat (Sin costo de API)">
                 <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Por Defecto)</option>
               </optgroup>
-              <optgroup label="Google AI Studio (Gemini)">
-                <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Última Generación Oficial, Ultra Rápido)</option>
-                <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Última Generación Oficial, Máxima Inteligencia)</option>
+              <optgroup label="Google AI Studio">
+                <option value="gemini-1.5-flash">Google Gemini Flash (Ultra Rápido)</option>
+                <option value="gemini-1.5-pro">Google Gemini Pro (Alta Capacidad)</option>
               </optgroup>
               <optgroup label="OpenRouter">
                 <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (Floor Económico)</option>

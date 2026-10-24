@@ -617,7 +617,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-2.5-flash'}:generateContent?key=${cKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-1.5-flash'}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1168,7 +1168,7 @@ Responde con formato Markdown limpio, usando viñetas y números claros. Incluye
         const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
           try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
         })();
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-1.5-flash'}:generateContent?key=${googleKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -5470,7 +5470,7 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
         try {
           const googleKey = env?.GOOGLE_API_KEY || '';
           if (googleKey) {
-            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`;
+            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-1.5-flash'}:generateContent?key=${googleKey}`;
             const gResp = await fetch(gUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -5488,7 +5488,7 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
             });
             const gData = await gResp.json();
             rawResponse = gData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            providerUsed = 'google_gemini_2_5_flash_backup';
+            providerUsed = 'google_ai_backup';
           }
         } catch (gErr) {
           console.warn('Fallo en respaldo Google Gemini:', gErr.message);
