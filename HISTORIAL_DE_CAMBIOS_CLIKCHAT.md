@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Erradicación Total de Versiones de IA Descontinuadas y Homologación de Reglas (v2.2.3)
+- **Diagnóstico y Necesidad:**
+  1. *Instrucción Estricta del Usuario:* Prohibición terminante de mencionar o utilizar modelos descontinuados de Google (específicamente la versión 2.5).
+  2. *Presencia Residual:* En GEMINI.md, selectores de configuración de modelo (VoceroAiModelSettings, customAIConfigs, AiBudgetModal) y endpoints de functions/api/[[route]].js aún existían referencias a dicha versión.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. GEMINI.md & CONTEXTO_PROYECTO.md:
+     - Actualizada la Regla 9 prohibiendo explícitamente cualquier mención o configuración de versiones descontinuadas.
+  2. functions/api/[[route]].js:
+     - Erradicada toda mención a la versión descontinuada en los endpoints de borde de Cloudflare.
+  3. Componentes de UI (VoceroAiModelSettings.tsx, customAIConfigs.ts, AiBudgetModal.tsx):
+     - Limpieza de selectores y presets estandarizando la infraestructura oficial vigente.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-DG6gGyjQ.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit 287adbb).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-23] Blindaje Integral Anti-Fuga de SETUP_PAYLOAD, Aislamiento de JSON Técnico y Aumento a 2048 Tokens en Edge (v2.2.2)
 - **Diagnóstico y Necesidad:**
   1. *Fuga de Bloque Técnico [SETUP_PAYLOAD] en Chat:* La respuesta final del asistente de onboarding mostraba en la burbuja del usuario el tag [SETUP_PAYLOAD] y el objeto JSON crudo de configuración.
