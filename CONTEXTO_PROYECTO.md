@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-23 22:55 GMT-6
-- **Versión Actual:** 2.2.6 (Agendamiento de Citas desde el Chat, Adaptabilidad Móvil 100% y Persistencia en D1)
+- **Última Actualización:** 2026-10-23 23:06 GMT-6
+- **Versión Actual:** 2.2.7 (Ocultación de Selectores 'Clásico' y Botón Flotante en Vista Celular)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Agendamiento de Citas en Chat: Bot y usuario agendan citas con selector de fecha, hora, modal optimizado y confirmación inmediata.
-  - Adaptabilidad Móvil Mobile-First: Switcher de pestañas táctiles (Chat / Servicio), ajuste viewport 100dvh y cero desbordes.
-  - Persistencia D1 Real: Endpoints POST y GET /api/bookings activos y tabla bookings en D1 en producción.
-  - Sincronización Automática con CRM: AgendaTab y VoceroBookingsView reflejan citas agendadas por el bot en tiempo real.
+  - Limpieza de Pantalla Móvil: Oculto el botón flotante 'Ver Clásico/CRM' y el toggle en cabecera en smartphones (<768px).
+  - Agendamiento de Citas en Chat: Bot y usuario agendan citas con selector de fecha, hora y confirmación en tiempo real.
+  - Adaptabilidad Móvil 100%: Switcher táctil Chat/Servicio en 100dvh sin elementos invasivos flotantes.
+  - Persistencia D1 Real: Endpoints POST/GET /api/bookings y sincronización con AgendaTab y VoceroBookingsView.
   - Perfil Real GeoSoft: soporte@geosoft.lat con credenciales y tenant geosoft activos en Cloudflare D1.
-  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` (commit 394a0b8) y 17/17 rutas en Chrome Headless.
+  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` (commit 6bce1d5) y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

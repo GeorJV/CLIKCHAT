@@ -16,6 +16,23 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-23] Ocultación de Selectores 'Clásico' y Botón Flotante en Vista Celular (v2.2.7)
+- **Diagnóstico y Necesidad:**
+  1. *Obstrucción Visual en Celulares:* El botón flotante inferior de cambio de modo ("Ver Clásico" / "Ver ClikChat CRM") y el botón "Clásico" en la barra de navegación se superponían directamente sobre el chat y la entrada de texto en pantallas móviles, estorbando la experiencia de usuario.
+  2. *Requerimiento del Usuario:* Eliminar la presencia de estos selectores en vista de celular para dejar la pantalla 100% despejada.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. VoceroModeTogglePill.tsx (55 líneas):
+     - Aplicada clase responsive `hidden md:block` al contenedor flotante fijo y al modo inline, asegurando que en dispositivos móviles (< 768px) no se renderice en pantalla.
+  2. VoceroTopNav.tsx (76 líneas):
+     - Aplicada clase responsive `hidden md:flex` al selector de modo visual, erradicando el botón "Clásico" de la cabecera móvil.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (npm run build) con 0 errores TypeScript. Bundle: dist/assets/index-BLnHcxHa.js.
+  - *Filtro 2:* Sincronización en GitHub rama main (commit 6bce1d5).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (https://clikchat.pages.dev y https://clikchatcrm.pages.dev) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-23] Agendamiento de Citas desde la Ventana de Chat, Adaptabilidad Móvil Integral y Persistencia en D1 (v2.2.6)
 - **Diagnóstico y Necesidad:**
   1. *Agendamiento de Citas desde el Chat:* El agente comercial y el cliente deben poder agendar y confirmar citas y reservaciones directamente desde la interfaz del chat, con selección de fecha, hora y datos de contacto, persistiendo en base de datos real.
