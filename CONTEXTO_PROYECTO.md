@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 21:44 GMT-6
-- **Versión Actual:** 2.3.2 (Configuración de Intervalos de Atención y Descansos entre Citas en Cuenta/Agenda)
+- **Última Actualización:** 2026-10-24 21:50 GMT-6
+- **Versión Actual:** 2.3.3 (Inteligencia Consultiva, Empatía y Validación Integral de Citas y Descansos)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `d2b36db`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `e38e2d5`)
 - **Estado Actual del Sistema:**
-  - Configuración de Intervalos y Descansos: Componente BookingIntervalConfig integrado en AgendaTab y CRM Vocero.
-  - Parámetros Personalizables: Duración de la cita (15-90 min) y tiempo de espera/descanso (0-30 min) guardados en D1.
-  - Cálculo Dinámico de Disponibilidad: El bot considera el ciclo completo (duración + buffer de descanso) para no colisionar.
-  - Consulta D1 en Milisegundos: Detección instantánea de citas y descansos ocupados con recomendación del siguiente horario libre.
-  - Tarjeta con Micro-Animación a los 3s: Despliegue con física de resorte táctil tras confirmación verbal.
+  - Inteligencia Consultiva & Empatía Humana: El bot no empuja ventas; escucha, comprende miedos/metas y hace sentir valioso al cliente.
+  - Flujo de Agendamiento Verificado: Paso 1 (Nombre/Email) -> Paso 2 (WhatsApp) -> Paso 3 (Día) -> Paso 4 (Horas) -> Paso 5 (Cita).
+  - Consulta D1 en Milisegundos con Descansos: Detecta ocupación por cita y buffer de descanso, sugiriendo la siguiente hora programada.
+  - Tarjeta con Micro-Animación a los 3s: Despliegue con física de resorte táctil Emil Kowalski tras confirmación en chat.
+  - Panel de Configuración de Intervalos: BookingIntervalConfig (155 líneas) integrado en AgendaTab y CRM Vocero.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

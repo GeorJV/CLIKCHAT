@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Auditoría Integral: Inteligencia Consultiva, Empatía y Validación de Citas y Descansos (v2.3.3)
+- **Diagnóstico y Necesidad:**
+  1. *Comportamiento Consultivo y Empatía Humana:* El usuario requirió verificar que el bot no se limite a intentar vender, sino que sea empático, comprenda la necesidad real del cliente, escuche sus dudas y lo haga sentir valioso e importante antes de cualquier propuesta comercial.
+  2. *Auditoría Integral del Flujo de Agendamiento:* Comprobar que el bot respete el orden estricto de pasos (Paso 1: Nombre y Correo -> Paso 2: Teléfono -> Paso 3: Día -> Paso 4: Horas disponibles con descanso -> Paso 5: Autorización), sin solicitar teléfonos anticipadamente en el primer turno.
+  3. *Verificación en Vivo de la Base de Datos:* Comprobar que la disponibilidad se consulte en milisegundos en Cloudflare D1 considerando tanto la duración de la cita como los intervalos de descanso configurados en la agenda.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js:
+     - Enriquecida la directiva general `1. PERSONALIDAD Y TONO (HUMANO, INTELIGENTE, EMPÁTICO Y CONSULTIVO)` priorizando la escucha activa, comprensión sincera de las metas del cliente y erradicación total de la presión de venta.
+     - Blindada la directiva del Paso 1 en `extractBookingSlots`: prohibición expresa de solicitar teléfono o fechas en el primer turno, enfocándose exclusivamente en Nombre y Correo.
+     - Estrategia consultiva en `servicios`: empatía con temores de inversión, diagnóstico personalizado y orientación honesta sobre lo que más le conviene al negocio del usuario.
+  2. Base de Datos Cloudflare D1:
+     - Actualizado el tenant `GeoSoft` (`ten_geosoft_prod`) con `system_prompt` y `sales_flow_rules` consultivos de alto valor, además de los parámetros `allow_agent_booking: 1`, `appointment_duration: 30` y `break_buffer_time: 10`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 8.98s con 0 errores TypeScript (`index-DSu79aEc.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `e38e2d5`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Validación en Vivo de Empatía & Agendamiento:*
+    * Consulta con dudas/miedos: El bot validó la preocupación del cliente de ropa, recomendó con honestidad empezar por web para cuidar su inversión y demostró interés real por su proyecto.
+    * Secuencia de citas probada con éxito: Turno 1 (Nombre/Correo) -> Turno 2 (WhatsApp) -> Turno 3 (Día/Fecha), con avance ordenado y cero mezclas de datos.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Configuración de Intervalos de Atención y Descansos entre Citas en Cuenta/Agenda (v2.3.2)
 - **Diagnóstico y Necesidad:**
   1. *Tiempo de Espera y Descanso entre Citas:* El usuario requería que el sistema de reservas permitiera configurar intervalos de descanso (por ejemplo, atender cada 30 minutos pero descansar 10 minutos para preparar la siguiente cita).
