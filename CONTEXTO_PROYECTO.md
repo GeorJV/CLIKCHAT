@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 21:32 GMT-6
-- **Versión Actual:** 2.3.0 (Calendario Inteligente por Pasos: Nombre/Email -> Tel -> Día -> Hora -> Autorización)
+- **Última Actualización:** 2026-10-24 21:38 GMT-6
+- **Versión Actual:** 2.3.1 (Verificación D1 en Milisegundos, Recomendación de Siguiente Horario y Tarjeta Animada a los 3s)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `00401cb`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `35df54b`)
 - **Estado Actual del Sistema:**
-  - Calendario Inteligente con Control de Slots: Extracción determinista de 5 slots (nombre, correo, teléfono, fecha, hora).
-  - Orden Lógico Estricto: 1° Nombre y Correo -> 2° Teléfono/WhatsApp -> 3° Día/Fecha -> 4° Hora con opciones -> 5° Autorización.
-  - Detección de Faltantes en Tiempo Real: Si el usuario omite un dato (ej. da nombre sin correo), el bot pide puntualmente el faltante.
-  - Autorización Condicional Estricta: Prohibido autorizar o emitir [BOOKING_CARD] mientras falte algún dato.
-  - Persistencia Completa en D1: Columnas y guardado en `bookings`, `crm_leads` y `chat_sessions` con customer_email.
-  - Switch de Citas y Tarjeta en Chat: BookingCardBubble con botón grande "Confirmo cita y guardar" y modal de consulta.
+  - Consulta D1 en Milisegundos: Verificación en tiempo real de colisión de citas (`SELECT booking_date, booking_time FROM bookings`).
+  - Detección de Horario Ocupado & Recomendación Automática: Si el espacio está ocupado, informa amablemente y sugiere la siguiente hora disponible.
+  - Confirmación Dinámica con Tarjeta Diferida: La IA confirma verbalmente en el chat y a los ~2.8s despliega suavemente la tarjeta estructurada.
+  - Micro-Animación Emil Kowalski: Fade-in y resorte táctil fluido en `BookingCardBubble` (147 líneas) con estado de verificación previo.
+  - Control de Slots en 5 Pasos: Nombre/Email -> Teléfono -> Día -> Hora -> Autorización estricta.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

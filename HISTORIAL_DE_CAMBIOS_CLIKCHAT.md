@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Verificación de Disponibilidad en Base de Datos D1 en Milisegundos, Recomendación de Siguiente Horario y Tarjeta Animada a los 3s (v2.3.1)
+- **Diagnóstico y Necesidad:**
+  1. *Consulta Real de Disponibilidad en D1 en Milisegundos:* El usuario requería que tras recibir los datos de fecha y hora, el bot consultara de inmediato en la base de datos real si ese espacio ya está reservado por otro cliente.
+  2. *Gestión de Espacio Ocupado y Recomendación Automática:* Si el espacio ya está reservado en la agenda, el bot debe informar profesionalmente que ese campo ya está ocupado y recomendar activamente el siguiente horario disponible programado.
+  3. *Aparición Diferida y Animación Profesional (3 Segundos):* Cuando el bot confirma la cita y presenta el resumen verbalmente en el chat, la tarjeta visual interactiva (`BookingCardBubble`) debe desplegarse unos 3 segundos después con una micro-animación suave y profesional (estándar Emil Kowalski: fade-in con resorte táctil).
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js:
+     - Implementadas funciones `normalizeTimeSlot` y `checkSlotAvailability` que consultan en Cloudflare D1 en milisegundos (`SELECT booking_date, booking_time, status FROM bookings WHERE tenant_id = ? AND status != 'cancelled'`).
+     - Detección de colisión: si el horario está ocupado, se bloquea la confirmación, se calcula la siguiente hora disponible (`nextAvailable` y `secondAvailable`) y se instruye a la IA para recomendarla al cliente de forma empática.
+     - Si hay disponibilidad comprobada y los 5 datos están completos, la IA confirma que la cita queda agendada con éxito y emite `[BOOKING_CARD: {...}]`.
+  2. BookingCardBubble.tsx (147 líneas):
+     - Incorporado estado `isRevealed` con delay de 2.8s: mientras verifica muestra un estado sutil con resplandor (*"Verificando disponibilidad en agenda oficial..."*).
+     - Al activarse, despliega la tarjeta con animación fluida de resorte `transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in slide-in-from-bottom-2`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 8.60s con 0 errores (`index-KpouiYL2.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `35df54b`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Validación en Vivo:*
+    * Caso Horario Ocupado: Solicitada cita para fecha/hora ya registrada en D1 $\rightarrow$ El bot informó con profesionalismo que el espacio ya estaba reservado y recomendó de inmediato 11:30 AM o 02:00 PM sin emitir tarjeta prematura.
+    * Caso Horario Libre: Solicitada cita en espacio disponible $\rightarrow$ El bot confirmó la disponibilidad en el sistema, agendó la cita y emitió la tarjeta estructurada con animación diferida.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Calendario Inteligente por Pasos con Control de Slots y Autorización Estricta (v2.3.0)
 - **Diagnóstico y Necesidad:**
   1. *Orden Lógico y Estructurado de Agendamiento:* El usuario requería que el calendario del bot en el sistema general tuviera un orden lógico estricto y supiera con certeza qué datos necesita recopilar (Nombre, Correo, Teléfono, Día y Hora).
