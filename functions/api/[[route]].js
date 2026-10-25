@@ -625,7 +625,13 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 8. PROHIBICIÓN ABSOLUTA DE REPETIR O HACER ECO DE LA RESPUESTA DEL USUARIO:
    - Queda TERMINANTEMENTE PROHIBIDO repetir, citar o hacer eco de las respuestas o palabras que el cliente acaba de escribir como parte de tu mensaje (por ejemplo: NO digas "Entendido que tu teléfono es...", NO digas "Dices que...", NO digas "Me indicas '...'").
    - Responde de forma directa, elegante, humana y ejecutiva, avanzando de inmediato al siguiente paso sin parafrasear lo que el cliente ya te dijo.
-   - En la confirmación de la cita, indica con claridad y elegancia el DÍA DE LA SEMANA y la FECHA COMPLETA (ej: "Viernes, 25 de Octubre de 2026").`;
+   - En la confirmación de la cita, indica con claridad y elegancia el DÍA DE LA SEMANA y la FECHA COMPLETA (ej: "Viernes, 25 de Octubre de 2026").
+9. CLARIDAD, INTELIGENCIA SUPREMA Y CERO TITUBEOS O FRASES EXTRAÑAS:
+   - Tus respuestas deben ser ROTUNDAMENTE CLARAS, INTELIGENTES, ELEGANTES Y DIRECTAS.
+   - Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o autorectificarse en el texto (ejemplo: PROHIBIDO decir "elegiste el horario de X no, sino que elegiste Y", "bueno en realidad...", "espera me equivoqué...").
+   - Si el cliente confirma o escoge una hora (ej: "Si 9 y 40 esta bien", "a las 10 me sirve"), asúmela con total certeza, agilidad y naturalidad: confirma para esa hora sin cuestionar ni mencionar opciones que ya quedaron en el pasado.
+   - Cero suspenso artificial o dramatismo infantil: PROHIBIDO usar puntos suspensivos innecesarios como "y... todo está en orden!" o "y... lamentablemente...". Exprésate con aplomo y solidez ejecutiva.
+   - Toda respuesta debe ser completa y terminada; nunca dejes oraciones cortadas.`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -744,7 +750,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           { role: 'system', content: systemContent },
           ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
           { role: 'user', content: userMessage }
-        ]
+        ],
+        max_tokens: 1024
       });
       if (cfResp?.response) {
         const clean = sanitizeAiResponse(cfResp.response);
@@ -785,7 +792,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         model: dsModel,
         messages,
         temperature: 0.35,
-        max_tokens: 600,
+        max_tokens: 1000,
         provider: {
           sort: 'price',
           allow_fallbacks: false
@@ -840,7 +847,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           { role: 'system', content: systemContent },
           ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
           { role: 'user', content: userMessage }
-        ]
+        ],
+        max_tokens: 1024
       });
       if (cfResp?.response) {
         const clean = sanitizeAiResponse(cfResp.response);
@@ -879,7 +887,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         model: 'openai/gpt-4o-mini',
         messages,
         temperature: 0.35,
-        max_tokens: 450,
+        max_tokens: 1000,
         provider: {
           sort: 'price',
           allow_fallbacks: false
@@ -4237,7 +4245,7 @@ function stripUserEcho(botReply, userMessage) {
     cleanReply = cleanReply.replace(directQuote, '');
   }
 
-  cleanReply = cleanReply.replace(/^(?:(?:entendido|registrado|anotado|comprendido)s+(?:ques+)?(?:tus+(?:correo|nombre|tel[eé]fono|whatsapp|informaci[oó]n|dato|mensaje)s+es[^.!?\n]+[.!?\n]+)\s*)+/i, '');
+  cleanReply = cleanReply.replace(/^(?:(?:entendido|registrado|anotado|comprendido)\s+(?:que\s+)?(?:tu\s+(?:correo|nombre|tel[eé]fono|whatsapp|informaci[oó]n|dato|mensaje)\s+es[^.!?\n]+[.!?\n]+)\s*)+/i, '');
 
   return cleanReply.trim();
 }
@@ -4316,6 +4324,80 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
   return str;
 }
 
+function parseFlexibleTime(str) {
+  if (!str) return null;
+  const s = str.trim().toLowerCase();
+
+  // 1. Patrón 'H y M' ej: '9 y 40', '8 y 20', '10 y 15', '9 y media', '9 y cuarto'
+  const yMatch = s.match(/(?:a\s+las?\s+)?(\d{1,2})\s+y\s+(\d{1,2}|media|cuarto)\s*(am|pm|de\s+la\s+tarde|de\s+la\s+mañana|de\s+la\s+noche)?/i);
+  if (yMatch) {
+    let h = parseInt(yMatch[1], 10);
+    let m = 0;
+    if (yMatch[2] === 'media') m = 30;
+    else if (yMatch[2] === 'cuarto') m = 15;
+    else m = parseInt(yMatch[2], 10);
+
+    let isPm = false;
+    if (yMatch[3]) {
+      isPm = /pm|tarde|noche/i.test(yMatch[3]);
+    } else {
+      isPm = (h >= 1 && h <= 6);
+    }
+    const ampm = isPm ? 'PM' : 'AM';
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+  }
+
+  // 2. Patrón estándar H:M am/pm o H:M
+  const hmMatch = s.match(/(?:a\s+las?\s+)?(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.|de\s+la\s+tarde|de\s+la\s+mañana|de\s+la\s+noche)?/i);
+  if (hmMatch) {
+    let h = parseInt(hmMatch[1], 10);
+    const m = parseInt(hmMatch[2], 10);
+    let isPm = false;
+    if (hmMatch[3]) {
+      isPm = /pm|p\.m\.|tarde|noche/i.test(hmMatch[3]);
+    } else if (h >= 13) {
+      h -= 12;
+      isPm = true;
+    } else {
+      isPm = (h >= 1 && h <= 6);
+    }
+    const ampm = isPm ? 'PM' : 'AM';
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+  }
+
+  // 3. Patrón H am/pm
+  const hMatch = s.match(/(?:a\s+las?\s+)?(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.|de\s+la\s+tarde|de\s+la\s+mañana|de\s+la\s+noche)/i);
+  if (hMatch && !s.includes('@')) {
+    let h = parseInt(hMatch[1], 10);
+    if (h >= 1 && h <= 24) {
+      let isPm = /pm|p\.m\.|tarde|noche/i.test(hMatch[2]);
+      if (h >= 13) {
+        h -= 12;
+        isPm = true;
+      }
+      const ampm = isPm ? 'PM' : 'AM';
+      return `${String(h).padStart(2, '0')}:00 ${ampm}`;
+    }
+  }
+
+  // 4. 'a las H' sin am/pm explícito ej: 'a las 11', 'a las 10', 'a las 4'
+  const aLasMatch = s.match(/\b(?:a\s+las?|las?)\s+(\d{1,2})\b/i);
+  if (aLasMatch && !s.includes('@') && !s.includes('.com')) {
+    let h = parseInt(aLasMatch[1], 10);
+    if (h >= 1 && h <= 24) {
+      let isPm = (h >= 1 && h <= 6);
+      if (h >= 13) {
+        h -= 12;
+        isPm = true;
+      }
+      const ampm = isPm ? 'PM' : 'AM';
+      return `${String(h).padStart(2, '0')}:00 ${ampm}`;
+    }
+  }
+
+  return null;
+}
+
 // ==============================================================================
 // EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
 // ==============================================================================
@@ -4363,12 +4445,17 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     if (phone) break;
   }
 
-  // 3. Extracción de Hora
+  // 3. Extracción de Hora (Flexibilidad Máxima & Sin Fallos Coloquiales)
   const timeRegex = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:am|pm|a\.m\.|p\.m\.)\b|\b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b/i;
   for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const flexTime = parseFlexibleTime(allUserMessages[i]);
+    if (flexTime) {
+      time = flexTime;
+      break;
+    }
     const tm = allUserMessages[i].match(timeRegex);
     if (tm) {
-      time = tm[0].trim().toUpperCase();
+      time = normalizeTimeSlot(tm[0].trim().toUpperCase());
       break;
     }
   }
@@ -4471,7 +4558,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
 function parseTimeToMinutes(timeStr) {
   if (!timeStr) return null;
-  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  const flex = parseFlexibleTime(timeStr);
+  const target = flex || timeStr;
+  const match = target.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
   if (!match) return null;
   let h = parseInt(match[1], 10);
   const m = parseInt(match[2], 10);
@@ -4494,6 +4583,8 @@ function minutesToTimeString(minutes) {
 
 function normalizeTimeSlot(t) {
   if (!t) return '';
+  const flex = parseFlexibleTime(t);
+  if (flex) return flex;
   let str = t.trim().toUpperCase();
   if (/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/.test(str)) {
     const parts = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
@@ -5615,16 +5706,17 @@ ${isSlotUnavailable ? `
 - Opción alternativa recomendada: "${secondAvailableTime}"
 
 DIRECTIVA OBLIGATORIA (MÁXIMA PRIORIDAD):
-Informa con tono profesional, cálido y empático que ese espacio puntual ya se encuentra reservado (o en tiempo de preparación/descanso entre citas).
+Informa de forma clara, inteligente, cálida y profesional que ese espacio puntual ya se encuentra reservado.
 Pregúntale amablemente si le serviría la siguiente hora programada disponible: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
-Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado.
+Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado. Cero dramatismo o puntos suspensivos ("y...").
 ` : (bookingState.slots.date && bookingState.slots.time ? `
 [VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:
 - Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${bookingState.slots.date} a las ${bookingState.slots.time}!
 
 DIRECTIVA OBLIGATORIA:
-Confirma con entusiasmo al cliente que acabas de verificar la disponibilidad en el sistema y que hay citas disponibles para ese día y hora, y que su cita ha sido agendada con éxito.
+Confirma con entusiasmo, inteligencia y claridad ejecutiva que acabas de verificar la disponibilidad en el sistema y que hay citas disponibles para el ${bookingState.slots.date} a las ${bookingState.slots.time}, y que su cita ha sido agendada con éxito.
 Presenta el resumen de la cita (Día, Hora, Nombre, Correo, Teléfono) indicando que la cita queda agendada.
+Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o decir frases incoherentes como "no elegiste X sino Y". Confirma directamente con seguridad.
 ` : '')}
 
 REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
@@ -5641,7 +5733,10 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}) y haya disponibilidad comprobada, autoriza la reserva con gran entusiasmo y emite obligatoriamente al final:
      [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
 3. CERO CANALIZACIÓN EXTERNA A WHATSAPP:
-   - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.`;
+   - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.
+4. CLARIDAD Y RESPUESTAS INTELIGENTES EN ELECCIÓN DE HORARIO:
+   - Si el usuario responde aceptando una opción ofrecida o proponiendo una nueva hora (ej: "Si 9 y 40 esta bien", "a las 10 me sirve", "perfecto a las 3"), acéptala y confírmala de inmediato con naturalidad y aplomo.
+   - Prohibido hacer comparaciones confusas con horarios previos o decir frases como "no elegiste tal sino tal". Directo, claro y profesional.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
