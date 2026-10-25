@@ -4827,13 +4827,28 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         sessionHistory = [];
       }
 
+      if (sessionHistory.length === 0 && Array.isArray(body.conversationHistory) && body.conversationHistory.length > 0) {
+        sessionHistory = body.conversationHistory;
+      }
+
+      let activeLeadInfo = { ...(leadInfo || {}) };
+      try {
+        const sessRows = await executeD1('SELECT user_name, user_phone, user_email FROM chat_sessions WHERE id = ?1 LIMIT 1', [currentSessionId]);
+        if (sessRows.length > 0) {
+          const s = sessRows[0];
+          if (!activeLeadInfo.name && s.user_name) activeLeadInfo.name = s.user_name;
+          if (!activeLeadInfo.email && s.user_email) activeLeadInfo.email = s.user_email;
+          if (!activeLeadInfo.phone && s.user_phone) activeLeadInfo.phone = s.user_phone;
+        }
+      } catch (sessReadErr) {}
+
       // 4.1 DETECCIÓN INTELIGENTE DE AGENDAMIENTO & EXTRACCIÓN DE SLOTS
       const isBookingContext = (
         /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|consultoria|consultor[ií]a|reservar|reserva|calendario|disponibilidad|horario|espacio)\b/i.test(message) ||
         sessionHistory.some(h => /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|reservar|reserva|calendario)\b/i.test(h.message || ''))
       );
 
-      const bookingState = extractBookingSlots(sessionHistory, message, leadInfo);
+      const bookingState = extractBookingSlots(sessionHistory, message, activeLeadInfo);
 
       // Persistir de inmediato en D1 si se identificaron datos del usuario
       if (bookingState.slots.email || bookingState.slots.name || bookingState.slots.phone) {
