@@ -4221,9 +4221,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
 
 function escapeRegExp(string) {
+  return string ? string.replace(/[.*+?^${}()|[\]\\]/g, '\\function escapeRegExp(string) {
   return string ? string.replace(/[.*+?^${}()|[\]\\]/g, '\\// ==============================================================================
 // EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
 // ==============================================================================') : '';
+}') : '';
 }
 
 function stripUserEcho(botReply, userMessage) {
