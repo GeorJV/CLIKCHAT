@@ -4337,6 +4337,79 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   };
 }
 
+const STANDARD_BOOKING_SLOTS = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '05:00 PM'];
+
+function normalizeTimeSlot(t) {
+  if (!t) return '';
+  let str = t.trim().toUpperCase();
+  if (/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/.test(str)) {
+    const parts = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
+    let h = parseInt(parts[1], 10);
+    const m = parts[2];
+    let ampm = parts[3];
+    if (!ampm) {
+      ampm = h >= 12 ? 'PM' : 'AM';
+      if (h > 12) h -= 12;
+    }
+    return `${h.toString().padStart(2, '0')}:${m} ${ampm}`;
+  }
+  if (/^(\d{1,2})\s*(AM|PM)$/.test(str)) {
+    const parts = str.match(/^(\d{1,2})\s*(AM|PM)$/);
+    const h = parseInt(parts[1], 10);
+    return `${h.toString().padStart(2, '0')}:00 ${parts[2]}`;
+  }
+  return str;
+}
+
+function checkSlotAvailability(requestedDate, requestedTime, existingBookings = []) {
+  const normReqTime = normalizeTimeSlot(requestedTime);
+  const normReqDate = (requestedDate || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const bookedSlotsOnDate = [];
+
+  for (const b of existingBookings) {
+    if (b.status === 'cancelled') continue;
+    const bDate = (b.booking_date || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const bTime = normalizeTimeSlot(b.booking_time);
+
+    const isSameDate = bDate === normReqDate ||
+      (normReqDate.length > 4 && bDate.includes(normReqDate)) ||
+      (bDate.length > 4 && normReqDate.includes(bDate));
+
+    if (isSameDate) {
+      bookedSlotsOnDate.push(bTime);
+    }
+  }
+
+  const isUnavailable = bookedSlotsOnDate.some(t => t === normReqTime || (t && normReqTime && t.replace(/^0/, '') === normReqTime.replace(/^0/, '')));
+
+  const currentIdx = STANDARD_BOOKING_SLOTS.findIndex(s => normalizeTimeSlot(s) === normReqTime || s.replace(/^0/, '') === normReqTime.replace(/^0/, ''));
+
+  const availableSlots = [];
+  for (let i = (currentIdx >= 0 ? currentIdx + 1 : 0); i < STANDARD_BOOKING_SLOTS.length; i++) {
+    const slot = STANDARD_BOOKING_SLOTS[i];
+    const nSlot = normalizeTimeSlot(slot);
+    if (!bookedSlotsOnDate.includes(nSlot)) {
+      availableSlots.push(slot);
+    }
+  }
+  for (let i = 0; i < (currentIdx >= 0 ? currentIdx : STANDARD_BOOKING_SLOTS.length); i++) {
+    const slot = STANDARD_BOOKING_SLOTS[i];
+    const nSlot = normalizeTimeSlot(slot);
+    if (!bookedSlotsOnDate.includes(nSlot) && !availableSlots.includes(slot)) {
+      availableSlots.push(slot);
+    }
+  }
+
+  return {
+    isAvailable: !isUnavailable,
+    bookedSlotsOnDate,
+    nextAvailable: availableSlots[0] || '11:30 AM',
+    secondAvailable: availableSlots[1] || '02:00 PM'
+  };
+}
+
+
     // ==============================================================================
     // CHAT CONVERSACIONAL RAG EN EDGE: POST /api/chat/message (Serverless 24/7)
     // ==============================================================================
@@ -5301,7 +5374,38 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
 2) Responde amablemente con un tono sublime y honesto: "Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo/administrador te responda con todos los detalles. ¿Te gustaría dejar tu nombre o WhatsApp para avisarte al instante?"
 3) Si no conoces la respuesta o no tienes datos para responder con certeza absoluta, agrega obligatoriamente al final de tu respuesta la etiqueta técnica: <!--UNRESOLVED_QUERY-->`;
 
-        // Inyección de Control Inteligente de Agendamiento
+        // Inyección de Control Inteligente de Agendamiento & Consulta D1 en Milisegundos
+        let isSlotUnavailable = false;
+        let nextAvailableTime = '11:30 AM';
+        let secondAvailableTime = '02:00 PM';
+
+        if (bookingState.slots.date && bookingState.slots.time) {
+          try {
+            const existingBookings = await executeD1(
+              "SELECT booking_date, booking_time, status FROM bookings WHERE tenant_id = ?1 AND status != 'cancelled'",
+              [actualTenantId]
+            ).catch(() => []);
+
+            const availability = checkSlotAvailability(bookingState.slots.date, bookingState.slots.time, existingBookings);
+            if (!availability.isAvailable) {
+              isSlotUnavailable = true;
+              nextAvailableTime = availability.nextAvailable;
+              secondAvailableTime = availability.secondAvailable;
+
+              const conflictTime = bookingState.slots.time;
+              bookingState.slots.time = null;
+              bookingState.isComplete = false;
+              if (!bookingState.missing.includes('Hora de la cita')) {
+                bookingState.missing.push('Hora de la cita');
+              }
+              bookingState.currentStep = 4;
+              bookingState.stepInstruction = `PASO 4 (Horario Ocupado): El espacio de las "${conflictTime}" ya está reservado en nuestra agenda. Infórmale amablemente al cliente que ese espacio puntual ya lo tenemos reservado, y recomiéndale activamente el siguiente horario libre: "${nextAvailableTime}" o si le queda mejor "${secondAvailableTime}".`;
+            }
+          } catch (availErr) {
+            console.warn('Error verificando disponibilidad en D1:', availErr.message);
+          }
+        }
+
         if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
           contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
 Ubicación actual de datos en la conversación:
@@ -5316,6 +5420,26 @@ DATOS QUE FALTAN: [${bookingState.missing.join(', ') || 'NINGUNO - TODO COMPLETO
 DIRECTIVA OBLIGATORIA PARA TU RESPUESTA:
 --> ${bookingState.stepInstruction}
 
+${isSlotUnavailable ? `
+[ALERTA DE DISPONIBILIDAD EN TIEMPO REAL - VERIFICACIÓN EN D1 EN MILISEGUNDOS]:
+- El usuario solicitó el día ${bookingState.slots.date}.
+- RESULTADO D1: ¡ESE HORARIO YA ESTÁ RESERVADO POR OTRO CLIENTE EN NUESTRA AGENDA!
+- Siguiente horario libre recomendado: "${nextAvailableTime}"
+- Opción alternativa recomendada: "${secondAvailableTime}"
+
+DIRECTIVA OBLIGATORIA (MÁXIMA PRIORIDAD):
+Informa con tono profesional, cálido y empático que ese espacio exacto ya se encuentra reservado en nuestra agenda.
+Pregúntale amablemente si le serviría la siguiente hora programada: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
+Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado.
+` : (bookingState.slots.date && bookingState.slots.time ? `
+[VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:
+- Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${bookingState.slots.date} a las ${bookingState.slots.time}!
+
+DIRECTIVA OBLIGATORIA:
+Confirma con entusiasmo al cliente que acabas de verificar la disponibilidad en el sistema y que hay citas disponibles para ese día y hora, y que su cita ha sido agendada con éxito.
+Presenta el resumen de la cita (Día, Hora, Nombre, Correo, Teléfono) indicando que la cita queda agendada.
+` : '')}
+
 REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 1. ORDEN LÓGICO ESTRICTO:
    - Primero se recopila el NOMBRE y CORREO (si el usuario dio uno pero falta el otro, solicita puntualmente el que falta).
@@ -5323,8 +5447,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Tercero se consulta el DÍA O FECHA deseada.
    - Cuarto se ofrece opciones de HORARIOS DISPONIBLES dentro de horario comercial (ej: 10:00 AM, 2:30 PM, 4:00 PM).
 2. AUTORIZACIÓN CONDICIONAL ESTRICTA:
-   - Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir la tarjeta estructurada [BOOKING_CARD: {...}] mientras falte cualquiera de los 5 datos obligatorios.
-   - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}), autoriza la reserva con gran entusiasmo y emite obligatoriamente al final:
+   - Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir la tarjeta estructurada [BOOKING_CARD: {...}] mientras falte cualquiera de los 5 datos obligatorios o si el espacio no está disponible.
+   - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}) y haya disponibilidad comprobada, autoriza la reserva con gran entusiasmo y emite obligatoriamente al final:
      [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
 3. CERO CANALIZACIÓN EXTERNA A WHATSAPP:
    - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.`;

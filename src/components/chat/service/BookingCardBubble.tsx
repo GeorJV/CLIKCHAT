@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Mail, Phone, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { ServiceBookingData } from '../../../types/serviceChat';
 
@@ -14,7 +14,16 @@ export const BookingCardBubble: React.FC<Props> = ({
   bookingData, isConfirmed = false, businessPhone = '50672935612', storeName = 'GeoSoft', onConfirm
 }) => {
   const [confirmed, setConfirmed] = useState(isConfirmed);
+  const [isRevealed, setIsRevealed] = useState(isConfirmed);
   const cleanPhone = (businessPhone || '50672935612').replace(/[^\d]/g, '');
+
+  useEffect(() => {
+    if (isRevealed) return;
+    const timer = setTimeout(() => {
+      setIsRevealed(true);
+    }, 2800);
+    return () => clearTimeout(timer);
+  }, [isRevealed]);
 
   const openWhatsAppConfirmation = () => {
     const text = `📅 *CONFIRMACIÓN DE CITA - ${storeName.toUpperCase()}*\n\n` +
@@ -37,8 +46,20 @@ export const BookingCardBubble: React.FC<Props> = ({
     openWhatsAppConfirmation();
   };
 
+  if (!isRevealed) {
+    return (
+      <div className="w-full mt-2 py-2 px-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-300 font-sans animate-pulse">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+          <span className="text-[11px] font-medium text-emerald-200">Verificando disponibilidad en agenda oficial...</span>
+        </div>
+        <span className="text-[10px] text-zinc-400 font-mono">D1 fast query</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full mt-2.5 rounded-2xl bg-[#181717] border border-emerald-500/30 p-3.5 sm:p-4 text-slate-100 shadow-xl shadow-black/60 font-sans animate-bubble-in">
+    <div className="w-full mt-2.5 rounded-2xl bg-[#181717] border border-emerald-500/30 p-3.5 sm:p-4 text-slate-100 shadow-xl shadow-black/60 font-sans transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in slide-in-from-bottom-2">
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/[0.08]">
         <div className="flex items-center gap-2">
