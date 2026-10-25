@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CalendarCheck, Clock, User, Phone, Briefcase, Send, CheckCircle2 } from 'lucide-react';
+import { X, CalendarCheck, Clock, User, Mail, Phone, Briefcase, Send, CheckCircle2 } from 'lucide-react';
 import { ServiceBookingData } from '../../../types/serviceChat';
 
 interface Props {
@@ -71,6 +71,15 @@ export const BookedAppointmentModal: React.FC<Props> = ({
               <span className="font-semibold text-white truncate block">{booking.customerName}</span>
             </div>
           </div>
+          {booking.customerEmail && (
+            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#121111] border border-white/[0.04]">
+              <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[10px] text-zinc-500 block leading-none">Correo Electrónico</span>
+                <span className="font-semibold text-white truncate block">{booking.customerEmail}</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#121111] border border-white/[0.04]">
             <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
             <div className="min-w-0">

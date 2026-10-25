@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, Phone, CheckCircle2, Send, ShieldCheck, Sparkles } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { ServiceBookingData } from '../../../types/serviceChat';
 
 interface Props {
@@ -22,6 +22,7 @@ export const BookingCardBubble: React.FC<Props> = ({
       `• *Fecha:* ${bookingData.date}\n` +
       `• *Horario:* ${bookingData.timeSlot}\n` +
       `• *Cliente:* ${bookingData.customerName}\n` +
+      (bookingData.customerEmail ? `• *Correo:* ${bookingData.customerEmail}\n` : '') +
       `• *WhatsApp:* ${bookingData.customerPhone}\n` +
       `• *Modalidad:* ${bookingData.service?.serviceModality === 'presencial' ? 'Presencial' : 'Online (Google Meet)'}\n` +
       (bookingData.service?.price ? `• *Inversión:* $${bookingData.service.price} ${bookingData.service.currency || 'USD'}\n` : '') +
@@ -49,7 +50,7 @@ export const BookingCardBubble: React.FC<Props> = ({
               <span>Resumen de tu Cita</span>
               <Sparkles className="w-3 h-3 text-amber-400" />
             </h4>
-            <p className="text-[10px] text-zinc-400">Disponibilidad verificada en agenda</p>
+            <p className="text-[10px] text-zinc-400">Datos completos y disponibilidad verificada</p>
           </div>
         </div>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${confirmed ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'}`}>
@@ -80,9 +81,15 @@ export const BookingCardBubble: React.FC<Props> = ({
           </div>
           <div className="flex items-center gap-1.5 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
             <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200">{bookingData.customerPhone}</span>
+            <span className="text-[11px] text-zinc-200 truncate">{bookingData.customerPhone}</span>
           </div>
         </div>
+        {bookingData.customerEmail && (
+          <div className="flex items-center gap-2 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
+            <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="text-[11px] text-zinc-200 truncate">{bookingData.customerEmail}</span>
+          </div>
+        )}
       </div>
 
       {/* Action Button */}

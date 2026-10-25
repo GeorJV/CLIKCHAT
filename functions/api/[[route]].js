@@ -373,7 +373,7 @@ function getFallbackTenant(slug = '') {
       cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20deseo%20agendar%20una%20cita',
       welcome_message: '¡Hola! 🚀 Soy Agente GeoSoft, tu asesor de soluciones de software e inteligencia artificial. ¿Deseas cotizar un proyecto o agendar una cita?',
       system_prompt: 'Eres el Agente GeoSoft oficial de GeoSoft. Asesoras con excelencia en desarrollo de software, apps móviles e IA, y agendas citas de asesoría técnica paso a paso en el chat.',
-      sales_flow_rules: 'PASO 1: Diagnóstico de proyecto. PASO 2: Presentar servicio y precio. PASO 3: Agendar pidiendo dato por dato (Servicio -> Fecha -> Hora con opciones -> Nombre y WhatsApp). PASO 4: Confirmar disponibilidad y emitir [BOOKING_CARD: {...}].',
+      sales_flow_rules: 'PASO 1: Diagnóstico de asesoría. Solicitar Nombre completo y Correo electrónico. PASO 2: Solicitar Teléfono o WhatsApp para recordatorios. PASO 3: Solicitar Día/Fecha y ofrecer 2-3 opciones de Horarios. PASO 4: ÚNICAMENTE cuando los 5 datos estén completos, autorizar la reserva y emitir [BOOKING_CARD: {...}]. Prohibido mandar a WhatsApp por fuera.',
       order_ticket_format: '',
       phone: '+506 7293-5612'
     };
@@ -640,7 +640,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-1.5-flash'}:generateContent?key=${cKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-pro'}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1203,7 +1203,7 @@ Responde con formato Markdown limpio, usando viñetas y números claros. Incluye
         const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
           try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
         })();
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-1.5-flash'}:generateContent?key=${googleKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-pro'}:generateContent?key=${googleKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2360,6 +2360,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         customer_name TEXT NOT NULL,
+        customer_email TEXT,
         customer_phone TEXT NOT NULL,
         service_id TEXT,
         service_name TEXT NOT NULL,
@@ -2372,6 +2373,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         notes TEXT,
         created_at TEXT DEFAULT (datetime('now'))
       )`).catch(() => {});
+      await executeD1('ALTER TABLE bookings ADD COLUMN customer_email TEXT').catch(() => {});
 
       if (request.method === 'POST') {
         const body = await request.json().catch(() => ({}));
@@ -2385,6 +2387,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         const id = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
         const customerName = (body.customerName || body.clientName || 'Cliente').trim();
+        const customerEmail = (body.customerEmail || body.customer_email || body.email || '').trim();
         const customerPhone = (body.customerPhone || body.phone || '').trim();
         const serviceName = body.serviceName || body.serviceTitle || 'Servicio Profesional';
         const serviceId = body.serviceId || 'srv_gen';
@@ -2396,14 +2399,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         const notes = body.notes || '';
 
         await executeD1(
-          'INSERT INTO bookings (id, tenant_id, customer_name, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
-          [id, tenantId, customerName, customerPhone, serviceId, serviceName, bookingDate, bookingTime, modality, 'confirmed', price, currency, notes]
+          'INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)',
+          [id, tenantId, customerName, customerEmail, customerPhone, serviceId, serviceName, bookingDate, bookingTime, modality, 'confirmed', price, currency, notes]
         ).catch(() => {});
 
         return jsonResponse({
           success: true,
           booking: {
-            id, tenant_id: tenantId, customer_name: customerName, customer_phone: customerPhone,
+            id, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
             service_name: serviceName, booking_date: bookingDate, booking_time: bookingTime,
             modality, status: 'confirmed', price, currency, notes
           }
@@ -4180,6 +4183,160 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       }
     }
 
+
+// ==============================================================================
+// EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
+// ==============================================================================
+function extractBookingSlots(history, currentMessage, leadInfo = {}) {
+  const allUserMessages = [];
+  if (Array.isArray(history)) {
+    for (const h of history) {
+      if (h.sender === 'user' || h.role === 'user') {
+        allUserMessages.push(h.message || h.content || '');
+      }
+    }
+  }
+  if (currentMessage) {
+    allUserMessages.push(currentMessage);
+  }
+
+  let email = (leadInfo?.email && typeof leadInfo.email === 'string' && leadInfo.email.includes('@')) ? leadInfo.email.trim() : null;
+  let phone = (leadInfo?.phone && typeof leadInfo.phone === 'string' && leadInfo.phone.replace(/\D/g, '').length >= 8) ? leadInfo.phone.trim() : null;
+  let name = (leadInfo?.name && typeof leadInfo.name === 'string' && leadInfo.name.trim().length >= 2) ? leadInfo.name.trim() : null;
+  let date = null;
+  let time = null;
+
+  // 1. Extracción de Email
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i;
+  for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const m = allUserMessages[i].match(emailRegex);
+    if (m) {
+      email = m[0].trim();
+      break;
+    }
+  }
+
+  // 2. Extracción de Teléfono (mínimo 8 dígitos)
+  for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const msg = allUserMessages[i];
+    const pMatches = msg.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/g);
+    if (pMatches) {
+      for (const p of pMatches) {
+        if (!/^\d{4}$/.test(p.trim()) && !/^\d{1,2}:\d{2}$/.test(p.trim())) {
+          phone = p.trim();
+          break;
+        }
+      }
+    }
+    if (phone) break;
+  }
+
+  // 3. Extracción de Hora
+  const timeRegex = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:am|pm|a\.m\.|p\.m\.)\b|\b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b/i;
+  for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const tm = allUserMessages[i].match(timeRegex);
+    if (tm) {
+      time = tm[0].trim().toUpperCase();
+      break;
+    }
+  }
+
+  // 4. Extracción de Fecha / Día
+  const compositeDateRegex = /\b(?:el\s+)?(?:(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+)?(\d{1,2}\s+de\s+[a-záéíóú]+|\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|mañana|hoy|pasado\s+mañana)\b/i;
+  const simpleDayRegex = /\b(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/i;
+  for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const msg = allUserMessages[i];
+    const compMatch = msg.match(compositeDateRegex);
+    if (compMatch) {
+      date = compMatch[0].replace(/^el\s+/i, '').trim();
+      break;
+    }
+    const dayMatch = msg.match(simpleDayRegex);
+    if (dayMatch) {
+      date = dayMatch[0].replace(/^el\s+/i, '').trim();
+      break;
+    }
+  }
+
+  // 5. Extracción de Nombre
+  const namePatterns = [
+    /(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i,
+    /nombre:\s*([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i
+  ];
+  for (let i = allUserMessages.length - 1; i >= 0; i--) {
+    const msg = allUserMessages[i];
+    for (const pat of namePatterns) {
+      const nm = msg.match(pat);
+      if (nm && !name) {
+        name = nm[1].trim();
+        break;
+      }
+    }
+    if (name) break;
+  }
+
+  if (!name) {
+    for (let i = 0; i < allUserMessages.length; i++) {
+      let cleanMsg = allUserMessages[i].trim();
+      if (email && cleanMsg.includes(email)) {
+        cleanMsg = cleanMsg.replace(email, '').replace(/,|y|mi correo es/gi, '').trim();
+      }
+      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanMsg)) {
+        const norm = cleanMsg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        if (!/^(hola|buenas|agendar|cita|reunion|gracias|claro|si|no|ok|perfecto|lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|hoy)$/.test(norm)) {
+          name = cleanMsg;
+          break;
+        }
+      }
+    }
+  }
+
+  if (name) {
+    name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  }
+
+  const missing = [];
+  if (!name) missing.push('Nombre completo');
+  if (!email) missing.push('Correo electrónico');
+  if (!phone) missing.push('Teléfono / WhatsApp');
+  if (!date) missing.push('Día / Fecha de la cita');
+  if (!time) missing.push('Hora de la cita');
+
+  let currentStep = 1;
+  let stepInstruction = '';
+
+  if (!name || !email) {
+    currentStep = 1;
+    if (!name && !email) {
+      stepInstruction = 'PASO 1: Solicita amablemente el NOMBRE COMPLETO y el CORREO ELECTRÓNICO del usuario para iniciar el registro.';
+    } else if (!email) {
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el nombre ("${name}"), pero FALTA el correo electrónico. Salúdalo por su nombre y pídele puntualmente su correo electrónico.`;
+    } else {
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el correo ("${email}"), pero FALTA el nombre completo. Agradece el correo y pídele amablemente cómo se llama.`;
+    }
+  } else if (!phone) {
+    currentStep = 2;
+    stepInstruction = `PASO 2: Ya tienes nombre ("${name}") y correo ("${email}"). Ahora solicita su NÚMERO DE TELÉFONO O WHATSAPP para recordatorios.`;
+  } else if (!date) {
+    currentStep = 3;
+    stepInstruction = `PASO 3: Ya tienes nombre, correo y teléfono ("${phone}"). Ahora consulta qué DÍA O FECHA prefiere para la reunión.`;
+  } else if (!time) {
+    currentStep = 4;
+    stepInstruction = `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece 2 o 3 OPCIONES DE HORARIOS DISPONIBLES (ej: 10:00 AM, 2:30 PM o 4:00 PM) para que elija su HORA.`;
+  } else {
+    currentStep = 5;
+    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS! Autoriza la reserva con gran entusiasmo y emite el tag estructurado [BOOKING_CARD: {...}] con los 5 datos recopilados.`;
+  }
+
+  return {
+    slots: { name, email, phone, date, time },
+    missing,
+    isComplete: missing.length === 0,
+    currentStep,
+    stepInstruction
+  };
+}
+
     // ==============================================================================
     // CHAT CONVERSACIONAL RAG EN EDGE: POST /api/chat/message (Serverless 24/7)
     // ==============================================================================
@@ -4322,6 +4479,29 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         sessionHistory = [];
       }
 
+      // 4.1 DETECCIÓN INTELIGENTE DE AGENDAMIENTO & EXTRACCIÓN DE SLOTS
+      const isBookingContext = (
+        /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|consultoria|consultor[ií]a|reservar|reserva|calendario|disponibilidad|horario|espacio)\b/i.test(message) ||
+        sessionHistory.some(h => /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|reservar|reserva|calendario)\b/i.test(h.message || ''))
+      );
+
+      const bookingState = extractBookingSlots(sessionHistory, message, leadInfo);
+
+      // Persistir de inmediato en D1 si se identificaron datos del usuario
+      if (bookingState.slots.email || bookingState.slots.name || bookingState.slots.phone) {
+        try {
+          await executeD1(
+            'UPDATE chat_sessions SET user_name = COALESCE(?1, user_name), user_email = COALESCE(?2, user_email), user_phone = COALESCE(?3, user_phone), updated_at = datetime(\'now\') WHERE id = ?4',
+            [bookingState.slots.name, bookingState.slots.email, bookingState.slots.phone, currentSessionId]
+          ).catch(() => {});
+
+          await executeD1(
+            'UPDATE crm_leads SET name = COALESCE(?1, name), email = COALESCE(?2, email), phone = COALESCE(?3, phone), updated_at = datetime(\'now\') WHERE session_id = ?4 OR id = ?5',
+            [bookingState.slots.name, bookingState.slots.email, bookingState.slots.phone, currentSessionId, 'lead_' + currentSessionId]
+          ).catch(() => {});
+        } catch (syncSlotsErr) {}
+      }
+
       // 5. Carga Paralela de Fuentes de Conocimiento (FAQs, Catálogo y Documentos RAG)
       let faqs = [];
       let products = [];
@@ -4438,7 +4618,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         && queryWords.length <= 4
         && !hasDirectProductMatch
         && !isCheckoutOrOrderQuery
-        && !requiresDeepRAG;
+        && !requiresDeepRAG
+        && !isBookingContext;
 
       if (isSimpleGreeting) {
         const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
@@ -4454,27 +4635,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
               ? `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. En qué te puedo colaborar hoy o qué se te antoja ordenar?`
               : `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. En qué te puedo colaborar hoy?`);
 
-        // Auto-rescate tolerante de tarjeta visual de cita si el LLM confirmó en texto pero omitió el tag
-        if (isBookingQuery && llmResult.text && !llmResult.text.includes('[BOOKING_CARD:')) {
-          const isConfirming = /registrado\s+tu\s+(?:nombre|informaci[oó]n|cita)|cita\s+del|cita\s+para\s+el|qued[oó]\s+agendad|reserva\s+confirmad|cita\s+est[aá]\s+confirmada/i.test(llmResult.text);
-          if (isConfirming) {
-            const dateMatch = llmResult.text.match(/(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|[0-9]{1,2}\s+de\s+[a-záéíóú]+|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
-            const timeMatch = llmResult.text.match(/([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm|AM|PM)|[0-9]{1,2}:[0-9]{2})/);
-            const nameMatch = llmResult.text.match(/(?:Genial|Excelente|Perfecto|Gracias|Hola),?\s*([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
-            const phoneMatch = message.match(/(\+?[0-9\s\-]{8,15})/);
 
-            const cardData = {
-              service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Especializado'),
-              date: dateMatch ? dateMatch[0].replace(/^el\s+/i, '').trim() : '25 de Octubre',
-              time: timeMatch ? timeMatch[0].trim() : '10:00 AM',
-              customerName: nameMatch ? nameMatch[1].trim() : 'Cliente',
-              customerPhone: phoneMatch ? phoneMatch[0].trim() : (targetTenant.phone || '+506 7293-5612'),
-              modality: 'online',
-              price: 1200
-            };
-            llmResult.text += '\n\n[BOOKING_CARD: ' + JSON.stringify(cardData) + ']';
-          }
-        }
 
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
@@ -5140,6 +5301,35 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
 2) Responde amablemente con un tono sublime y honesto: "Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo/administrador te responda con todos los detalles. ¿Te gustaría dejar tu nombre o WhatsApp para avisarte al instante?"
 3) Si no conoces la respuesta o no tienes datos para responder con certeza absoluta, agrega obligatoriamente al final de tu respuesta la etiqueta técnica: <!--UNRESOLVED_QUERY-->`;
 
+        // Inyección de Control Inteligente de Agendamiento
+        if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
+          contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
+Ubicación actual de datos en la conversación:
+- 1. Nombre completo: ${bookingState.slots.name ? `OBTENIDO ("${bookingState.slots.name}")` : 'FALTANTE'}
+- 2. Correo electrónico: ${bookingState.slots.email ? `OBTENIDO ("${bookingState.slots.email}")` : 'FALTANTE'}
+- 3. Teléfono / WhatsApp: ${bookingState.slots.phone ? `OBTENIDO ("${bookingState.slots.phone}")` : 'FALTANTE'}
+- 4. Día / Fecha de cita: ${bookingState.slots.date ? `OBTENIDO ("${bookingState.slots.date}")` : 'FALTANTE'}
+- 5. Hora de la cita: ${bookingState.slots.time ? `OBTENIDO ("${bookingState.slots.time}")` : 'FALTANTE'}
+
+DATOS QUE FALTAN: [${bookingState.missing.join(', ') || 'NINGUNO - TODO COMPLETO'}]
+
+DIRECTIVA OBLIGATORIA PARA TU RESPUESTA:
+--> ${bookingState.stepInstruction}
+
+REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
+1. ORDEN LÓGICO ESTRICTO:
+   - Primero se recopila el NOMBRE y CORREO (si el usuario dio uno pero falta el otro, solicita puntualmente el que falta).
+   - Segundo se solicita el TELÉFONO o WHATSAPP para recordatorios.
+   - Tercero se consulta el DÍA O FECHA deseada.
+   - Cuarto se ofrece opciones de HORARIOS DISPONIBLES dentro de horario comercial (ej: 10:00 AM, 2:30 PM, 4:00 PM).
+2. AUTORIZACIÓN CONDICIONAL ESTRICTA:
+   - Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir la tarjeta estructurada [BOOKING_CARD: {...}] mientras falte cualquiera de los 5 datos obligatorios.
+   - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}), autoriza la reserva con gran entusiasmo y emite obligatoriamente al final:
+     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+3. CERO CANALIZACIÓN EXTERNA A WHATSAPP:
+   - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.`;
+        }
+
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
 
         const llmResult = await callEdgeLLM({
@@ -5159,6 +5349,39 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
             : '¡Hola! Con mucho gusto te atiendo. ¿En qué te puedo asesorar o qué producto estás buscando el día de hoy?'
         );
         llmResult.text = adaptTemporalGreetings(llmResult.text, timePeriod);
+
+        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA
+        if (bookingState.isComplete) {
+          if (!llmResult.text.includes('[BOOKING_CARD:')) {
+            const cardData = {
+              service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
+              date: bookingState.slots.date || 'Próxima fecha',
+              time: bookingState.slots.time || '10:00 AM',
+              customerName: bookingState.slots.name || 'Cliente',
+              customerEmail: bookingState.slots.email || '',
+              customerPhone: bookingState.slots.phone || (targetTenant.phone || '+506 7293-5612'),
+              modality: 'online',
+              price: targetTenant.name === 'GeoSoft' ? 1200 : 0
+            };
+            llmResult.text += '\n\n[BOOKING_CARD: ' + JSON.stringify(cardData) + ']';
+          } else {
+            try {
+              const cardMatch = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
+              if (cardMatch) {
+                const parsedCard = JSON.parse(cardMatch[1]);
+                if (!parsedCard.customerEmail && bookingState.slots.email) {
+                  parsedCard.customerEmail = bookingState.slots.email;
+                  llmResult.text = llmResult.text.replace(cardMatch[0], '[BOOKING_CARD: ' + JSON.stringify(parsedCard) + ']');
+                }
+              }
+            } catch (e) {}
+          }
+        } else {
+          // Si faltan datos, queda TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD]
+          if (llmResult.text.includes('[BOOKING_CARD:')) {
+            llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
+          }
+        }
 
         // Detección Human-in-the-Loop: Si no conoce la respuesta, registrar en unresolved_queries en D1
         const isUnresolvedQuery = Boolean(
@@ -5626,7 +5849,7 @@ Si aún falta información para cubrir los 4 pasos, NO generes [SETUP_PAYLOAD]. 
         try {
           const googleKey = env?.GOOGLE_API_KEY || '';
           if (googleKey) {
-            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-1.5-flash'}:generateContent?key=${googleKey}`;
+            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${env?.GOOGLE_MODEL || 'gemini-pro'}:generateContent?key=${googleKey}`;
             const gResp = await fetch(gUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

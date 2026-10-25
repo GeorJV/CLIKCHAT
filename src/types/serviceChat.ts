@@ -1,4 +1,4 @@
-﻿export interface ServiceItem {
+export interface ServiceItem {
   id: string;
   tenantId?: string;
   title: string;
@@ -21,6 +21,7 @@ export interface ServiceBookingData {
   date: string;
   timeSlot: string;
   customerName: string;
+  customerEmail?: string;
   customerPhone: string;
   notes?: string;
 }

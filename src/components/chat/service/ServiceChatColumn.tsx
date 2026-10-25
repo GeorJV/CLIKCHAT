@@ -30,7 +30,8 @@ function parseBookingCard(text: string): { cleanContent: string; bookingData: Se
         cleanContent: clean,
         bookingData: {
           service: { id: p.serviceId || 'srv_selected', title: p.service || p.serviceTitle || 'Desarrollo Web & SaaS', price: Number(p.price) || 1200, currency: p.currency || 'USD', image: '', serviceModality: 'online' },
-          date: p.date || '25 de Octubre', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || ''
+          date: p.date || '25 de Octubre', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente',
+          customerEmail: p.customerEmail || p.email || '', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || ''
         }
       };
     } catch {}
@@ -40,13 +41,15 @@ function parseBookingCard(text: string): { cleanContent: string; bookingData: Se
     const dateM = text.match(/(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|[0-9]{1,2}\s+de\s+[a-záéíóú]+|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
     const timeM = text.match(/([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm|AM|PM)|[0-9]{1,2}:[0-9]{2})/i);
     const nameM = text.match(/(?:Genial|Excelente|Perfecto|Gracias|Hola),?\s*([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
+    const emailM = text.match(/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/);
     const phoneM = text.match(/(\+?[0-9\s\-]{8,16})/);
     return {
       cleanContent: text,
       bookingData: {
         service: { id: 'srv_selected', title: 'Desarrollo Web & SaaS', price: 1200, currency: 'USD', image: '', serviceModality: 'online' },
         date: dateM ? dateM[0].replace(/^el\s+/i, '').trim() : '25 de Octubre', timeSlot: timeM ? timeM[0].trim() : '10:00 AM',
-        customerName: nameM ? nameM[1].trim() : 'Cliente', customerPhone: phoneM ? phoneM[0].trim() : '+506 7293-5612', notes: ''
+        customerName: nameM ? nameM[1].trim() : 'Cliente', customerEmail: emailM ? emailM[1].trim() : '',
+        customerPhone: phoneM ? phoneM[0].trim() : '+506 7293-5612', notes: ''
       }
     };
   }
