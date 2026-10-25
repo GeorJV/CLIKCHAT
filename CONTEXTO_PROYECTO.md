@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 21:50 GMT-6
-- **Versión Actual:** 2.3.3 (Inteligencia Consultiva, Empatía y Validación Integral de Citas y Descansos)
+- **Última Actualización:** 2026-10-24 22:10 GMT-6
+- **Versión Actual:** 2.3.4 (Confirmación con Día de Semana + Fecha Completa y Cero Eco del Cliente)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `e38e2d5`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `b0e316a`)
 - **Estado Actual del Sistema:**
-  - Inteligencia Consultiva & Empatía Humana: El bot no empuja ventas; escucha, comprende miedos/metas y hace sentir valioso al cliente.
+  - Inteligencia Consultiva & Empatía Humana: Escucha activa, comprensión de metas/miedos y asesoría sin presión de venta.
   - Flujo de Agendamiento Verificado: Paso 1 (Nombre/Email) -> Paso 2 (WhatsApp) -> Paso 3 (Día) -> Paso 4 (Horas) -> Paso 5 (Cita).
-  - Consulta D1 en Milisegundos con Descansos: Detecta ocupación por cita y buffer de descanso, sugiriendo la siguiente hora programada.
-  - Tarjeta con Micro-Animación a los 3s: Despliegue con física de resorte táctil Emil Kowalski tras confirmación en chat.
-  - Panel de Configuración de Intervalos: BookingIntervalConfig (155 líneas) integrado en AgendaTab y CRM Vocero.
+  - Confirmación con Día y Fecha Completa: Algoritmo `formatFullDayAndDate` emite "Día, DD de Mes de AAAA" tanto en texto como en BOOKING_CARD.
+  - Cero Eco del Cliente: Filtro determinista `stripUserEcho` y reglas LLM que erradican citas repetitivas del input del usuario.
+  - Consulta D1 en Milisegundos con Descansos: Ocupación por cita + buffer de descanso con recomendación de siguiente hora.
+  - Tarjeta con Micro-Animación a los 3s: Física de resorte táctil Emil Kowalski y botón de confirmación por WhatsApp.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

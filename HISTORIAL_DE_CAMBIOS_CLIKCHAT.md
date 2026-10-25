@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Formato Canónico de Citas (Día de la Semana + Fecha Completa) y Erradicación del Eco del Usuario (v2.3.4)
+- **Diagnóstico y Necesidad:**
+  1. *Día y Fecha en la Confirmación:* Al confirmar la cita, el bot debe incluir obligatoriamente tanto el día de la semana como la fecha completa (ej: "Lunes, 26 de Octubre de 2026" o "Viernes, 30 de Octubre de 2026"), en lugar de solo un día aislado o fecha numérica abstracta.
+  2. *Erradicación Total del Eco:* El bot no debe repetir la respuesta del usuario como parte de su propia respuesta (evitar fórmulas como "Entendido que tu correo es...", "Dices que...", o citar textualmente la frase del cliente).
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js:
+     - Creada función canónica `formatFullDayAndDate(dateInput, refDate)`: convierte cualquier entrada del usuario ("viernes", "mañana", "2026-10-26", "26 de octubre") calculando el día de la semana y emitiendo el formato `"Día, DD de Mes de AAAA"` (ej. `"Lunes, 26 de Octubre de 2026"`).
+     - Creado filtro determinista `stripUserEcho(botReply, userMessage)`: remueve quirúrgicamente citas directas o confirmaciones redundantes de eco que repitan el input del cliente.
+     - Directiva nuclear `8. PROHIBICIÓN ABSOLUTA DE REPETIR O HACER ECO DE LA RESPUESTA DEL USUARIO` inyectada en el prompt del Edge LLM y en las reglas del bloque de agendamiento.
+     - Formato canónico integrado en el payload de la tarjeta visual `[BOOKING_CARD: {"date": "...", ...}]`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.67s con 0 errores TypeScript (`index-DSu79aEc.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `b0e316a`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Pruebas en Vivo en Edge API:*
+    * Caso fecha: Envío de `"2026-10-26"` -> Respuesta emitida: `"Lunes, 26 de Octubre de 2026"` en texto y en `[BOOKING_CARD]`. Cero eco.
+    * Caso día relativo: Envío de `"este viernes"` -> Proyección canónica a `"Viernes, 30 de Octubre de 2026"` en texto y en `[BOOKING_CARD]`. Cero eco.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Auditoría Integral: Inteligencia Consultiva, Empatía y Validación de Citas y Descansos (v2.3.3)
 - **Diagnóstico y Necesidad:**
   1. *Comportamiento Consultivo y Empatía Humana:* El usuario requirió verificar que el bot no se limite a intentar vender, sino que sea empático, comprenda la necesidad real del cliente, escuche sus dudas y lo haga sentir valioso e importante antes de cualquier propuesta comercial.
