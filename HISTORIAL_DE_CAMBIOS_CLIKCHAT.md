@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Claridad e Inteligencia Suprema: Parser de Horas Coloquiales, Cero Titubeos y Buffer de Tokens (v2.3.5)
+- **Diagnóstico y Necesidad:**
+  1. *Respuesta Rara / Falta de Claridad:* En situaciones donde el usuario aceptaba una hora alternativa o expresaba horarios coloquialmente (ej: "Si 9 y 40 esta bien"), el bot generaba respuestas confusas e incoherentes ("Me alegra que hayas elegido el horario de 8:40am no, sino que elegiste las 9:40 am").
+  2. *Causa Raíz Identificada en Auditoría D1:* La expresión horaria "9 y 40" no era capturada por la regex anterior, provocando que el extractor tomara una hora ocupada antigua del historial (8:00 AM) y enviara al LLM instrucciones contradictorias.
+  3. *Truncamiento de Tokens:* Las respuestas largas en Cloudflare Workers AI Llama 3.3 se cortaban a la mitad (falta de `max_tokens: 1024`), impidiendo la emisión correcta de la tarjeta y frases finales.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. functions/api/[[route]].js:
+     - Creada función `parseFlexibleTime`: reconoce con precisión matemática expresiones coloquiales en español ("9 y 40", "9 y media", "a las 10", "3 de la tarde", "2 y cuarto", "8 y 20") normalizándolas inmediatamente a `HH:MM AM/PM`.
+     - Integración en `extractBookingSlots`, `parseTimeToMinutes` y `normalizeTimeSlot`: garantiza prioridad absoluta a la hora actual del usuario sin retroceder a horas descartadas.
+     - Directiva Nuclear 9 en `callEdgeLLM`: Prohibición total de titubeos, contradicciones o auto-correcciones ("no elegiste X sino Y"), exigiendo respuestas 100% claras, ejecutivas, inteligentes y certeras.
+     - Ampliación de Buffer: `max_tokens: 1024` configurado en Cloudflare Workers AI y 1000 en respaldos, erradicando textos truncados.
+     - Resiliencia de Memoria: Integración de `conversationHistory` y recuperación de slots desde `chat_sessions`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 8.48s con 0 errores TypeScript (`index-DSu79aEc.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `852a8f8`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Prueba Conversacional en Producción:*
+    * Escenario real: Usuario responde "Si 9 y 40 esta bien" tras sugerencia previa.
+    * Resultado: Confirmación inmediata, ejecutiva y elegante para "Lunes, 26 de Octubre de 2026 a las 09:40 AM" con tarjeta `[BOOKING_CARD]` completa y cero frases raras.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Formato Canónico de Citas (Día de la Semana + Fecha Completa) y Erradicación del Eco del Usuario (v2.3.4)
 - **Diagnóstico y Necesidad:**
   1. *Día y Fecha en la Confirmación:* Al confirmar la cita, el bot debe incluir obligatoriamente tanto el día de la semana como la fecha completa (ej: "Lunes, 26 de Octubre de 2026" o "Viernes, 30 de Octubre de 2026"), en lugar de solo un día aislado o fecha numérica abstracta.

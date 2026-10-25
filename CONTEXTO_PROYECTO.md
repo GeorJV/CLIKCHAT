@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 22:10 GMT-6
-- **Versión Actual:** 2.3.4 (Confirmación con Día de Semana + Fecha Completa y Cero Eco del Cliente)
+- **Última Actualización:** 2026-10-24 22:18 GMT-6
+- **Versión Actual:** 2.3.5 (Claridad e Inteligencia Suprema: Parser de Horas Coloquiales, Cero Titubeos y Buffer de Tokens)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `b0e316a`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `852a8f8`)
 - **Estado Actual del Sistema:**
-  - Inteligencia Consultiva & Empatía Humana: Escucha activa, comprensión de metas/miedos y asesoría sin presión de venta.
+  - Inteligencia y Claridad Suprema: Respuestas directas, ejecutivas y sin titubeos ni auto-correcciones incoherentes.
+  - Parser de Horas Coloquiales: `parseFlexibleTime` interpreta "9 y 40", "9 y media", "a las 10" normalizando a HH:MM AM/PM.
+  - Cero Truncamientos: Buffer ampliado a 1024 tokens en Cloudflare Workers AI eliminando cortes de texto a la mitad.
   - Flujo de Agendamiento Verificado: Paso 1 (Nombre/Email) -> Paso 2 (WhatsApp) -> Paso 3 (Día) -> Paso 4 (Horas) -> Paso 5 (Cita).
   - Confirmación con Día y Fecha Completa: Algoritmo `formatFullDayAndDate` emite "Día, DD de Mes de AAAA" tanto en texto como en BOOKING_CARD.
-  - Cero Eco del Cliente: Filtro determinista `stripUserEcho` y reglas LLM que erradican citas repetitivas del input del usuario.
   - Consulta D1 en Milisegundos con Descansos: Ocupación por cita + buffer de descanso con recomendación de siguiente hora.
-  - Tarjeta con Micro-Animación a los 3s: Física de resorte táctil Emil Kowalski y botón de confirmación por WhatsApp.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
