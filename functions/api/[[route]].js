@@ -621,7 +621,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - Termina siempre con una sola pregunta abierta, amable y entusiasta que invite al cliente a continuar la charla de forma fluida (ej: '¿En qué canal te gustaría automatizar primero?' o '¿Te gustaría ver una prueba con tus propios productos?').${temporalInstruction}
 7. ESTILO DE CHAT HUMANIZADO REAL Y SIGNOS DE INTERROGACIÓN:
    - Al formular cualquier pregunta, utiliza ÚNICAMENTE el signo de interrogación de cierre (?). Queda TERMINANTEMENTE PROHIBIDO usar el signo de apertura (¿). Ejemplo correcto: 'Cómo te va hoy? Deseas que te tome el pedido?'.
-   - Tampoco utilices signos de exclamación de apertura (¡). Usa tono cercano y natural de WhatsApp.`;
+   - Tampoco utilices signos de exclamación de apertura (¡). Usa tono cercano y natural de WhatsApp.
+8. PROHIBICIÓN ABSOLUTA DE REPETIR O HACER ECO DE LA RESPUESTA DEL USUARIO:
+   - Queda TERMINANTEMENTE PROHIBIDO repetir, citar o hacer eco de las respuestas o palabras que el cliente acaba de escribir como parte de tu mensaje (por ejemplo: NO digas "Entendido que tu teléfono es...", NO digas "Dices que...", NO digas "Me indicas '...'").
+   - Responde de forma directa, elegante, humana y ejecutiva, avanzando de inmediato al siguiente paso sin parafrasear lo que el cliente ya te dijo.
+   - En la confirmación de la cita, indica con claridad y elegancia el DÍA DE LA SEMANA y la FECHA COMPLETA (ej: "Viernes, 25 de Octubre de 2026").`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -4215,6 +4219,105 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     }
 
 
+
+function escapeRegExp(string) {
+  return string ? string.replace(/[.*+?^${}()|[\]\\]/g, '\\// ==============================================================================
+// EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
+// ==============================================================================') : '';
+}
+
+function stripUserEcho(botReply, userMessage) {
+  if (!botReply || !userMessage) return botReply;
+  let cleanReply = botReply;
+  const trimmedUser = userMessage.trim();
+
+  if (trimmedUser.length >= 3) {
+    const quoteRegex = new RegExp(`^(?:(?:me dices|dices que|indicaste que|mencionas que|veo que dices|según me indicas|has dicho|dijiste)[:\\s]*["'«]?${escapeRegExp(trimmedUser)}["'»]?[.,;:!?-]*\\s*)`, 'i');
+    cleanReply = cleanReply.replace(quoteRegex, '');
+
+    const directQuote = new RegExp(`^["'«]${escapeRegExp(trimmedUser)}["'»][.,;:!?-]*\\s*`, 'i');
+    cleanReply = cleanReply.replace(directQuote, '');
+  }
+
+  cleanReply = cleanReply.replace(/^(?:(?:entendido|registrado|anotado|comprendido)s+(?:ques+)?(?:tus+(?:correo|nombre|tel[eé]fono|whatsapp|informaci[oó]n|dato|mensaje)s+es[^.!?\n]+[.!?\n]+)\s*)+/i, '');
+
+  return cleanReply.trim();
+}
+
+function formatFullDayAndDate(dateInput, refDate = new Date()) {
+  if (!dateInput) return '';
+  let str = dateInput.trim();
+
+  const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  const clean = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  if (clean === 'hoy') {
+    const d = new Date(refDate);
+    return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  }
+
+  if (clean === 'manana' || clean === 'mañana') {
+    const d = new Date(refDate);
+    d.setDate(d.getDate() + 1);
+    return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  }
+
+  if (clean.includes('pasado manana') || clean.includes('pasado mañana')) {
+    const d = new Date(refDate);
+    d.setDate(d.getDate() + 2);
+    return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  }
+
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const dayNum = parseInt(isoMatch[3], 10);
+    const d = new Date(y, m, dayNum, 12, 0, 0);
+    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
+  }
+
+  const slashMatch = str.match(/^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$/);
+  if (slashMatch) {
+    const dayNum = parseInt(slashMatch[1], 10);
+    const m = parseInt(slashMatch[2], 10) - 1;
+    const y = slashMatch[3] ? (slashMatch[3].length === 2 ? 2000 + parseInt(slashMatch[3], 10) : parseInt(slashMatch[3], 10)) : refDate.getFullYear();
+    const d = new Date(y, m, dayNum, 12, 0, 0);
+    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
+  }
+
+  const textDateMatch = str.match(/(?:(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)[,\s]+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del?\s+)?(\d{4}))?/i);
+  if (textDateMatch) {
+    const dayNum = parseInt(textDateMatch[2], 10);
+    const monthName = textDateMatch[3].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const monthMap = {
+      enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+      julio: 6, agosto: 7, setiembre: 8, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+    };
+    const m = monthMap[monthName] !== undefined ? monthMap[monthName] : refDate.getMonth();
+    const y = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : refDate.getFullYear();
+    const d = new Date(y, m, dayNum, 12, 0, 0);
+    const dayOfWeekName = daysOfWeek[d.getDay()];
+    return `${dayOfWeekName}, ${dayNum} de ${months[m]} de ${y}`;
+  }
+
+  const dayOnlyMatch = clean.match(/(lunes|martes|miercoles|jueves|viernes|sabado|domingo)/);
+  if (dayOnlyMatch) {
+    const targetDayName = dayOnlyMatch[1];
+    const targetDayIdx = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6 }[targetDayName];
+    const d = new Date(refDate);
+    const currentDay = d.getDay();
+    let diff = targetDayIdx - currentDay;
+    if (diff <= 0) diff += 7;
+    d.setDate(d.getDate() + diff);
+    return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  }
+
+  return str;
+}
+
 // ==============================================================================
 // EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
 // ==============================================================================
@@ -4279,12 +4382,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     const msg = allUserMessages[i];
     const compMatch = msg.match(compositeDateRegex);
     if (compMatch) {
-      date = compMatch[0].replace(/^el\s+/i, '').trim();
+      date = formatFullDayAndDate(compMatch[0].replace(/^el\s+/i, '').trim());
       break;
     }
     const dayMatch = msg.match(simpleDayRegex);
     if (dayMatch) {
-      date = dayMatch[0].replace(/^el\s+/i, '').trim();
+      date = formatFullDayAndDate(dayMatch[0].replace(/^el\s+/i, '').trim());
       break;
     }
   }
@@ -5527,6 +5630,9 @@ Presenta el resumen de la cita (Día, Hora, Nombre, Correo, Teléfono) indicando
 ` : '')}
 
 REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
+0. DÍA DE LA SEMANA Y FECHA OBLIGATORIA (CERO ECO DEL CLIENTE):
+   - Al confirmar la cita, incluye OBLIGATORIAMENTE el DÍA DE LA SEMANA y la FECHA COMPLETA (ejemplo: "${bookingState.slots.date || 'Día y Fecha Completa'}").
+   - PROHIBIDO TERMINANTEMENTE repetir como loro la respuesta del usuario como parte de tu respuesta. Avanza de inmediato con tu mensaje sin hacer eco de lo que él escribió.
 1. ORDEN LÓGICO ESTRICTO:
    - Primero se recopila el NOMBRE y CORREO (si el usuario dio uno pero falta el otro, solicita puntualmente el que falta).
    - Segundo se solicita el TELÉFONO o WHATSAPP para recordatorios.
@@ -5552,7 +5658,10 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           customKey: targetTenant.custom_llm_key,
           userTimeInfo
         });
-        const cleanReply = sanitizeAiResponse(llmResult?.text);
+        let cleanReply = sanitizeAiResponse(llmResult?.text);
+        if (cleanReply) {
+          cleanReply = stripUserEcho(cleanReply, message);
+        }
         llmResult.text = cleanReply || (
           targetTenant.business_type === 'restaurante'
             ? '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?'
@@ -5565,7 +5674,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
               service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
-              date: bookingState.slots.date || 'Próxima fecha',
+              date: formatFullDayAndDate(bookingState.slots.date) || 'Próxima fecha',
               time: bookingState.slots.time || '10:00 AM',
               customerName: bookingState.slots.name || 'Cliente',
               customerEmail: bookingState.slots.email || '',
