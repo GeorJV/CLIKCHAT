@@ -16,6 +16,35 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Calendario Inteligente por Pasos con Control de Slots y Autorización Estricta (v2.3.0)
+- **Diagnóstico y Necesidad:**
+  1. *Orden Lógico y Estructurado de Agendamiento:* El usuario requería que el calendario del bot en el sistema general tuviera un orden lógico estricto y supiera con certeza qué datos necesita recopilar (Nombre, Correo, Teléfono, Día y Hora).
+  2. *Inteligencia y Detección de Datos Faltantes:* El bot debía ser inteligente para detectar en tiempo real qué dato no entregó el usuario (ej: si entregó el nombre pero no el correo, o si entregó la fecha pero no el teléfono) y solicitar puntualmente el dato faltante en su orden correspondiente.
+  3. *Autorización Condicional Estricta:* Prohibición absoluta de autorizar la cita o emitir la tarjeta estructurada `[BOOKING_CARD]` mientras falte cualquiera de los 5 datos. Únicamente cuando los 5 slots estén 100% completos, el bot autoriza la reserva y genera la tarjeta interactiva con el botón grande de confirmación y guardado.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Serverless Edge):**
+  1. functions/api/[[route]].js:
+     - Creado extractor determinista de slots `extractBookingSlots(history, message, leadInfo)` que analiza en cada turno el estado de los 5 datos clave (`name`, `email`, `phone`, `date`, `time`).
+     - Protocolo de 5 pasos inyectado en tiempo real en el prompt de contexto:
+       * Paso 1: Solicitar Nombre completo y Correo electrónico (o solicitar el faltante si entregó uno solo).
+       * Paso 2: Solicitar Teléfono o WhatsApp para recordatorios.
+       * Paso 3: Solicitar Día o Fecha de preferencia.
+       * Paso 4: Ofrecer 2-3 opciones de Horarios disponibles (ej: 10:00 AM, 2:30 PM, 4:00 PM).
+       * Paso 5: Autorización y confirmación con emisión obligatoria de `[BOOKING_CARD: {...}]` con todos los datos y `customerEmail`.
+     - Blindaje doble en Edge: erradicación automática de tags `[BOOKING_CARD]` si faltan slots (`missing.length > 0`), y auto-garantía de tarjeta cuando `missing.length === 0`.
+     - Actualizado endpoint `POST /api/bookings` con columna `customer_email TEXT` y persistencia en D1.
+     - Persistencia sincronizada en tiempo real de `email`, `name` y `phone` en `chat_sessions` y `crm_leads`.
+  2. src/types/serviceChat.ts (27 líneas), BookingCardBubble.tsx (126 líneas), BookedAppointmentModal.tsx (119 líneas), ServiceChatColumn.tsx (178 líneas) & ServiceChatView.tsx (168 líneas):
+     - Soporte integral de `customerEmail` en tipos, visualización de tarjeta, modal de cita y persistencia en D1.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) con 0 errores TypeScript. Bundle: `dist/assets/index-Bqy6reTf.js`.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `00401cb`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Validación en Vivo:* Flujo conversacional de 6 turnos probado contra la API de producción verificando la solicitud ordenada, detección de correo faltante y emisión de `[BOOKING_CARD]` únicamente al completar los 5 datos.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Blindaje de Agendamiento en Chat, Switch en Citas y Erradicación de Botones Superiores (v2.2.9)
 - **Diagnóstico y Necesidad:**
   1. *Desvío No Deseado a WhatsApp:* El bot comercial estaba enviando el número de WhatsApp oficial en lugar de pedir los datos y agendar directamente en el chat, debido a instrucciones legadas en operational_rules y sales_flow_rules en base de datos.

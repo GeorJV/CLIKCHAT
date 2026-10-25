@@ -1,17 +1,18 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 00:08 GMT-6
-- **Versión Actual:** 2.2.9 (Blindaje Agendamiento Chat, Switch Citas y Pantalla Superior Despejada)
+- **Última Actualización:** 2026-10-24 21:32 GMT-6
+- **Versión Actual:** 2.3.0 (Calendario Inteligente por Pasos: Nombre/Email -> Tel -> Día -> Hora -> Autorización)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `00401cb`)
 - **Estado Actual del Sistema:**
-  - Agendamiento Conversacional: Prohibido mandar a WhatsApp por fuera. El bot pide datos en orden y confirma en el chat.
-  - Switch de Agendamiento en Citas: Toggle interactivo en AgendaTab y VoceroBookingsView (Permitir al agente agendar citas en el chat).
-  - Pantalla Superior Despejada: Eliminados los 2 botones superiores de agendar; preservado únicamente el botón inferior en pills.
-  - Tarjeta Visual en Chat: BookingCardBubble con parser híbrido y botón grande "Confirmo cita y guardar" que sincroniza en D1 y abre WhatsApp.
-  - Botón de Cabecera Dinámico: Muta a verde con check (✅ Mi Cita) y despliega BookedAppointmentModal.
-  - Verificado con 3 Filtros: Build limpio 0 errores, push a `main` (commit 3f07a5e) y 17/17 rutas en Chrome Headless.
+  - Calendario Inteligente con Control de Slots: Extracción determinista de 5 slots (nombre, correo, teléfono, fecha, hora).
+  - Orden Lógico Estricto: 1° Nombre y Correo -> 2° Teléfono/WhatsApp -> 3° Día/Fecha -> 4° Hora con opciones -> 5° Autorización.
+  - Detección de Faltantes en Tiempo Real: Si el usuario omite un dato (ej. da nombre sin correo), el bot pide puntualmente el faltante.
+  - Autorización Condicional Estricta: Prohibido autorizar o emitir [BOOKING_CARD] mientras falte algún dato.
+  - Persistencia Completa en D1: Columnas y guardado en `bookings`, `crm_leads` y `chat_sessions` con customer_email.
+  - Switch de Citas y Tarjeta en Chat: BookingCardBubble con botón grande "Confirmo cita y guardar" y modal de consulta.
+  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
