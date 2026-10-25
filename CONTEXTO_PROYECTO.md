@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 21:38 GMT-6
-- **Versión Actual:** 2.3.1 (Verificación D1 en Milisegundos, Recomendación de Siguiente Horario y Tarjeta Animada a los 3s)
+- **Última Actualización:** 2026-10-24 21:44 GMT-6
+- **Versión Actual:** 2.3.2 (Configuración de Intervalos de Atención y Descansos entre Citas en Cuenta/Agenda)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `35df54b`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `d2b36db`)
 - **Estado Actual del Sistema:**
-  - Consulta D1 en Milisegundos: Verificación en tiempo real de colisión de citas (`SELECT booking_date, booking_time FROM bookings`).
-  - Detección de Horario Ocupado & Recomendación Automática: Si el espacio está ocupado, informa amablemente y sugiere la siguiente hora disponible.
-  - Confirmación Dinámica con Tarjeta Diferida: La IA confirma verbalmente en el chat y a los ~2.8s despliega suavemente la tarjeta estructurada.
-  - Micro-Animación Emil Kowalski: Fade-in y resorte táctil fluido en `BookingCardBubble` (147 líneas) con estado de verificación previo.
-  - Control de Slots en 5 Pasos: Nombre/Email -> Teléfono -> Día -> Hora -> Autorización estricta.
+  - Configuración de Intervalos y Descansos: Componente BookingIntervalConfig integrado en AgendaTab y CRM Vocero.
+  - Parámetros Personalizables: Duración de la cita (15-90 min) y tiempo de espera/descanso (0-30 min) guardados en D1.
+  - Cálculo Dinámico de Disponibilidad: El bot considera el ciclo completo (duración + buffer de descanso) para no colisionar.
+  - Consulta D1 en Milisegundos: Detección instantánea de citas y descansos ocupados con recomendación del siguiente horario libre.
+  - Tarjeta con Micro-Animación a los 3s: Despliegue con física de resorte táctil tras confirmación verbal.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

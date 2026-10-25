@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-24] Configuración de Intervalos de Atención y Descansos entre Citas en Cuenta/Agenda (v2.3.2)
+- **Diagnóstico y Necesidad:**
+  1. *Tiempo de Espera y Descanso entre Citas:* El usuario requería que el sistema de reservas permitiera configurar intervalos de descanso (por ejemplo, atender cada 30 minutos pero descansar 10 minutos para preparar la siguiente cita).
+  2. *Gestión en la Cuenta del Usuario:* Esta configuración debía estar disponible en la agenda/cuenta del usuario para que pudiera ajustar la duración de la atención y el intervalo de descanso.
+  3. *Cálculo Dinámico de Disponibilidad:* El bot de agendamiento conversacional debía considerar tanto la duración de la cita como el intervalo de descanso para no agendar citas durante el tiempo de descanso y recomendar siempre el siguiente horario disponible considerando el ciclo completo.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. BookingIntervalConfig.tsx (155 líneas):
+     - Componente modular y atómico para configurar la duración de la cita (15, 30, 45, 60, 90 min) y el tiempo de descanso/espera (0, 5, 10, 15, 20, 30 min).
+     - Vista previa interactiva en tiempo real del ciclo de agenda (ej. 30 min atención + 10 min descanso = cita cada 40 min).
+     - Sincronización automática con localStorage y persistencia en backend mediante GET y POST `/api/tenant/booking-settings`.
+  2. AgendaTab.tsx (157 líneas) & VoceroBookingsView.tsx (158 líneas):
+     - Integrado el control de intervalos y descansos con soporte adaptativo para temas oscuros y claros sin exceder las 180 líneas por archivo.
+  3. functions/api/[[route]].js:
+     - Endpoints GET y POST `/api/tenant/booking-settings` ampliados con columnas `appointment_duration` y `break_buffer_time` en D1.
+     - Lógica matemática `generateDynamicDaySlots` y `checkSlotAvailability` que calcula con exactitud de reloj minutos de atención y minutos de descanso, detectando solapamientos durante el descanso y sugiriendo la siguiente hora programada.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 9.49s con 0 errores TypeScript (`index-DSu79aEc.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `d2b36db`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+  - *Validación en Vivo:* Probada la persistencia y lectura con `POST` y `GET /api/tenant/booking-settings` confirmando el guardado de 30 min de duración y 10 min de descanso en D1.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Verificación de Disponibilidad en Base de Datos D1 en Milisegundos, Recomendación de Siguiente Horario y Tarjeta Animada a los 3s (v2.3.1)
 - **Diagnóstico y Necesidad:**
   1. *Consulta Real de Disponibilidad en D1 en Milisegundos:* El usuario requería que tras recibir los datos de fecha y hora, el bot consultara de inmediato en la base de datos real si ese espacio ya está reservado por otro cliente.
