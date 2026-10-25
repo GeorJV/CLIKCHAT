@@ -2434,24 +2434,52 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       }
     }
 
-    // BOOKING SETTINGS: POST /api/tenant/booking-settings
-    if (segments[0] === 'tenant' && segments[1] === 'booking-settings' && request.method === 'POST') {
-      let body = {};
-      try { body = await request.json(); } catch (e) {}
-      const { tenantId, allowAgentBooking } = body;
-      const tId = tenantId || 'ten_geosoft_prod';
-      try {
-        await executeD1("ALTER TABLE tenants ADD COLUMN allow_agent_booking INTEGER DEFAULT 1");
-      } catch (e) {}
-      try {
-        await executeD1(
-          'UPDATE tenants SET allow_agent_booking = ?1, updated_at = datetime(\'now\') WHERE id = ?2 OR slug = ?2',
-          [allowAgentBooking ? 1 : 0, tId]
-        );
-      } catch (e) {
-        console.warn('Booking settings D1 note:', e.message);
+    // BOOKING SETTINGS: GET & POST /api/tenant/booking-settings (con descansos e intervalos)
+    if (segments[0] === 'tenant' && segments[1] === 'booking-settings') {
+      if (request.method === 'GET') {
+        const tenantParam = url.searchParams.get('tenant') || url.searchParams.get('tenantId') || 'geosoft';
+        const rows = await executeD1(
+          'SELECT allow_agent_booking, appointment_duration, break_buffer_time FROM tenants WHERE id = ?1 OR slug = ?1 LIMIT 1',
+          [tenantParam]
+        ).catch(() => []);
+        return jsonResponse({
+          success: true,
+          allowAgentBooking: rows[0]?.allow_agent_booking !== 0,
+          appointmentDuration: Number(rows[0]?.appointment_duration) || 30,
+          breakBufferTime: rows[0]?.break_buffer_time !== undefined && rows[0]?.break_buffer_time !== null ? Number(rows[0]?.break_buffer_time) : 10
+        });
       }
-      return jsonResponse({ success: true, allowAgentBooking: Boolean(allowAgentBooking) });
+
+      if (request.method === 'POST') {
+        let body = {};
+        try { body = await request.json(); } catch (e) {}
+        const { tenantId, allowAgentBooking, appointmentDuration, breakBufferTime } = body;
+        const tId = tenantId || 'ten_geosoft_prod';
+        try {
+          await executeD1("ALTER TABLE tenants ADD COLUMN allow_agent_booking INTEGER DEFAULT 1");
+          await executeD1("ALTER TABLE tenants ADD COLUMN appointment_duration INTEGER DEFAULT 30");
+          await executeD1("ALTER TABLE tenants ADD COLUMN break_buffer_time INTEGER DEFAULT 10");
+        } catch (e) {}
+        try {
+          await executeD1(
+            'UPDATE tenants SET allow_agent_booking = COALESCE(?1, allow_agent_booking), appointment_duration = COALESCE(?2, appointment_duration), break_buffer_time = COALESCE(?3, break_buffer_time), updated_at = datetime(\'now\') WHERE id = ?4 OR slug = ?4',
+            [
+              allowAgentBooking !== undefined ? (allowAgentBooking ? 1 : 0) : null,
+              appointmentDuration !== undefined ? Number(appointmentDuration) : null,
+              breakBufferTime !== undefined ? Number(breakBufferTime) : null,
+              tId
+            ]
+          );
+        } catch (e) {
+          console.warn('Booking settings D1 note:', e.message);
+        }
+        return jsonResponse({
+          success: true,
+          allowAgentBooking: allowAgentBooking !== undefined ? Boolean(allowAgentBooking) : true,
+          appointmentDuration: Number(appointmentDuration) || 30,
+          breakBufferTime: breakBufferTime !== undefined ? Number(breakBufferTime) : 10
+        });
+      }
     }
 
     // ADMIN: GET /api/admin/metrics
@@ -4337,7 +4365,28 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   };
 }
 
-const STANDARD_BOOKING_SLOTS = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '05:00 PM'];
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return null;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return null;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const ampm = match[3] ? match[3].toUpperCase() : null;
+
+  if (ampm === 'PM' && h < 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+
+  return h * 60 + m;
+}
+
+function minutesToTimeString(minutes) {
+  let h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${h12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
 
 function normalizeTimeSlot(t) {
   if (!t) return '';
@@ -4361,51 +4410,82 @@ function normalizeTimeSlot(t) {
   return str;
 }
 
-function checkSlotAvailability(requestedDate, requestedTime, existingBookings = []) {
+function generateDynamicDaySlots(startHour, endHour, duration, breakBuffer, busyIntervals = []) {
+  const startMinutes = startHour * 60;
+  const endMinutes = endHour * 60;
+  const step = duration + breakBuffer;
+  const slots = [];
+
+  for (let current = startMinutes; current + duration <= endMinutes; current += step) {
+    const slotEnd = current + duration;
+    const hasCollision = busyIntervals.some(b => current < b.end && slotEnd > b.start);
+    slots.push({
+      time: minutesToTimeString(current),
+      minutes: current,
+      isAvailable: !hasCollision
+    });
+  }
+  return slots;
+}
+
+function checkSlotAvailability(requestedDate, requestedTime, existingBookings = [], appointmentDuration = 30, breakBufferTime = 10) {
   const normReqTime = normalizeTimeSlot(requestedTime);
+  const reqMinutes = parseTimeToMinutes(normReqTime);
   const normReqDate = (requestedDate || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  const bookedSlotsOnDate = [];
+  const busyIntervals = [];
 
   for (const b of existingBookings) {
     if (b.status === 'cancelled') continue;
     const bDate = (b.booking_date || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const bTime = normalizeTimeSlot(b.booking_time);
-
     const isSameDate = bDate === normReqDate ||
       (normReqDate.length > 4 && bDate.includes(normReqDate)) ||
       (bDate.length > 4 && normReqDate.includes(bDate));
 
     if (isSameDate) {
-      bookedSlotsOnDate.push(bTime);
+      const bMinutes = parseTimeToMinutes(b.booking_time);
+      if (bMinutes !== null) {
+        // El bloque ocupado abarca la duración de la cita + el descanso (buffer)
+        busyIntervals.push({
+          start: bMinutes,
+          end: bMinutes + appointmentDuration + breakBufferTime,
+          timeStr: normalizeTimeSlot(b.booking_time)
+        });
+      }
     }
   }
 
-  const isUnavailable = bookedSlotsOnDate.some(t => t === normReqTime || (t && normReqTime && t.replace(/^0/, '') === normReqTime.replace(/^0/, '')));
+  let isUnavailable = false;
+  if (reqMinutes !== null) {
+    const reqEnd = reqMinutes + appointmentDuration;
+    isUnavailable = busyIntervals.some(b => reqMinutes < b.end && reqEnd > b.start);
+  }
 
-  const currentIdx = STANDARD_BOOKING_SLOTS.findIndex(s => normalizeTimeSlot(s) === normReqTime || s.replace(/^0/, '') === normReqTime.replace(/^0/, ''));
+  // Generar slots del día desde las 8:00 AM hasta las 6:00 PM con duración y descanso
+  const daySlots = generateDynamicDaySlots(8, 18, appointmentDuration, breakBufferTime, busyIntervals);
+  const availableSlots = daySlots.filter(s => s.isAvailable);
 
-  const availableSlots = [];
-  for (let i = (currentIdx >= 0 ? currentIdx + 1 : 0); i < STANDARD_BOOKING_SLOTS.length; i++) {
-    const slot = STANDARD_BOOKING_SLOTS[i];
-    const nSlot = normalizeTimeSlot(slot);
-    if (!bookedSlotsOnDate.includes(nSlot)) {
-      availableSlots.push(slot);
+  let nextAvailable = null;
+  let secondAvailable = null;
+
+  if (reqMinutes !== null) {
+    const later = availableSlots.filter(s => s.minutes > reqMinutes);
+    if (later.length > 0) {
+      nextAvailable = later[0].time;
+      secondAvailable = later[1]?.time || availableSlots[0]?.time;
     }
   }
-  for (let i = 0; i < (currentIdx >= 0 ? currentIdx : STANDARD_BOOKING_SLOTS.length); i++) {
-    const slot = STANDARD_BOOKING_SLOTS[i];
-    const nSlot = normalizeTimeSlot(slot);
-    if (!bookedSlotsOnDate.includes(nSlot) && !availableSlots.includes(slot)) {
-      availableSlots.push(slot);
-    }
-  }
+
+  if (!nextAvailable) nextAvailable = availableSlots[0]?.time || '10:00 AM';
+  if (!secondAvailable) secondAvailable = availableSlots[1]?.time || '02:00 PM';
 
   return {
     isAvailable: !isUnavailable,
-    bookedSlotsOnDate,
-    nextAvailable: availableSlots[0] || '11:30 AM',
-    secondAvailable: availableSlots[1] || '02:00 PM'
+    nextAvailable,
+    secondAvailable,
+    appointmentDuration,
+    breakBufferTime,
+    totalCycle: appointmentDuration + breakBufferTime
   };
 }
 
@@ -5386,7 +5466,9 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
               [actualTenantId]
             ).catch(() => []);
 
-            const availability = checkSlotAvailability(bookingState.slots.date, bookingState.slots.time, existingBookings);
+            const apptDuration = Number(targetTenant.appointment_duration) || 30;
+            const breakBuffer = targetTenant.break_buffer_time !== undefined && targetTenant.break_buffer_time !== null ? Number(targetTenant.break_buffer_time) : 10;
+            const availability = checkSlotAvailability(bookingState.slots.date, bookingState.slots.time, existingBookings, apptDuration, breakBuffer);
             if (!availability.isAvailable) {
               isSlotUnavailable = true;
               nextAvailableTime = availability.nextAvailable;
@@ -5423,13 +5505,14 @@ DIRECTIVA OBLIGATORIA PARA TU RESPUESTA:
 ${isSlotUnavailable ? `
 [ALERTA DE DISPONIBILIDAD EN TIEMPO REAL - VERIFICACIÓN EN D1 EN MILISEGUNDOS]:
 - El usuario solicitó el día ${bookingState.slots.date}.
-- RESULTADO D1: ¡ESE HORARIO YA ESTÁ RESERVADO POR OTRO CLIENTE EN NUESTRA AGENDA!
+- RESULTADO D1: ¡ESE HORARIO YA ESTÁ RESERVADO O EN INTERVALO DE DESCANSO ENTRE CITAS EN NUESTRA AGENDA!
+- Regla operativa del negocio: Citas de ${targetTenant.appointment_duration || 30} min + ${targetTenant.break_buffer_time !== undefined ? targetTenant.break_buffer_time : 10} min de descanso entre citas.
 - Siguiente horario libre recomendado: "${nextAvailableTime}"
 - Opción alternativa recomendada: "${secondAvailableTime}"
 
 DIRECTIVA OBLIGATORIA (MÁXIMA PRIORIDAD):
-Informa con tono profesional, cálido y empático que ese espacio exacto ya se encuentra reservado en nuestra agenda.
-Pregúntale amablemente si le serviría la siguiente hora programada: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
+Informa con tono profesional, cálido y empático que ese espacio puntual ya se encuentra reservado (o en tiempo de preparación/descanso entre citas).
+Pregúntale amablemente si le serviría la siguiente hora programada disponible: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
 Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado.
 ` : (bookingState.slots.date && bookingState.slots.time ? `
 [VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:

@@ -4,6 +4,7 @@ import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard'
 import { VoceroNewBookingModal } from './VoceroNewBookingModal';
 import { VoceroCompactCalendar } from './VoceroCompactCalendar';
 import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
+import { BookingIntervalConfig } from './BookingIntervalConfig';
 import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
 
 interface VoceroBookingsViewProps {
@@ -133,6 +134,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       </div>
 
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl w-full mx-auto space-y-3">
+        <BookingIntervalConfig tenantId={tId} isDarkTheme={false} />
         {showMonthCalendar && (
           <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>
         )}

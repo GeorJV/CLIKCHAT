@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, RefreshCw, Bot } from 'lucide-react';
+import { BookingIntervalConfig } from '../crm/bookings/BookingIntervalConfig';
 
 interface Appointment {
   id: string; clientName: string; serviceName: string; date: string; time: string; status: 'confirmed' | 'pending' | 'completed'; price: number;
@@ -91,6 +92,9 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${allowAgentBooking ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
       </div>
+
+      {/* Configuración de Intervalos de Atención y Descanso */}
+      <BookingIntervalConfig tenantId={activeSlug} isDarkTheme={true} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#181717] border border-[#282626] p-4 rounded-2xl">
