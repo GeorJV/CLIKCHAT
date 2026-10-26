@@ -4723,6 +4723,27 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   const hasNewTimeInMsg = Boolean(parseFlexibleTime(currentMessage) || (currentMessage || '').match(timeRegex));
   const hasNewDateInMsg = Boolean((currentMessage || '').match(compositeDateRegex) || (currentMessage || '').match(simpleDayRegex));
 
+  const hasNoTarde = /\b(?:no\s+(?:en\s+la\s+|por\s+la\s+)?tardes?)\b/i.test(currentMessage || '');
+  const hasNoManana = /\b(?:no\s+(?:en\s+la\s+|por\s+la\s+)?mañanas?|no\s+(?:en\s+la\s+|por\s+la\s+)?mananas?)\b/i.test(currentMessage || '');
+  const wantsMorning = (/\b(?:en\s+la\s+mañana|en\s+la\s+manana|por\s+la\s+mañana|por\s+la\s+manana|de\s+la\s+mañana|de\s+la\s+manana|en\s+las\s+mañanas|en\s+las\s+mananas|temprano|matutin[oa])\b/i.test(currentMessage || '') || hasNoTarde) && !hasNoManana;
+  const wantsAfternoon = (/\b(?:en\s+la\s+tarde|por\s+la\s+tarde|de\s+la\s+tarde|en\s+las\s+tardes|tardecita|vespertin[oa])\b/i.test(currentMessage || '') || hasNoManana) && !hasNoTarde;
+
+  // Si el usuario expresó preferencia de turno sin dar una hora fija, anular la hora previa para ofrecer opciones del turno deseado
+  if (!hasNewTimeInMsg) {
+    if (wantsMorning) {
+      time = null;
+    } else if (wantsAfternoon) {
+      time = null;
+    }
+  }
+
+  // Detección contextual de fecha para "mañana" (día siguiente)
+  if (/\b(?:mañana|manana)\b/i.test(currentMessage || '')) {
+    date = formatFullDayAndDate('mañana');
+  } else if (!date && wantsMorning) {
+    date = formatFullDayAndDate('mañana');
+  }
+
   if (isRescheduleIntent && !hasNewTimeInMsg && !hasNewDateInMsg && (date || time)) {
     time = null;
   }
@@ -4754,9 +4775,15 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     stepInstruction = `PASO 3: Ya tienes nombre, correo y teléfono ("${phone}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión. No pidas hora aún.`;
   } else if (!time) {
     currentStep = 4;
-    stepInstruction = isRescheduleIntent
-      ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
-      : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+    if (wantsMorning) {
+      stepInstruction = `PASO 4: El cliente solicitó explícitamente horario EN LA MAÑANA para el "${date}". Ofrece con calidez y entusiasmo 2 o 3 OPCIONES DE HORARIOS EN LA MAÑANA disponibles (por ejemplo: "09:30 AM", "10:30 AM" o "11:30 AM") para que elija su hora. Queda TERMINANTEMENTE PROHIBIDO ofrecer o sugerir horarios de la tarde (como 2pm, 3pm, 4pm).`;
+    } else if (wantsAfternoon) {
+      stepInstruction = `PASO 4: El cliente solicitó explícitamente horario EN LA TARDE para el "${date}". Ofrece con calidez y entusiasmo 2 o 3 OPCIONES DE HORARIOS EN LA TARDE disponibles (por ejemplo: "02:00 PM", "03:30 PM" o "04:30 PM") para que elija su hora. Queda TERMINANTEMENTE PROHIBIDO ofrecer horarios de la mañana.`;
+    } else {
+      stepInstruction = isRescheduleIntent
+        ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
+        : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+    }
   } else if (isRescheduleIntent) {
     currentStep = 5;
     stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
@@ -4882,10 +4909,21 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
   let secondAvailable = null;
 
   if (reqMinutes !== null) {
-    const later = availableSlots.filter(s => s.minutes > reqMinutes);
-    if (later.length > 0) {
-      nextAvailable = later[0].time;
-      secondAvailable = later[1]?.time || availableSlots[0]?.time;
+    const isMorning = reqMinutes < 12 * 60;
+    const samePeriodSlots = availableSlots.filter(s => isMorning ? s.minutes < 12 * 60 : s.minutes >= 12 * 60);
+    const laterInPeriod = samePeriodSlots.filter(s => s.minutes > reqMinutes);
+    if (laterInPeriod.length > 0) {
+      nextAvailable = laterInPeriod[0].time;
+      secondAvailable = laterInPeriod[1]?.time || samePeriodSlots[0]?.time;
+    } else if (samePeriodSlots.length > 0) {
+      nextAvailable = samePeriodSlots[0].time;
+      secondAvailable = samePeriodSlots[1]?.time;
+    } else {
+      const later = availableSlots.filter(s => s.minutes > reqMinutes);
+      if (later.length > 0) {
+        nextAvailable = later[0].time;
+        secondAvailable = later[1]?.time || availableSlots[0]?.time;
+      }
     }
   }
 
@@ -5295,8 +5333,8 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       }
 
-      // Responder con FAQ oficial si la coincidencia es alta (>= 0.70) y no es una acción de comanda/pago de restaurante
-      if (topFaq && topFaqScore >= 0.70 && !isCheckoutOrOrderQuery && !isAddingItemAction) {
+      // Responder con FAQ oficial si la coincidencia es alta (>= 0.70) y no es una consulta de agendamiento/comanda
+      if (topFaq && topFaqScore >= 0.70 && !isCheckoutOrOrderQuery && !isBookingContext) {
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
