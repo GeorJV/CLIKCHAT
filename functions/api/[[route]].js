@@ -4668,18 +4668,47 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     if (phone) break;
   }
 
-  // 3. Extracción de Hora (Flexibilidad Máxima & Sin Fallos Coloquiales)
+  // 3. Extracción de Hora (Flexibilidad Máxima & Sin Arrastre Erróneo de Pasado)
   const timeRegex = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:am|pm|a\.m\.|p\.m\.)\b|\b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b/i;
-  for (let i = allUserMessages.length - 1; i >= 0; i--) {
-    const flexTime = parseFlexibleTime(allUserMessages[i]);
+  const messagesToCheckTime = [];
+  if (currentMessage) messagesToCheckTime.push(currentMessage);
+  if (cardIndexInHistory >= 0 && Array.isArray(history)) {
+    for (let i = history.length - 1; i > cardIndexInHistory; i--) {
+      if (history[i].sender === 'user' || history[i].role === 'user') {
+        messagesToCheckTime.push(history[i].message || history[i].content || '');
+      }
+    }
+  }
+
+  for (const msg of messagesToCheckTime) {
+    const flexTime = parseFlexibleTime(msg);
     if (flexTime) {
       time = flexTime;
       break;
     }
-    const tm = allUserMessages[i].match(timeRegex);
+    const tm = msg.match(timeRegex);
     if (tm) {
       time = normalizeTimeSlot(tm[0].trim().toUpperCase());
       break;
+    }
+  }
+
+  if (!time && cardTime) {
+    time = cardTime;
+  }
+
+  if (!time) {
+    for (let i = allUserMessages.length - 1; i >= 0; i--) {
+      const flexTime = parseFlexibleTime(allUserMessages[i]);
+      if (flexTime) {
+        time = flexTime;
+        break;
+      }
+      const tm = allUserMessages[i].match(timeRegex);
+      if (tm) {
+        time = normalizeTimeSlot(tm[0].trim().toUpperCase());
+        break;
+      }
     }
   }
 
@@ -4772,7 +4801,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
 
-  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?)\b/i.test(currentMessage || '');
+  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?|pero\s+mañana|pero\s+manana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|no\s+es\s+\d+|no\s+te\s+estoy\s+pidiendo)\b/i.test(currentMessage || '');
+  const isQuestioningDateOrTomorrow = /\b(?:pero\s+mañana|pero\s+manana|pero\s+maana|pero\s+mamana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|mañana\s+no\s+es|manana\s+no\s+es|es\s+mañana|es\s+manana|no\s+es\s+\d+)\b/i.test(currentMessage || '');
   const hasNewTimeInMsg = Boolean(parseFlexibleTime(currentMessage) || (currentMessage || '').match(timeRegex));
   const hasNewDateInMsg = Boolean((currentMessage || '').match(compositeDateRegex) || (currentMessage || '').match(simpleDayRegex));
 
@@ -4800,8 +4830,11 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   // Detección contextual de fecha para "mañana" (día siguiente)
   const cleanCurrMsg = (currentMessage || '').replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
-  if (/\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg)) {
+  if (isQuestioningDateOrTomorrow || /\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg)) {
     date = formatFullDayAndDate('mañana');
+    if (isQuestioningDateOrTomorrow && !hasNewTimeInMsg) {
+      time = null;
+    }
   } else if (!date && wantsMorning) {
     date = formatFullDayAndDate('mañana');
   }
@@ -5179,11 +5212,11 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       } catch (pauseCheckErr) {}
 
-      // 4. NIVEL 1: Memoria Episódica D1 (últimos turnos para mantener contexto)
+      // 4. NIVEL 1: Memoria Episódica D1 (últimos turnos cronológicos para mantener contexto fiel)
       let sessionHistory = [];
       try {
         const historyRows = await executeD1(
-          'SELECT sender, message, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 30',
+          'SELECT sender, message, created_at FROM (SELECT sender, message, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at DESC LIMIT 35) sub ORDER BY created_at ASC',
           [currentSessionId]
         );
         sessionHistory = historyRows.slice(0, -1);
@@ -5252,6 +5285,64 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
             [bookingState.slots.name, bookingState.slots.email, bookingState.slots.phone, currentSessionId, 'lead_' + currentSessionId]
           ).catch(() => {});
         } catch (syncSlotsErr) {}
+      }
+
+      // 4.2 DETECCIÓN DE CORTESÍA, GRATITUD Y CONSULTAS DE CITA YA CONFIRMADA
+      const cleanMsgNorm = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      const isGratitude = /^(?:gracias|muchas\s*gracias|muchisimas\s*gracias|ok\s*gracias|perfecto\s*gracias|listo\s*gracias|excelente\s*gracias|gracias\s*amig[oa]|mil\s*gracias|te\s*lo\s*agradezco|gracias\s*por\s*todo|entendido\s*gracias)\s*$/i.test(cleanMsgNorm);
+      const isConfirmationCheck = /(?:ya\s*est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])|est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])\s*(?:la\s*cita|el\s*espacio)|la\s*cita\s*ya\s*qued[oó]|ya\s*qued[oó]\s*(?:la\s*cita|agendad[oa]|confirmad[oa]))/i.test(cleanMsgNorm);
+      const isDateClarification = /(?:de\s+(?:qu[eé]\s+)?(?:f[eé]ch?a|fehca|d[ií]a)|qu[eé]\s+(?:f[eé]ch?a|fehca|d[ií]a)|para\s+cu[aá]ndo)/i.test(cleanMsgNorm);
+
+      if (isGratitude || isConfirmationCheck || isDateClarification) {
+        let confirmedApt = null;
+        try {
+          const cPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').replace(/\D/g, '');
+          const cEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim().toLowerCase();
+          const aptRows = await executeD1(
+            "SELECT * FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != '' AND replace(customer_phone, ' ', '') LIKE '%' || ?2 || '%') OR (customer_email != '' AND lower(customer_email) = ?3)) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
+            [actualTenantId, cPhone.slice(-8), cEmail]
+          ).catch(() => []);
+          if (aptRows.length > 0) confirmedApt = aptRows[0];
+        } catch (e) {}
+
+        const aptDate = confirmedApt?.booking_date || bookingState.slots.date;
+        const aptTime = confirmedApt?.booking_time || bookingState.slots.time;
+        const clientName = bookingState.slots.name || confirmedApt?.customer_name || activeLeadInfo?.name || '';
+
+        if (aptDate && aptTime) {
+          let directReply = '';
+          let levelLabel = '';
+          if (isGratitude) {
+            directReply = `¡Con muchísimo gusto${clientName ? ', ' + clientName : ''}! Tu cita para el **${aptDate} a las ${aptTime}** está 100% confirmada y guardada en nuestra agenda oficial. Quedamos a tu completa disposición para lo que necesites en tu proyecto. ¡Nos vemos en la sesión! 😊`;
+            levelLabel = 'Nivel 1: Gratitud & Confirmación Cerrada';
+          } else if (isConfirmationCheck) {
+            directReply = `¡Sí, totalmente confirmada! Tu cita para el **${aptDate} a las ${aptTime}** ya está agendada y registrada en nuestro sistema oficial${clientName ? ' a nombre de ' + clientName : ''}. ¿Deseas hacer algún cambio o tienes alguna otra consulta?`;
+            levelLabel = 'Nivel 1: Estado de Cita Confirmada';
+          } else if (isDateClarification) {
+            directReply = `Tu cita se encuentra programada para el **${aptDate} a las ${aptTime}**. ¿Te gustaría conservarla para esa fecha o prefieres reprogramarla para otro día u horario?`;
+            levelLabel = 'Nivel 1: Aclaración de Fecha de Cita';
+          }
+
+          if (directReply) {
+            const botMsgId = 'msg_' + Date.now() + '_b';
+            try {
+              await executeD1(
+                'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+                [botMsgId, currentSessionId, actualTenantId, 'assistant', directReply, 'level_1']
+              );
+            } catch (e) {}
+
+            return jsonResponse({
+              sessionId: currentSessionId,
+              level: 'level_1',
+              levelLabel,
+              confidence: 0.99,
+              answer: directReply,
+              orderTotal: null,
+              isRestaurant
+            });
+          }
+        }
       }
 
       // 5. Carga Paralela de Fuentes de Conocimiento (FAQs, Catálogo y Documentos RAG)
@@ -6145,15 +6236,17 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
               [actualTenantId]
             ).catch(() => []);
 
-            const existingBookings = isReschedule
-              ? rawBookings.filter(b => {
-                  const cPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').replace(/\D/g, '');
-                  const bPhone = (b.customer_phone || '').replace(/\D/g, '');
-                  const samePhone = cPhone.length >= 8 && bPhone.length >= 8 && (cPhone.includes(bPhone) || bPhone.includes(cPhone));
-                  const sameEmail = bookingState.slots.email && b.customer_email && b.customer_email.trim().toLowerCase() === bookingState.slots.email.trim().toLowerCase();
-                  return !(samePhone || sameEmail);
-                })
-              : rawBookings;
+            const cPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').replace(/\D/g, '');
+            const cEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim().toLowerCase();
+
+            // Filtrar siempre reservas del mismo cliente para que no autocolisione al agendar o reprogramar
+            const existingBookings = rawBookings.filter(b => {
+              const bPhone = (b.customer_phone || '').replace(/\D/g, '');
+              const bEmail = (b.customer_email || '').trim().toLowerCase();
+              const samePhone = cPhone.length >= 8 && bPhone.length >= 8 && (cPhone.includes(bPhone) || bPhone.includes(cPhone));
+              const sameEmail = cEmail.length > 3 && bEmail.length > 3 && cEmail === bEmail;
+              return !(samePhone || sameEmail);
+            });
 
             const apptDuration = Number(targetTenant.appointment_duration) || 30;
             const breakBuffer = targetTenant.break_buffer_time !== undefined && targetTenant.break_buffer_time !== null ? Number(targetTenant.break_buffer_time) : 10;
@@ -6291,7 +6384,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               modality: 'online',
               price: targetTenant.name === 'GeoSoft' ? 1200 : 0
             };
-            llmResult.text += '\n\n[BOOKING_CARD: ' + JSON.stringify(cardData) + ']';
+            const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${bookingState.slots.date}** a las **${bookingState.slots.time}** ha quedado reservado.`;
+            llmResult.text = `${intro}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
           } else {
             try {
               const cardMatch = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
