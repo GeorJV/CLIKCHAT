@@ -852,6 +852,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   const cProvider = userCustomConfig?.provider || '';
   const wantsOnlyGLM = cModel.includes('glm') || (cProvider === 'openrouter' && !cModel.includes('llama'));
 
+  let lastAiError = 'none';
+
   // OPCIÓN 1 (MOTOR PRINCIPAL OFICIAL DE ALTA DISPONIBILIDAD): Google AI Studio Oficial Vigente
   if (googleKey) {
     const googleModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
@@ -911,8 +913,13 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
               tokens: 500
             };
           }
+        } else {
+          const errText = await gResp.text().catch(() => '');
+          lastAiError = `Google ${gModel} ${gResp.status}: ${errText.substring(0, 160)}`;
+          console.warn(lastAiError);
         }
       } catch (gErr) {
+        lastAiError = `Google ${gModel} catch: ${gErr.message}`;
         console.warn(`Motor Google AI ${gModel} falló:`, gErr.message);
       }
     }
@@ -1113,7 +1120,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     model: 'template_fallback',
     neurons: 0,
     costUsd: 0,
-    tokens: 0
+    tokens: 0,
+    lastAiError
   };
 }
 
@@ -6758,6 +6766,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           products: prodsToInclude,
           provider: llmResult.provider,
           model: llmResult.model,
+          lastAiError: llmResult.lastAiError || 'none',
           neurons: llmResult.neurons || 0,
           costUsd: llmResult.costUsd || 0,
           tokens: llmResult.tokens || 0,
