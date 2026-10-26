@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 16:55 GMT-6
-- **Versión Actual:** 2.5.2 (Bienvenida Oficial GeoSoft y Props Dinámicas en ServiceChatView)
+- **Última Actualización:** 2026-10-26 17:12 GMT-6
+- **Versión Actual:** 2.5.3 (Comparación Exacta de Fechas Calendario y Preservación de Fecha)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Bienvenida Oficial GeoSoft: Saludo cálido y consultivo sin presionar citas ("¡Hola! Bienvenido, ¿en qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?").
-  - Props Dinámicas en ServiceChatView: Prop `welcomeMessage` integrada y sanitización de mensajes obsoletos cacheados.
-  - Preferencias de Turno (Mañana vs Tarde): Detección de "en la mañana"/"en la tarde" y anulación de horas previas.
-  - Saludo Directo "Hola": Respuesta concisa ("¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?") sin cascada de mensajes.
-  - Cero Repetición en Citas: Emisión directa de tarjeta interactiva con pregunta de cierre.
-  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual en Cloudflare Pages.
+  - Comparación de Fechas Calendario: Erradicada colisión de nombres de día contra fechas completas (`areDatesMatching`), evitando que citas de hoy bloqueen mañana.
+  - Preservación de Fecha entre Turnos: Priorización de mensajes posteriores a la tarjeta para evitar que menciones antiguas ("hoy") sobreescriban la fecha acordada ("mañana").
+  - Tolerancia a Errores Tipográficos: Soporte de "manana", "maana", "mamana" y discriminación estricta de turnos ("de la mañana" vs día de mañana).
+  - Saneamiento de Historial Workers AI: Filtrado de mensajes vacíos y fallback contextual de alta fidelidad según la industria del tenant.
+  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y prueba en vivo de cita a las 8:00 AM para mañana verificada en producción.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

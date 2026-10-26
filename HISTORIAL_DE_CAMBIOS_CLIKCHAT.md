@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Comparación Exacta de Fechas Calendario y Preservación de Fecha entre Turnos (v2.5.3)
+- **Diagnóstico y Causa Raíz:**
+  1. *Pérdida de la Fecha Acordada (Sobreescritura Histórica):* En `extractBookingSlots`, tras haber emitido previamente una tarjeta o acordado la cita para mañana (`Martes, 27 de Octubre de 2026`), cuando el usuario enviaba un mensaje posterior (ej. *"ME REFIERO A MAANA EN LA MAMANA TIENEN A LAS 8 AM"* con errores tipográficos sin tildes ni eñes), el extractor de fecha ignoraba la fecha de la tarjeta previa (`cardDate`) y recorría todo el historial hacia atrás, topándose con un mensaje antiguo de 20 turnos atrás (*"quiero cita para hoy"*). Como resultado, sobreescribía la fecha a **HOY (Lunes, 26 de Octubre)** en vez de mantener **MAÑANA (Martes, 27 de Octubre)**.
+  2. *Colisión de Nombres de Día en Disponibilidad D1:* En `checkSlotAvailability`, la comparación de fechas utilizaba `normReqDate.includes(bDate) || bDate.includes(normReqDate)`. En la base de datos existía un registro de prueba antiguo con `booking_date: "lunes"` a las `8:00 AM`. Al evaluar el bot la fecha equivocada (Lunes 26), `"lunes, 26 de octubre".includes("lunes")` evaluaba como verdadero, declarando que las 8:00 AM estaban reservadas. Al revisar el usuario la agenda de mañana (Martes 27), no existía ninguna cita a las 8:00 AM porque la ocupación correspondía en realidad al lunes anterior.
+  3. *Confusión de Modificador Horario con Fecha:* Expresiones como *"8 de la mañana"* hacían que la expresión regular considerara *"la"* como un mes, o bien confundiera el modificador de turno matutino con la fecha del día siguiente.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Comparador Calendario Consciente (`areDatesMatching`):*
+     - En `functions/api/[[route]].js`, implementada la función `areDatesMatching(normReqDate, bDate)` que extrae día numérico y mes. Si los números de día son diferentes (ej. 26 vs 27), nunca colisionan, eliminando falsos positivos entre semanas o días distintos.
+  2. *Preservación Estricta de la Fecha Acordada en Sesión:*
+     - Al extraer fecha en `extractBookingSlots`, se priorizan exclusivamente los mensajes nuevos posteriores a la tarjeta emitida. Si no se expresa una nueva fecha después de la tarjeta, se preserva inmutable `cardDate`. Solo se recurre al historial lejano si jamás se acordó una fecha.
+  3. *Tolerancia a Errores Tipográficos y Separación de Turno vs Día:*
+     - Añadido soporte para variaciones coloquiales y tipográficas (`manana`, `maana`, `mamana`).
+     - Sanitización de modificadores de hora (*"de la mañana"*, *"en la mañana"*, *"por la mañana"*) para que no se interpreten como el día de la cita.
+     - Saneamiento del payload a Workers AI (filtrado de mensajes vacíos que causaban 400) y fallback contextual adaptado por tipo de negocio.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 15.08s con 0 errores TypeScript (`index-Bep_lQyh.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `2623498`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Pruebas en Vivo Verificadas:*
+    - Test en la sesión activa: Solicitud de cita para *"mañana a las 8 am"*, respuesta HTTP 200 confirmando: *"¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el Martes, 27 de Octubre de 2026 a las 08:00 AM ha quedado reservado"* con emisión directa de `[BOOKING_CARD]` limpia y precisa.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-26] Bienvenida Oficial GeoSoft y Props Dinámicas en ServiceChatView (v2.5.2)
 - **Diagnóstico y Necesidad:**
   1. *Mensaje Hardcoded en Chat de Servicios:* En `ServiceChatView.tsx`, el `useEffect` inicial inyectaba un mensaje fijo cableado en código (*"¡Hola! 🌸 Soy especialista... Veo que te interesa... ¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?"*), el cual presionaba al cliente a elegir de inmediato entre conocer detalles o agendar, en vez de mantener un tono consultivo para identificar sus necesidades reales.
