@@ -4769,6 +4769,8 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
 
       const currentSessionId = sessionId || ('sess_' + Date.now().toString(36));
       const actualTenantId = targetTenant.id;
+      const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
+      const isServices = targetTenant.business_type === 'servicios';
 
       // 2. Garantizar sesión viva en chat_sessions
       try {
@@ -5508,7 +5510,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           }
         }
 
-        if (draftTotal > 0 || draftItems.length > 0) {
+        if (isRestaurant && (draftTotal > 0 || draftItems.length > 0)) {
           const isCRC = activeCurrency.toUpperCase() === 'CRC';
           const currencySymbol = isCRC ? '₡' : '$';
           const formattedDraftTotal = isCRC
@@ -5535,7 +5537,7 @@ ${draftItems.map(it => {
 3) SOLO AHORA QUE EL CLIENTE YA AGREGÓ O SOLICITÓ AGREGAR ALGO A SU COMPRA: Pregúntale amablemente: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?", o si prefiere pedir la cuenta diciendo "¿cuánto es?".
 4) REGLA ESTRICTA DE CONFIRMACIÓN: El producto ${itemName || ''} YA FUE AGREGADO y anotado en la comanda. Queda TERMINANTEMENTE PROHIBIDO pedirle al cliente que vuelva a confirmar el producto (NO decir "¿Deseas confirmar tu taco/hamburguesa?", ni "Para confirmar tu taco...", ni "confirmar ${itemName || 'producto'}"). El producto ya está listo en su orden. Solo pregunta si desea agregar algo más o pedir la cuenta / confirmar su pedido completo.`;
           }
-        } else {
+        } else if (isRestaurant) {
           contextBlock += `\n\n[REGLA DE ORO DE VENTA CRUZADA / UPSELLING (ESTRICTA)]:
 El cliente AÚN NO ha agregado ni solicitado agregar nada a su compra/orden.
 Queda TERMINANTEMENTE PROHIBIDO preguntar "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" ni sugerir bebidas, papas o acompañamientos extras.
@@ -5687,17 +5689,43 @@ ${draftItems.length > 0 ? draftItems.map(it => `• ${it.quantity || 1}x ${it.na
           if (isAskingItemDetails) {
             const isCRC = activeCurrency.toUpperCase() === 'CRC';
             const formattedPrice = isCRC ? Math.round(Number(prodPrice)).toLocaleString('es-CR') : Number(prodPrice).toFixed(2);
-            contextBlock += `\n\n[CONSULTA SOBRE DETALLES / INGREDIENTES / CONTENIDO DEL PRODUCTO]:
+            if (isRestaurant) {
+              contextBlock += `\n\n[CONSULTA SOBRE DETALLES / INGREDIENTES / CONTENIDO DEL PRODUCTO]:
 El cliente está preguntando qué trae, qué incluye o cuáles son los ingredientes ${prodName ? `de "${prodName}"` : 'del producto'}.
 Instrucciones obligatorias:
 1) Explica con amabilidad, entusiasmo y apetitosidad qué ingredientes, componentes o porciones trae según la información del catálogo.
 2) Menciona claramente su precio oficial (${activeSym}${formattedPrice || '[Precio]'}).
 3) Al finalizar tu explicación, pregúntale amablemente: "¿Deseas agregar ${prodName || 'este producto'} a tu pedido?"
 4) REGLA DE ORO DE VENTA CRUZADA: El cliente NO ha agregado este producto todavía a su orden. Queda TERMINANTEMENTE PROHIBIDO preguntar "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" ni ofrecer bebidas o adicionales en este momento. Limítate a responder la duda y preguntar amablemente si desea agregar este platillo a su pedido.`;
+            } else if (isServices) {
+              contextBlock += `\n\n[CONSULTA SOBRE ALCANCE / CARACTERÍSTICAS DEL SERVICIO]:
+El cliente está consultando qué incluye o qué alcance tiene ${prodName ? `el servicio "${prodName}"` : 'el servicio'}.
+Instrucciones obligatorias:
+1) Explica con claridad ejecutiva, profesionalismo y empatía los beneficios y entregables oficiales incluidos en el catálogo.
+2) Menciona claramente su tarifa oficial (${activeSym}${formattedPrice || '[Tarifa]'}).
+3) Pregúntale amablemente si desea coordinar una asesoría técnica personalizada o agendar una llamada para revisar su caso.
+4) Queda TERMINANTEMENTE PROHIBIDO usar términos gastronómicos como comanda, platillo, comida, bebida o pedir la cuenta.`;
+            } else {
+              contextBlock += `\n\n[CONSULTA SOBRE DETALLES / ESPECIFICACIONES DEL PRODUCTO]:
+El cliente está consultando detalles ${prodName ? `de "${prodName}"` : 'del producto'}.
+Instrucciones obligatorias:
+1) Explica con amabilidad las especificaciones y beneficios según el catálogo.
+2) Menciona su precio oficial (${activeSym}${formattedPrice || '[Precio]'}).
+3) Pregúntale amablemente si desea sumarlo a su compra o realizar su pedido.`;
+            }
           } else if (isAskingItemPrice) {
-            contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
+            if (isRestaurant) {
+              contextBlock += `\n\n[CONSULTA DE PRECIO DE PLATILLO]:
 Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda.
 REGLA DE ORO: NO sugerir bebidas ni más papas. Solo después de que el usuario decida agregarlo a su compra se le pueden sugerir adicionales.`;
+            } else if (isServices) {
+              contextBlock += `\n\n[CONSULTA DE TARIFA DE SERVICIO]:
+Menciona la tarifa oficial con claridad y transparencia. Pregunta amablemente si desea conocer los entregables incluidos en este paquete o agendar una sesión técnica de asesoría.
+Queda TERMINANTEMENTE PROHIBIDO usar términos gastronómicos como "comanda", "platillo", "bebida" o "cuenta".`;
+            } else {
+              contextBlock += `\n\n[CONSULTA DE PRECIO DE PRODUCTO]:
+Menciona el precio oficial con amabilidad y pregunta amablemente si desea agregarlo a su compra o carrito.`;
+            }
           }
 
           const isLegitProduct = prodName && products.some(p => {
@@ -5707,16 +5735,25 @@ REGLA DE ORO: NO sugerir bebidas ni más papas. Solo después de que el usuario 
           });
           if (isLegitProduct && prodPrice > 0 && !isDisputeOrCorrection) {
             quickActions = [
-              { id: 'add_item', label: itemLabel, actionText: itemAction, variant: 'gastronomic' }
+              { id: 'add_item', label: itemLabel, actionText: itemAction, variant: isRestaurant ? 'gastronomic' : 'primary' }
             ];
           } else {
-            quickActions = [
+            quickActions = isRestaurant ? [
               { id: 'view_menu', label: '📖 Ver Menú Completo', actionText: '¿Cuáles son las opciones del menú?', variant: 'secondary' },
               { id: 'view_total', label: '🧾 Ver mi Pedido', actionText: '¿Cuánto es el total?', variant: 'primary' }
+            ] : [
+              { id: 'view_services', label: '💼 Ver Servicios', actionText: '¿Cuáles servicios ofrecen?', variant: 'secondary' },
+              { id: 'book_call', label: '📅 Agendar Cita', actionText: 'Deseo agendar una asesoría', variant: 'primary' }
             ];
           }
         } else if (isAddingMore) {
-          contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
+          if (isRestaurant) {
+            contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
+          } else if (isServices) {
+            contextBlock += `\n\n[CONTINUACIÓN DE CONSULTA]: El cliente desea consultar más opciones. Pregúntale con amabilidad qué otro requerimiento tecnológico o servicio le gustaría evaluar.`;
+          } else {
+            contextBlock += `\n\n[CONTINUACIÓN DE COMPRA]: El cliente desea seguir viendo opciones. Pregúntale con amabilidad qué otro producto le gustaría agregar a su compra.`;
+          }
         }
 
         // Inyección de Estrategia y Flujo Conversacional de Venta en 4 Pasos
