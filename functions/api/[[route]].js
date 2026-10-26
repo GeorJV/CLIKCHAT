@@ -951,11 +951,19 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // 2. Respaldo Nativo de Cloudflare Workers AI: Meta Llama 3.3 70B Fast
   if (env?.AI) {
     try {
+      const validHistory = history
+        .filter(h => (h.message && h.message.trim()) || (h.content && h.content.trim()))
+        .slice(-12)
+        .map(h => ({
+          role: h.sender === 'user' || h.role === 'user' ? 'user' : 'assistant',
+          content: (h.message || h.content || '').trim()
+        }));
+
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
         messages: [
           { role: 'system', content: systemContent },
-          ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
-          { role: 'user', content: userMessage }
+          ...validHistory,
+          { role: 'user', content: userMessage.trim() || 'Hola' }
         ],
         max_tokens: 1024
       });
@@ -1028,8 +1036,12 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   }
 
   // 4. Plantilla de contingencia gastronómica/comercial humana
+  const isSrv = context && /servicios|geosoft|agenda|cita|software/i.test(context);
+  const fallbackText = isSrv
+    ? '¡Hola! Con mucho gusto te atiendo y te asesoro. ¿En qué proyecto o requerimiento tecnológico te podemos colaborar?'
+    : '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones o deseas consultar por algún producto en específico?';
   return {
-    text: `¡Hola! Con mucho gusto te atiendo. Te gustaría conocer nuestras opciones del menú o deseas consultar por algún platillo en específico?`,
+    text: fallbackText,
     provider: 'context_template',
     model: 'template_fallback',
     neurons: 0,
