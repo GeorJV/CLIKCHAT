@@ -6,20 +6,27 @@ import { VoceroCompactCalendar } from './VoceroCompactCalendar';
 import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
 import { BookingIntervalConfig } from './BookingIntervalConfig';
 import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
+import {
+  normalizeToDateKey,
+  getBookingFilterKeys,
+  isBookingInFilter,
+  BookingFilterType,
+} from '../../../utils/bookingDateNormalizer';
 
 interface VoceroBookingsViewProps {
   tenantId?: string;
 }
 
 export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId }) => {
-  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'tomorrow' | 'after' | 'this_week' | 'next_week'>('all');
+  const [timeFilter, setTimeFilter] = useState<BookingFilterType>('all');
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
   const [showMonthCalendar, setShowMonthCalendar] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
 
-  const now = new Date();
-  const todayKey = now.toISOString().slice(0, 10);
+  const now = useMemo(() => new Date(), []);
+  const filterKeys = useMemo(() => getBookingFilterKeys(now), [now]);
+  const todayKey = filterKeys.todayKey;
   const tId = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'geosoft';
   const storageKey = `clikchat_bookings_${tId}`;
   const bookingSwitchKey = `clikchat_allow_chat_booking_${tId}`;
@@ -30,7 +37,16 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   });
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
-    try { const saved = localStorage.getItem(storageKey); return saved ? JSON.parse(saved) : getInitialAppointments(); } catch { return getInitialAppointments(); }
+    try {
+      const saved = localStorage.getItem(storageKey);
+      const items = saved ? JSON.parse(saved) : getInitialAppointments();
+      return items.map((a: AppointmentItem) => ({
+        ...a,
+        dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey
+      }));
+    } catch {
+      return getInitialAppointments();
+    }
   });
 
   useEffect(() => {
@@ -39,16 +55,19 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.bookings && Array.isArray(d.bookings) && isMounted) {
-          const apiApts = d.bookings.map((b: any) => ({
-            id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
-            dateKey: b.booking_date || todayKey, displayDate: b.booking_date || todayKey, time: b.booking_time || '10:00 AM',
-            status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
-          }));
+          const apiApts = d.bookings.map((b: any) => {
+            const normKey = normalizeToDateKey(b.booking_date, now) || todayKey;
+            return {
+              id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
+              dateKey: normKey, displayDate: b.booking_date || normKey, time: b.booking_time || '10:00 AM',
+              status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
+            };
+          });
           setAppointments(prev => { const seen = new Set(prev.map(p => p.id)); return [...apiApts.filter(a => !seen.has(a.id)), ...prev]; });
         }
       }).catch(() => {});
     return () => { isMounted = false; };
-  }, [tId, todayKey]);
+  }, [tId, todayKey, now]);
 
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(appointments)); } catch (e) {}
@@ -70,22 +89,17 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: a.status === 'confirmed' ? 'pending' : 'confirmed' } : a));
   };
 
-  const appointmentDates = useMemo(() => appointments.map(a => a.dateKey), [appointments]);
+  const appointmentDates = useMemo(
+    () => appointments.map(a => normalizeToDateKey(a.dateKey, now) || a.dateKey),
+    [appointments, now]
+  );
 
   const filtered = useMemo(() => {
-    if (calendarSelectedDate) return appointments.filter(a => a.dateKey === calendarSelectedDate);
-    const msInDay = 86400000;
-    const nowMs = new Date(todayKey).getTime();
-    return appointments.filter(a => {
-      const diff = (new Date(a.dateKey).getTime() - nowMs) / msInDay;
-      if (timeFilter === 'today') return diff === 0;
-      if (timeFilter === 'tomorrow') return diff === 1;
-      if (timeFilter === 'after') return diff === 2;
-      if (timeFilter === 'this_week') return diff >= 0 && diff <= 7;
-      if (timeFilter === 'next_week') return diff > 7 && diff <= 14;
-      return true;
-    });
-  }, [appointments, timeFilter, calendarSelectedDate, todayKey]);
+    if (calendarSelectedDate) {
+      return appointments.filter(a => (normalizeToDateKey(a.dateKey, now) || a.dateKey) === calendarSelectedDate);
+    }
+    return appointments.filter(a => isBookingInFilter(a.dateKey, timeFilter, filterKeys, now));
+  }, [appointments, timeFilter, calendarSelectedDate, filterKeys, now]);
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
@@ -151,7 +165,10 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
         )}
       </main>
 
-      <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => setAppointments(prev => [apt, ...prev])} />
+      <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => {
+        const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
+        setAppointments(prev => [norm, ...prev]);
+      }} />
       <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={(id) => { setAppointments(prev => prev.filter(a => a.id !== id)); setSelectedAppointment(null); }} />
     </div>
   );

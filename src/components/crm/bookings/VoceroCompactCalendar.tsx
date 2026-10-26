@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { getLocalDateKey } from '../../../utils/bookingDateNormalizer';
 
 interface Props {
   appointmentDates: string[]; // ['2026-10-20', '2026-10-21']
@@ -35,7 +36,7 @@ export const VoceroCompactCalendar: React.FC<Props> = ({
     return `${year}-${m}-${d}`;
   };
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateKey(new Date());
 
   return (
     <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs font-sans max-w-sm w-full mx-auto animate-in fade-in zoom-in-95 duration-150">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, User, Briefcase } from 'lucide-react';
 import { AppointmentItem } from './VoceroAppointmentCard';
+import { getLocalDateKey } from '../../../utils/bookingDateNormalizer';
 
 interface VoceroNewBookingModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ export const VoceroNewBookingModal: React.FC<VoceroNewBookingModalProps> = ({
   const [phone, setPhone] = useState('');
   const [serviceName, setServiceName] = useState('');
   const [notes, setNotes] = useState('');
-  const [dateKey, setDateKey] = useState(new Date().toISOString().slice(0, 10));
+  const [dateKey, setDateKey] = useState(() => getLocalDateKey());
   const [time, setTime] = useState('10:00');
   const [channel, setChannel] = useState<'whatsapp' | 'instagram' | 'web'>('whatsapp');
 

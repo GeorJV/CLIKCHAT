@@ -1,9 +1,9 @@
 import { AppointmentItem } from './VoceroAppointmentCard';
+import { getLocalDateKey } from '../../../utils/bookingDateNormalizer';
 
 export const getInitialAppointments = (): AppointmentItem[] => {
   const now = new Date();
-  const formatKey = (d: Date) => d.toISOString().slice(0, 10);
-  const todayKey = formatKey(now);
+  const todayKey = getLocalDateKey(now);
 
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
@@ -30,7 +30,7 @@ export const getInitialAppointments = (): AppointmentItem[] => {
       id: 'apt-2',
       clientName: 'María Fernanda Ruiz',
       serviceName: 'Consulta de Valoración',
-      dateKey: formatKey(tomorrow),
+      dateKey: getLocalDateKey(tomorrow),
       displayDate: `Mañana, ${tomorrow.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
       time: '10:00',
       status: 'pending',
@@ -43,7 +43,7 @@ export const getInitialAppointments = (): AppointmentItem[] => {
       id: 'apt-3',
       clientName: 'David Rodríguez',
       serviceName: 'Asesoría Especializada',
-      dateKey: formatKey(dayAfter),
+      dateKey: getLocalDateKey(dayAfter),
       displayDate: dayAfterName.charAt(0).toUpperCase() + dayAfterName.slice(1),
       time: '16:00',
       status: 'confirmed',
