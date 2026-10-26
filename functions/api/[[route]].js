@@ -3183,11 +3183,19 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           resolvedCustomKey = JSON.stringify({
             key: custom_ai_config.apiKey.trim(),
             provider: custom_ai_config.provider || (custom_ai_config.apiKey.startsWith('AIza') || custom_ai_config.apiKey.startsWith('AQ.') ? 'google' : custom_ai_config.apiKey.startsWith('sk-or') ? 'openrouter' : 'openai'),
-            model: custom_ai_config.model
+            model: custom_ai_config.model,
+            deliveryMode: message_delivery_mode || custom_ai_config.deliveryMode
           });
+        } else if (message_delivery_mode) {
+          resolvedCustomKey = JSON.stringify({ deliveryMode: message_delivery_mode });
         } else {
           resolvedCustomKey = null;
         }
+      } else if (message_delivery_mode) {
+        let cfg = {};
+        try { if (typeof custom_llm_key === 'string' && custom_llm_key.startsWith('{')) cfg = JSON.parse(custom_llm_key); } catch (e) {}
+        cfg.deliveryMode = message_delivery_mode;
+        resolvedCustomKey = JSON.stringify(cfg);
       }
 
       const hasCustomKey = resolvedCustomKey !== undefined;
@@ -3263,6 +3271,13 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         ...(memoryTenants.get(id) || memoryTenants.get(slug) || getFallbackTenant(id)),
         ...body
       };
+      if (message_delivery_mode) finalTenant.message_delivery_mode = message_delivery_mode;
+      else if (finalTenant.custom_llm_key && finalTenant.custom_llm_key.startsWith('{')) {
+        try {
+          const pK = JSON.parse(finalTenant.custom_llm_key);
+          if (pK.deliveryMode) finalTenant.message_delivery_mode = pK.deliveryMode;
+        } catch (e) {}
+      }
 
       if (finalTenant.id) memoryTenants.set(finalTenant.id, finalTenant);
       if (finalTenant.slug) memoryTenants.set(finalTenant.slug, finalTenant);

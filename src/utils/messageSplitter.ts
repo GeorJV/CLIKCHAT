@@ -1,4 +1,4 @@
-export type DeliveryMode = 'micro' | 'interleaved' | 'single';
+export type DeliveryMode = 'micro' | 'moderate' | 'intermediate' | 'single' | 'interleaved';
 
 /**
  * Erradica signos de apertura '¿' y '¡' para un estilo de chat de WhatsApp 100% humanizado
@@ -10,26 +10,25 @@ export function cleanHumanizedText(rawText: string): string {
 
 /**
  * Divide el mensaje del asistente en múltiples burbujas según el modo de envío configurado:
- * - 'micro': Mensaje por mensaje (oraciones/micro-burbujas como chatea una persona real)
- * - 'interleaved': Mensaje intercalado (cada ~2 renglones en bloques moderados equilibrados)
- * - 'single': Mensaje único tradicional en una sola burbuja completa
+ * - 'micro': Microburbujas oración por oración (mensajes breves rápidos)
+ * - 'moderate': Moderado (cada ~2 renglones en bloques breves)
+ * - 'intermediate': Intermedio (bloques equilibrados de ~30-45 palabras)
+ * - 'single': Bloque completo en una sola burbuja unificada
  */
 export function splitMessageByDeliveryMode(
   rawText: string,
-  mode: DeliveryMode = 'interleaved'
+  mode: DeliveryMode = 'moderate'
 ): string[] {
   const text = cleanHumanizedText(rawText).trim();
   if (!text) return [];
 
-  // Modo Único: una sola burbuja completa
+  // 1. Bloque Completo: una sola burbuja
   if (mode === 'single') {
     return [text];
   }
 
-  // Si contiene un ticket/comanda formateado con caracteres de caja (╔, ║, ╚), mantenerlo protegido
-  const hasBoxTicket = /[╔║╠╚═]/.test(text);
-  if (hasBoxTicket) {
-    // Si hay caja ASCII, separar el texto previo, la caja y el texto posterior
+  // Protección de tickets / comandas formateadas con cajas ASCII
+  if (/[╔║╠╚═]/.test(text)) {
     const parts = text.split(/(╔[\s\S]*?╚═*╝)/g).filter(p => p.trim().length > 0);
     if (parts.length > 1) {
       const result: string[] = [];
@@ -44,59 +43,45 @@ export function splitMessageByDeliveryMode(
     }
   }
 
-  // Dividir por párrafos naturales (\n\n o \n)
   const rawParagraphs = text.split(/\n+/).map(p => p.trim()).filter(Boolean);
 
+  // 2. Modo Microburbujas: oración por oración (máx 10-12 palabras)
   if (mode === 'micro') {
     const microBubbles: string[] = [];
-
     for (const para of rawParagraphs) {
-      // Si es viñeta de menú/producto o lista, mantener el ítem como una burbuja completa
       if (/^(?:[-*•]|\d+[.)])\s+/.test(para)) {
         microBubbles.push(para);
         continue;
       }
-
-      // Si el párrafo es corto (< 15 palabras), enviarlo como una micro-burbuja directa
-      const words = para.split(/\s+/);
-      if (words.length <= 14) {
-        microBubbles.push(para);
-        continue;
-      }
-
-      // Si es más largo, dividir por oraciones naturales (. ? !)
       const sentences = para.split(/(?<=[.?!])\s+/).filter(s => s.trim().length > 0);
-      let currentAcc = '';
-
-      for (const sent of sentences) {
-        if (!currentAcc) {
-          currentAcc = sent;
-        } else if ((currentAcc + ' ' + sent).split(/\s+/).length <= 14) {
-          currentAcc += ' ' + sent;
+      let current = '';
+      for (const s of sentences) {
+        if (!current) {
+          current = s;
+        } else if ((current + ' ' + s).split(/\s+/).length <= 11) {
+          current += ' ' + s;
         } else {
-          microBubbles.push(currentAcc.trim());
-          currentAcc = sent;
+          microBubbles.push(current.trim());
+          current = s;
         }
       }
-      if (currentAcc.trim()) {
-        microBubbles.push(currentAcc.trim());
-      }
+      if (current.trim()) microBubbles.push(current.trim());
     }
-
     return microBubbles.length > 0 ? microBubbles : [text];
   }
 
-  // Modo Intercalado / Moderado: Agrupar cada ~2 renglones o ideas medianas (~25-45 palabras)
-  const interleavedBubbles: string[] = [];
+  // 3. Modo Moderado (2 renglones / interleaved): ~14 a 22 palabras por burbuja
+  const isModerate = mode === 'moderate' || mode === 'interleaved';
+  const targetWords = isModerate ? 20 : 42; // 20 para moderado, 42 para intermedio
+
+  const bubbles: string[] = [];
   let buffer = '';
 
   for (const para of rawParagraphs) {
     const isBullet = /^(?:[-*•]|\d+[.)])\s+/.test(para);
-
     if (isBullet) {
-      // Las viñetas de platillos o precios se acumulan con el buffer si es pequeño
-      if (buffer && buffer.split(/\s+/).length >= 35) {
-        interleavedBubbles.push(buffer.trim());
+      if (buffer && buffer.split(/\s+/).length >= (isModerate ? 16 : 32)) {
+        bubbles.push(buffer.trim());
         buffer = para;
       } else {
         buffer = buffer ? `${buffer}\n${para}` : para;
@@ -107,19 +92,16 @@ export function splitMessageByDeliveryMode(
     if (!buffer) {
       buffer = para;
     } else {
-      const combinedWordCount = `${buffer}\n\n${para}`.split(/\s+/).length;
-      if (combinedWordCount <= 38) {
+      const combinedCount = `${buffer}\n\n${para}`.split(/\s+/).length;
+      if (combinedCount <= targetWords) {
         buffer = `${buffer}\n\n${para}`;
       } else {
-        interleavedBubbles.push(buffer.trim());
+        bubbles.push(buffer.trim());
         buffer = para;
       }
     }
   }
 
-  if (buffer.trim()) {
-    interleavedBubbles.push(buffer.trim());
-  }
-
-  return interleavedBubbles.length > 0 ? interleavedBubbles : [text];
+  if (buffer.trim()) bubbles.push(buffer.trim());
+  return bubbles.length > 0 ? bubbles : [text];
 }

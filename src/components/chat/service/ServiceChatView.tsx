@@ -11,15 +11,16 @@ import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
+import { DeliveryMode } from '../../../utils/messageSplitter';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
-  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; onExit?: () => void;
+  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
-  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, onExit,
+  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, deliveryMode, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || { ...DEFAULT_SERVICE, title: 'Servicio Especializado', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'service'>('chat');
@@ -79,6 +80,7 @@ export const ServiceChatView: React.FC<Props> = ({
       const userText = batch.join('\n').trim();
       if (!userText) return;
       setIsLoading(true);
+      const startTime = Date.now();
       try {
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -86,6 +88,9 @@ export const ServiceChatView: React.FC<Props> = ({
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
+        const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+        const elapsed = Date.now() - startTime;
+        if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
         setMessages((prev) => [...prev, {
           id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: data?.answer || '¡Con gusto te asesoro! ¿En qué te podemos colaborar hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -94,6 +99,9 @@ export const ServiceChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
+          const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+          const elapsed = Date.now() - startTime;
+          if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           setMessages((prev) => [...prev, { id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100, modelUsed: fb.provider, reasoning: fb.levelLabel } }]);
         } catch {
@@ -149,6 +157,7 @@ export const ServiceChatView: React.FC<Props> = ({
             storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title}
             messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking}
             businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'}
+            deliveryMode={deliveryMode}
             onInputChange={setInputValue} onSendMessage={handleSendMessage}
             onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
             onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)}

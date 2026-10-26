@@ -52,7 +52,7 @@ export function App() {
     else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !t) setSelectedTenantSlug(user.tenantSlug);
   }, [search, routeTenantSlug, user?.tenantSlug, user?.role]);
 
-  const { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
+  const { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, deliveryMode, businessType } = useProductResolver(productId, selectedTenantSlug);
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));
   const isServicesBiz = businessType === 'servicios';
   const servicesList = productsList?.length > 0 ? productsList.map(toServiceItem) : (productItem ? [toServiceItem(productItem)] : []);
@@ -90,14 +90,14 @@ export function App() {
         {currentView === 'product' && (
           <div className="h-full w-full overflow-hidden bg-[#222020]">
             {isResolvingProduct && !productItem ? <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando catálogo virtual...</div> : (
-              <ProductChatView storeName={storeName || 'Tienda Oficial'} agentName={agentName || 'Asistente Virtual'} agentAvatar={agentAvatar} welcomeMessage={welcomeMessage} tenantSlug={selectedTenantSlug} initialProduct={productItem || DEFAULT_PRODUCT} products={productsList?.length > 0 ? productsList : (productItem ? [productItem] : [DEFAULT_PRODUCT])} responseDelaySec={responseDelaySec} businessType={businessType} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
+              <ProductChatView storeName={storeName || 'Tienda Oficial'} agentName={agentName || 'Asistente Virtual'} agentAvatar={agentAvatar} welcomeMessage={welcomeMessage} tenantSlug={selectedTenantSlug} initialProduct={productItem || DEFAULT_PRODUCT} products={productsList?.length > 0 ? productsList : (productItem ? [productItem] : [DEFAULT_PRODUCT])} responseDelaySec={responseDelaySec} deliveryMode={deliveryMode} businessType={businessType} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
             )}
           </div>
         )}
         {(currentView === 'service' || (currentView === 'chat' && isServicesBiz)) && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
             {isResolvingProduct && !storeName ? <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando agenda y asesoría virtual...</div> : (
-              <ServiceChatView storeName={storeName || 'Centro Especializado'} agentName={agentName || 'Asesora Profesional'} agentAvatar={agentAvatar} tenantSlug={selectedTenantSlug} responseDelaySec={responseDelaySec} services={servicesList} initialService={servicesList[0]} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
+              <ServiceChatView storeName={storeName || 'Centro Especializado'} agentName={agentName || 'Asesora Profesional'} agentAvatar={agentAvatar} tenantSlug={selectedTenantSlug} responseDelaySec={responseDelaySec} deliveryMode={deliveryMode} services={servicesList} initialService={servicesList[0]} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
             )}
           </div>
         )}

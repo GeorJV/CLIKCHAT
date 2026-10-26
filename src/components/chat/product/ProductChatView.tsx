@@ -13,13 +13,15 @@ import { useProductChatOrder } from './useProductChatOrder';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { useLivePresencePing } from '../../../hooks/useLivePresencePing';
 
+import { DeliveryMode } from '../../../utils/messageSplitter';
+
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; welcomeMessage?: string;
-  businessType?: string; tenantSlug?: string; products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; onExit?: () => void;
+  businessType?: string; tenantSlug?: string; products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
-  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar, welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl', products = [], initialProduct, responseDelaySec, onExit,
+  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar, welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl', products = [], initialProduct, responseDelaySec, deliveryMode, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'product'>('chat');
@@ -63,6 +65,7 @@ export const ProductChatView: React.FC<Props> = ({
       const userText = batch.join('\n').trim();
       if (!userText) return;
       setIsLoading(true);
+      const startTime = Date.now();
       try {
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -76,6 +79,9 @@ export const ProductChatView: React.FC<Props> = ({
         });
         if (!res.ok) throw new Error('Error en el servidor de chat');
         const data = await res.json();
+        const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+        const elapsed = Date.now() - startTime;
+        if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
         if (data?.isRestaurant || isRestaurant) {
           syncFromBotReply(data?.orderItems, data?.orderTotal, data?.answer);
           const askedTotal = data?.isAskingTotal || /\b(cuanto\s*es(\s*la\s*cuenta|\s*para\s*pagar|\s*en\s*total|\s*todo)?|la\s*cuenta|total\s*a\s*pagar|total\s*del\s*pedido)\b/i.test(userText);
@@ -92,6 +98,9 @@ export const ProductChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl', storeName, agentName, businessType, welcomeMessage, userMessage: userText, selectedProduct, products, sessionId: sessId });
+          const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+          const elapsed = Date.now() - startTime;
+          if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           setMessages((prev) => [...prev, {
             id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -142,6 +151,7 @@ export const ProductChatView: React.FC<Props> = ({
           <ProductChatColumn
             storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} productTitle={selectedProduct.title}
             messages={messages} inputValue={inputValue} isLoading={isLoading} theme={theme} themeStyles={themeStyles}
+            deliveryMode={deliveryMode}
             onThemeChange={setTheme} onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={handleAudioRecorded} onExit={onExit} onResetChat={handleResetChat}
           />
         </div>

@@ -9,18 +9,17 @@ import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from '../ChatMessageContent';
 import { QuickActionButtons } from '../QuickActionButtons';
+import { splitMessageByDeliveryMode, DeliveryMode } from '../../../utils/messageSplitter';
 
 interface Props {
-  storeName: string; agentName: string; agentAvatar?: string; productTitle: string;
-  messages: ProductChatMessage[]; inputValue: string; isLoading: boolean;
-  theme: ProductChatTheme; themeStyles: ThemeStyles; onThemeChange?: (t: ProductChatTheme) => void;
-  onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
-  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
-  onResetChat?: () => void;
+  storeName: string; agentName: string; agentAvatar?: string; productTitle: string; messages: ProductChatMessage[];
+  inputValue: string; isLoading: boolean; theme: ProductChatTheme; themeStyles: ThemeStyles; onThemeChange?: (t: ProductChatTheme) => void;
+  deliveryMode?: DeliveryMode; onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
+  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void; onResetChat?: () => void;
 }
 
 export const ProductChatColumn: React.FC<Props> = ({
-  storeName, agentName, agentAvatar, messages, inputValue, isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit, onResetChat
+  storeName, agentName, agentAvatar, messages, inputValue, isLoading, themeStyles, deliveryMode, onInputChange, onSendMessage, onAudioRecorded, onExit, onResetChat
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -84,45 +83,46 @@ export const ProductChatColumn: React.FC<Props> = ({
         {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
+          const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+          const bubbles = isAssistant && !msg.isAudio ? splitMessageByDeliveryMode(msg.content, activeMode) : [];
+
+          if (isAssistant && !msg.isAudio && bubbles.length > 1) {
+            return (
+              <div key={msg.id} className="flex flex-col items-start w-full space-y-1.5 mt-2">
+                {bubbles.map((chunk, bIdx) => (
+                  <div key={`${msg.id}-b-${bIdx}`} className={`w-fit max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm animate-bubble-in break-words overflow-hidden min-w-0 ${themeStyles.botBubble} origin-bottom-left`}>
+                    <div className="space-y-1.5 min-w-0">
+                      <ChatMessageContent content={chunk} isUser={false} onActionClick={onSendMessage} />
+                      {bIdx === bubbles.length - 1 && msg.quickActions && msg.quickActions.length > 0 && (
+                        <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
+                      )}
+                      {bIdx === bubbles.length - 1 && (
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
+                          {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
+                          <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
           return (
             <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
-              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${
-                msg.isAudio
-                  ? 'px-2 py-0.5'
-                  : isAssistant
-                    ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm'
-                    : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'
-              } ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
-                {msg.isAudio ? (
-                  <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} />
-                ) : isAssistant && msg.ragTrace && isBusinessAdminViewer() ? (
+              <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
+                {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
-                    {msg.quickActions && msg.quickActions.length > 0 && (
-                      <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
-                    )}
+                    {msg.quickActions && msg.quickActions.length > 0 && <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
-                      <ProductRAGBadge trace={msg.ragTrace} />
+                      {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
                       <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
                     </div>
                   </div>
-                ) : isAssistant ? (
-                  <div className="space-y-1 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
-                    {msg.quickActions && msg.quickActions.length > 0 && (
-                      <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
-                    )}
-                    <div className="flex justify-end">
-                      <span className={`text-[10px] select-none tabular-nums ${themeStyles.textSecondary}`}>{msg.timestamp || '20:03'}</span>
-                    </div>
-                  </div>
                 ) : (
-                  <div className="flow-root leading-snug">
-                    <span className="whitespace-pre-wrap break-words select-text">{msg.content}</span>
-                    <span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">
-                      {msg.timestamp || '20:03'}
-                    </span>
-                  </div>
+                  <div className="flow-root leading-snug"><span className="whitespace-pre-wrap break-words select-text">{msg.content}</span><span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">{msg.timestamp || '20:03'}</span></div>
                 )}
               </div>
             </div>
