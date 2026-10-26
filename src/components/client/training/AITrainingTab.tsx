@@ -14,7 +14,7 @@ interface AITrainingTabProps {
   tenant?: Tenant | null;
   onUpdateSettings?: (updates: Partial<Tenant>) => Promise<boolean>;
   unresolved: UnresolvedQuery[];
-  onResolve: (id: string, payload: { answer: string; category?: string; autoInjectToFaq: boolean }) => Promise<boolean>;
+  onResolve: (id: string, answerOrPayload: any, category?: string) => Promise<boolean>;
   faqs?: FAQ[];
   onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
   onUpdateFaq?: (id: string, newAnswer: string) => Promise<boolean>;

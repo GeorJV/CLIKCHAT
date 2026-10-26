@@ -173,13 +173,15 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
     runImmediatelyOnFocus: true
   });
 
-  const resolveQuery = async (queryId: string, answer: string, category: string = 'consultas_resueltas') => {
-    if (!answer.trim()) return false;
+  const resolveQuery = async (queryId: string, answerOrPayload: string | { answer: string; category?: string }, category: string = 'consultas_resueltas') => {
+    const answerText = typeof answerOrPayload === 'string' ? answerOrPayload : (answerOrPayload?.answer || '');
+    const cat = typeof answerOrPayload === 'object' && answerOrPayload?.category ? answerOrPayload.category : category;
+    if (!answerText.trim()) return false;
     try {
       const res = await fetch(`/api/audit/resolve/${queryId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answer: answer.trim(), category, autoInjectToFaq: true })
+        body: JSON.stringify({ answer: answerText.trim(), category: cat, autoInjectToFaq: true })
       });
       if (res.ok) {
         await loadTenantData(tenantSlug);
