@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Blindaje Factual de Precios & Erradicación Determinista de Alucinaciones (v2.4.4)
+- **Diagnóstico y Causa Raíz:**
+  1. *Fuga de Ejemplos Negativos (Efecto Elefante Rosa):* La instrucción del prompt contenía ejemplos literales de cifras no autorizadas (`como $800, $2500`). Los modelos de lenguaje atendían a estos tokens y alucinaban tarifas como "página estática básica comienza en $800 USD".
+  2. *Falta de Intercepción Algorítmica en Código:* El sistema confiaba en texto en el prompt sin validar matemáticamente en el backend si los números generados correspondían a precios reales del catálogo.
+  3. *Temperatura Elevada (`0.35`):* Favorecía la deducción creativa de precios en lugar de una cita factual estricta.
+- **Solución Quirúrgica Implementada (Defensa en Profundidad 4 Capas):**
+  1. *Guardaespaldas Algorítmico de Precios en JavaScript (`enforceFactualPriceGuardrail` en `functions/api/[[route]].js`):*
+     - Escanea mediante regex todo monto monetario (`$`, `₡`, `€`, `USD`, `CRC`) en la respuesta generada por el LLM.
+     - Compara contra los precios legítimos autorizados del negocio (catálogo D1, FAQs, documentos y ofertas de campaña).
+     - Si detecta un precio no autorizado (ej: $800), el código **lo bloquea de forma inmediata e infalible**, reescribe la respuesta con la tarifa base oficial del catálogo ($1,200 USD para proyectos a medida) y activa el enrutamiento a HITL.
+  2. *Erradicación Total de Ejemplos Negativos en System Prompt:*
+     - Eliminadas todas las menciones a números y ejemplos falsos en directivas. Reemplazado por regla estricta de fidelidad factual absoluta.
+  3. *Temperatura Ultrabaja (`temperature: 0.1`):*
+     - Configurado en todos los proveedores y llamadas a modelos en Edge para forzar modo determinista y apegado 100% al contexto.
+  4. *Enrutamiento Automático a Dudas No Resueltas (HITL):*
+     - Ante preguntas fuera de catálogo o intentos de forzar precios no registrados, se registra la duda en `unresolved_queries` (`status: 'pending'`) en Cloudflare D1 con todo el historial de chat para que el dueño de negocio la responda desde el CRM.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.40s con 0 errores TypeScript (`index-BOxISafV.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `ba56a0d` y `9f24592`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) y pruebas reales HTTP:
+    - Consulta con web básica estática: Responde oficialmente con $1200 USD (0 alucinaciones).
+    - Intento de forzar $300 dólares: El bot rechaza terminantemente y reitera la tarifa oficial de $1200 USD.
+    - Consulta fuera de catálogo (limpieza de oficinas): Deriva a HITL, responde con fallback honesto y registra en `unresolved_queries` en D1.
+    - Auditoría Chrome Headless: 17/17 rutas operativas al 100%.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-26] Generador de Enlaces de Campaña con Contexto IA & Ofertas Dinámicas (v2.4.3)
 - **Diagnóstico y Necesidad:**
   1. *Desconexión entre Publicidad y Chat:* Cuando un negocio creaba anuncios pagados (Meta Ads, Instagram, TikTok, Google Ads) o publicaciones con ganchos específicos, el bot recibía al cliente como un visitante anónimo sin saber qué video vio, qué anuncio lo atrajo ni qué oferta se le prometió.
