@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Jerarquía Estricta RAG: FAQs ➔ Base de Conocimiento ➔ Fallback HITL con Registro Automático de Dudas (v2.3.9)
+- **Diagnóstico y Necesidad:**
+  1. *Alucinación por Falta de Restricción RAG:* Cuando un cliente preguntaba por suscripciones o planes mensuales (no existentes en el negocio), el LLM alucinaba respuestas inventadas (como "$99 USD al mes") en lugar de admitir desconocimiento.
+  2. *Falla en el Registro de Dudas Pendientes (`unresolved_queries`):* La inserción en la base de datos D1 dependía exclusivamente de que el LLM devolviera la etiqueta técnica `<!--UNRESOLVED_QUERY-->`. Al alucinar, nunca emitía la etiqueta y la duda se perdía sin alertar al dueño.
+  3. *Condición `hasKnowledge` Inadecuada:* El backend evaluaba `products.length > 0 || faqs.length > 0` para activar el LLM, por lo que cualquier negocio con productos siempre llamaba a la IA y nunca caía en el Nivel 4 de Fallback HITL.
+- **Solución Quirúrgica Implementada (functions/api/[[route]].js):**
+  1. *Paso 1 (Nivel 2 FAQs Verificadas):* Evaluación simétrica prioritaria contra la tabla `faqs`. Si la similitud es $\ge 0.70$, se responde al instante ($0 costo / 0 latencia).
+  2. *Paso 2 (Nivel 3 Base de Conocimiento RAG & Catálogo):* Si no está en FAQs, busca en chunks de documentos y catálogo oficial. Si existe respaldo verified (`hasVerifiedKnowledge`), responde con el LLM anclado estrictamente a ese conocimiento.
+  3. *Paso 3 (Nivel 4 Fallback HITL Determinista):* Si la consulta es una duda o pregunta informativa y NO tiene respaldo en FAQs ni en Documentos/Catálogo:
+     - El backend inserta automáticamente la pregunta en `unresolved_queries` con status `'pending'` y datos de contacto en Cloudflare D1.
+     - Emite de forma determinista la respuesta honesta sin alucinaciones: *"Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo te responda con todos los detalles..."*.
+     - Alerta en tiempo real al dueño en el panel de ClikChat (*Entrenamiento AI -> Dudas Pendientes*) con badge rojo.
+     - Al responderla el dueño en el panel, se auto-entrena el bot creando la FAQ en Nivel 2.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 11.88s con 0 errores TypeScript (`index-Cl3cKXqt.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-26] Cuatro Modos de Burbujas y Respeto Estricto de Velocidad de Respuesta (v2.3.8)
 - **Diagnóstico y Necesidad:**
   1. *Falta de División en Chat de Servicios y Productos:* `ServiceChatColumn.tsx` y `ProductChatColumn.tsx` no llamaban a `splitMessageByDeliveryMode`, mostrando siempre un único bloque inmenso de texto aunque estuviera configurado en microburbujas.

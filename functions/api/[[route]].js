@@ -5034,48 +5034,44 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         });
       }
 
-      // 7. NIVEL 2: RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
-      // Si hay documentos cargados en RAG con coincidencia o producto específico, ceder paso a Nivel 3.
-      // Si NO hay documentos cargados en RAG, permitir que las FAQs oficiales respondan directamente.
-      const shouldBypassFaqForRAG = (hasDocumentMatch || hasDirectProductMatch || isCheckoutOrOrderQuery) || (requiresDeepRAG && (docChunks.length > 0 || rawDocs.length > 0));
-      if (!shouldBypassFaqForRAG) {
-        let topFaq = null;
-        let topFaqScore = 0;
-        for (const faq of faqs) {
-          const targetText = `${faq.question}`;
-          const score = computeOverlapScore(message, targetText);
-          if (score > topFaqScore) {
-            topFaqScore = score;
-            topFaq = faq;
-          }
-        }
-
-        // Solo detener si la pregunta del usuario es idéntica o casi idéntica a la FAQ oficial (>= 75% certeza simétrica)
-        if (topFaq && topFaqScore >= 0.75) {
-          const botMsgId = 'msg_' + Date.now() + '_b';
-          try {
-            await executeD1(
-              'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-              [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
-            );
-          } catch (e) {}
-
-          return jsonResponse({
-            sessionId: currentSessionId,
-            level: 'level_2_faq',
-            levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
-            confidence: topFaqScore,
-            answer: topFaq.answer,
-            matchedItem: topFaq,
-            stoppedEarly: true,
-            zeroCost: true,
-            orderTotal: null,
-            isRestaurant: targetTenant.business_type === 'restaurante'
-          });
+      // 7. PASO 1 (NIVEL 2): RAG de FAQs con Detención Inmediata ($0 Costo / Sin LLM)
+      // Se evalúa PRIMERO: Si la pregunta coincide con una FAQ oficial, se responde de inmediato.
+      let topFaq = null;
+      let topFaqScore = 0;
+      for (const faq of faqs) {
+        const targetText = `${faq.question}`;
+        const score = computeOverlapScore(message, targetText);
+        if (score > topFaqScore) {
+          topFaqScore = score;
+          topFaq = faq;
         }
       }
 
-      // 8. NIVEL 3: RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
+      // Responder con FAQ oficial si la coincidencia es alta (>= 0.70) y no es una acción de comanda/pago de restaurante
+      if (topFaq && topFaqScore >= 0.70 && !isCheckoutOrOrderQuery && !isAddingItemAction) {
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_2_faq',
+          levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
+          confidence: topFaqScore,
+          answer: topFaq.answer,
+          matchedItem: topFaq,
+          stoppedEarly: true,
+          zeroCost: true,
+          orderTotal: null,
+          isRestaurant: targetTenant.business_type === 'restaurante'
+        });
+      }
+
+      // 8. PASO 2 (NIVEL 3): RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
       // Score de productos (coincidencia con nombre, sku, descripción, categoría y stock)
       const scoredProducts = products.map(p => {
         const pText = `${p.name} ${p.name} ${p.short_description || ''} ${p.full_description || ''} ${p.details?.category || ''} ${p.details?.sku || ''}`;
@@ -5106,7 +5102,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }).sort((a, b) => b.score - a.score);
 
       const relevantChunks = scoredChunks.filter(sc => sc.score >= 0.12).map(sc => sc.chunk);
-      const chunksToInclude = relevantChunks.length > 0 ? relevantChunks.slice(0, 6) : docChunks.slice(0, 4);
+      const chunksToInclude = relevantChunks.length > 0 ? relevantChunks.slice(0, 6) : [];
 
       // Garantizar que documentos crudos con alta coincidencia también se incluyan en el contexto
       for (const d of rawDocs) {
@@ -5122,7 +5118,69 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       }
 
-      const hasKnowledge = matchedProducts.length > 0 || chunksToInclude.length > 0 || products.length > 0 || faqs.length > 0;
+      // Verificación de existencia de conocimiento verificado en la Base de Conocimiento
+      const hasVerifiedKnowledge = matchedProducts.length > 0 || chunksToInclude.length > 0;
+
+      // Detección estricta de consultas o dudas informativas del usuario
+      const isCustomerInquiry = (
+        cleanUserQuery.includes('?') ||
+        cleanUserQuery.includes('¿') ||
+        requiresDeepRAG ||
+        /\b(cuanto|cuanta|cuantos|cuantas|precio|precios|costo|costos|tarifa|tarifas|valor|pagar|pago|pagos|mensual|mensualidad|suscripcion|suscripciones|plan|planes|cuota|cuotas|metodo|metodos|sinpe|tarjeta|transferencia|efectivo|financiamiento|credito|garantia|garantias|tiempo|demora|tardan|plazo|entrega|envio|envios|cobertura|donde|ubicacion|horario|horarios|atienden|abierto|cerrado|como|que|cual|cuales|quien|tienen|ofrecen|hacen|venden|dan|pueden|sirve|funciona|politica|politicas|requisito|requisitos|terminos|condiciones|devolucion|cancelacion|descuento|promo|promocion)\b/i.test(cleanUserQuery)
+      );
+
+      const isBookingSlotFilling = isBookingContext && (
+        Boolean(bookingState.slots.name && !bookingState.slots.email) ||
+        Boolean(bookingState.slots.email && !bookingState.slots.phone) ||
+        Boolean(bookingState.slots.phone && !bookingState.slots.date) ||
+        Boolean(bookingState.slots.date && !bookingState.slots.time)
+      );
+
+      // PASO 3 (NIVEL 4): Si NO está en FAQs Y NO está en la Base de Conocimiento,
+      // derivar DIRECTAMENTE a HITL, registrar en unresolved_queries para el dueño y emitir fallback honesto
+      const isDirectUnresolvedFallback = (
+        isCustomerInquiry &&
+        !hasVerifiedKnowledge &&
+        !isBookingSlotFilling &&
+        !isCheckoutOrOrderQuery
+      );
+
+      if (isDirectUnresolvedFallback) {
+        const unresId = 'unres_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+        try {
+          await executeD1(
+            'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [unresId, actualTenantId, currentSessionId, message, JSON.stringify(activeLeadInfo || {}), 'pending']
+          );
+        } catch (uErr) {
+          console.warn('Error registrando duda no resuelta en D1:', uErr.message);
+        }
+
+        const fallbackAnswer = `Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo te responda con todos los detalles.\n\n¿Te gustaría indicarme tu número de WhatsApp o correo electrónico para avisarte al instante?`;
+
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', fallbackAnswer, 'fallback_hitl']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'fallback_hitl',
+          levelLabel: 'Nivel 4: Duda Registrada para el Administrador (HITL)',
+          confidence: 0.10,
+          answer: fallbackAnswer,
+          isFallback: true,
+          isUnresolved: true,
+          requiresLeadInfo: true,
+          orderTotal: null,
+          isRestaurant: targetTenant.business_type === 'restaurante'
+        });
+      }
+
+      const hasKnowledge = hasVerifiedKnowledge || isBookingContext || products.length > 0 || faqs.length > 0;
 
       if (hasKnowledge) {
         let contextBlock = '';
@@ -5829,7 +5887,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const isUnresolvedQuery = Boolean(
           llmResult.text && (
             llmResult.text.includes('<!--UNRESOLVED_QUERY-->') ||
-            /no\s+quiero\s+darte\s+informaci[oó]n\s+inexacta|he\s+registrado\s+tu\s+duda|consulta\s+muy\s+puntual/i.test(llmResult.text)
+            /no\s+quiero\s+darte\s+informaci[oó]n\s+inexacta|he\s+registrado\s+tu\s+duda|consulta\s+muy\s+puntual|no\s+tengo\s+ese\s+dato|no\s+dispongo\s+de\s+esa\s+informaci[oó]n|no\s+tengo\s+esa\s+informaci[oó]n/i.test(llmResult.text)
           )
         );
 
@@ -5839,7 +5897,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           try {
             await executeD1(
               'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-              [unresId, actualTenantId, currentSessionId, message, JSON.stringify(leadInfo || {}), 'pending']
+              [unresId, actualTenantId, currentSessionId, message, JSON.stringify(leadInfo || activeLeadInfo || {}), 'pending']
             );
           } catch (uErr) {
             console.warn('Error inserting unresolved query D1:', uErr.message);
@@ -5857,7 +5915,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         try {
           await executeD1(
             'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used, metadata) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, 'level_3_catalog', msgMetadata]
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', llmResult.text, isUnresolvedQuery ? 'fallback_hitl' : 'level_3_catalog', msgMetadata]
           );
         } catch (e) {}
 
@@ -6063,10 +6121,13 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
         return jsonResponse({
           sessionId: currentSessionId,
-          level: 'level_3_catalog',
-          levelLabel: 'Nivel 3: Asesoría de Catálogo & RAG',
-          confidence: matchedProducts.length > 0 ? 0.92 : 0.70,
+          level: isUnresolvedQuery ? 'fallback_hitl' : 'level_3_catalog',
+          levelLabel: isUnresolvedQuery ? 'Nivel 4: Duda Registrada para el Administrador (HITL)' : 'Nivel 3: Asesoría de Catálogo & RAG',
+          confidence: isUnresolvedQuery ? 0.15 : (matchedProducts.length > 0 ? 0.92 : 0.70),
           answer: llmResult.text,
+          isFallback: isUnresolvedQuery,
+          isUnresolved: isUnresolvedQuery,
+          requiresLeadInfo: isUnresolvedQuery,
           products: prodsToInclude,
           provider: llmResult.provider,
           model: llmResult.model,

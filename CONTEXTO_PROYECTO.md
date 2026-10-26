@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 11:34 GMT-6
-- **Versión Actual:** 2.3.8 (Cuatro Modos de Burbujas y Respeto Estricto de Velocidad)
+- **Última Actualización:** 2026-10-26 12:08 GMT-6
+- **Versión Actual:** 2.3.9 (Jerarquía Estricta RAG 3 Niveles: FAQs -> Docs -> Fallback HITL D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `d8fdbe3`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - 4 Modos de Burbujas Funcionales: Microburbujas (oración por oración), Moderado (2 renglones), Intermedio y Bloque completo.
-  - Renderizado Multi-Burbuja Nativo: Operativo en Servicios (`ServiceChatColumn`) y Productos (`ProductChatColumn`).
-  - Velocidad Estricta Respetada: El bot aguarda con typing exactamente los segundos programados (1s, 2s, 9s, etc.).
-  - Configuración en Panel de Negocio: Selector de 4 modos integrado junto al control de segundos en Cadencia del Chatbot.
-  - Cierre de Sesión Limpio: `logout()` purga localStorage y redirige a la raíz `/`, eliminando URLs congeladas y cruce de cuentas.
+  - Jerarquía RAG Estricta: Paso 1 (FAQs $0 costo) -> Paso 2 (Base de Conocimiento RAG & Catálogo) -> Paso 3 (Fallback HITL).
+  - Captura Determinista de Dudas: Si una consulta no tiene match en FAQs ni Docs, se guarda automáticamente en `unresolved_queries` en D1.
+  - Alerta en Panel del Dueño: Aparece en tiempo real en *Entrenamiento AI -> Dudas Pendientes* con badge rojo para auto-entrenar con 1-clic.
+  - Cero Alucinaciones: El bot admite desconocimiento honestamente sin inventar tarifas ficticias ni planes inexistentes.
+  - 4 Modos de Burbujas y Velocidad Estricta: Micro, Moderado, Intermedio y Bloque completo funcionales con cadencia respetada.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
