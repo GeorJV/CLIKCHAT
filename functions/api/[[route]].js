@@ -5132,7 +5132,6 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         && !isBookingContext;
 
       if (isSimpleGreeting) {
-        const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
         const botName = targetTenant.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
         const storeName = targetTenant.name || 'nuestro negocio';
 
@@ -6134,7 +6133,6 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           );
         } catch (e) {}
 
-        const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
         const isCRC = activeCurrency.toUpperCase() === 'CRC' || /[₡¢]|CRC|colones/i.test(message);
 
         // RESCATE POST-LLM: Si la IA confirmó que anotó un producto (ej: "Tu Queque de chocolate... ya está anotado")
