@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Saludo Directo a "Hola" sin Mensajes en Cascada y Tarjeta Limpia de Cita sin Renglones Repetidos (v2.5.0)
+- **Diagnóstico y Necesidad:**
+  1. *Mensajes en Cascada ante "Hola":* Cuando el usuario escribía simplemente "hola", si la conversación ya tenía historial previo o contexto de agendamiento, el sistema no lo reconocía como saludo inicial puro y disparaba la estrategia completa de venta y agendamiento con el LLM, pidiendo de inmediato nombre y correo. La respuesta dividida por cadencia (`deliverStaggeredBubbles`) arrojaba hasta 4 o 5 burbujas consecutivas en vez de esperar el flujo natural del usuario.
+  2. *Repetición Redundante Renglón por Renglón en Citas:* Al confirmar o reprogramar una cita, la directiva del sistema le ordenaba a la IA presentar el resumen completo en texto (Servicio, Fecha, Hora, Nombre, Correo, Teléfono). Cada una de estas líneas era fragmentada como un mensaje independiente, enviando renglón por renglón datos que ya se encuentran presentados de forma visual y estética dentro de la tarjeta interactiva `[BOOKING_CARD]`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Detector de Saludo Puro Inmediato (`isPureGreeting` en Edge):*
+     - En `functions/api/[[route]].js`, se agregó intercepción previa a cualquier extracción de slots o llamada a LLM.
+     - Si el mensaje contiene únicamente saludos de cortesía (`"hola"`, `"hola buenas"`, `"buenos días"`, `"buenas tardes"`, etc.), el bot responde de inmediato con una única burbuja limpia: `"¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?"`.
+     - Cero costos de tokens LLM, cero preguntas prematuras y total respeto al ritmo del usuario.
+  2. *Erradicación de Listado Renglón por Renglón en Confirmación de Citas:*
+     - Actualizado el System Prompt y `stepInstruction` (Paso 5 y Reprogramación) prohibiendo estrictamente redactar campos de la cita en texto.
+     - Creada función determinista `cleanBookingCardText(text)` en Edge que filtra cualquier viñeta o línea tipo `Servicio:`, `Fecha:`, `Hora:`, etc., y asegura que el párrafo concluya con: *"¿Te gustaría hacer algún cambio o tienes alguna otra consulta?"* antes de emitir `[BOOKING_CARD: {...}]`.
+  3. *Entrega Unificada de Tarjeta en Frontend (`ServiceChatView.tsx` - 179 líneas):*
+     - Modificado `ServiceChatView.tsx` para que, cuando el mensaje contenga `cardMatch`, se entregue en una sola burbuja unificada con la tarjeta interactiva, suprimiendo la fragmentación escalonada.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 14.08s con 0 errores TypeScript (`index-DMgBOLBO.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `80dbccc`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Pruebas en Vivo Verificadas:*
+    - Test "hola": Respuesta instantánea `¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?` (`level_1`), sin cascada de mensajes.
+    - Test Cita / Reprogramación: Respuesta en un solo párrafo conciso con la pregunta *"¿Te gustaría hacer algún cambio o tienes alguna otra consulta?"* seguido de la tarjeta interactiva `[BOOKING_CARD]`, con cero renglones repetidos.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-26] Restitución de Inteligencia Conversacional Total y Reprogramación Nativa de Citas en Chat sin Desvío a FAQs / HITL (v2.4.9)
 - **Diagnóstico y Causa Raíz:**
   1. *Compuerta Artificial Pre-LLM (`isDirectUnresolvedFallback`):* Un condicional en `functions/api/[[route]].js` interceptaba todo mensaje que contuviera signos de interrogación o palabras comunes en español (`que`, `como`, `donde`, `pueden`). Si no había una coincidencia exacta de catálogo y los slots de cita ya estaban llenos, abortaba la llamada a la IA y enviaba el mensaje robótico predeterminado (*"Esa es una consulta muy puntual y no quiero darte información inexacta..."*), creando un registro pendiente en `unresolved_queries`.

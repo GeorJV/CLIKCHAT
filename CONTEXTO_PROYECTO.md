@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 15:15 GMT-6
-- **Versión Actual:** 2.4.9 (Inteligencia Conversacional Total & Reprogramación de Citas en Chat)
+- **Última Actualización:** 2026-10-26 16:35 GMT-6
+- **Versión Actual:** 2.5.0 (Respuesta Directa a Hola y Tarjeta Limpia de Cita sin Renglones Repetidos)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Inteligencia Total sin Desvío a FAQs: Compuerta artificial HITL pre-LLM eliminada; RAG fluido y consultivo activo.
+  - Saludo Directo "Hola": Respuesta concisa y única ("¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?") esperando el flujo del usuario.
+  - Cero Repetición en Citas: Erradicado el listado renglón por renglón en texto; emisión directa del cuadro con pregunta de cierre.
+  - Entrega Unificada de Tarjeta: La tarjeta interactiva y el texto se entregan en una sola burbuja limpia sin fragmentación.
   - Reprogramación Nativa en Chat: Cambio de horario dinámico verificado en D1 con emisión de tarjeta actualizada.
   - Filtros de Agenda Exactos: Normalizador `bookingDateNormalizer.ts` convierte fechas en español a claves `YYYY-MM-DD`.
-  - Auto-Scroll Reactivo: La pantalla desciende automáticamente al revelar la disponibilidad y tarjeta de cita completa.
-  - Price Guardrail Determinista: Filtro algorítmico en Edge bloquea cualquier número monetario no autorizado en catálogo.
-  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
+  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en producción.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
