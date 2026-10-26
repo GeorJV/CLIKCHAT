@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 17:42 GMT-6
-- **Versión Actual:** 2.5.4 (Resolución Integral de Citas Congeladas, Auto-Registro en D1 y Google AI Studio)
+- **Última Actualización:** 2026-10-26 17:56 GMT-6
+- **Versión Actual:** 2.5.5 (Desacoplamiento RAG vs Agendamiento, Memoria Contextual y Cero Bucles)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Cero Bucles de Horarios Ocupados: Corregida subconsulta en SQLite D1 (`ORDER BY created_at DESC LIMIT 35`) para erradicar arrastre de horarios antiguos (3pm).
-  - Persistencia Directa en D1: Al emitir `[BOOKING_CARD]`, la cita se inserta automáticamente en la tabla `bookings` de Cloudflare D1.
-  - Comprensión de Cierre y Cortesía: Respuestas inmediatas de confirmación ante "GRACIAS", "ENTOCNES YA ESTA FORMIMADA LA CITA?" y aclaraciones de fechas ("DE FEHCA ME ESTAS HABLANDO").
-  - Google AI Studio Vigente: Integrado como Opción 1 de alta prioridad (`gemini-3.5-flash` / `gemini-3.1-flash-lite`) con `systemInstruction` y normalización de turnos.
-  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless y suite conversacional validada en vivo.
+  - Desacoplamiento RAG vs Agendamiento: Preguntas de servicios/precios se responden con la Base de Conocimiento sin exigir datos de citas ni emitir tarjetas.
+  - Memoria Contextual Fluida: El bot recuerda el negocio, nombre y necesidades del cliente, recomendando soluciones a la medida.
+  - Cero Bucles o Tarjetas Invasivas: Supresión de [BOOKING_CARD] en turnos informativos post-cita y bloqueo de arrastre de horas viejas (`cardTime`).
+  - Google AI Studio Robusto: Garantía de turno inicial 'user' y modelos oficiales vigentes (`gemini-3.5-flash` / `gemini-3.1-flash-lite`).
+  - Persistencia Confirmada en D1: Guardado automático de citas con status confirmed y panel cronológico de 100 mensajes.
+  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless y suite de inteligencia aprobada.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

@@ -16,6 +16,38 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Desacoplamiento de Consultas RAG vs Agendamiento, Memoria Contextual Sin Bucles y Blindaje Multiturno (v2.5.5)
+- **Diagnóstico y Causas Raíces:**
+  1. *Forzamiento Invasivo de Slots de Cita en Preguntas Informativas:* Si el tenant era de servicios (`GeoSoft`), el sistema inyectaba ciegamente la directiva obligatoria de captura de slots (`stepInstruction`: "PASO 2: Solicita teléfono..."). Cuando el cliente preguntaba por servicios, tecnologías, precios o soporte, el bot ignoraba la consulta del usuario y le exigía un teléfono o correo.
+  2. *Re-inyección Indeseada de Tarjeta [BOOKING_CARD]:* Si el cliente ya había agendado una cita y luego formulaba una pregunta informativa posterior (ej: "¿cuánto tardan en entregar un proyecto?"), la condición `bookingState.isComplete` volvía a estampar la tarjeta de cita en la respuesta en lugar de responder limpiamente la duda técnica.
+  3. *Reabsorción Prematura de Hora Vieja (`cardTime`):* Si el cliente pedía "otra cita", "cambiar" o expresaba una preferencia de turno ("en la mañana", "en la tarde") sin hora fija, el extractor rellenaba `time` con `cardTime` previo, resucitando horarios ocupados antiguos.
+  4. *Catálogo de Contingencia Gastronómico en Tenant Tecnológico:* Si D1 fallaba o devolvía 0 productos, el fallback inyectaba hamburguesas y pizzas a un tenant de software.
+  5. *Error 400 Potencial en Gemini API:* Si el primer mensaje del historial provenía del bot (`role: 'model'`), la API de Google AI Studio rechazaba la llamada exigiendo que el primer turno sea `'user'`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Desacoplamiento Inteligente de Intención (`isInfoOrServiceQuery` vs `isExplicitBookingIntent`):*
+     - Si el usuario pregunta por servicios, precios, tecnologías o soporte, el bot responde con maestría, dominio técnico y riqueza factual basándose en el Catálogo de Productos y Base de Conocimiento oficial RAG, sin exigir datos de citas ni forzar slots.
+     - Si el usuario manifiesta intención de agendar o entrega datos de contacto/horario, se activa el flujo guiado de agendamiento.
+  2. *Supresión de Tarjetas en Turnos Informativos:* Modificado `if (bookingState.isComplete && !isInfoOrServiceQuery)` para que nunca se emita ni reinyecte una tarjeta de cita en turnos de consulta informativa.
+  3. *Bloqueo de `cardTime` en Modificadores de Cambio:* `if (!time && cardTime && !wantsTimeChange)` erradica el arrastre de horas previas cuando el usuario pide otra cita o cambiar de turno.
+  4. *Catálogo de Contingencia Segmentado por Industria:* Si D1 falla, se entregan servicios de software para GeoSoft (Desarrollo Web & SaaS, Agentes IA, Apps Móviles) y comida solo para restaurantes.
+  5. *Garantía de Turno Inicial 'user' en Gemini API:* Purga de turnos iniciales `'model'` para cumplir estrictamente con la especificación de Gemini en Google AI Studio.
+  6. *Historial Completo en Panel:* Subconsulta en `/api/chat/messages/:sessionId` con los últimos 100 mensajes cronológicos.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.46s con 0 errores TypeScript (`index-B9-lCnhJ.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `796999e`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) + Hash Match al 100% y 17/17 rutas operativas en Chrome Headless.
+  - *Suite de Inteligencia en Vivo Aprobada:*
+    - Turno 1 (RAG Servicios): Explicó los 3 servicios y tarifas oficiales sin forzar cita ni emitir tarjeta.
+    - Turno 2 (Memoria Contextual): Retuvo "Alejandro" y "clínica dental", recomendando Agente de IA para pacientes.
+    - Turno 3 (Explicación Funcional): Describió atención 24/7 y gestión de citas sin bucles.
+    - Turno 4 (Agendamiento): Guardó cita en D1 (`apt_1793058895509_q0tc`) para Martes 27 Oct 11:00 AM y emitió tarjeta interactiva.
+    - Turno 5 (Pregunta Post-Cita): Respondió tiempos de entrega ("3 a 5 días", "2 a 4 semanas") y garantía sin reinyectar tarjeta de cita.
+    - Turno 6 (Cierre): Agradecimiento y confirmación de espacio en agenda.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-26] Resolución Integral de Bucles de Citas Congeladas en 3pm, Persistencia Automática en D1 y Motor Oficial Google AI Studio (v2.5.4)
 - **Diagnóstico y Causas Raíces:**
   1. *Falla de SQL en Memoria Episódica (`chat_messages`):* En `functions/api/[[route]].js`, la consulta a D1 usaba `ORDER BY created_at ASC LIMIT 30`. En sesiones con más de 30 turnos (la sesión del cliente tenía 76 mensajes), se traían los primeros 30 mensajes antiguos y se omitían los recientes. Al haber solicitado `3 pm` en el turno 26, el extractor siempre recuperaba `03:00 PM` como hora congelada, provocando bucles interminables.
