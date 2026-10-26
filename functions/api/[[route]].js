@@ -4570,6 +4570,24 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   let date = null;
   let time = null;
 
+  // 0. Recuperar datos de cualquier tarjeta de cita previa en el historial
+  if (Array.isArray(history)) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      const hText = history[i].message || history[i].content || '';
+      const cardMatch = hText.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
+      if (cardMatch) {
+        try {
+          const card = JSON.parse(cardMatch[1]);
+          if (!name && card.customerName) name = card.customerName.trim();
+          if (!email && card.customerEmail) email = card.customerEmail.trim();
+          if (!phone && card.customerPhone) phone = card.customerPhone.trim();
+          if (!date && card.date) date = card.date.trim();
+        } catch (e) {}
+        break;
+      }
+    }
+  }
+
   // 1. Extracción de Email
   const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i;
   for (let i = allUserMessages.length - 1; i >= 0; i--) {
