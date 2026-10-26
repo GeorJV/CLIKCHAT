@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Cuatro Modos de Burbujas y Respeto Estricto de Velocidad de Respuesta (v2.3.8)
+- **Diagnóstico y Necesidad:**
+  1. *Falta de División en Chat de Servicios y Productos:* `ServiceChatColumn.tsx` y `ProductChatColumn.tsx` no llamaban a `splitMessageByDeliveryMode`, mostrando siempre un único bloque inmenso de texto aunque estuviera configurado en microburbujas.
+  2. *Definición de los 4 Modos Requeridos:* El usuario solicitó explícitamente 4 modos de entrega: **Microburbujas** (oración por oración), **Moderado** (de dos renglones), **Intermedio** (bloques equilibrados de ~30 a 45 palabras) y **Bloque completo** (mensaje único).
+  3. *Incumplimiento de Velocidad de Respuesta:* La cadencia en segundos configurada (`response_delay_sec`) no era respetada porque el bot respondía en cuanto finalizaba el fetch sin esperar el tiempo mínimo programado, y `useProductResolver` no sincronizaba `response_delay_sec` del backend.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. messageSplitter.ts (107 líneas):
+     - Soporte nativo para los 4 modos: `micro` (oración por oración $\le 11$ palabras), `moderate` (2 renglones $\le 20$ palabras), `intermediate` (ideas medianas $\le 42$ palabras) y `single` (1 sola burbuja).
+  2. MessageDeliveryModeSelector.tsx (106 líneas):
+     - Selector con tarjetas visuales intuitivas para los 4 modos en variantes light y dark.
+  3. ChatCadenceSettingCard.tsx (132 líneas):
+     - Integración directa del selector de 4 modos de burbujas junto al slider de segundos en el panel del cliente.
+  4. Sincronización y Renderizado Multi-Burbuja:
+     - `useProductResolver.ts`: sincronización reactiva de `response_delay_sec` y `deliveryMode` desde D1.
+     - `ServiceChatView.tsx` y `ProductChatView.tsx`: cálculo del tiempo transcurrido (`elapsed`) y retención de typing para cumplir exactamente el `targetDelayMs` configurado antes de emitir la respuesta.
+     - `ServiceChatColumn.tsx` (175 líneas) y `ProductChatColumn.tsx` (178 líneas): renderizado multi-burbuja nativo en WhatsApp style con espaciado orgánico (`space-y-1.5`), manteniendo tarjetas de citas y quick actions en la última burbuja.
+  5. functions/api/[[route]].js:
+     - Persistencia de `deliveryMode` en `custom_llm_key` y retorno en `PUT /api/tenants/:id` y `GET /api/tenants/:slug`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.15s con 0 errores TypeScript (`index-Cl3cKXqt.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `d8fdbe3`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-26] Corrección de Sesión: Redirección Canónica a Raíz en Logout y Aislamiento de Tenant por Cuenta (v2.3.7)
 - **Diagnóstico y Necesidad:**
   1. *URL Congelada tras Cerrar Sesión:* Al presionar "Cerrar Sesión", `logout()` borraba tokens pero no alteraba la URL del navegador, dejando visible de forma permanente `/user/mi-negocio/{slug}/...`.
