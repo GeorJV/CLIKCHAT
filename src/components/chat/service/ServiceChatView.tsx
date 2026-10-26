@@ -33,16 +33,14 @@ export const ServiceChatView: React.FC<Props> = ({
     if (typeof window !== 'undefined') { try { const c = localStorage.getItem(confirmKey); if (c) return JSON.parse(c); } catch (e) {} }
     return null;
   });
-  const [viewConfirmedModal, setViewConfirmedModal] = useState(false);
-  const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
+  const [viewConfirmedModal, setViewConfirmedModal] = useState(false); const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
     if (typeof window !== 'undefined') { try { const c = localStorage.getItem(msgStorageKey); if (c) { const p = JSON.parse(c); if (Array.isArray(p) && p.length > 0) return p; } } catch (e) {} }
     return [];
   });
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false); const [bookingOpen, setBookingOpen] = useState(false);
   const [sessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const s = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
@@ -67,8 +65,7 @@ export const ServiceChatView: React.FC<Props> = ({
     setMessages((prev) => prev.length > 0 ? prev : [{
       id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
       content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
     }]);
   }, [selectedService.id, sessId, agentName, storeName, selectedService.title, selectedService.duration]);
 
@@ -94,17 +91,20 @@ export const ServiceChatView: React.FC<Props> = ({
         const rawAns = data?.answer || '¡Con gusto te asesoro! ¿En qué te podemos colaborar hoy?';
         const cardMatch = rawAns.match(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/);
         const textWithoutCard = rawAns.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
-        const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
-        await deliverStaggeredBubbles({
-          fullText: textWithoutCard, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
-          createMessage: (bubble, isLast, bIdx) => ({
-            id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-            content: isLast && cardMatch ? `${bubble}\n\n${cardMatch[0]}` : bubble,
+        if (cardMatch) {
+          setMessages((prev) => [...prev, {
+            id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: isLast ? { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' } : undefined
-          }),
-          onDeliver: (msg) => setMessages((prev) => [...prev, msg])
-        });
+            ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' }
+          }]);
+        } else {
+          const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+          await deliverStaggeredBubbles({
+            fullText: textWithoutCard, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
+            createMessage: (bubble, isLast, bIdx) => ({ id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: bubble, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: isLast ? { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' } : undefined }),
+            onDeliver: (msg) => setMessages((prev) => [...prev, msg])
+          });
+        }
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
@@ -142,8 +142,7 @@ export const ServiceChatView: React.FC<Props> = ({
     } catch (e) {}
     setMessages((prev) => [...prev, {
       id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-      content: `📅 **¡Cita Agendada con Éxito!**\n\n- **Servicio:** ${data.service.title}\n- **Fecha:** ${data.date} a las ${data.timeSlot}\n- **Cliente:** ${data.customerName} (${data.customerPhone})\n- **Modalidad:** ${data.service.serviceModality === 'presencial' ? 'Presencial' : 'Online (Google Meet / Zoom)'}\n\nTe enviamos los datos de acceso a tu WhatsApp. ¡Nos vemos en la sesión!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }]);
     setMobileTab('chat');
   };

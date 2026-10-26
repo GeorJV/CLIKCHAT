@@ -4400,6 +4400,43 @@ function stripUserEcho(botReply, userMessage) {
   return cleanReply.trim();
 }
 
+function cleanBookingCardText(text) {
+  if (!text || !text.includes('[BOOKING_CARD:')) return text;
+  const cardMatch = text.match(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/);
+  if (!cardMatch) return text;
+
+  let beforeCard = text.substring(0, cardMatch.index).trim();
+  const cardTag = cardMatch[0];
+  let afterCard = text.substring(cardMatch.index + cardMatch[0].length).trim();
+
+  // 1. Eliminar líneas que listen datos de la cita renglón por renglón
+  beforeCard = beforeCard
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return true;
+      if (/^(?:[-*•📌📅⏰👤✉️📱🎯]|\d+[.)])?\s*(?:\*\*)?(?:servicio|fecha|d[ií]a|hora|horario|nombre|cliente|correo|email|tel[eé]fono|whatsapp|modalidad|inversi[oó]n|precio)\s*(?:\*\*)?\s*:/i.test(trimmed)) {
+        return false;
+      }
+      if (/^(?:aqu[ií]\s+tienes\s+(?:el\s+resumen|los\s+detalles|la\s+informaci[oó]n)(?:\s+de\s+(?:tu\s+cita|la\s+sesi[oó]n))?|a\s+continuaci[oó]n\s+(?:el\s+resumen|los\s+datos)|resumen\s+de\s+(?:tu\s+cita|la\s+sesi[oó]n)|detalles\s+de\s+(?:tu\s+cita|la\s+sesi[oó]n))\s*:?$/i.test(trimmed)) {
+        return false;
+      }
+      return true;
+    })
+    .join('\n');
+
+  // 2. Compactar saltos de línea repetidos
+  beforeCard = beforeCard.replace(/\n{3,}/g, '\n\n').trim();
+
+  // 3. Garantizar la pregunta de cierre amigable
+  const closingQuestion = '¿Te gustaría hacer algún cambio o tienes alguna otra consulta?';
+  if (!/(?:te\s+gustar[ií]a\s+hacer\s+alg[uú]n\s+cambio|tienes\s+alguna\s+otra\s+consulta)/i.test(beforeCard)) {
+    beforeCard += '\n\n' + closingQuestion;
+  }
+
+  return (beforeCard + '\n\n' + cardTag + (afterCard ? '\n\n' + afterCard : '')).trim();
+}
+
 function formatFullDayAndDate(dateInput, refDate = new Date()) {
   if (!dateInput) return '';
   let str = dateInput.trim();
@@ -4722,10 +4759,10 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
   } else if (isRescheduleIntent) {
     currentStep = 5;
-    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó explícitamente cambiar su cita para el "${date}" a las "${time}". Confirma con gran calidez y entusiasmo el cambio de horario a las ${time}, confirmando que verificaste la agenda en D1 y emitiendo la nueva tarjeta de confirmación [BOOKING_CARD: {...}] con el horario actualizado.`;
+    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
   } else {
     currentStep = 5;
-    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS! Si la fecha y hora están disponibles en agenda, autoriza la reserva con gran entusiasmo y emite el tag estructurado [BOOKING_CARD: {...}] con los 5 datos recopilados.`;
+    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS! Si la fecha y hora están disponibles en agenda, autoriza la reserva con calidez en un solo párrafo breve. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
   }
 
   return {
@@ -5043,6 +5080,31 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           if (!activeLeadInfo.phone && s.user_phone) activeLeadInfo.phone = s.user_phone;
         }
       } catch (sessReadErr) {}
+
+      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (CERO ESPERA / CERO MENSAJES EN CASCADA / ESPERAR FLUJO DEL USUARIO)
+      const cleanMsgGreeting = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      const isPureGreeting = /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
+
+      if (isPureGreeting) {
+        const greetingReply = '¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?';
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', greetingReply, 'level_1']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_1',
+          levelLabel: 'Nivel 1: Saludo & Cortesía Inmediata',
+          confidence: 0.99,
+          answer: greetingReply,
+          orderTotal: null,
+          isRestaurant
+        });
+      }
 
       // 4.1 DETECCIÓN INTELIGENTE DE AGENDAMIENTO & EXTRACCIÓN DE SLOTS
       const isBookingContext = (
@@ -6020,9 +6082,12 @@ Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para e
 [VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:
 - Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${bookingState.slots.date} a las ${bookingState.slots.time}!
 
-DIRECTIVA OBLIGATORIA:
-Confirma con entusiasmo, inteligencia y claridad ejecutiva que acabas de verificar la disponibilidad en el sistema y que hay citas disponibles para el ${bookingState.slots.date} a las ${bookingState.slots.time}, y que su cita ha sido agendada con éxito.
-Presenta el resumen de la cita (Día, Hora, Nombre, Correo, Teléfono) indicando que la cita queda agendada.
+DIRECTIVA OBLIGATORIA (CERO REPETICIÓN RENGLÓN POR RENGLÓN):
+1. Confirma con entusiasmo, amabilidad y en un único párrafo breve que verificaste la disponibilidad y que el espacio para el ${bookingState.slots.date} a las ${bookingState.slots.time} ha quedado reservado.
+2. PROHIBICIÓN ESTRICTA: Queda TERMINANTEMENTE PROHIBIDO redactar o listar en el texto los campos de la cita renglón por renglón (como "Servicio:", "Fecha:", "Hora:", "Nombre:", "Correo:", "Teléfono:"), ya que todos esos detalles aparecen de forma automática y visual en el cuadro interactivo de la cita.
+3. Tu mensaje de texto debe ser de 1 solo párrafo breve y amigable, cerrando exactamente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?"
+4. Inmediatamente después de esa pregunta, emite la tarjeta:
+   [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
 Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o decir frases incoherentes como "no elegiste X sino Y". Confirma directamente con seguridad.
 ` : '')}
 
@@ -6037,8 +6102,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Cuarto se ofrece opciones de HORARIOS DISPONIBLES dentro de horario comercial (ej: 10:00 AM, 2:30 PM, 4:00 PM).
 2. AUTORIZACIÓN CONDICIONAL ESTRICTA:
    - Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir la tarjeta estructurada [BOOKING_CARD: {...}] mientras falte cualquiera de los 5 datos obligatorios o si el espacio no está disponible.
-   - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}) y haya disponibilidad comprobada, autoriza la reserva con gran entusiasmo y emite obligatoriamente al final:
-     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+   - ÚNICAMENTE cuando los 5 datos estén OBTENIDOS (${bookingState.isComplete ? '¡ESTÁN COMPLETOS!' : 'AÚN FALTAN DATOS'}) y haya disponibilidad comprobada, autoriza la reserva en un único párrafo breve (sin listar renglones de campos en texto), cerrando con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].
 3. CERO CANALIZACIÓN EXTERNA A WHATSAPP:
    - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.
 4. CLARIDAD Y RESPUESTAS INTELIGENTES EN ELECCIÓN DE HORARIO:
@@ -6046,7 +6110,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Prohibido hacer comparaciones confusas con horarios previos o decir frases como "no elegiste tal sino tal". Directo, claro y profesional.
 5. REPROGRAMACIÓN O CAMBIO DE CITA / HORARIO:
    - Si el usuario solicita cambiar, mover o reprogramar su cita (ej: "me puedes cambiar la cita para las 3 y 30 es que no voy a poder a las 3pm", "cambiemos a las 4pm", "la podemos mover"):
-     Acepta cordialmente la solicitud de inmediato. Confirma el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${bookingState.slots.date || 'día acordado'}) con entusiasmo, indicando que acabas de verificar el nuevo espacio en agenda, y emite de inmediato la nueva tarjeta de confirmación actualizada:
+     Acepta cordialmente la solicitud en un único párrafo breve confirmando el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${bookingState.slots.date || 'día acordado'}), indicando que acabas de verificar el nuevo espacio en agenda.
+     PROHIBIDO terminantemente redactar listas o renglones de campos en texto. Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
      [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.`;
         }
@@ -6114,11 +6179,15 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               }
             } catch (e) {}
           }
+          llmResult.text = cleanBookingCardText(llmResult.text);
         } else {
           // Si faltan datos, queda TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD]
           if (llmResult.text.includes('[BOOKING_CARD:')) {
             llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
           }
+        }
+        if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {
+          llmResult.text = cleanBookingCardText(llmResult.text);
         }
 
         // Detección Human-in-the-Loop: Si no conoce la respuesta o se bloqueó un precio no catalogado, registrar en unresolved_queries en D1
