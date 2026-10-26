@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Send, LogOut, Calendar, CalendarCheck } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceBookingData } from '../../../types/serviceChat';
@@ -10,6 +10,7 @@ import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from '../ChatMessageContent';
 import { BookingCardBubble } from './BookingCardBubble';
 import { splitMessageByDeliveryMode, DeliveryMode } from '../../../utils/messageSplitter';
+import { parseBookingCard } from '../../../utils/bookingCardParser';
 
 interface Props {
   storeName: string; agentName: string; agentAvatar?: string; serviceTitle: string; messages: ProductChatMessage[];
@@ -19,45 +20,42 @@ interface Props {
   onOpenBooking?: () => void; onOpenConfirmedModal?: () => void; onConfirmBookingFromCard?: (data: ServiceBookingData) => void;
 }
 
-function parseBookingCard(text: string): { cleanContent: string; bookingData: ServiceBookingData | null } {
-  const match = text.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
-  if (match) {
-    try {
-      const p = JSON.parse(match[1]);
-      return {
-        cleanContent: text.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim(),
-        bookingData: { service: { id: p.serviceId || 'srv_selected', title: p.service || p.serviceTitle || 'Desarrollo Web & SaaS', price: Number(p.price) || 1200, currency: p.currency || 'USD', image: '', serviceModality: 'online' }, date: p.date || '25 de Octubre', timeSlot: p.time || p.timeSlot || '10:00 AM', customerName: p.customerName || p.name || 'Cliente', customerEmail: p.customerEmail || p.email || '', customerPhone: p.customerPhone || p.phone || '', notes: p.notes || '' }
-      };
-    } catch {}
-  }
-  if (/registrado\s+tu\s+(?:nombre|informaci[oó]n|cita)|cita\s+del|cita\s+para\s+el|qued[oó]\s+agendad|reserva\s+confirmad/i.test(text)) {
-    const dM = text.match(/(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|[0-9]{1,2}\s+de\s+[a-záéíóú]+|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
-    const tM = text.match(/([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm|AM|PM)|[0-9]{1,2}:[0-9]{2})/i);
-    const nM = text.match(/(?:Genial|Excelente|Perfecto|Gracias|Hola),?\s*([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
-    const eM = text.match(/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/);
-    const pM = text.match(/(\+?[0-9\s\-]{8,16})/);
-    return {
-      cleanContent: text,
-      bookingData: { service: { id: 'srv_selected', title: 'Desarrollo Web & SaaS', price: 1200, currency: 'USD', image: '', serviceModality: 'online' }, date: dM ? dM[0].replace(/^el\s+/i, '').trim() : '25 de Octubre', timeSlot: tM ? tM[0].trim() : '10:00 AM', customerName: nM ? nM[1].trim() : 'Cliente', customerEmail: eM ? eM[1].trim() : '', customerPhone: pM ? pM[0].trim() : '+506 7293-5612', notes: '' }
-    };
-  }
-  return { cleanContent: text, bookingData: null };
-}
-
 export const ServiceChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, serviceTitle, messages, inputValue, isLoading, confirmedBooking, businessPhone = '50672935612', deliveryMode,
   onInputChange, onSendMessage, onAudioRecorded, onExit, onOpenBooking, onOpenConfirmedModal, onConfirmBookingFromCard
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }
+  }, []);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    const t = setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 120);
-    return () => clearTimeout(t);
-  }, [messages, isLoading]);
+    scrollToBottom('smooth');
+    const t1 = setTimeout(() => scrollToBottom('smooth'), 80);
+    const t2 = setTimeout(() => scrollToBottom('smooth'), 220);
+    const t3 = setTimeout(() => scrollToBottom('auto'), 450);
+    const t4 = setTimeout(() => scrollToBottom('auto'), 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, [messages, isLoading, scrollToBottom]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      scrollToBottom('smooth');
+      setTimeout(() => scrollToBottom('smooth'), 100);
+      setTimeout(() => scrollToBottom('auto'), 300);
+    };
+    window.addEventListener('clikchat:scroll-bottom', handleScroll);
+    return () => window.removeEventListener('clikchat:scroll-bottom', handleScroll);
+  }, [scrollToBottom]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onInputChange(e.target.value);
@@ -84,7 +82,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col bg-[#111010] min-h-0 overscroll-contain">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 pb-10 sm:pb-14 flex flex-col bg-[#111010] min-h-0 overscroll-contain">
         {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
@@ -144,7 +142,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-6 shrink-0" />
       </div>
 
       {/* Quick Action Pills: Único botón de Agendar Cita */}

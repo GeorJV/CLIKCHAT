@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Clock, User, Mail, Phone, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { ServiceBookingData } from '../../../types/serviceChat';
 
@@ -15,13 +15,26 @@ export const BookingCardBubble: React.FC<Props> = ({
 }) => {
   const [confirmed, setConfirmed] = useState(isConfirmed);
   const [isRevealed, setIsRevealed] = useState(isConfirmed);
+  const cardRef = useRef<HTMLDivElement>(null);
   const cleanPhone = (businessPhone || '50672935612').replace(/[^\d]/g, '');
 
   useEffect(() => {
-    if (isRevealed) return;
+    if (isRevealed) {
+      window.dispatchEvent(new CustomEvent('clikchat:scroll-bottom'));
+      const t1 = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('clikchat:scroll-bottom'));
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
+      const t2 = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('clikchat:scroll-bottom'));
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 250);
+      const t3 = setTimeout(() => window.dispatchEvent(new CustomEvent('clikchat:scroll-bottom')), 550);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
     const timer = setTimeout(() => {
       setIsRevealed(true);
-    }, 2800);
+    }, 700);
     return () => clearTimeout(timer);
   }, [isRevealed]);
 
@@ -59,7 +72,7 @@ export const BookingCardBubble: React.FC<Props> = ({
   }
 
   return (
-    <div className="w-full mt-2.5 rounded-2xl bg-[#181717] border border-emerald-500/30 p-3.5 sm:p-4 text-slate-100 shadow-xl shadow-black/60 font-sans transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in slide-in-from-bottom-2">
+    <div ref={cardRef} className="w-full mt-2.5 rounded-2xl bg-[#181717] border border-emerald-500/30 p-3.5 sm:p-4 text-slate-100 shadow-xl shadow-black/60 font-sans transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in slide-in-from-bottom-2">
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/[0.08]">
         <div className="flex items-center gap-2">
