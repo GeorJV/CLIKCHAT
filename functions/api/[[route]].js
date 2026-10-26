@@ -762,7 +762,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-pro'}:generateContent?key=${cKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-3.5-flash'}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -870,6 +870,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           } else {
             normalizedTurns.push({ role, parts: [{ text }] });
           }
+        }
+
+        // Garantizar que el primer turno sea estrictamente 'user' (requisito obligatorio de Gemini API)
+        while (normalizedTurns.length > 0 && normalizedTurns[0].role === 'model') {
+          normalizedTurns.shift();
         }
 
         const currMsg = (userMessage || 'Hola').trim();
@@ -1111,9 +1116,14 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 
   // 4. Plantilla de contingencia gastronómica/comercial humana
   const isSrv = context && /servicios|geosoft|agenda|cita|software/i.test(context);
+  const isOngoing = Array.isArray(history) && history.length > 0;
   const fallbackText = isSrv
-    ? '¡Hola! Con mucho gusto te atiendo y te asesoro. ¿En qué proyecto o requerimiento tecnológico te podemos colaborar?'
-    : '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones o deseas consultar por algún producto en específico?';
+    ? (isOngoing
+        ? 'Con mucho gusto te asesoro. ¿Me podrías indicar más detalles sobre tu requerimiento tecnológico o proyecto para darte la mejor opción?'
+        : '¡Hola! Con mucho gusto te atiendo y te asesoro. ¿En qué proyecto o requerimiento tecnológico te podemos colaborar?')
+    : (isOngoing
+        ? 'Con mucho gusto te atiendo. ¿Qué más te gustaría consultar o qué se te antoja ordenar?'
+        : '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones o deseas consultar por algún producto en específico?');
   return {
     text: fallbackText,
     provider: 'context_template',
@@ -3612,7 +3622,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'GET') {
       const sessionId = decodeURIComponent(segments[2]);
       const rows = await executeD1(
-        'SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 100',
+        'SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM (SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at DESC LIMIT 100) sub ORDER BY created_at ASC',
         [sessionId]
       );
       let activeOrder = null;
@@ -4768,7 +4778,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  if (!time && cardTime) {
+  const wantsTimeChange = /\b(cambiar|cambio|otra\s+cita|nueva\s+cita|otra\s+hora|otro\s+horario|otro\s+d[ií]a|mover|posponer|reprogramar|en\s+la\s+mañana|en\s+la\s+manana|en\s+la\s+tarde|por\s+la\s+mañana|por\s+la\s+tarde|no\s+te\s+estoy\s+pidiendo|no\s+en\s+la\s+tarde|no\s+en\s+la\s+mañana)\b/i.test(currentMessage || '');
+
+  if (!time && cardTime && !wantsTimeChange) {
     time = cardTime;
   }
 
@@ -4876,7 +4888,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
 
-  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?|pero\s+mañana|pero\s+manana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|no\s+es\s+\d+|no\s+te\s+estoy\s+pidiendo)\b/i.test(currentMessage || '');
+  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|otra\s+cita|nueva\s+cita|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?|pero\s+mañana|pero\s+manana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|no\s+es\s+\d+|no\s+te\s+estoy\s+pidiendo)\b/i.test(currentMessage || '');
   const isQuestioningDateOrTomorrow = /\b(?:pero\s+mañana|pero\s+manana|pero\s+maana|pero\s+mamana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|mañana\s+no\s+es|manana\s+no\s+es|es\s+mañana|es\s+manana|no\s+es\s+\d+)\b/i.test(currentMessage || '');
   const hasNewTimeInMsg = Boolean(parseFlexibleTime(currentMessage) || (currentMessage || '').match(timeRegex));
   const hasNewDateInMsg = Boolean((currentMessage || '').match(compositeDateRegex) || (currentMessage || '').match(simpleDayRegex));
@@ -5469,37 +5481,69 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       }
 
-      // Si D1 está en límite de cuota o no hay productos cargados, garantizar catálogo de contingencia
+      // Si D1 está en límite de cuota o no hay productos cargados, garantizar catálogo de contingencia según la industria
       if (products.length === 0) {
-        products = [
-          {
-            id: 'prod_chicken_crunch',
-            name: 'Chicken Crunch Combo',
-            price: 6950,
-            currency: 'CRC',
-            short_description: 'Pechuga de pollo empanizada súper crujiente con aderezo especial, lechuga fresca, tomate, papas fritas y refresco.',
-            full_description: 'Combo completo con pechuga de pollo empanizada súper crujiente con aderezo especial de la casa, lechuga fresca, tomate, queso derretido, papas fritas crocantes y refresco de 500ml.',
-            details: { category: 'Combos', stock: 50, sku: 'CHK-001' }
-          },
-          {
-            id: 'prod_mini_cheese',
-            name: 'Mini Cheese Burger',
-            price: 3500,
-            currency: 'CRC',
-            short_description: 'Carne 100% de res, doble queso cheddar fundido y pan brioche artesanal.',
-            full_description: 'Hamburguesa clásica individual con torta de carne de res premium, doble queso cheddar derretido, pepinillos y salsa secreta en pan brioche.',
-            details: { category: 'Hamburguesas', stock: 40, sku: 'MCB-002' }
-          },
-          {
-            id: 'prod_pizza_margarita',
-            name: 'Pizza Margarita',
-            price: 5500,
-            currency: 'CRC',
-            short_description: 'Masa madre crocante, salsa pomodoro italiana, mozzarella fresca y albahaca.',
-            full_description: 'Pizza artesanal tradicional de 8 porciones elaborada con masa madre de fermentación lenta, salsa de tomate pomodoro, queso mozzarella gratinado y hojas de albahaca fresca.',
-            details: { category: 'Pizzas', stock: 30, sku: 'PIZ-003' }
-          }
-        ];
+        if (targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft' || /software|saas|tecnolog|desarrollo/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`)) {
+          products = [
+            {
+              id: 'prod_geosoft_web_saas',
+              name: 'Desarrollo Web & Plataformas SaaS a Medida',
+              price: 1200,
+              currency: 'USD',
+              short_description: 'Desarrollo de aplicaciones web de alto rendimiento, portales empresariales y sistemas SaaS completos construidos con arquitectura modular, escalabilidad en la nube y máxima velocidad.',
+              full_description: 'Creamos aplicaciones web profesionales y escalables utilizando las tecnologías más avanzadas del mercado (React, TypeScript, Cloudflare Edge, Node.js y bases de datos distribuidas). Incluye diseño responsivo premium, autenticación segura, panel de administración para el dueño, optimización SEO y despliegue global con 99.9% de uptime.',
+              details: { category: 'Desarrollo de Software', tiempo_entrega: '2 a 4 semanas', soporte: 'Garantía de 3 meses incluida' }
+            },
+            {
+              id: 'prod_geosoft_agentes_ia',
+              name: 'Agentes de Inteligencia Artificial & Bots de Ventas 24/7',
+              price: 450,
+              currency: 'USD',
+              short_description: 'Implementación de asistentes conversacionales con IA avanzada, calibrados con la base de conocimiento de tu empresa (RAG) para atención, captura de prospectos y ventas automáticas en WhatsApp y Web.',
+              full_description: 'Automatiza la atención y captación de clientes de tu empresa con un Agente de IA personalizado. Capaz de entender contexto comercial, consultar catálogos en tiempo real, responder preguntas complejas sobre políticas o precios, y sincronizar leads calificados directamente a tu CRM.',
+              details: { category: 'Inteligencia Artificial', canales: 'WhatsApp, Web, Instagram', integracion: 'CRM y base de datos' }
+            },
+            {
+              id: 'prod_geosoft_apps_moviles',
+              name: 'Desarrollo de Aplicaciones Móviles (iOS & Android)',
+              price: 1800,
+              currency: 'USD',
+              short_description: 'Aplicaciones móviles nativas y multiplataforma fluidas, intuitivas y conectadas en tiempo real a tus sistemas empresariales.',
+              full_description: 'Desarrollo integral de apps móviles para iOS y Android con Flutter o React Native. Experiencias táctiles de primer nivel, notificaciones push, modo offline, pasarelas de pago y publicación guiada en App Store y Google Play.',
+              details: { category: 'Aplicaciones Móviles', plataformas: 'iOS y Android', publicacion: 'Asistencia en tiendas incluida' }
+            }
+          ];
+        } else {
+          products = [
+            {
+              id: 'prod_chicken_crunch',
+              name: 'Chicken Crunch Combo',
+              price: 6950,
+              currency: 'CRC',
+              short_description: 'Pechuga de pollo empanizada súper crujiente con aderezo especial, lechuga fresca, tomate, papas fritas y refresco.',
+              full_description: 'Combo completo con pechuga de pollo empanizada súper crujiente con aderezo especial de la casa, lechuga fresca, tomate, queso derretido, papas fritas crocantes y refresco de 500ml.',
+              details: { category: 'Combos', stock: 50, sku: 'CHK-001' }
+            },
+            {
+              id: 'prod_mini_cheese',
+              name: 'Mini Cheese Burger',
+              price: 3500,
+              currency: 'CRC',
+              short_description: 'Carne 100% de res, doble queso cheddar fundido y pan brioche artesanal.',
+              full_description: 'Hamburguesa clásica individual con torta de carne de res premium, doble queso cheddar derretido, pepinillos y salsa secreta en pan brioche.',
+              details: { category: 'Hamburguesas', stock: 40, sku: 'MCB-002' }
+            },
+            {
+              id: 'prod_pizza_margarita',
+              name: 'Pizza Margarita',
+              price: 5500,
+              currency: 'CRC',
+              short_description: 'Masa madre crocante, salsa pomodoro italiana, mozzarella fresca y albahaca.',
+              full_description: 'Pizza artesanal tradicional de 8 porciones elaborada con masa madre de fermentación lenta, salsa de tomate pomodoro, queso mozzarella gratinado y hojas de albahaca fresca.',
+              details: { category: 'Pizzas', stock: 30, sku: 'PIZ-003' }
+            }
+          ];
+        }
       }
 
       // 6. Normalización y Extracción de Palabras Clave
@@ -6345,7 +6389,22 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           }
         }
 
-        if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
+        const isExplicitBookingIntent = /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|reservar|reserva|calendario|disponibilidad|horario|espacio|reprogramar|reprogramaci[oó]n|cambiar\s+(?:la\s+)?cita|mover\s+(?:la\s+)?cita|otra\s+hora|otro\s+horario|otra\s+cita|nueva\s+cita)\b/i.test(message) ||
+          (/\b(a\s+las?\s+\d+|el\s+(?:lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)|mañana|manana|hoy)\b/i.test(message) && isBookingContext);
+
+        const isInfoOrServiceQuery = (
+          /\?|¿/.test(message) ||
+          /\b(qu[eé]\s+(?:servicios?|hacen|ofrecen|desarrollan|incluye)|cu[aá]nto\s+(?:cuesta|vale|cobran|sale)|precios?|tarifas?|costos?|informaci[oó]n|planes?|paquetes?|garant[ií]a|tecnolog[ií]as?|lenguajes?|d[oó]nde\s+est[aá]n|qui[eé]nes?\s+son|c[oó]mo\s+trabajan)\b/i.test(message)
+        ) && !isExplicitBookingIntent;
+
+        if (isInfoOrServiceQuery) {
+          contextBlock += `\n\n[DIRECTIVA DE ASESORÍA Y CONSULTA COMERCIAL (MÁXIMA PRIORIDAD ACTUAL)]:
+El cliente está consultando información sobre tus servicios, tecnologías, productos, tarifas o capacidades de la empresa.
+1. Responde a su pregunta con total claridad, maestría técnica, detalle y amabilidad basándote en la información verificada del catálogo, FAQs y documentos oficiales.
+2. Explica con valor y transparencia lo que incluye el servicio y sus beneficios clave. Cita las tarifas oficiales correspondientes sin inventar precios.
+3. NO le exijas datos de agendamiento (nombre, teléfono, correo) en esta respuesta; primero satisface plenamente su consulta y aporta valor real.
+4. Cierra amablemente con una pregunta de seguimiento orientada a su proyecto (por ejemplo: "¿Tienes en mente alguna funcionalidad en específico para tu plataforma o te gustaría que coordinemos una llamada estratégica para analizar los detalles?").\n`;
+        } else if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
           contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
 Ubicación actual de datos en la conversación:
 - 1. Nombre completo: ${bookingState.slots.name ? `OBTENIDO ("${bookingState.slots.name}")` : 'FALTANTE'}
@@ -6446,8 +6505,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         llmResult.text = guardrailResult.text;
         const isPriceGuardrailBlocked = guardrailResult.triggered;
 
-        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1
-        if (bookingState.isComplete) {
+        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (SOLO EN FLUJOS DE AGENDAMIENTO, NO EN PREGUNTAS INFORMATIVAS)
+        if (bookingState.isComplete && !isInfoOrServiceQuery) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
               service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
