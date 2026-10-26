@@ -97,7 +97,7 @@ export function App() {
         {(currentView === 'service' || (currentView === 'chat' && isServicesBiz)) && (
           <div className="h-full w-full overflow-hidden bg-[#131212]">
             {isResolvingProduct && !storeName ? <div className="h-full w-full flex items-center justify-center bg-[#151414] text-xs font-semibold text-zinc-300">Cargando agenda y asesoría virtual...</div> : (
-              <ServiceChatView storeName={storeName || 'Centro Especializado'} agentName={agentName || 'Asesora Profesional'} agentAvatar={agentAvatar} tenantSlug={selectedTenantSlug} responseDelaySec={responseDelaySec} deliveryMode={deliveryMode} services={servicesList} initialService={servicesList[0]} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
+              <ServiceChatView storeName={storeName || 'Centro Especializado'} agentName={agentName || 'Asesora Profesional'} agentAvatar={agentAvatar} welcomeMessage={welcomeMessage} tenantSlug={selectedTenantSlug} responseDelaySec={responseDelaySec} deliveryMode={deliveryMode} services={servicesList} initialService={servicesList[0]} onExit={() => navigate(getTenantTabPath(selectedTenantSlug, 'business'))} />
             )}
           </div>
         )}

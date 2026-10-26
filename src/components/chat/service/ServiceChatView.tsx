@@ -15,12 +15,12 @@ import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
-  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; onExit?: () => void;
+  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
-  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, deliveryMode, onExit,
+  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, deliveryMode, welcomeMessage, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || { ...DEFAULT_SERVICE, title: 'Servicio Especializado', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'service'>('chat');
@@ -34,7 +34,7 @@ export const ServiceChatView: React.FC<Props> = ({
     return null;
   });
   const [viewConfirmedModal, setViewConfirmedModal] = useState(false); const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
-    if (typeof window !== 'undefined') { try { const c = localStorage.getItem(msgStorageKey); if (c) { const p = JSON.parse(c); if (Array.isArray(p) && p.length > 0) return p; } } catch (e) {} }
+    if (typeof window !== 'undefined') { try { const c = localStorage.getItem(msgStorageKey); if (c) { const p = JSON.parse(c); if (Array.isArray(p) && p.length > 0) return p[0]?.content?.includes('¿Deseas conocer qué incluye') ? [] : p; } } catch (e) {} }
     return [];
   });
   const [inputValue, setInputValue] = useState('');
@@ -62,12 +62,12 @@ export const ServiceChatView: React.FC<Props> = ({
   }, [messages, msgStorageKey]);
 
   useEffect(() => {
+    const welcome = welcomeMessage?.trim() ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName) : `¡Hola! 👋 Bienvenido a **${storeName}**.\n\n¿En qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?`;
     setMessages((prev) => prev.length > 0 ? prev : [{
-      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant',
-      content: `¡Hola! 🌸 Soy **${agentName}**, especialista de **${storeName}**.\n\nVeo que te interesa **${selectedService.title}** (${selectedService.duration || '45 min'}).\n\n¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?`,
+      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant', content: welcome,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
     }]);
-  }, [selectedService.id, sessId, agentName, storeName, selectedService.title, selectedService.duration]);
+  }, [selectedService.id, sessId, agentName, storeName, welcomeMessage]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
     debounceMs: Math.max((responseDelaySec ?? 1) * 1000, 400), deliveryDelayMs: 0, onSetLoading: setIsLoading,
