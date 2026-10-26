@@ -39,14 +39,18 @@ export function App() {
   );
 
   const [selectedTenantSlug, setSelectedTenantSlug] = useState<string>(() => (
-    routeTenantSlug || params?.get('t') || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl'
+    (user && user.role !== 'superadmin' ? user.tenantSlug : null) || routeTenantSlug || params?.get('t') || (typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null) || 'comida-callejera-xl'
   ));
 
   useEffect(() => {
+    if (user && user.role !== 'superadmin' && user.tenantSlug) {
+      if (user.tenantSlug !== selectedTenantSlug) setSelectedTenantSlug(user.tenantSlug);
+      return;
+    }
     const t = routeTenantSlug || params?.get('t');
     if (t && t !== selectedTenantSlug) setSelectedTenantSlug(t);
     else if (user?.tenantSlug && user.tenantSlug !== selectedTenantSlug && !t) setSelectedTenantSlug(user.tenantSlug);
-  }, [search, routeTenantSlug, user?.tenantSlug]);
+  }, [search, routeTenantSlug, user?.tenantSlug, user?.role]);
 
   const { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading: isResolvingProduct, responseDelaySec, businessType } = useProductResolver(productId, selectedTenantSlug);
   const hideTopBar = !isSuperAdmin || currentView === 'landing' || currentView === 'product' || currentView === 'service' || (currentView === 'chat' && (params?.has('t') || routeTenantSlug) && !params?.has('panel'));

@@ -40,7 +40,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const activeTab: ClientTab = currentTab;
 
   const storedSlug = typeof window !== 'undefined' ? localStorage.getItem('clikchat_active_tenant_slug') : null;
-  const activeSlug = routeTenantSlug || user?.tenantSlug || (storedSlug && storedSlug !== 'acme-store' ? storedSlug : '') || (tenantSlug && tenantSlug !== 'acme-store' ? tenantSlug : '') || 'comida-callejera-xl';
+  const authenticatedSlug = user?.role === 'superadmin' ? (routeTenantSlug || user?.tenantSlug) : (user?.tenantSlug || routeTenantSlug);
+  const activeSlug = authenticatedSlug || (storedSlug && storedSlug !== 'acme-store' ? storedSlug : '') || (tenantSlug && tenantSlug !== 'acme-store' ? tenantSlug : '') || 'comida-callejera-xl';
 
   const {
     tenantSlug: currentSlug, setTenantSlug, tenant, products, faqs, unresolved,
@@ -55,15 +56,16 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   }, [activeSlug]);
 
   useEffect(() => {
-    if (isAuthenticated && activeSlug && (!isPanelUrl || pathname === '/dashboard' || pathname.startsWith('/panel/'))) {
-      if (user?.role === 'superadmin' && pathname === '/dashboard') {
-        navigate('/super-admin', { replace: true });
-        return;
-      }
-      const target = isVoceroMode ? getVoceroTabPath(activeSlug, 'settings') : getTenantTabPath(activeSlug, 'business');
-      navigate(target, { replace: true });
+    if (!isAuthenticated || !user) return;
+    if (user.role === 'superadmin') {
+      if (pathname === '/dashboard') navigate('/super-admin', { replace: true });
+      return;
     }
-  }, [isAuthenticated, activeSlug, isPanelUrl, pathname, activeTab, navigate, user?.role]);
+    const targetSlug = user.tenantSlug;
+    if (targetSlug && (routeTenantSlug !== targetSlug || pathname === '/dashboard' || pathname.startsWith('/panel/'))) {
+      navigate(isVoceroMode ? getVoceroTabPath(targetSlug, 'settings') : getTenantTabPath(targetSlug, activeTab || 'business'), { replace: true });
+    }
+  }, [isAuthenticated, user?.tenantSlug, user?.role, routeTenantSlug, pathname, isVoceroMode, activeTab, navigate]);
 
   if (isAuthLoading) {
     return (
@@ -163,15 +165,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       </main>
 
       <SwitchTenantModal
-        isOpen={isSwitchModalOpen}
-        onClose={() => setIsSwitchModalOpen(false)}
+        isOpen={isSwitchModalOpen} onClose={() => setIsSwitchModalOpen(false)}
         availableTenants={user?.role === 'superadmin' ? availableTenants : availableTenants.filter(t => t.slug === currentSlug)}
         currentSlug={currentSlug}
-        onSelectTenant={(slug) => {
-          setTenantSlug(slug);
-          navigate(getTenantTabPath(slug, activeTab));
-          if (onSelectTenant) onSelectTenant(slug);
-        }}
+        onSelectTenant={(slug) => { setTenantSlug(slug); navigate(getTenantTabPath(slug, activeTab)); if (onSelectTenant) onSelectTenant(slug); }}
         onLogout={logout}
       />
     </div>

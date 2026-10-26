@@ -298,12 +298,19 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem('clikchat_role');
-    localStorage.removeItem('clikchat_active_tenant_slug');
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem('clikchat_role');
+      localStorage.removeItem('clikchat_active_tenant_slug');
+      localStorage.removeItem('clikchat_active_tab');
+      sessionStorage.clear();
+    } catch (e) {}
     setUser(null);
     setTenant(null);
     setError(null);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   }, []);
 
   return {
