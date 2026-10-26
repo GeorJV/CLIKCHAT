@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-24 22:18 GMT-6
-- **Versión Actual:** 2.3.5 (Claridad e Inteligencia Suprema: Parser de Horas Coloquiales, Cero Titubeos y Buffer de Tokens)
+- **Última Actualización:** 2026-10-26 10:05 GMT-6
+- **Versión Actual:** 2.3.6 (Adaptación Táctil Nativa y Ampliación Visual en Celulares)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `852a8f8`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `4f2cf66`)
 - **Estado Actual del Sistema:**
-  - Inteligencia y Claridad Suprema: Respuestas directas, ejecutivas y sin titubeos ni auto-correcciones incoherentes.
-  - Parser de Horas Coloquiales: `parseFlexibleTime` interpreta "9 y 40", "9 y media", "a las 10" normalizando a HH:MM AM/PM.
-  - Cero Truncamientos: Buffer ampliado a 1024 tokens en Cloudflare Workers AI eliminando cortes de texto a la mitad.
-  - Flujo de Agendamiento Verificado: Paso 1 (Nombre/Email) -> Paso 2 (WhatsApp) -> Paso 3 (Día) -> Paso 4 (Horas) -> Paso 5 (Cita).
-  - Confirmación con Día y Fecha Completa: Algoritmo `formatFullDayAndDate` emite "Día, DD de Mes de AAAA" tanto en texto como en BOOKING_CARD.
+  - Adaptación Móvil Nativa: Input ergonómico (15px, min-h-42px, anti-zoom iOS) y botones de enviar/mic ampliados a 40x40px táctiles.
+  - Píldoras y Botoncitos Legibles: Quick pills, botones de servicio y acciones rápidas con altura táctil (min-h-34px) y texto claro.
+  - Burbujas y Tarjetas de Cita: Tipografía de mensajes a 14px nítida y botón "Confirmo cita y guardar" prominente (min-h-46px).
+  - Inteligencia y Claridad Suprema: Respuestas ejecutivas, parser de horas coloquiales y confirmación canónica sin titubeos.
   - Consulta D1 en Milisegundos con Descansos: Ocupación por cita + buffer de descanso con recomendación de siguiente hora.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**

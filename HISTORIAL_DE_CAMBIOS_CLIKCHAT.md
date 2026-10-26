@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Adaptación Táctil Nativa y Ampliación Visual en Celulares (v2.3.6)
+- **Diagnóstico y Necesidad:**
+  1. *Elementos Minúsculos en Móvil:* El usuario reportó que en celular los elementos del chat se veían muy pequeños (botones de acción, botón de enviar, micrófono, píldoras y barra de texto).
+  2. *Experiencia Táctil y Prevención de Zoom en iOS:* La tipografía de 12px en el input provocaba zoom automático en iOS Safari, y los botones con tamaños de 24-28px eran difíciles de accionar con el pulgar.
+  3. *Sensación de Aplicación Nativa:* Requerimiento de que la ventana de chat detecte el celular y adapte todas sus proporciones al estándar de apps nativas de mensajería (WhatsApp / Telegram / iMessage).
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. Hook useIsMobileDevice.ts (35 líneas):
+     - Detección universal reactiva de viewport ($\le 768px$), capacidades táctiles y userAgent móvil.
+  2. Barra de Entrada Ergonómica (ChatInputBar.tsx, ServiceChatColumn.tsx, ProductChatColumn.tsx):
+     - Textarea con tipografía a 15px en móvil (previniendo auto-zoom de iOS) y altura mínima de 42px.
+     - Botón de enviar ampliado a 40x40px táctil con icono de 20x20px (Send) en lugar de 14x14px.
+     - Botón de micrófono (ChatMicButton.tsx) ampliado a 40x40px táctil con icono de 20x20px (Mic).
+     - Padding seguro inferior para barras de navegación gestual (`pb-[max(0.625rem,env(safe-area-inset-bottom))]`).
+  3. Píldoras de Respuestas y Acciones Rápidas (ChatQuickPills.tsx, ServiceChatColumn.tsx, QuickActionButtons.tsx):
+     - Altura mínima táctil de 34px-36px, padding cómodo (px-3.5 py-1.5) y tipografía nítida (12px-13px en vez de 10px).
+     - Botones "📅 Agendar Cita" y "✅ Mi Cita" destacados y fáciles de presionar.
+  4. Burbujas de Mensajes y Tarjeta de Cita (ChatMessageContent.tsx, ChatMessageItem.tsx, BookingCardBubble.tsx):
+     - Tipografía de lectura aumentada a 14px nítida en móvil (text-sm).
+     - Botón "📅 Confirmo cita y guardar" prominente (altura mínima 46px, font-black, icono de 20x20px).
+     - Botón "Ver en WhatsApp" con altura mínima de 40px y padding táctil.
+  5. Encabezado Táctil (ChatHeader.tsx, ServiceChatColumn.tsx, ProductChatColumn.tsx):
+     - Avatares de 36px-40px, títulos destacados y botones de acción (reiniciar/salir) con áreas de toque de 36-40px.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 9.86s con 0 errores TypeScript (`index-DL59kPKC.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `4f2cf66`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-24] Claridad e Inteligencia Suprema: Parser de Horas Coloquiales, Cero Titubeos y Buffer de Tokens (v2.3.5)
 - **Diagnóstico y Necesidad:**
   1. *Respuesta Rara / Falta de Claridad:* En situaciones donde el usuario aceptaba una hora alternativa o expresaba horarios coloquialmente (ej: "Si 9 y 40 esta bien"), el bot generaba respuestas confusas e incoherentes ("Me alegra que hayas elegido el horario de 8:40am no, sino que elegiste las 9:40 am").
