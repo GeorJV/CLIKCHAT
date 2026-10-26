@@ -1,17 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 12:57 GMT-6
-- **Versión Actual:** 2.4.2 (Aislamiento Estricto de Vocabulario Gastronómico y de Servicios)
+- **Última Actualización:** 2026-10-26 13:30 GMT-6
+- **Versión Actual:** 2.4.3 (Generador de Enlaces de Campaña con Contexto IA & Ofertas Dinámicas)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Aislamiento Gastronómico: "Comanda", "platillo" y "bebidas/papas" restringidos 100% a restaurantes; prohibidos en GeoSoft/servicios.
-  - Contextualización Automática: Repreguntas cortas heredan el tema previo en `unresolved_queries`.
-  - Visor de Hilo en Panel HITL: El dueño ve el historial exacto del chat con botón desplegable en consultas pendientes.
-  - Auto-Entrenamiento Refinado: Campo editable de pregunta oficial al resolver dudas para poblar FAQs oficiales limpias.
-  - Blindaje Anti-Alucinación de Tarifas: Prohibición estricta de inventar precios en variantes no catalogadas en LLM Prompt.
-  - Entrega Progresiva Escalonada: Mensajes multi-burbuja fluidos con retraso de 1s a 2s e indicador de escritura continuo.
+  - Generador de Enlaces de Campaña: Panel interactivo para crear links con canal (Meta, TikTok, etc.), anuncio, descripción y oferta.
+  - Memoria Contextual de Anuncios: El bot sabe de qué anuncio viene el cliente, qué vio en el post y qué oferta le prometieron.
+  - Atribución Automática CRM: Leads registrados con tags de campaña y oferta sin requerir webhooks ni integraciones complejas.
+  - Aislamiento Gastronómico: Vocabulario de restaurantes delimitado exclusivamente a negocios de comida.
+  - Contextualización Automática: Repreguntas cortas heredan el tema conversacional previo en `unresolved_queries`.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

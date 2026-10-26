@@ -16,7 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
-### [2026-10-26] Aislamiento Estricto de Vocabulario Gastronómico y de Servicios (v2.4.2)
+### [2026-10-26] Generador de Enlaces de Campaña con Contexto IA & Ofertas Dinámicas (v2.4.3)
+- **Diagnóstico y Necesidad:**
+  1. *Desconexión entre Publicidad y Chat:* Cuando un negocio creaba anuncios pagados (Meta Ads, Instagram, TikTok, Google Ads) o publicaciones con ganchos específicos, el bot recibía al cliente como un visitante anónimo sin saber qué video vio, qué anuncio lo atrajo ni qué oferta se le prometió.
+  2. *Falta de Atribución y Ofertas Personalizadas:* El dueño no disponía de un generador interactivo para configurar de dónde proviene el tráfico, el nombre del anuncio, la descripción de lo que muestra el video/post, la URL de referencia y la oferta/descuento especial.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Full RAG):**
+  1. *Generador Visual de Enlaces (`CampaignLinkGeneratorCard.tsx` - 178 líneas):*
+     - Integrado en el panel de *Canal Propio ClikChat ➔ Enlaces & Plantillas*.
+     - Permite seleccionar el origen (Instagram Ads, Facebook Ads, TikTok, Google Ads, Web, WhatsApp, etc.).
+     - Campos para: Nombre de Campaña/Anuncio, Oferta o Gancho, Descripción de lo que muestra el anuncio para la IA, y URL opcional del post/anuncio.
+     - Generación instantánea de URL parametrizada (`?src=...&camp=...&offer=...&desc=...&ad_url=...`) con botón de copiado 1-clic y botón de prueba directa.
+  2. *Captura y Persistencia en Chat Client (`campaignTracking.ts` - 29 líneas):*
+     - Integrado en `ServiceChatView.tsx` y `ProductChatView.tsx`: Captura los parámetros de campaña desde la URL y los envía al backend en `campaignContext`.
+  3. *Inyección Contextual en Backend Edge (`functions/api/[[route]].js`):*
+     - El bot recibe el bloque `[CONTEXTO DE PROCEDENCIA DEL CLIENTE (ANUNCIO / CAMPAÑA ENTRANTE)]` con origen, anuncio, oferta y contenido visto.
+     - Si el cliente menciona el anuncio o la oferta, la IA responde con total conocimiento de causa sin pedirle que se lo explique.
+     - En `crm_leads`, el lead queda automáticamente etiquetado con su canal (`channel`), tags (`camp:`, `oferta:`) y notas con el enlace del anuncio.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.59s con 0 errores TypeScript (`index-BOxISafV.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `3ba86e0`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 - **Diagnóstico y Necesidad:**
   1. *Fuga de Jerga de Restaurante a Negocios de Servicios:* Cuando un cliente consultaba precios en GeoSoft (ej: "¿Cuánto vale una página web estática?"), el prompt del backend inyectaba de forma incondicional: *"Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda."*.
   2. *Incoherencia de Marca:* Debido a esa instrucción no condicionada, el bot de software le decía al cliente frases absurdas como: *"¿Deseas agregar esta opción a tu comanda?"* o reglas de no sugerir *"bebidas ni más papas"*.
