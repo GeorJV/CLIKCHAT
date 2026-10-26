@@ -6371,7 +6371,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         llmResult.text = guardrailResult.text;
         const isPriceGuardrailBlocked = guardrailResult.triggered;
 
-        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA
+        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1
         if (bookingState.isComplete) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
@@ -6399,6 +6399,39 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             } catch (e) {}
           }
           llmResult.text = cleanBookingCardText(llmResult.text);
+
+          // AUTO-REGISTRO DETERMINISTA EN CLOUDFLARE D1 (AGENDA / VOCERO CRM / PANEL DEL DUEÑO)
+          if (bookingState.slots.date && bookingState.slots.time) {
+            try {
+              const bService = targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional');
+              const bPrice = targetTenant.name === 'GeoSoft' ? 1200 : 0;
+              const bName = (bookingState.slots.name || activeLeadInfo?.name || 'Cliente').trim();
+              const bEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim();
+              const bPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
+              const bDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
+              const bTime = bookingState.slots.time;
+
+              const existingApt = await executeD1(
+                "SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != '' AND customer_phone = ?2) OR (customer_email != '' AND customer_email = ?3)) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
+                [actualTenantId, bPhone, bEmail]
+              ).catch(() => []);
+
+              if (existingApt.length > 0) {
+                await executeD1(
+                  "UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, price = ?5, status = 'confirmed' WHERE id = ?6",
+                  [bName, bDate, bTime, bService, bPrice, existingApt[0].id]
+                ).catch(() => {});
+              } else {
+                const newAptId = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                await executeD1(
+                  "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD')",
+                  [newAptId, actualTenantId, bName, bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice]
+                ).catch(() => {});
+              }
+            } catch (autoSaveErr) {
+              console.warn('Error auto-saving appointment in D1:', autoSaveErr.message);
+            }
+          }
         } else {
           // Si faltan datos, queda TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD]
           if (llmResult.text.includes('[BOOKING_CARD:')) {

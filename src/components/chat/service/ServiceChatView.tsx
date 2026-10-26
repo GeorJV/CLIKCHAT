@@ -46,8 +46,7 @@ export const ServiceChatView: React.FC<Props> = ({
       const s = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (s) return s;
       const c = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-      localStorage.setItem(storageKey, c);
-      return c;
+      localStorage.setItem(storageKey, c); return c;
     }
     return 'sess_' + Date.now().toString(36);
   });
@@ -92,6 +91,15 @@ export const ServiceChatView: React.FC<Props> = ({
         const cardMatch = rawAns.match(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/);
         const textWithoutCard = rawAns.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
         if (cardMatch) {
+          try {
+            const parsed = JSON.parse(cardMatch[0].replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, ''));
+            const cData: ServiceBookingData = {
+              service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' },
+              date: parsed.date, timeSlot: parsed.time, customerName: parsed.customerName, customerEmail: parsed.customerEmail, customerPhone: parsed.customerPhone
+            };
+            setConfirmedBooking(cData);
+            try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
+          } catch (e) {}
           setMessages((prev) => [...prev, {
             id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -125,9 +133,7 @@ export const ServiceChatView: React.FC<Props> = ({
   });
 
   const handleSendMessage = (customText?: string, fromVoice?: boolean) => {
-    const text = (customText || inputValue).trim();
-    if (!text) return;
-    setInputValue('');
+    const text = (customText || inputValue).trim(); if (!text) return; setInputValue('');
     if (!fromVoice) sendBatchedMessage(text); else sendVoiceQuery(text);
   };
 
@@ -140,10 +146,7 @@ export const ServiceChatView: React.FC<Props> = ({
       const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
       localStorage.setItem(k, JSON.stringify([apt, ...JSON.parse(localStorage.getItem(k) || '[]')]));
     } catch (e) {}
-    setMessages((prev) => [...prev, {
-      id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
-      content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
+    setMessages((prev) => [...prev, { id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     setMobileTab('chat');
   };
 
@@ -158,10 +161,7 @@ export const ServiceChatView: React.FC<Props> = ({
       <div className="flex-1 w-full h-full flex lg:grid lg:grid-cols-2 overflow-hidden min-h-0">
         <div className={`h-full w-full ${mobileTab === 'chat' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
           <ServiceChatColumn
-            storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title}
-            messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking}
-            businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode}
-            onInputChange={setInputValue} onSendMessage={handleSendMessage}
+            storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title} messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking} businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode} onInputChange={setInputValue} onSendMessage={handleSendMessage}
             onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
             onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking}
           />
