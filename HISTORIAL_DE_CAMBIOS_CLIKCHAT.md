@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Restitución de Inteligencia Conversacional Total y Reprogramación Nativa de Citas en Chat sin Desvío a FAQs / HITL (v2.4.9)
+- **Diagnóstico y Causa Raíz:**
+  1. *Compuerta Artificial Pre-LLM (`isDirectUnresolvedFallback`):* Un condicional en `functions/api/[[route]].js` interceptaba todo mensaje que contuviera signos de interrogación o palabras comunes en español (`que`, `como`, `donde`, `pueden`). Si no había una coincidencia exacta de catálogo y los slots de cita ya estaban llenos, abortaba la llamada a la IA y enviaba el mensaje robótico predeterminado (*"Esa es una consulta muy puntual y no quiero darte información inexacta..."*), creando un registro pendiente en `unresolved_queries`.
+  2. *Bloqueo de Reprogramaciones y Cambios de Cita:* Cuando el usuario pedía cambiar la hora (ej. de 3:00 PM a 3:30 PM), la compuerta la clasificaba erróneamente como duda no resuelta porque los slots ya existían, impidiendo que el bot procesara el cambio de horario.
+  3. *Colisión de Disponibilidad en D1:* Al intentar agendar en el nuevo horario (3:30 PM), la verificación contra citas existentes chocaba con el buffer de la cita anterior del mismo cliente (3:00 PM - 3:40 PM).
+- **Solución Quirúrgica Implementada:**
+  1. *Eliminación de Compuerta Artificial e Inteligencia Conversacional Total:*
+     - Desmantelado por completo el bloque `isDirectUnresolvedFallback`. Todas las consultas conversacionales llegan a `callEdgeLLM`.
+     - Reconfigurado el System Prompt: el bot actúa como un asesor consultivo, persuasivo y sumamente inteligente. Solo marca `<!--UNRESOLVED_QUERY-->` si la consulta es ajena al negocio y de índole imposible de deducir.
+     - Blindado `isUnresolvedQuery`: bajo ningún concepto una solicitud de reserva o reprogramación se desvía a HITL (`!isBookingContext`).
+  2. *Soporte Nativo para Reprogramación de Citas en Chat:*
+     - En `extractBookingSlots`: detección de intención de reprogramación (`isRescheduleIntent`) y extracción de hora flexible (`"3 y 30"` -> `"03:30 PM"`).
+     - Recuperación automática de slots (`name`, `email`, `phone`, `date`) desde cualquier `[BOOKING_CARD]` previa en el historial conversacional.
+     - Al verificar disponibilidad en D1, se excluye la cita previa del cliente para evitar falsa colisión con su propio horario anterior.
+     - En `POST /api/bookings`: si el cliente ya cuenta con una cita activa, se actualiza el registro con `UPDATE` en D1 en vez de duplicar citas en la agenda.
+  3. *Emisión Inmediata de Tarjeta Interactiva Actualizada:*
+     - El bot emite directamente la tarjeta `[BOOKING_CARD: {...}]` con la nueva hora confirmada (03:30 PM) y mensaje empático en tiempo real.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) con 0 errores TypeScript (`index-BVhU0jLz.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commits `43a0d7c`, `608d9f7`, `0958653`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Pruebas en Vivo Verificadas:*
+    - Test de Reprogramación: `"quiero cambiar la cita , ya que la tenia a una hora y no voy a PODER ASI QUE LA QUIERO CAMBIAR A A LAS 3 Y 30 PM DE HOY"` -> HTTP 200, respuesta empática inmediata, verificación en D1, tarjeta emitida con 03:30 PM, `isFallback: false`, `isUnresolved: false`. Cero desvíos a FAQs.
+    - Test de Consulta Técnica: `"¿Qué tecnologías usan ustedes para desarrollar las páginas web y plataformas SaaS?"` -> HTTP 200, respuesta técnica de alto nivel, `isFallback: false`, `isUnresolved: false`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-26] Normalización Determinista de Fechas y Filtro Preciso en Agenda CRM (v2.4.6)
 - **Diagnóstico y Causa Raíz:**
   1. *Fechas en Lenguaje Natural que Producían `NaN`:* En la base de datos D1, las citas agendadas por los bots o creadas por usuarios contenían fechas en texto natural en español (`"Lunes, 26 de Octubre de 2026"`, `"Lunes, 27 de octubre de 2026"`, `"lunes"`).
