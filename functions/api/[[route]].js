@@ -839,9 +839,10 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   const openRouterKey = env?.OPENROUTER_API_KEY || (() => {
     try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
   })();
-  const googleKey = env?.GOOGLE_AI_STUDIO_KEY || (() => {
-    try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; }
-  })();
+  const defaultGoogleKey = atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc=');
+  const googleKey = (env?.GOOGLE_AI_STUDIO_KEY && env.GOOGLE_AI_STUDIO_KEY.length >= 45 && !env.GOOGLE_AI_STUDIO_KEY.includes('...'))
+    ? env.GOOGLE_AI_STUDIO_KEY.trim()
+    : defaultGoogleKey;
 
   // 1. Cadena de Alta Disponibilidad & Ultra Bajo Costo:
   // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
