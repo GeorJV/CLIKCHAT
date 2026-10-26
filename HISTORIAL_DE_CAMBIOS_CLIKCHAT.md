@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Resolución Integral de Bucles de Citas Congeladas en 3pm, Persistencia Automática en D1 y Motor Oficial Google AI Studio (v2.5.4)
+- **Diagnóstico y Causas Raíces:**
+  1. *Falla de SQL en Memoria Episódica (`chat_messages`):* En `functions/api/[[route]].js`, la consulta a D1 usaba `ORDER BY created_at ASC LIMIT 30`. En sesiones con más de 30 turnos (la sesión del cliente tenía 76 mensajes), se traían los primeros 30 mensajes antiguos y se omitían los recientes. Al haber solicitado `3 pm` en el turno 26, el extractor siempre recuperaba `03:00 PM` como hora congelada, provocando bucles interminables.
+  2. *Cero Persistencia de Citas en D1 al Confirmar en Chat:* El backend emitía `[BOOKING_CARD: ...]` en texto pero nunca realizaba `INSERT INTO bookings` en D1, dependiendo exclusivamente de un clic manual en frontend.
+  3. *Autocolisión del Cliente Consigo Mismo:* En `checkSlotAvailability`, si el cliente ya tenía una cita agendada, la consulta en D1 colisionaba con su propia reserva impidiendo reprogramar o ajustar su cita.
+  4. *Cuota Excedida en OpenRouter & Ausencia de Google AI Studio en Edge:* La clave de OpenRouter arrojó error 403 (saldo consumido), haciendo caer al bot a plantillas de contingencia repetitivas.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Consulta Cronológica Invertida en D1:* Cambiado a subconsulta `(SELECT ... ORDER BY created_at DESC LIMIT 35) sub ORDER BY created_at ASC`, garantizando que la memoria episódica trabaje siempre con los últimos 35 mensajes reales.
+  2. *Auto-Registro Determinista en Cloudflare D1:* Al emitir `[BOOKING_CARD]` cuando los slots están completos, se ejecuta automáticamente `INSERT/UPDATE bookings` en D1 con status `confirmed`.
+  3. *Filtrado de Autocolisión:* En `checkSlotAvailability`, se omiten las reservas del mismo teléfono o email del cliente, permitiendo agendamiento y reprogramación fluidos.
+  4. *Detección de Cortesía y Confirmación Inmediata (Nivel 1):* Mensajes como "GRACIAS", "ENTOCNES YA ESTA FORMIMADA LA CITA?", "PERO MANANA NO ES 26", "DE FEHCA ME ESTAS HABLANDO" se interceptan de inmediato con confirmación cálida y precisa de la cita registrada en D1, cerrando el flujo con cero bucles.
+  5. *Integración Oficial de Google AI Studio Edge:* Integrado Google AI Studio (`gemini-3.5-flash` y `gemini-3.1-flash-lite`) como Opción 1 de alta prioridad en `callEdgeLLM` con normalización de roles (`user`/`model`) y `systemInstruction` nativo.
+  6. *Soporte de `tenant_id` y `bookingCard` JSON:* Soportado `tenant_id` en query params de `/api/bookings` y retorno de `bookingCard` estructurado en el JSON del chat.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Build local limpio (`npm run build`) en 8.70s con 0 errores TypeScript (`index-B9-lCnhJ.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `405b0e4`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) + Hash Match al 100% y 17/17 rutas operativas en Chrome Headless.
+  - *Pruebas en Vivo Verificadas:*
+    - Caso completo del usuario reproducido con éxito: respuestas cálidas, sin bucles de 3pm, "GRACIAS" cerrando con cordialidad y confirmando la cita, persistencia automática en D1 confirmada para el tenant `geosoft`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-26] Comparación Exacta de Fechas Calendario y Preservación de Fecha entre Turnos (v2.5.3)
 - **Diagnóstico y Causa Raíz:**
   1. *Pérdida de la Fecha Acordada (Sobreescritura Histórica):* En `extractBookingSlots`, tras haber emitido previamente una tarjeta o acordado la cita para mañana (`Martes, 27 de Octubre de 2026`), cuando el usuario enviaba un mensaje posterior (ej. *"ME REFIERO A MAANA EN LA MAMANA TIENEN A LAS 8 AM"* con errores tipográficos sin tildes ni eñes), el extractor de fecha ignoraba la fecha de la tarjeta previa (`cardDate`) y recorría todo el historial hacia atrás, topándose con un mensaje antiguo de 20 turnos atrás (*"quiero cita para hoy"*). Como resultado, sobreescribía la fecha a **HOY (Lunes, 26 de Octubre)** en vez de mantener **MAÑANA (Martes, 27 de Octubre)**.

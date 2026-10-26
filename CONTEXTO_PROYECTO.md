@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 17:12 GMT-6
-- **Versión Actual:** 2.5.3 (Comparación Exacta de Fechas Calendario y Preservación de Fecha)
+- **Última Actualización:** 2026-10-26 17:42 GMT-6
+- **Versión Actual:** 2.5.4 (Resolución Integral de Citas Congeladas, Auto-Registro en D1 y Google AI Studio)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Comparación de Fechas Calendario: Erradicada colisión de nombres de día contra fechas completas (`areDatesMatching`), evitando que citas de hoy bloqueen mañana.
-  - Preservación de Fecha entre Turnos: Priorización de mensajes posteriores a la tarjeta para evitar que menciones antiguas ("hoy") sobreescriban la fecha acordada ("mañana").
-  - Tolerancia a Errores Tipográficos: Soporte de "manana", "maana", "mamana" y discriminación estricta de turnos ("de la mañana" vs día de mañana).
-  - Saneamiento de Historial Workers AI: Filtrado de mensajes vacíos y fallback contextual de alta fidelidad según la industria del tenant.
-  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y prueba en vivo de cita a las 8:00 AM para mañana verificada en producción.
+  - Cero Bucles de Horarios Ocupados: Corregida subconsulta en SQLite D1 (`ORDER BY created_at DESC LIMIT 35`) para erradicar arrastre de horarios antiguos (3pm).
+  - Persistencia Directa en D1: Al emitir `[BOOKING_CARD]`, la cita se inserta automáticamente en la tabla `bookings` de Cloudflare D1.
+  - Comprensión de Cierre y Cortesía: Respuestas inmediatas de confirmación ante "GRACIAS", "ENTOCNES YA ESTA FORMIMADA LA CITA?" y aclaraciones de fechas ("DE FEHCA ME ESTAS HABLANDO").
+  - Google AI Studio Vigente: Integrado como Opción 1 de alta prioridad (`gemini-3.5-flash` / `gemini-3.1-flash-lite`) con `systemInstruction` y normalización de turnos.
+  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless y suite conversacional validada en vivo.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
