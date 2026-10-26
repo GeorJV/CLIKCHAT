@@ -2522,6 +2522,30 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         const currency = body.currency || 'USD';
         const notes = body.notes || '';
 
+        // Si el cliente ya tenía una cita previa activa, actualizarla para reprogramarla
+        const existingApt = await executeD1(
+          'SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != \'\' AND customer_phone = ?2) OR (customer_email != \'\' AND customer_email = ?3)) AND status != \'cancelled\' ORDER BY created_at DESC LIMIT 1',
+          [tenantId, customerPhone, customerEmail]
+        ).catch(() => []);
+
+        if (existingApt.length > 0) {
+          const prevId = existingApt[0].id;
+          await executeD1(
+            'UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, service_id = ?5, price = ?6, status = \'confirmed\', notes = ?7 WHERE id = ?8',
+            [customerName, bookingDate, bookingTime, serviceName, serviceId, price, notes, prevId]
+          ).catch(() => {});
+
+          return jsonResponse({
+            success: true,
+            updated: true,
+            booking: {
+              id: prevId, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
+              service_name: serviceName, booking_date: bookingDate, booking_time: bookingTime,
+              modality, status: 'confirmed', price, currency, notes
+            }
+          }, 200);
+        }
+
         await executeD1(
           'INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)',
           [id, tenantId, customerName, customerEmail, customerPhone, serviceId, serviceName, bookingDate, bookingTime, modality, 'confirmed', price, currency, notes]
@@ -4640,6 +4664,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
 
+  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?)\b/i.test(currentMessage || '');
+  const hasNewTimeInMsg = Boolean(parseFlexibleTime(currentMessage) || (currentMessage || '').match(timeRegex));
+  const hasNewDateInMsg = Boolean((currentMessage || '').match(compositeDateRegex) || (currentMessage || '').match(simpleDayRegex));
+
+  if (isRescheduleIntent && !hasNewTimeInMsg && !hasNewDateInMsg && (date || time)) {
+    time = null;
+  }
+
   const missing = [];
   if (!name) missing.push('Nombre completo');
   if (!email) missing.push('Correo electrónico');
@@ -4667,7 +4699,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     stepInstruction = `PASO 3: Ya tienes nombre, correo y teléfono ("${phone}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión. No pidas hora aún.`;
   } else if (!time) {
     currentStep = 4;
-    stepInstruction = `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+    stepInstruction = isRescheduleIntent
+      ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
+      : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+  } else if (isRescheduleIntent) {
+    currentStep = 5;
+    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó explícitamente cambiar su cita para el "${date}" a las "${time}". Confirma con gran calidez y entusiasmo el cambio de horario a las ${time}, confirmando que verificaste la agenda en D1 y emitiendo la nueva tarjeta de confirmación [BOOKING_CARD: {...}] con el horario actualizado.`;
   } else {
     currentStep = 5;
     stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS! Si la fecha y hora están disponibles en agenda, autoriza la reserva con gran entusiasmo y emite el tag estructurado [BOOKING_CARD: {...}] con los 5 datos recopilados.`;
@@ -4991,8 +5028,8 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
 
       // 4.1 DETECCIÓN INTELIGENTE DE AGENDAMIENTO & EXTRACCIÓN DE SLOTS
       const isBookingContext = (
-        /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|consultoria|consultor[ií]a|reservar|reserva|calendario|disponibilidad|horario|espacio)\b/i.test(message) ||
-        sessionHistory.some(h => /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|reservar|reserva|calendario)\b/i.test(h.message || ''))
+        /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|consultoria|consultor[ií]a|reservar|reserva|calendario|disponibilidad|horario|espacio|reprogramar|reprogramaci[oó]n|cambiar|cambio|mover|posponer|modificar)\b/i.test(message) ||
+        sessionHistory.some(h => /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|reservar|reserva|calendario|reprogramar)\b/i.test(h.message || ''))
       );
 
       const bookingState = extractBookingSlots(sessionHistory, message, activeLeadInfo);
@@ -5272,6 +5309,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       const isDirectUnresolvedFallback = (
         isCustomerInquiry &&
         !hasVerifiedKnowledge &&
+        !isBookingContext &&
         !isBookingSlotFilling &&
         !isCheckoutOrOrderQuery
       );
@@ -5942,10 +5980,21 @@ Si el cliente formula una pregunta específica sobre un tema, servicio, producto
 
         if (bookingState.slots.date && bookingState.slots.time) {
           try {
-            const existingBookings = await executeD1(
-              "SELECT booking_date, booking_time, status FROM bookings WHERE tenant_id = ?1 AND status != 'cancelled'",
+            const isReschedule = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?)\b/i.test(message || '');
+            const rawBookings = await executeD1(
+              "SELECT id, booking_date, booking_time, status, customer_phone, customer_email FROM bookings WHERE tenant_id = ?1 AND status != 'cancelled'",
               [actualTenantId]
             ).catch(() => []);
+
+            const existingBookings = isReschedule
+              ? rawBookings.filter(b => {
+                  const cPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').replace(/\D/g, '');
+                  const bPhone = (b.customer_phone || '').replace(/\D/g, '');
+                  const samePhone = cPhone.length >= 8 && bPhone.length >= 8 && (cPhone.includes(bPhone) || bPhone.includes(cPhone));
+                  const sameEmail = bookingState.slots.email && b.customer_email && b.customer_email.trim().toLowerCase() === bookingState.slots.email.trim().toLowerCase();
+                  return !(samePhone || sameEmail);
+                })
+              : rawBookings;
 
             const apptDuration = Number(targetTenant.appointment_duration) || 30;
             const breakBuffer = targetTenant.break_buffer_time !== undefined && targetTenant.break_buffer_time !== null ? Number(targetTenant.break_buffer_time) : 10;
@@ -6022,7 +6071,12 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - No envíes al usuario a escribir por WhatsApp por fuera. La cita se agenda y autoriza directamente aquí en el chat.
 4. CLARIDAD Y RESPUESTAS INTELIGENTES EN ELECCIÓN DE HORARIO:
    - Si el usuario responde aceptando una opción ofrecida o proponiendo una nueva hora (ej: "Si 9 y 40 esta bien", "a las 10 me sirve", "perfecto a las 3"), acéptala y confírmala de inmediato con naturalidad y aplomo.
-   - Prohibido hacer comparaciones confusas con horarios previos o decir frases como "no elegiste tal sino tal". Directo, claro y profesional.`;
+   - Prohibido hacer comparaciones confusas con horarios previos o decir frases como "no elegiste tal sino tal". Directo, claro y profesional.
+5. REPROGRAMACIÓN O CAMBIO DE CITA / HORARIO:
+   - Si el usuario solicita cambiar, mover o reprogramar su cita (ej: "me puedes cambiar la cita para las 3 y 30 es que no voy a poder a las 3pm", "cambiemos a las 4pm", "la podemos mover"):
+     Acepta cordialmente la solicitud de inmediato. Confirma el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${bookingState.slots.date || 'día acordado'}) con entusiasmo, indicando que acabas de verificar el nuevo espacio en agenda, y emite de inmediato la nueva tarjeta de confirmación actualizada:
+     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+     Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
