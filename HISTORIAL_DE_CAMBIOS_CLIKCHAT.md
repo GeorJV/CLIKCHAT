@@ -16,7 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
-### [2026-10-26] Contextualización Conversacional RAG & Visor de Hilo en Panel HITL (v2.4.1)
+### [2026-10-26] Aislamiento Estricto de Vocabulario Gastronómico y de Servicios (v2.4.2)
+- **Diagnóstico y Necesidad:**
+  1. *Fuga de Jerga de Restaurante a Negocios de Servicios:* Cuando un cliente consultaba precios en GeoSoft (ej: "¿Cuánto vale una página web estática?"), el prompt del backend inyectaba de forma incondicional: *"Menciona el precio oficial con amabilidad y pregunta amablemente si desea sumarlo a su comanda."*.
+  2. *Incoherencia de Marca:* Debido a esa instrucción no condicionada, el bot de software le decía al cliente frases absurdas como: *"¿Deseas agregar esta opción a tu comanda?"* o reglas de no sugerir *"bebidas ni más papas"*.
+- **Solución Quirúrgica Implementada (functions/api/[[route]].js):**
+  1. *Condicionamiento Estricto por Tipo de Negocio (`isRestaurant` vs `isServices` vs `retail`):*
+     - Términos gastronómicos (*"comanda"*, *"platillo"*, *"bebidas o papas"*, *"pedir la cuenta"*, *"comanda activa"*) quedaron restringidos **exclusivamente** a negocios gastronómicos (`business_type === 'restaurante'`).
+     - Para negocios de servicios (`business_type === 'servicios'`, como GeoSoft), el prompt ahora instruye explícitamente:
+       *"Menciona la tarifa oficial con claridad y transparencia. Pregunta amablemente si desea conocer los entregables o agendar una sesión técnica de asesoría. PROHIBIDO TERMINANTEMENTE usar términos gastronómicos como comanda, platillo, comida, bebida o cuenta."*
+  2. *Acciones Rápidas Contextuales:* Para servicios, las acciones rápidas ahora ofrecen *"Ver Servicios"* y *"Agendar Cita"*, eliminando cualquier referencia a *"Ver Comanda"* o menús de comida.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 25.43s con 0 errores TypeScript (`index-C1KPBrrk.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `a06343a`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 - **Diagnóstico y Necesidad:**
   1. *Preguntas Huérfanas sin Contexto en Panel HITL:* Cuando un cliente en el chat realizaba una repregunta corta de seguimiento (ej: "PERO SI OFRECEN?"), el sistema anti-alucinaciones evaluaba esa frase de forma aislada. Al no contener el nombre explícito del servicio ("Desarrollo Web"), no encontraba conocimiento verificado y registraba la duda en `unresolved_queries` únicamente con el texto literal `"PERO SI OFRECEN?"`. Al dueño del negocio le resultaba imposible saber qué estaba preguntando el cliente.
   2. *Imposibilidad de Ajustar la FAQ Auto-Entrenada:* Al resolver la duda en el panel, el sistema inyectaba la pregunta literal del cliente en la tabla `faqs`, creando preguntas frecuentes sin sentido semántico.

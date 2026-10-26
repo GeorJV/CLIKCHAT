@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 12:51 GMT-6
-- **Versión Actual:** 2.4.1 (Contextualización Conversacional RAG & Visor de Hilo en Panel HITL)
+- **Última Actualización:** 2026-10-26 12:57 GMT-6
+- **Versión Actual:** 2.4.2 (Aislamiento Estricto de Vocabulario Gastronómico y de Servicios)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Contextualización Automática: Consultas cortas de seguimiento heredan el tema conversacional previo en `unresolved_queries`.
-  - Visor de Hilo en Panel HITL: El dueño ve el historial exacto del chat con botón desplegable para entender qué consultó el cliente.
+  - Aislamiento Gastronómico: "Comanda", "platillo" y "bebidas/papas" restringidos 100% a restaurantes; prohibidos en GeoSoft/servicios.
+  - Contextualización Automática: Repreguntas cortas heredan el tema previo en `unresolved_queries`.
+  - Visor de Hilo en Panel HITL: El dueño ve el historial exacto del chat con botón desplegable en consultas pendientes.
   - Auto-Entrenamiento Refinado: Campo editable de pregunta oficial al resolver dudas para poblar FAQs oficiales limpias.
   - Blindaje Anti-Alucinación de Tarifas: Prohibición estricta de inventar precios en variantes no catalogadas en LLM Prompt.
   - Entrega Progresiva Escalonada: Mensajes multi-burbuja fluidos con retraso de 1s a 2s e indicador de escritura continuo.
-  - 4 Modos de Burbujas: Microburbujas, Moderado, Intermedio y Bloque completo funcionales con velocidad respetada.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
