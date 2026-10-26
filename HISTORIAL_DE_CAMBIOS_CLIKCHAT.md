@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Entrega Progresiva Escalonada de Multi-Burbujas con Typing Activo (v2.4.0)
+- **Diagnóstico y Necesidad:**
+  1. *Aparición Simultánea de Mensajes:* Cuando el bot respondía en modos multi-burbuja (microburbujas, moderado o intermedio), todos los mensajes se desplegaban de un solo golpe simultáneo en pantalla, rompiendo la experiencia natural y fluida de un chat conversacional humano estilo WhatsApp.
+  2. *Falta de Pausa e Indicador entre Mensajes:* No existía una cadencia realista de escritura entre cada burbuja (1s a 2s) que acompañara el avance del mensaje.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. *Motor de Entrega Escalonada (messageSplitter.ts - 151 líneas):*
+     - Función `deliverStaggeredBubbles`: Entrega la primera burbuja inmediatamente y programa las siguientes con un retraso orgánico de 1 a 2 segundos (`interBubbleDelayMs`), manteniendo el indicador de escritura (`isLoading: true`) mientras se prepara el siguiente fragmento.
+  2. *Integración en Vistas de Chat (ServiceChatView.tsx y ProductChatView.tsx):*
+     - Despliegue secuencial de burbujas en Servicios y Productos con persistencia de tarjetas de agendamiento y botones de acción rápida en la burbuja final.
+  3. *Renderizado Limpio de Clúster de Burbujas (ServiceChatColumn.tsx y ProductChatColumn.tsx):*
+     - Agrupamiento orgánico continuo (`isNextSameSender`): Los mensajes intermedios omiten divisores y timestamps redundantes para un flujo limpio, mostrando el timestamp, RAG Badge y acciones en la burbuja final.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 9.24s con 0 errores TypeScript (`index-BkKjgAt7.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-26] Jerarquía Estricta RAG: FAQs ➔ Base de Conocimiento ➔ Fallback HITL con Registro Automático de Dudas (v2.3.9)
 - **Diagnóstico y Necesidad:**
   1. *Alucinación por Falta de Restricción RAG:* Cuando un cliente preguntaba por suscripciones o planes mensuales (no existentes en el negocio), el LLM alucinaba respuestas inventadas (como "$99 USD al mes") en lugar de admitir desconocimiento.

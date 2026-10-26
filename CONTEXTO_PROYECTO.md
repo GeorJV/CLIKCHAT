@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 12:08 GMT-6
-- **Versión Actual:** 2.3.9 (Jerarquía Estricta RAG 3 Niveles: FAQs -> Docs -> Fallback HITL D1)
+- **Última Actualización:** 2026-10-26 12:32 GMT-6
+- **Versión Actual:** 2.4.0 (Entrega Progresiva Escalonada de Multi-Burbujas con Typing Activo)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Jerarquía RAG Estricta: Paso 1 (FAQs $0 costo) -> Paso 2 (Base de Conocimiento RAG & Catálogo) -> Paso 3 (Fallback HITL).
-  - Captura Determinista de Dudas: Si una consulta no tiene match en FAQs ni Docs, se guarda automáticamente en `unresolved_queries` en D1.
-  - Alerta en Panel del Dueño: Aparece en tiempo real en *Entrenamiento AI -> Dudas Pendientes* con badge rojo para auto-entrenar con 1-clic.
-  - Cero Alucinaciones: El bot admite desconocimiento honestamente sin inventar tarifas ficticias ni planes inexistentes.
-  - 4 Modos de Burbujas y Velocidad Estricta: Micro, Moderado, Intermedio y Bloque completo funcionales con cadencia respetada.
+  - Entrega Progresiva Escalonada: Los mensajes multi-burbuja se envían secuencialmente con 1s a 2s de pausa entre sí.
+  - Indicador de Escritura Vivo: El bot muestra animación de "escribiendo..." de forma fluida mientras prepara la siguiente burbuja.
+  - Clúster Limpio WhatsApp: Las burbujas intermedias omiten timestamps repetidos; la burbuja final ancla la tarjeta y RAG trace.
+  - Jerarquía RAG Estricta: Paso 1 (FAQs $0 costo) -> Paso 2 (Base de Conocimiento RAG & Catálogo) -> Paso 3 (Fallback HITL D1).
+  - Captura Determinista de Dudas: Consultas sin respaldo se guardan en `unresolved_queries` para respuesta 1-clic en el panel.
+  - 4 Modos de Burbujas: Microburbujas, Moderado, Intermedio y Bloque completo funcionales con velocidad respetada.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

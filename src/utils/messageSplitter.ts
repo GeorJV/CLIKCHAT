@@ -105,3 +105,47 @@ export function splitMessageByDeliveryMode(
   if (buffer.trim()) bubbles.push(buffer.trim());
   return bubbles.length > 0 ? bubbles : [text];
 }
+
+export interface StaggeredMessageOptions<T> {
+  fullText: string;
+  mode?: DeliveryMode;
+  responseDelaySec?: number;
+  createMessage: (bubble: string, isLast: boolean, index: number) => T;
+  onDeliver: (msg: T) => void;
+  onSetLoading: (loading: boolean) => void;
+}
+
+/**
+ * Entrega una respuesta progresiva burbuja por burbuja con retraso realista (1s a 2s)
+ * e indicador de escritura (typing) activo entre cada mensaje para máxima fluidez.
+ */
+export async function deliverStaggeredBubbles<T>({
+  fullText,
+  mode = 'moderate',
+  responseDelaySec = 1,
+  createMessage,
+  onDeliver,
+  onSetLoading,
+}: StaggeredMessageOptions<T>): Promise<void> {
+  const bubbles = splitMessageByDeliveryMode(fullText, mode);
+  if (bubbles.length <= 1) {
+    onDeliver(createMessage(fullText, true, 0));
+    onSetLoading(false);
+    return;
+  }
+
+  // Entrega la primera burbuja
+  onDeliver(createMessage(bubbles[0], false, 0));
+
+  // Retraso entre burbujas (entre 1s y 2s según cadencia para fluidez orgánica)
+  const interBubbleDelayMs = Math.min(Math.max((responseDelaySec ?? 1.2) * 1000, 1000), 2000);
+
+  for (let i = 1; i < bubbles.length; i++) {
+    onSetLoading(true);
+    await new Promise((r) => setTimeout(r, interBubbleDelayMs));
+    const isLast = i === bubbles.length - 1;
+    onDeliver(createMessage(bubbles[i], isLast, i));
+  }
+
+  onSetLoading(false);
+}

@@ -11,7 +11,7 @@ import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock';
 import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
-import { DeliveryMode } from '../../../utils/messageSplitter';
+import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
@@ -43,7 +43,6 @@ export const ServiceChatView: React.FC<Props> = ({
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-
   const [sessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const s = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
@@ -92,18 +91,32 @@ export const ServiceChatView: React.FC<Props> = ({
         const elapsed = Date.now() - startTime;
         if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
-        setMessages((prev) => [...prev, {
-          id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: data?.answer || '¡Con gusto te asesoro! ¿En qué te podemos colaborar hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' }
-        }]);
+        const rawAns = data?.answer || '¡Con gusto te asesoro! ¿En qué te podemos colaborar hoy?';
+        const cardMatch = rawAns.match(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/);
+        const textWithoutCard = rawAns.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim();
+        const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+        await deliverStaggeredBubbles({
+          fullText: textWithoutCard, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
+          createMessage: (bubble, isLast, bIdx) => ({
+            id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
+            content: isLast && cardMatch ? `${bubble}\n\n${cardMatch[0]}` : bubble,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            ragTrace: isLast ? { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' } : undefined
+          }),
+          onDeliver: (msg) => setMessages((prev) => [...prev, msg])
+        });
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
           const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
-          const elapsed = Date.now() - startTime;
-          if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
+          if (Date.now() - startTime < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - (Date.now() - startTime)));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
-          setMessages((prev) => [...prev, { id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100, modelUsed: fb.provider, reasoning: fb.levelLabel } }]);
+          const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+          await deliverStaggeredBubbles({
+            fullText: fb.answer, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
+            createMessage: (bubble, isLast, bIdx) => ({ id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: bubble, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: isLast ? { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 100, modelUsed: fb.provider, reasoning: fb.levelLabel } : undefined }),
+            onDeliver: (msg) => setMessages((prev) => [...prev, msg])
+          });
         } catch {
           setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te podemos colaborar hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
         }
@@ -121,15 +134,11 @@ export const ServiceChatView: React.FC<Props> = ({
   const handleConfirmBooking = (data: ServiceBookingData) => {
     setConfirmedBooking(data);
     try { localStorage.setItem(confirmKey, JSON.stringify(data)); } catch (e) {}
-    fetch('/api/bookings', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantSlug, tenantId: (selectedService as any).tenant_id || (selectedService as any).tenantId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' })
-    }).catch(() => {});
+    fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantSlug, tenantId: (selectedService as any).tenant_id || (selectedService as any).tenantId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
     try {
       const k = `clikchat_bookings_${tenantSlug || 'default'}`;
-      const prev = JSON.parse(localStorage.getItem(k) || '[]');
       const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
-      localStorage.setItem(k, JSON.stringify([apt, ...prev]));
+      localStorage.setItem(k, JSON.stringify([apt, ...JSON.parse(localStorage.getItem(k) || '[]')]));
     } catch (e) {}
     setMessages((prev) => [...prev, {
       id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant',
@@ -143,12 +152,8 @@ export const ServiceChatView: React.FC<Props> = ({
     <div className="w-full h-full flex flex-col bg-[#131212] text-slate-100 overflow-hidden font-sans">
       <div className="lg:hidden flex items-center justify-between px-3 py-2 bg-[#171616] border-b border-[#282626] shrink-0 z-20">
         <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[#111010] border border-[#282626]">
-          <button type="button" onClick={() => setMobileTab('chat')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 min-h-[32px] ${mobileTab === 'chat' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}>
-            <MessageSquare className="w-4 h-4" /><span>Chat</span>
-          </button>
-          <button type="button" onClick={() => setMobileTab('service')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 min-h-[32px] ${mobileTab === 'service' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}>
-            <Sparkles className="w-4 h-4" /><span>Servicio</span>
-          </button>
+          <button type="button" onClick={() => setMobileTab('chat')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 min-h-[32px] ${mobileTab === 'chat' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}><MessageSquare className="w-4 h-4" /><span>Chat</span></button>
+          <button type="button" onClick={() => setMobileTab('service')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 min-h-[32px] ${mobileTab === 'service' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}><Sparkles className="w-4 h-4" /><span>Servicio</span></button>
         </div>
       </div>
       <div className="flex-1 w-full h-full flex lg:grid lg:grid-cols-2 overflow-hidden min-h-0">
@@ -156,12 +161,10 @@ export const ServiceChatView: React.FC<Props> = ({
           <ServiceChatColumn
             storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title}
             messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking}
-            businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'}
-            deliveryMode={deliveryMode}
+            businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode}
             onInputChange={setInputValue} onSendMessage={handleSendMessage}
             onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
-            onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)}
-            onConfirmBookingFromCard={handleConfirmBooking}
+            onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking}
           />
         </div>
         <div className={`h-full w-full ${mobileTab === 'service' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>

@@ -83,6 +83,7 @@ export const ProductChatColumn: React.FC<Props> = ({
         {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
+          const isNextSameSender = idx < messages.length - 1 && messages[idx + 1].sender === msg.sender;
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
           const bubbles = isAssistant && !msg.isAudio ? splitMessageByDeliveryMode(msg.content, activeMode) : [];
 
@@ -110,16 +111,18 @@ export const ProductChatColumn: React.FC<Props> = ({
           }
 
           return (
-            <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
+            <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-1' : idx === 0 ? 'mt-0' : 'mt-2.5'}`}>
               <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
                 {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
                     <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
                     {msg.quickActions && msg.quickActions.length > 0 && <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
-                      {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
-                      <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
-                    </div>
+                    {(!isNextSameSender || msg.ragTrace) && (
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
+                        {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
+                        <span className={`text-[10px] ${themeStyles.textSecondary} shrink-0 self-end select-none`}>{msg.timestamp || '20:03'}</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flow-root leading-snug"><span className="whitespace-pre-wrap break-words select-text">{msg.content}</span><span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">{msg.timestamp || '20:03'}</span></div>
@@ -148,11 +151,7 @@ export const ProductChatColumn: React.FC<Props> = ({
             <div className="flex-1 flex items-center justify-between gap-2 py-1 px-1 select-none animate-fade-in min-h-[42px] sm:min-h-[22px]">
               <div className="flex items-center gap-1.5 shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" /><span className="text-xs sm:text-[11px] font-mono font-bold text-red-400">Grabando...</span></div>
               <div className="flex-1 flex items-center justify-center gap-0.5 px-1 max-w-[120px]">
-                <span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse" />
-                <span className="w-0.5 h-5 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" />
-                <span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse [animation-delay:150ms]" />
-                <span className="w-0.5 h-5.5 bg-red-500 rounded-full animate-pulse [animation-delay:100ms]" />
-                <span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse [animation-delay:200ms]" />
+                <span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse" /><span className="w-0.5 h-5 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" /><span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse [animation-delay:150ms]" /><span className="w-0.5 h-5.5 bg-red-500 rounded-full animate-pulse [animation-delay:100ms]" /><span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse [animation-delay:200ms]" />
               </div>
               <span className="text-[11px] sm:text-[10px] text-zinc-400 truncate">Suelta para enviar</span>
             </div>

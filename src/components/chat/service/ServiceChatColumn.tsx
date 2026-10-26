@@ -88,6 +88,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
         {messages.map((msg, idx) => {
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
+          const isNextSameSender = idx < messages.length - 1 && messages[idx + 1].sender === msg.sender;
           const { cleanContent, bookingData } = isAssistant ? parseBookingCard(msg.content) : { cleanContent: msg.content, bookingData: null };
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
           const bubbles = isAssistant && !msg.isAudio ? splitMessageByDeliveryMode(cleanContent, activeMode) : [];
@@ -116,16 +117,18 @@ export const ServiceChatColumn: React.FC<Props> = ({
           }
 
           return (
-            <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-0.5' : idx === 0 ? 'mt-0' : 'mt-2'}`}>
+            <div key={msg.id} className={`flex items-start w-full ${isAssistant ? 'justify-start' : 'justify-end'} ${isSameSender ? 'mt-1' : idx === 0 ? 'mt-0' : 'mt-2.5'}`}>
               <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[92%] sm:max-w-[85%] px-3.5 py-2 text-xs sm:text-sm bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
                 {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
                     {cleanContent && <ChatMessageContent content={cleanContent} isUser={false} onActionClick={onSendMessage} />}
                     {bookingData && <BookingCardBubble bookingData={bookingData} isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))} storeName={storeName} businessPhone={businessPhone} onConfirm={(d) => onConfirmBookingFromCard?.(d)} />}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
-                      {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
-                      <span className="text-[10px] select-none tabular-nums text-zinc-400">{msg.timestamp || '20:03'}</span>
-                    </div>
+                    {(!isNextSameSender || msg.ragTrace) && (
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
+                        {msg.ragTrace && isBusinessAdminViewer() ? <ProductRAGBadge trace={msg.ragTrace} /> : <span />}
+                        <span className="text-[10px] select-none tabular-nums text-zinc-400">{msg.timestamp || '20:03'}</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flow-root leading-snug"><span className="whitespace-pre-wrap break-words select-text">{msg.content}</span><span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">{msg.timestamp || '20:03'}</span></div>

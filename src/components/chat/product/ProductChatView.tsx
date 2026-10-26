@@ -13,7 +13,7 @@ import { useProductChatOrder } from './useProductChatOrder';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { useLivePresencePing } from '../../../hooks/useLivePresencePing';
 
-import { DeliveryMode } from '../../../utils/messageSplitter';
+import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; welcomeMessage?: string;
@@ -46,10 +46,7 @@ export const ProductChatView: React.FC<Props> = ({
     onResetOrderTotal: resetOrder, onRestoreOrderTotal: (total) => setOrderTotal(total)
   });
 
-  useLivePresencePing({
-    tenantSlug, sessionId: sessId, activeProduct: selectedProduct?.title,
-    hasCart: Boolean(orderTotal && orderTotal > 0), cartTotal: orderTotal || 0,
-  });
+  useLivePresencePing({ tenantSlug, sessionId: sessId, activeProduct: selectedProduct?.title, hasCart: Boolean(orderTotal && orderTotal > 0), cartTotal: orderTotal || 0 });
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -90,22 +87,28 @@ export const ProductChatView: React.FC<Props> = ({
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
         const rawAns = data?.answer || '';
         const safeAns = (!rawAns || /user safety|response safety/i.test(rawAns) || /^(the user|i need to)/i.test(rawAns)) ? '¡Hola! Con gusto te atiendo. ¿En qué te puedo colaborar?' : rawAns;
-        setMessages((prev) => [...prev, {
-          id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: safeAns,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), quickActions: data?.quickActions,
-          ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 85, modelUsed: data?.provider || 'RAG Cloudflare Edge', reasoning: data?.levelLabel || 'RAG Catálogo D1' }
-        }]);
+        const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+        await deliverStaggeredBubbles({
+          fullText: safeAns, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
+          createMessage: (bubble, isLast, bIdx) => ({
+            id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: bubble,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), quickActions: isLast ? data?.quickActions : undefined,
+            ragTrace: isLast ? { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 85, modelUsed: data?.provider || 'RAG Cloudflare Edge', reasoning: data?.levelLabel || 'RAG Catálogo D1' } : undefined
+          }),
+          onDeliver: (msg) => setMessages((prev) => [...prev, msg])
+        });
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl', storeName, agentName, businessType, welcomeMessage, userMessage: userText, selectedProduct, products, sessionId: sessId });
           const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
-          const elapsed = Date.now() - startTime;
-          if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
+          if (Date.now() - startTime < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - (Date.now() - startTime)));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
-          setMessages((prev) => [...prev, {
-            id: `asst-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: fb.answer, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 120, modelUsed: fb.provider, reasoning: fb.levelLabel }
-          }]);
+          const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
+          await deliverStaggeredBubbles({
+            fullText: fb.answer, mode: activeMode, responseDelaySec, onSetLoading: setIsLoading,
+            createMessage: (bubble, isLast, bIdx) => ({ id: `asst-${Date.now()}-${bIdx}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: bubble, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: isLast ? { levelUsed: (lvlMap[fb.level] || 3) as any, confidence: fb.confidence, executionTimeMs: 120, modelUsed: fb.provider, reasoning: fb.levelLabel } : undefined }),
+            onDeliver: (msg) => setMessages((prev) => [...prev, msg])
+          });
         } catch {
           setMessages((prev) => [...prev, { id: `err-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: '¡Hola! ¿En qué te puedo asesorar el día de hoy?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
         }
