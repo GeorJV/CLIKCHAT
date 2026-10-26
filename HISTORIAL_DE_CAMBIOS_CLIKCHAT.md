@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Auto-Scroll Total & Visibilidad Completa de Tarjetas de Disponibilidad (v2.4.5)
+- **Diagnóstico y Necesidad:**
+  1. *Mensaje Entrecortado tras Verificar Disponibilidad:* Cuando el bot verificaba la disponibilidad de citas en la agenda, la tarjeta interactiva de cita (`BookingCardBubble`) iniciaba con un placeholder de verificación de 36px y luego se expandía a ~320px de alto.
+  2. *Ausencia de Auto-Scroll en Expansión Asíncrona:* El contenedor de chat no se desplazaba hacia abajo tras la expansión, dejando visible únicamente la parte superior y obligando al usuario a realizar scroll manual para ver los detalles y el botón de confirmación.
+- **Solución Quirúrgica Implementada (ARQMODULAR & UX):**
+  1. *Módulo Parser Aislado (`bookingCardParser.ts` - 34 líneas):*
+     - Extracción limpia de la lógica de parseo de tarjetas de reserva a su propio archivo de utilidad, manteniendo `ServiceChatColumn.tsx` en 176 líneas (<180 líneas ARQMODULAR).
+  2. *Auto-Scroll Reactivo Escalonado (`ServiceChatColumn.tsx` - 176 líneas):*
+     - Integrado `chatContainerRef` con función determinista `scrollToBottom` (`scrollTo({ top: scrollHeight, behavior })`).
+     - Listener global del evento `clikchat:scroll-bottom` con disparos escalonados a 80ms, 220ms, 450ms y 800ms.
+     - Añadido padding inferior generoso (`pb-10 sm:pb-14`) y espaciador `h-6 shrink-0` antes del final de mensajes para que el contenido nunca quede pegado a la barra inferior.
+  3. *Optimización de `BookingCardBubble.tsx` (160 líneas):*
+     - Shimmer de verificación acelerado de 2800ms a 700ms para una respuesta ágil y dinámica.
+     - Disparo inmediato de eventos `clikchat:scroll-bottom` y `scrollIntoView({ behavior: 'smooth', block: 'end' })` al revelarse la tarjeta con todos sus datos y botones visibles sin intervención del usuario.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 9.56s con 0 errores TypeScript (`index-C2OCJPNF.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `bb2cb1d`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) y auditoría Chrome Headless con 17/17 rutas operativas al 100%.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-26] Blindaje Factual de Precios & Erradicación Determinista de Alucinaciones (v2.4.4)
 - **Diagnóstico y Causa Raíz:**
   1. *Fuga de Ejemplos Negativos (Efecto Elefante Rosa):* La instrucción del prompt contenía ejemplos literales de cifras no autorizadas (`como $800, $2500`). Los modelos de lenguaje atendían a estos tokens y alucinaban tarifas como "página estática básica comienza en $800 USD".
