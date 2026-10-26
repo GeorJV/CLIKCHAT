@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Contextualización Conversacional RAG & Visor de Hilo en Panel HITL (v2.4.1)
+- **Diagnóstico y Necesidad:**
+  1. *Preguntas Huérfanas sin Contexto en Panel HITL:* Cuando un cliente en el chat realizaba una repregunta corta de seguimiento (ej: "PERO SI OFRECEN?"), el sistema anti-alucinaciones evaluaba esa frase de forma aislada. Al no contener el nombre explícito del servicio ("Desarrollo Web"), no encontraba conocimiento verificado y registraba la duda en `unresolved_queries` únicamente con el texto literal `"PERO SI OFRECEN?"`. Al dueño del negocio le resultaba imposible saber qué estaba preguntando el cliente.
+  2. *Imposibilidad de Ajustar la FAQ Auto-Entrenada:* Al resolver la duda en el panel, el sistema inyectaba la pregunta literal del cliente en la tabla `faqs`, creando preguntas frecuentes sin sentido semántico.
+  3. *Alucinaciones de Tarifas en Variantes no Listadas:* Cuando el usuario insistía en precios de subcategorías (ej: "página estática básica" o "web dinámica"), el LLM infería tarifas arbitrarias ($800 USD, $2500 USD) en lugar de ceñirse a las tarifas oficiales del catálogo ($1200 USD).
+- **Solución Quirúrgica Implementada (functions/api/[[route]].js, VoceroUnresolvedQueriesList.tsx, UnresolvedQueriesTab.tsx):**
+  1. *Motor de Contextualización Automática:*
+     - Función `buildUnresolvedContext` en Edge: Detecta repreguntas cortas ($\le 7$ palabras) y extrae el tema del mensaje anterior del usuario para formar preguntas contextualizadas (ej: `"PUEDO PAGAR MI WEB A PAGOS ➔ PERO SI OFRECEN?"`).
+     - Almacena en `user_lead_info.chat_context` los últimos 4 turnos de la conversación para auditoría total.
+  2. *Visor de Conversación en Panel HITL (`VoceroUnresolvedQueriesList.tsx` - 177 líneas):*
+     - Botón interactivo "Ver qué venían hablando en el chat" que despliega el hilo completo del cliente y del bot con estilo conversacional.
+     - Campo editable "Pregunta o FAQ que aprenderá el bot" para que el dueño ajuste la redacción oficial antes de guardar en la memoria RAG (Nivel 2).
+  3. *Blindaje Estricto de Tarifas en LLM Prompt:*
+     - Regla explícita en el System Prompt que prohíbe terminantemente inventar tarifas intermedias o alternativas ($800, $2500) ante variantes no catalogadas.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.79s con 0 errores TypeScript (`index-C1KPBrrk.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `02cfadc`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-26] Entrega Progresiva Escalonada de Multi-Burbujas con Typing Activo (v2.4.0)
 - **Diagnóstico y Necesidad:**
   1. *Aparición Simultánea de Mensajes:* Cuando el bot respondía en modos multi-burbuja (microburbujas, moderado o intermedio), todos los mensajes se desplegaban de un solo golpe simultáneo en pantalla, rompiendo la experiencia natural y fluida de un chat conversacional humano estilo WhatsApp.

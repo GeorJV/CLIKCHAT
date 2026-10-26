@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 12:32 GMT-6
-- **Versión Actual:** 2.4.0 (Entrega Progresiva Escalonada de Multi-Burbujas con Typing Activo)
+- **Última Actualización:** 2026-10-26 12:51 GMT-6
+- **Versión Actual:** 2.4.1 (Contextualización Conversacional RAG & Visor de Hilo en Panel HITL)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Entrega Progresiva Escalonada: Los mensajes multi-burbuja se envían secuencialmente con 1s a 2s de pausa entre sí.
-  - Indicador de Escritura Vivo: El bot muestra animación de "escribiendo..." de forma fluida mientras prepara la siguiente burbuja.
-  - Clúster Limpio WhatsApp: Las burbujas intermedias omiten timestamps repetidos; la burbuja final ancla la tarjeta y RAG trace.
-  - Jerarquía RAG Estricta: Paso 1 (FAQs $0 costo) -> Paso 2 (Base de Conocimiento RAG & Catálogo) -> Paso 3 (Fallback HITL D1).
-  - Captura Determinista de Dudas: Consultas sin respaldo se guardan en `unresolved_queries` para respuesta 1-clic en el panel.
+  - Contextualización Automática: Consultas cortas de seguimiento heredan el tema conversacional previo en `unresolved_queries`.
+  - Visor de Hilo en Panel HITL: El dueño ve el historial exacto del chat con botón desplegable para entender qué consultó el cliente.
+  - Auto-Entrenamiento Refinado: Campo editable de pregunta oficial al resolver dudas para poblar FAQs oficiales limpias.
+  - Blindaje Anti-Alucinación de Tarifas: Prohibición estricta de inventar precios en variantes no catalogadas en LLM Prompt.
+  - Entrega Progresiva Escalonada: Mensajes multi-burbuja fluidos con retraso de 1s a 2s e indicador de escritura continuo.
   - 4 Modos de Burbujas: Microburbujas, Moderado, Intermedio y Bloque completo funcionales con velocidad respetada.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
