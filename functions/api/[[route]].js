@@ -5304,16 +5304,6 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         Boolean(bookingState.slots.date && !bookingState.slots.time)
       );
 
-      // PASO 3 (NIVEL 4): Si NO está en FAQs Y NO está en la Base de Conocimiento,
-      // derivar DIRECTAMENTE a HITL, registrar en unresolved_queries para el dueño y emitir fallback honesto
-      const isDirectUnresolvedFallback = (
-        isCustomerInquiry &&
-        !hasVerifiedKnowledge &&
-        !isBookingContext &&
-        !isBookingSlotFilling &&
-        !isCheckoutOrOrderQuery
-      );
-
       const buildUnresolvedContext = (history, userMsg, baseLead) => {
         const uTurns = (history || []).filter(h => h.sender === 'user').map(h => (h.message || '').trim()).filter(Boolean);
         const prevUserTurn = uTurns.length > 0 ? uTurns[uTurns.length - 1] : '';
@@ -5334,43 +5324,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         };
       };
 
-      if (isDirectUnresolvedFallback) {
-        const unresId = 'unres_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
-        const { contextualQ, leadWithContext } = buildUnresolvedContext(sessionHistory, message, activeLeadInfo);
-        try {
-          await executeD1(
-            'INSERT INTO unresolved_queries (id, tenant_id, session_id, user_question, user_lead_info, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [unresId, actualTenantId, currentSessionId, contextualQ, JSON.stringify(leadWithContext), 'pending']
-          );
-        } catch (uErr) {
-          console.warn('Error registrando duda no resuelta en D1:', uErr.message);
-        }
-
-        const fallbackAnswer = `Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo te responda con todos los detalles.\n\n¿Te gustaría indicarme tu número de WhatsApp o correo electrónico para avisarte al instante?`;
-
-        const botMsgId = 'msg_' + Date.now() + '_b';
-        try {
-          await executeD1(
-            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', fallbackAnswer, 'fallback_hitl']
-          );
-        } catch (e) {}
-
-        return jsonResponse({
-          sessionId: currentSessionId,
-          level: 'fallback_hitl',
-          levelLabel: 'Nivel 4: Duda Registrada para el Administrador (HITL)',
-          confidence: 0.10,
-          answer: fallbackAnswer,
-          isFallback: true,
-          isUnresolved: true,
-          requiresLeadInfo: true,
-          orderTotal: null,
-          isRestaurant: targetTenant.business_type === 'restaurante'
-        });
-      }
-
-      const hasKnowledge = hasVerifiedKnowledge || isBookingContext || products.length > 0 || faqs.length > 0;
+      const hasKnowledge = true;
 
       if (hasKnowledge) {
         let contextBlock = '';
@@ -5966,12 +5920,12 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como una bebida o más papas?" SOLO DEBE SALIR cuando el usuario YA agregó o solicitó agregar algo a su compra. Si el usuario no ha agregado nada aún (solo saluda, pregunta precios, ingredientes o consulta opciones), queda TERMINANTEMENTE PROHIBIDO sugerir bebidas o más papas. Solo después de que el usuario ya agregó o solicitó agregar algo a su orden sale esa sugerencia.`;
         }
 
-        // Regla Estricta de Anti-Alucinaciones & Human-in-the-Loop (HITL)
-        contextBlock += `\n\n[REGLA ESTRICTA DE ANTI-ALUCINACIÓN & CONSULTAS NO RESUELTAS (HITL)]:
-Si el cliente formula una pregunta específica sobre un tema, servicio, producto, ingrediente o política que NO está presente en el catálogo, menú, FAQs ni en los documentos oficiales proporcionados:
-1) NUNCA inventes información, precios, políticas ni detalles falsos para proteger la marca del negocio.
-2) Responde amablemente con un tono sublime y honesto: "Esa es una consulta muy puntual y no quiero darte información inexacta. He registrado tu duda para que nuestro equipo/administrador te responda con todos los detalles. ¿Te gustaría dejar tu nombre o WhatsApp para avisarte al instante?"
-3) Si no conoces la respuesta o no tienes datos para responder con certeza absoluta, agrega obligatoriamente al final de tu respuesta la etiqueta técnica: <!--UNRESOLVED_QUERY-->`;
+        // Regla de Inteligencia Conversacional, Fidelidad Factual y Manejo de Dudas
+        contextBlock += `\n\n[REGLAS DE INTELIGENCIA CONVERSACIONAL, EXPERIENCIA Y ASESORÍA]:
+1) Sé un asesor sumamente inteligente, resolutivo, empático y experto. Atiende con total naturalidad, calidez y fluidez cualquier interacción: diagnóstico de necesidades, asesoría de proyectos, agendamiento de citas, reprogramaciones y cambios de horario.
+2) Si el cliente desea cambiar o reprogramar su cita (ej: "quiero cambiar la cita para las 3 y 30", "mover a las 4pm"): trátalo como reprogramación prioritaria, confirma el nuevo horario solicitado con amabilidad y emite la tarjeta actualizada [BOOKING_CARD: {...}].
+3) En consultas de PRECIOS y SERVICIOS, respeta estrictamente los precios y paquetes autorizados del catálogo oficial (cero invención de tarifas).
+4) NUNCA uses frases robóticas ni digas "Esa es una consulta muy puntual" en conversaciones normales, dudas comerciales o agendamiento de citas. Únicamente si el cliente formula una pregunta sobre un dato que no existe y que no se puede deducir, explica amablemente lo que sí ofrece la empresa o canaliza con el administrador (<!--UNRESOLVED_QUERY-->).`;
 
         // Inyección de Control Inteligente de Agendamiento & Consulta D1 en Milisegundos
         let isSlotUnavailable = false;
@@ -6150,7 +6104,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         }
 
         // Detección Human-in-the-Loop: Si no conoce la respuesta o se bloqueó un precio no catalogado, registrar en unresolved_queries en D1
-        const isUnresolvedQuery = Boolean(
+        const isUnresolvedQuery = !isBookingContext && Boolean(
           isPriceGuardrailBlocked ||
           (llmResult.text && (
             llmResult.text.includes('<!--UNRESOLVED_QUERY-->') ||
