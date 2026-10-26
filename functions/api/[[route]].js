@@ -856,35 +856,44 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     const googleModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
     for (const gModel of googleModels) {
       try {
-        const contents = [];
-        if (systemContent) {
-          contents.push({ role: 'user', parts: [{ text: `[INSTRUCCIONES OFICIALES DEL SISTEMA]:\n${systemContent}\n\nConfirma que comprendes las directivas respondiendo al siguiente mensaje del usuario.` }] });
-          contents.push({ role: 'model', parts: [{ text: 'Entendido. Asesoraré al cliente siguiendo estrictamente estas directivas oficiales.' }] });
-        }
-        if (Array.isArray(history)) {
-          for (const h of history.slice(-10)) {
-            const hText = (h.message || h.content || '').trim();
-            if (hText) {
-              contents.push({
-                role: h.sender === 'user' || h.role === 'user' ? 'user' : 'model',
-                parts: [{ text: hText }]
-              });
-            }
+        const rawHistory = Array.isArray(history) ? history.slice(-8) : [];
+        const normalizedTurns = [];
+        for (const h of rawHistory) {
+          const text = (h.message || h.content || '').trim();
+          if (!text) continue;
+          const role = (h.sender === 'user' || h.role === 'user') ? 'user' : 'model';
+          if (normalizedTurns.length > 0 && normalizedTurns[normalizedTurns.length - 1].role === role) {
+            normalizedTurns[normalizedTurns.length - 1].parts[0].text += `\n${text}`;
+          } else {
+            normalizedTurns.push({ role, parts: [{ text }] });
           }
         }
-        contents.push({ role: 'user', parts: [{ text: (userMessage || 'Hola').trim() }] });
+
+        const currMsg = (userMessage || 'Hola').trim();
+        if (normalizedTurns.length > 0 && normalizedTurns[normalizedTurns.length - 1].role === 'user') {
+          normalizedTurns[normalizedTurns.length - 1].parts[0].text += `\n${currMsg}`;
+        } else {
+          normalizedTurns.push({ role: 'user', parts: [{ text: currMsg }] });
+        }
 
         const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${googleKey}`;
+        const gBody = {
+          contents: normalizedTurns,
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1024
+          }
+        };
+        if (systemContent && systemContent.trim()) {
+          gBody.systemInstruction = {
+            parts: [{ text: systemContent.trim() }]
+          };
+        }
+
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 1024
-            }
-          })
+          body: JSON.stringify(gBody)
         });
 
         if (gResp.ok) {
