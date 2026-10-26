@@ -851,7 +851,64 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   const cProvider = userCustomConfig?.provider || '';
   const wantsOnlyGLM = cModel.includes('glm') || (cProvider === 'openrouter' && !cModel.includes('llama'));
 
-  // OPCIÓN 1 (POR DEFECTO DEL SISTEMA): Meta Llama 3.3 70B Fast en Cloudflare Workers AI
+  // OPCIÓN 1 (MOTOR PRINCIPAL OFICIAL DE ALTA DISPONIBILIDAD): Google AI Studio Oficial Vigente
+  if (googleKey) {
+    const googleModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+    for (const gModel of googleModels) {
+      try {
+        const contents = [];
+        if (systemContent) {
+          contents.push({ role: 'user', parts: [{ text: `[INSTRUCCIONES OFICIALES DEL SISTEMA]:\n${systemContent}\n\nConfirma que comprendes las directivas respondiendo al siguiente mensaje del usuario.` }] });
+          contents.push({ role: 'model', parts: [{ text: 'Entendido. Asesoraré al cliente siguiendo estrictamente estas directivas oficiales.' }] });
+        }
+        if (Array.isArray(history)) {
+          for (const h of history.slice(-10)) {
+            const hText = (h.message || h.content || '').trim();
+            if (hText) {
+              contents.push({
+                role: h.sender === 'user' || h.role === 'user' ? 'user' : 'model',
+                parts: [{ text: hText }]
+              });
+            }
+          }
+        }
+        contents.push({ role: 'user', parts: [{ text: (userMessage || 'Hola').trim() }] });
+
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${googleKey}`;
+        const gResp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1024
+            }
+          })
+        });
+
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          const rawText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
+          const clean = sanitizeAiResponse(rawText);
+          if (clean) {
+            return {
+              text: clean,
+              provider: 'google_ai_studio',
+              model: gModel,
+              neurons: 0,
+              costUsd: 0,
+              tokens: 500
+            };
+          }
+        }
+      } catch (gErr) {
+        console.warn(`Motor Google AI ${gModel} falló:`, gErr.message);
+      }
+    }
+  }
+
+  // OPCIÓN 2: Meta Llama 3.3 70B Fast en Cloudflare Workers AI
   if (!wantsOnlyGLM && env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
