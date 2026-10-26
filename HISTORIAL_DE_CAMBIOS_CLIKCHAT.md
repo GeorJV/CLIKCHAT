@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Bienvenida Oficial GeoSoft y Props Dinámicas en ServiceChatView (v2.5.2)
+- **Diagnóstico y Necesidad:**
+  1. *Mensaje Hardcoded en Chat de Servicios:* En `ServiceChatView.tsx`, el `useEffect` inicial inyectaba un mensaje fijo cableado en código (*"¡Hola! 🌸 Soy especialista... Veo que te interesa... ¿Deseas conocer qué incluye la sesión o prefieres que revisemos los horarios disponibles para tu cita?"*), el cual presionaba al cliente a elegir de inmediato entre conocer detalles o agendar, en vez de mantener un tono consultivo para identificar sus necesidades reales.
+  2. *Desconexión de Props con la Configuración de Inquilinos:* `App.tsx` no transmitía la prop `welcomeMessage` a `<ServiceChatView />`, a pesar de que el hook `useProductResolver` ya recuperaba el saludo configurado en la base de datos D1.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Actualización de Configuración Oficial de GeoSoft en D1:*
+     - Actualizado en Cloudflare D1 (tenant `geosoft`) el campo `welcome_message` a: `"¡Hola! Bienvenido, ¿en qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?"`.
+     - Actualizado el fallback correspondiente en `DEFAULT_TENANTS` de `functions/api/[[route]].js` para consistencia total en rescates locales.
+  2. *Conexión de Props Dinámicas en `App.tsx` y `ServiceChatView.tsx` (179 líneas):*
+     - En `App.tsx`, añadido `welcomeMessage={welcomeMessage}` al instanciar `<ServiceChatView />`.
+     - En `ServiceChatView.tsx`, declarada la prop opcional `welcomeMessage?: string`. En el `useEffect` de arranque, si existe `welcomeMessage` configurado se reemplazan dinámicamente las variables de negocio/asesor, o bien se utiliza el saludo oficial por defecto.
+     - Añadida sanitización automática en el lector de `localStorage` para descartar mensajes cacheados obsoletos que contuvieran la frase eliminada (*"¿Deseas conocer qué incluye la sesión..."*).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 15.57s con 0 errores TypeScript (`index-Bep_lQyh.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `3e8789a`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Pruebas en Vivo Verificadas:*
+    - Consulta `GET https://clikchat.pages.dev/api/tenants/geosoft`: Retorna `welcome_message: "¡Hola! Bienvenido, ¿en qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?"`.
+    - Carga en vivo de `/chat/geosoft`: Renderiza de inmediato el nuevo saludo empático y consultivo sin mención a sesión ni presiones de horario.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-26] Soporte de Preferencia Horaria Mañana/Tarde y Resiliencia en RAG FAQs (v2.5.1)
 - **Diagnóstico y Causa Raíz:**
   1. *Arrastre de Hora Previa y Confusión de Turno:* Cuando el usuario decía *"QUISERO CITA EN LA MANANA"*, el extractor de slots conservaba la hora de la tarde de turnos anteriores (ej. `03:00 PM`) porque el mensaje actual no contenía dígitos numéricos. Al comprobar `03:00 PM` en D1, detectaba ocupación y recomendaba horarios posteriores de la tarde (`04:00 PM`, `04:40 PM`), contradiciendo la petición de horario matutino.

@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 16:48 GMT-6
-- **Versión Actual:** 2.5.1 (Preferencia Horaria Mañana/Tarde y Resiliencia en RAG FAQs)
+- **Última Actualización:** 2026-10-26 16:55 GMT-6
+- **Versión Actual:** 2.5.2 (Bienvenida Oficial GeoSoft y Props Dinámicas en ServiceChatView)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Preferencias de Turno (Mañana vs Tarde): Detección de "en la mañana"/"en la tarde", anulación de horas previas y oferta de slots del turno.
-  - Corrección RAG FAQs: Erradicada variable no definida en condición de FAQ; cero caídas a respuestas genéricas del cliente.
-  - Saludo Directo "Hola": Respuesta concisa y única ("¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?") esperando el flujo del usuario.
-  - Cero Repetición en Citas: Erradicado el listado renglón por renglón en texto; emisión directa del cuadro con pregunta de cierre.
-  - Reprogramación Nativa en Chat: Cambio de horario dinámico verificado en D1 con emisión de tarjeta actualizada.
-  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en producción.
+  - Bienvenida Oficial GeoSoft: Saludo cálido y consultivo sin presionar citas ("¡Hola! Bienvenido, ¿en qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?").
+  - Props Dinámicas en ServiceChatView: Prop `welcomeMessage` integrada y sanitización de mensajes obsoletos cacheados.
+  - Preferencias de Turno (Mañana vs Tarde): Detección de "en la mañana"/"en la tarde" y anulación de horas previas.
+  - Saludo Directo "Hola": Respuesta concisa ("¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?") sin cascada de mensajes.
+  - Cero Repetición en Citas: Emisión directa de tarjeta interactiva con pregunta de cierre.
+  - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual en Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
