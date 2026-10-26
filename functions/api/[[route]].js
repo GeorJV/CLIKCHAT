@@ -4709,7 +4709,13 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
     if (segments[0] === 'chat' && segments[1] === 'message' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour, source } = body;
+      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour, source, campaignContext } = body;
+      const campCtx = campaignContext && typeof campaignContext === 'object' ? campaignContext : {};
+      const adSource = campCtx.source || source || (sessionId?.startsWith('wa_') ? 'whatsapp' : 'web');
+      const adCamp = campCtx.campaign || '';
+      const adOffer = campCtx.offer || '';
+      const adDesc = campCtx.description || '';
+      const adUrl = campCtx.adUrl || '';
 
       if (!message) {
         return jsonResponse({ error: 'Mensaje requerido' }, 400);
@@ -4795,14 +4801,25 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
 
       // Sincronizar automáticamente hacia crm_leads (Vocero CRM)
       try {
+        const leadTags = [];
+        if (adCamp) leadTags.push(`camp:${adCamp}`);
+        if (adOffer) leadTags.push(`oferta:${adOffer}`);
+        const leadNotes = [
+          adCamp ? `Campaña: ${adCamp}` : '',
+          adOffer ? `Oferta: ${adOffer}` : '',
+          adDesc ? `Anuncio visto: ${adDesc}` : '',
+          adUrl ? `URL: ${adUrl}` : ''
+        ].filter(Boolean).join(' | ');
+
         await executeD1(`
           INSERT INTO crm_leads (id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, updated_at)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'lead', 0, '[]', '', 0, ?8, datetime('now'), datetime('now'))
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'lead', 0, ?8, ?9, 0, ?10, datetime('now'), datetime('now'))
           ON CONFLICT(id) DO UPDATE SET
             name = COALESCE(?4, name),
             phone = COALESCE(?5, phone),
             email = COALESCE(?6, email),
-            last_message = ?8,
+            channel = COALESCE(?7, channel),
+            last_message = ?10,
             last_message_at = datetime('now'),
             updated_at = datetime('now')
         `, [
@@ -4812,7 +4829,9 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           leadInfo?.name || null,
           leadInfo?.phone || (currentSessionId.startsWith('wa_') ? currentSessionId.replace('wa_', '') : null),
           leadInfo?.email || null,
-          currentSessionId.startsWith('wa_') ? 'whatsapp' : 'web',
+          adSource,
+          JSON.stringify(leadTags),
+          leadNotes,
           message
         ]);
       } catch (crmSyncErr) {}
@@ -5214,6 +5233,17 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         // 1. Información General del Negocio
         contextBlock += `--- INFORMACIÓN GENERAL DEL NEGOCIO ---\n`;
         contextBlock += `NOMBRE DE LA EMPRESA: ${targetTenant.name || 'ClikChat Store'}\n`;
+
+        // Inyección de Contexto de Campaña / Anuncio de Procedencia
+        if (adCamp || adOffer || adDesc || (adSource && adSource !== 'web')) {
+          contextBlock += `\n[CONTEXTO DE PROCEDENCIA DEL CLIENTE (ANUNCIO / CAMPAÑA ENTRANTE)]:
+- CANAL DE ORIGEN: ${adSource}
+${adCamp ? `- CAMPAÑA / ANUNCIO ESPECÍFICO: "${adCamp}"\n` : ''}${adOffer ? `- OFERTA / PROMOCIÓN PROMETIDA AL CLIENTE: "${adOffer}"\n` : ''}${adDesc ? `- CONTENIDO DEL ANUNCIO VISTO POR EL CLIENTE: "${adDesc}"\n` : ''}${adUrl ? `- ENLACE DE REFERENCIA: ${adUrl}\n` : ''}
+DIRECTIVA DE ATENCIÓN CONTEXTUAL:
+1) El cliente llega directamente a través de este anuncio/oferta. Tienes pleno conocimiento de qué anuncio vio y qué oferta se le mostró.
+2) Si el cliente pregunta por la oferta o hace referencia al anuncio (ej: "vengo por el anuncio", "quiero la promo", "cuánto vale lo del video"), reconoce la oferta de inmediato con amabilidad y responde orientándolo a aprovecharla con entusiasmo.
+3) No le pidas al cliente que te explique qué anuncio vio; atiéndelo demostrando que ya estás al tanto de su procedencia.\n`;
+        }
         if (sessionHistory.length === 0 && targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
           contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
         }

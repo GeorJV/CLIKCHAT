@@ -12,6 +12,7 @@ import { useProductChatSession } from './useProductChatSession';
 import { useProductChatOrder } from './useProductChatOrder';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { useLivePresencePing } from '../../../hooks/useLivePresencePing';
+import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
 
 import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
 
@@ -71,7 +72,8 @@ export const ProductChatView: React.FC<Props> = ({
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
             sessionId: sessId, message: userText, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-            source: typeof window !== 'undefined' ? (localStorage.getItem('clikchat_traffic_source') || undefined) : undefined
+            source: typeof window !== 'undefined' ? (localStorage.getItem('clikchat_traffic_source') || undefined) : undefined,
+            campaignContext: getCampaignContextFromUrl()
           })
         });
         if (!res.ok) throw new Error('Error en el servidor de chat');

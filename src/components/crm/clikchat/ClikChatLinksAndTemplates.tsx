@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, Check, MessageSquare, Instagram, Facebook, Smartphone, QrCode, ExternalLink, Target } from 'lucide-react';
+import { CampaignLinkGeneratorCard } from './CampaignLinkGeneratorCard';
 
 interface Props {
   tenantSlug: string;
@@ -64,6 +65,9 @@ export const ClikChatLinksAndTemplates: React.FC<Props> = ({ tenantSlug, storeNa
           Si no deseas conectar webhooks complejos en Meta o tus redes sociales, simplemente copia estos enlaces rastreados y pégalos en los mensajes automáticos de tus redes. Cuando el cliente haga clic, el bot sabrá exactamente de dónde provino y te lo mostrará en el CRM.
         </p>
       </div>
+
+      {/* Generador Personalizado de Anuncios y Ofertas con Contexto IA */}
+      <CampaignLinkGeneratorCard tenantSlug={cleanSlug} storeName={storeName} />
 
       {/* Generador de Enlaces con Atribución */}
       <div className="rounded-2xl border border-[#e2e8f0] bg-white p-5 shadow-xs space-y-3">

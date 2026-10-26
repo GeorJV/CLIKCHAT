@@ -8,10 +8,10 @@ import { ServiceDetailModal } from './ServiceDetailModal';
 import { ServiceBookingModal } from './ServiceBookingModal';
 import { BookedAppointmentModal } from './BookedAppointmentModal';
 import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
-import { DEFAULT_SERVICE } from './serviceChatMock';
-import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
+import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
+import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
@@ -83,7 +83,7 @@ export const ServiceChatView: React.FC<Props> = ({
       try {
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) })
+          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
