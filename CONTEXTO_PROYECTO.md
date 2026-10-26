@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 16:35 GMT-6
-- **Versión Actual:** 2.5.0 (Respuesta Directa a Hola y Tarjeta Limpia de Cita sin Renglones Repetidos)
+- **Última Actualización:** 2026-10-26 16:48 GMT-6
+- **Versión Actual:** 2.5.1 (Preferencia Horaria Mañana/Tarde y Resiliencia en RAG FAQs)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Preferencias de Turno (Mañana vs Tarde): Detección de "en la mañana"/"en la tarde", anulación de horas previas y oferta de slots del turno.
+  - Corrección RAG FAQs: Erradicada variable no definida en condición de FAQ; cero caídas a respuestas genéricas del cliente.
   - Saludo Directo "Hola": Respuesta concisa y única ("¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?") esperando el flujo del usuario.
   - Cero Repetición en Citas: Erradicado el listado renglón por renglón en texto; emisión directa del cuadro con pregunta de cierre.
-  - Entrega Unificada de Tarjeta: La tarjeta interactiva y el texto se entregan en una sola burbuja limpia sin fragmentación.
   - Reprogramación Nativa en Chat: Cambio de horario dinámico verificado en D1 con emisión de tarjeta actualizada.
-  - Filtros de Agenda Exactos: Normalizador `bookingDateNormalizer.ts` convierte fechas en español a claves `YYYY-MM-DD`.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en producción.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

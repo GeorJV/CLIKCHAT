@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Soporte de Preferencia Horaria Mañana/Tarde y Resiliencia en RAG FAQs (v2.5.1)
+- **Diagnóstico y Causa Raíz:**
+  1. *Arrastre de Hora Previa y Confusión de Turno:* Cuando el usuario decía *"QUISERO CITA EN LA MANANA"*, el extractor de slots conservaba la hora de la tarde de turnos anteriores (ej. `03:00 PM`) porque el mensaje actual no contenía dígitos numéricos. Al comprobar `03:00 PM` en D1, detectaba ocupación y recomendaba horarios posteriores de la tarde (`04:00 PM`, `04:40 PM`), contradiciendo la petición de horario matutino.
+  2. *Error 500 y Caída a Fallback Genérico en Cliente:* Cuando el usuario respondía *"SI PERO YO QUIERO MANANA EN LA MANANA NO EN LA TARDE"*, una variable no declarada (`isAddingItemAction`) en la condición de FAQ oficial (`topFaqScore >= 0.70`) arrojaba un `ReferenceError` en el worker de Cloudflare Edge. Esto hacía que el cliente entrara en `catch` y mostrara la respuesta local genérica *"Entendido. En GeoSoft estamos para servirte. ¿Hay algún producto o consulta en específico...?"*, abandonando el flujo de agendamiento.
+- **Solución Quirúrgica Implementada:**
+  1. *Detección de Preferencia Horaria (Mañana vs Tarde):*
+     - En `extractBookingSlots`: detección de intención matutina (`wantsMorning`) y vespertina (`wantsAfternoon`) incluyendo negaciones (*"no en la tarde"*, *"no en la mañana"*).
+     - Si el usuario expresa turno de mañana sin hora fija, se invalida cualquier hora previa de la tarde (`time = null`), asegurando que no se valide el slot anterior.
+     - Instrucción guiada `PASO 4` para ofrecer explícitamente opciones del turno solicitado (ej. `09:30 AM`, `10:30 AM`, `11:30 AM`) prohibiendo terminantemente sugerir horarios del turno contrario.
+  2. *Búsqueda Consciente del Turno en Disponibilidad D1 (`checkSlotAvailability`):*
+     - Al buscar alternativas libres, se priorizan los slots dentro del mismo período (`AM` o `PM`) solicitado por el usuario.
+  3. *Corrección de Temporal Dead Zone en FAQs:*
+     - En `functions/api/[[route]].js`, corregida la condición a `!isBookingContext`, erradicando el error 500 y garantizando que el flujo de agendamiento continúe con 100% de estabilidad.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 16.38s con 0 errores TypeScript.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `f0fc306`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Pruebas en Vivo Verificadas:*
+    - Test *"QUISERO CITA EN LA MANANA"*: HTTP 200, ofrece 09:30 AM, 10:30 AM y 11:30 AM para mañana. Cero mención a 03:00 PM o 04:00 PM.
+    - Test *"SI PERO YO QUIERO MANANA EN LA MANANA NO EN LA TARDE"*: HTTP 200, mantiene el contexto de citas y reitera opciones matutinas sin caer a mensajes genéricos.
+    - Test *"a las 10:30 am"*: HTTP 200, confirma el horario y emite la tarjeta interactiva `[BOOKING_CARD]` en una sola burbuja limpia.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-26] Saludo Directo a "Hola" sin Mensajes en Cascada y Tarjeta Limpia de Cita sin Renglones Repetidos (v2.5.0)
 - **Diagnóstico y Necesidad:**
   1. *Mensajes en Cascada ante "Hola":* Cuando el usuario escribía simplemente "hola", si la conversación ya tenía historial previo o contexto de agendamiento, el sistema no lo reconocía como saludo inicial puro y disparaba la estrategia completa de venta y agendamiento con el LLM, pidiendo de inmediato nombre y correo. La respuesta dividida por cadencia (`deliverStaggeredBubbles`) arrojaba hasta 4 o 5 burbujas consecutivas en vez de esperar el flujo natural del usuario.
