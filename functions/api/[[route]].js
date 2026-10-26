@@ -1288,6 +1288,35 @@ export async function onRequest(context) {
       return jsonResponse({ status: 'ok', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
     }
 
+    if (segments[0] === 'test-google') {
+      const defaultGoogleKey = atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc=');
+      const gKey = (env?.GOOGLE_AI_STUDIO_KEY && env.GOOGLE_AI_STUDIO_KEY.length >= 45 && !env.GOOGLE_AI_STUDIO_KEY.includes('...'))
+        ? env.GOOGLE_AI_STUDIO_KEY.trim()
+        : defaultGoogleKey;
+
+      const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${gKey}`;
+      try {
+        const resp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: 'Hola, di OK' }] }]
+          })
+        });
+        const data = await resp.json();
+        return jsonResponse({
+          status: resp.status,
+          keyLength: gKey.length,
+          keyPrefix: gKey.substring(0, 10),
+          envKeyExists: Boolean(env?.GOOGLE_AI_STUDIO_KEY),
+          reply: data.candidates?.[0]?.content?.parts?.[0]?.text,
+          error: data.error
+        });
+      } catch (err) {
+        return jsonResponse({ error: err.message, stack: err.stack }, 500);
+      }
+    }
+
     // ==============================================================================
     // PRESENCE RADAR & LIVE TYPING SNEAK PEEK (TIDIO / ZOLUTIUM SUPERCHARGED)
     // ==============================================================================
