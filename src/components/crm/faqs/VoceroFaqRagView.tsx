@@ -10,7 +10,7 @@ interface VoceroFaqRagViewProps {
   onCreateFaq: (question: string, answer: string, category?: string) => Promise<boolean>;
   onUpdateFaq?: (id: string, newAnswer: string) => Promise<boolean>;
   onDeleteFaq: (id: string) => Promise<boolean>;
-  onResolveQuery: (queryId: string, answer: string, category?: string) => Promise<boolean>;
+  onResolveQuery: (queryId: string, answer: string, category?: string, question?: string) => Promise<boolean>;
 }
 
 export const VoceroFaqRagView: React.FC<VoceroFaqRagViewProps> = ({

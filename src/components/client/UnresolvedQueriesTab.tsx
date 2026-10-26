@@ -1,23 +1,35 @@
 import React, { useState } from 'react';
 import { UnresolvedQuery } from '../../types';
-import { MessageSquare, Send, Sparkles, CheckCircle2, User, Phone, Clock } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, CheckCircle2, User, Phone, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface UnresolvedQueriesTabProps {
   unresolved: UnresolvedQuery[];
-  onResolve: (queryId: string, answer: string, category?: string) => Promise<boolean>;
+  onResolve: (queryId: string, answer: string, category?: string, question?: string) => Promise<boolean>;
 }
 
 export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unresolved, onResolve }) => {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState('');
+  const [questionTitle, setQuestionTitle] = useState('');
   const [category, setCategory] = useState('consultas_resueltas');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openContextId, setOpenContextId] = useState<string | null>(null);
+
+  const handleStartResolve = (q: UnresolvedQuery) => {
+    setResolvingId(q.id);
+    setAnswerText('');
+    setQuestionTitle(q.user_question || '');
+  };
 
   const handleSendResponse = async (queryId: string) => {
     if (!answerText.trim() || isSubmitting) return;
     setIsSubmitting(true);
-    const ok = await onResolve(queryId, answerText, category);
-    if (ok) { setResolvingId(null); setAnswerText(''); }
+    const ok = await onResolve(queryId, answerText.trim(), category.trim(), questionTitle.trim());
+    if (ok) {
+      setResolvingId(null);
+      setAnswerText('');
+      setQuestionTitle('');
+    }
     setIsSubmitting(false);
   };
 
@@ -47,64 +59,120 @@ export const UnresolvedQueriesTab: React.FC<UnresolvedQueriesTabProps> = ({ unre
         </div>
       ) : (
         <div className="space-y-3">
-          {pending.map((q) => (
-            <div key={q.id} className="onyx-card rounded-2xl p-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-400">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>{new Date(q.created_at).toLocaleString()}</span>
-                  {q.user_lead_info?.name && <span className="font-semibold text-zinc-300 ml-2"><User className="w-3 h-3 inline" /> {q.user_lead_info.name}</span>}
-                  {q.user_lead_info?.phone && <span className="text-zinc-300 ml-2"><Phone className="w-3 h-3 inline" /> {q.user_lead_info.phone}</span>}
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">Pendiente</span>
-              </div>
-              <div className="mt-3 bg-[#111010] p-3.5 rounded-xl border border-[#262424]">
-                <p className="text-xs text-zinc-400 font-semibold mb-1">Pregunta del Cliente:</p>
-                <p className="text-sm text-white font-medium">"{q.user_question}"</p>
-              </div>
-              {resolvingId === q.id ? (
-                <div className="mt-4 space-y-3 bg-[#161515] border border-[#2e2b2b] rounded-xl p-3.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-zinc-200 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Tu Respuesta Oficial:</span>
-                    <button onClick={() => setResolvingId(null)} className="text-zinc-400 hover:text-white cursor-pointer">Cancelar</button>
+          {pending.map((q) => {
+            const hasChatContext = Array.isArray(q.user_lead_info?.chat_context) && q.user_lead_info.chat_context.length > 0;
+            const isContextOpen = openContextId === q.id || resolvingId === q.id;
+
+            return (
+              <div key={q.id} className="onyx-card rounded-2xl p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-400">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{new Date(q.created_at).toLocaleString()}</span>
+                    {q.user_lead_info?.name && <span className="font-semibold text-zinc-300 ml-2"><User className="w-3 h-3 inline" /> {q.user_lead_info.name}</span>}
+                    {q.user_lead_info?.phone && <span className="text-zinc-300 ml-2"><Phone className="w-3 h-3 inline" /> {q.user_lead_info.phone}</span>}
                   </div>
-                  <textarea
-                    value={answerText}
-                    onChange={(e) => setAnswerText(e.target.value)}
-                    placeholder="Escribe la respuesta que aprenderá el bot..."
-                    className="w-full bg-[#111010] border border-[#282626] rounded-xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 min-h-[65px]"
-                  />
-                  <div className="flex items-center justify-between gap-2">
-                    <input
-                      type="text"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      placeholder="Categoría"
-                      className="bg-[#111010] border border-[#282626] rounded-lg px-2.5 py-1.5 text-xs text-white w-36"
-                    />
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">Pendiente</span>
+                </div>
+                <div className="mt-3 bg-[#111010] p-3.5 rounded-xl border border-[#262424]">
+                  <p className="text-xs text-zinc-400 font-semibold mb-1">Pregunta del Cliente:</p>
+                  <p className="text-sm text-white font-medium">"{q.user_question}"</p>
+                </div>
+
+                {hasChatContext && (
+                  <div className="mt-2.5">
                     <button
-                      onClick={() => handleSendResponse(q.id)}
-                      disabled={!answerText.trim() || isSubmitting}
-                      className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer"
+                      type="button"
+                      onClick={() => setOpenContextId(isContextOpen ? null : q.id)}
+                      className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{isContextOpen ? 'Ocultar contexto' : 'Ver qué venían conversando en el chat'}</span>
+                      {isContextOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+
+                    {isContextOpen && (
+                      <div className="mt-1.5 p-3 rounded-xl bg-[#141414] border border-[#262424] text-xs space-y-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Historial reciente:</p>
+                        <div className="space-y-1">
+                          {q.user_lead_info.chat_context!.map((msg, idx) => (
+                            <div key={idx} className="text-[11.5px] leading-relaxed">
+                              <span className={`font-bold mr-1.5 ${msg.sender === 'Cliente' ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                                {msg.sender}:
+                              </span>
+                              <span className="text-zinc-200">{msg.text || msg.message}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {resolvingId === q.id ? (
+                  <div className="mt-4 space-y-3 bg-[#161515] border border-[#2e2b2b] rounded-xl p-3.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-zinc-200 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Tu Respuesta Oficial:</span>
+                      <button onClick={() => setResolvingId(null)} className="text-zinc-400 hover:text-white cursor-pointer">Cancelar</button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-400 mb-1">
+                        Pregunta o FAQ que aprenderá el bot:
+                      </label>
+                      <input
+                        type="text"
+                        value={questionTitle}
+                        onChange={(e) => setQuestionTitle(e.target.value)}
+                        placeholder="Ej: ¿Ofrecen planes de financiamiento o pago en cuotas?"
+                        className="w-full bg-[#111010] border border-[#282626] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-400 mb-1">
+                        Respuesta oficial que dará el bot:
+                      </label>
+                      <textarea
+                        value={answerText}
+                        onChange={(e) => setAnswerText(e.target.value)}
+                        placeholder="Escribe la respuesta que aprenderá el bot..."
+                        className="w-full bg-[#111010] border border-[#282626] rounded-xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 min-h-[65px]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        type="text"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        placeholder="Categoría"
+                        className="bg-[#111010] border border-[#282626] rounded-lg px-2.5 py-1.5 text-xs text-white w-36"
+                      />
+                      <button
+                        onClick={() => handleSendResponse(q.id)}
+                        disabled={!answerText.trim() || isSubmitting}
+                        className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isSubmitting ? 'Guardando...' : 'Enviar y Auto-Entrenar'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => handleStartResolve(q)}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm cursor-pointer"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>{isSubmitting ? 'Guardando...' : 'Enviar y Auto-Entrenar'}</span>
+                      <span>Responder esta Duda</span>
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => { setResolvingId(q.id); setAnswerText(''); }}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Responder esta Duda</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

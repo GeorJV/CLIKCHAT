@@ -99,6 +99,8 @@ export interface UnresolvedQuery {
     name?: string;
     phone?: string;
     email?: string;
+    chat_context?: Array<{ sender: string; text?: string; message?: string }>;
+    raw_message?: string;
   };
   status: 'pending' | 'resolved' | 'dismissed';
   human_answer?: string;

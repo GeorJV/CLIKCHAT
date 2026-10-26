@@ -61,5 +61,6 @@ export interface TenantListItem {
 export interface ResolveQueryPayload {
   answer: string;
   category?: string;
+  question?: string;
   autoInjectToFaq: boolean;
 }
