@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Corrección de Sesión: Redirección Canónica a Raíz en Logout y Aislamiento de Tenant por Cuenta (v2.3.7)
+- **Diagnóstico y Necesidad:**
+  1. *URL Congelada tras Cerrar Sesión:* Al presionar "Cerrar Sesión", `logout()` borraba tokens pero no alteraba la URL del navegador, dejando visible de forma permanente `/user/mi-negocio/{slug}/...`.
+  2. *Cruce de Cuentas al Iniciar Sesión:* Si el usuario cerraba sesión e ingresaba con otra cuenta distinta (ej: de GeoSoft a otra o viceversa), `routeTenantSlug` (extraído de la URL congelada) tenía precedencia sobre `user.tenantSlug`, provocando que el sistema cargara los datos y el dashboard de la cuenta previa.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Clean Design):**
+  1. useAuth.ts:
+     - `logout()`: limpieza atómica de `clikchat_auth_token`, `clikchat_role`, `clikchat_active_tenant_slug`, `clikchat_active_tab` y `sessionStorage.clear()`.
+     - Redirección forzada inmediata a la raíz (`window.location.href = '/'`), eliminando la URL congelada y reiniciando el estado de memoria del navegador en limpio.
+  2. ClientDashboard.tsx (176 líneas):
+     - Prioridad estricta a la identidad del usuario autenticado: `authenticatedSlug` asigna máxima prioridad a `user.tenantSlug` sobre `routeTenantSlug` para cuentas de negocio normales.
+     - Redirección canónica automática: si la URL no coincide con el slug del usuario logueado o viene de `/dashboard`, navega de inmediato a `/user/mi-negocio/${user.tenantSlug}/...`.
+     - Inclusión correcta de `isVoceroMode` en desestructuración de `useVoceroMode()`.
+  3. App.tsx (120 líneas):
+     - `selectedTenantSlug` sincroniza reactivamente con `user.tenantSlug` cuando el usuario autenticado no es superadmin, garantizando consistencia total en toda la aplicación.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 13.13s con 0 errores TypeScript (`index-Z5_9OSqZ.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commits `4bfc88d` y `84661da`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-26] Adaptación Táctil Nativa y Ampliación Visual en Celulares (v2.3.6)
 - **Diagnóstico y Necesidad:**
   1. *Elementos Minúsculos en Móvil:* El usuario reportó que en celular los elementos del chat se veían muy pequeños (botones de acción, botón de enviar, micrófono, píldoras y barra de texto).

@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 10:05 GMT-6
-- **Versión Actual:** 2.3.6 (Adaptación Táctil Nativa y Ampliación Visual en Celulares)
+- **Última Actualización:** 2026-10-26 11:06 GMT-6
+- **Versión Actual:** 2.3.7 (Cierre de Sesión Limpio y Aislamiento de Cuentas por Tenant)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `4f2cf66`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit `84661da`)
 - **Estado Actual del Sistema:**
-  - Adaptación Móvil Nativa: Input ergonómico (15px, min-h-42px, anti-zoom iOS) y botones de enviar/mic ampliados a 40x40px táctiles.
-  - Píldoras y Botoncitos Legibles: Quick pills, botones de servicio y acciones rápidas con altura táctil (min-h-34px) y texto claro.
-  - Burbujas y Tarjetas de Cita: Tipografía de mensajes a 14px nítida y botón "Confirmo cita y guardar" prominente (min-h-46px).
-  - Inteligencia y Claridad Suprema: Respuestas ejecutivas, parser de horas coloquiales y confirmación canónica sin titubeos.
+  - Cierre de Sesión Limpio: `logout()` purga localStorage y redirige a la raíz `/`, eliminando URLs congeladas.
+  - Cero Cruce de Cuentas: `user.tenantSlug` tiene prioridad absoluta sobre la URL anterior al autenticar.
+  - Redirección Canónica Automática: Navegación instantánea al slug del usuario autenticado en el portal.
+  - Adaptación Móvil Nativa: Inputs ergonómicos (15px, min-h-42px), botones táctiles 40x40px y prevención de zoom iOS.
   - Consulta D1 en Milisegundos con Descansos: Ocupación por cita + buffer de descanso con recomendación de siguiente hora.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
