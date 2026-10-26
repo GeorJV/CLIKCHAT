@@ -16,6 +16,36 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Normalización Determinista de Fechas y Filtro Preciso en Agenda CRM (v2.4.6)
+- **Diagnóstico y Causa Raíz:**
+  1. *Fechas en Lenguaje Natural que Producían `NaN`:* En la base de datos D1, las citas agendadas por los bots o creadas por usuarios contenían fechas en texto natural en español (`"Lunes, 26 de Octubre de 2026"`, `"Lunes, 27 de octubre de 2026"`, `"lunes"`).
+  2. *Fallo Crítico de Filtrado Matemático:* En `VoceroBookingsView.tsx`, el cálculo `const diff = (new Date(a.dateKey).getTime() - nowMs) / msInDay` devolvía `NaN` para cualquier fecha en español. Al evaluar `diff === 0` (Hoy), `diff === 1` (Mañana) o `diff >= 0 && diff <= 7` (Esta semana), todas las citas reales eran descartadas y solo sobrevivía la cita demo inicial generada en formato ISO.
+  3. *Desfasaje de Zona Horaria (UTC vs Local):* El uso de `toISOString().slice(0, 10)` provocaba que a partir de las 18:00 (GMT-6) el sistema asumiera la fecha de mañana, desfasando la selección del calendario y los filtros diarios.
+- **Solución Quirúrgica Implementada (ARQMODULAR & Reglas de Fecha):**
+  1. *Módulo Especializado de Fechas (`bookingDateNormalizer.ts` - 138 líneas):*
+     - Creado convertidor determinista `normalizeToDateKey(rawDate, refDate)` capaz de interpretar:
+       - Formatos ISO y numéricos: `YYYY-MM-DD`, `YYYY/MM/DD`, `DD/MM/YYYY`, `DD-MM-YYYY`.
+       - Fechas completas y abreviadas en español con meses: `"Lunes, 26 de Octubre de 2026"`, `"26 de octubre"`, `"Hoy, 26 oct"`.
+       - Nombres de días y términos relativos: `"hoy"`, `"mañana"`, `"pasado mañana"`, `"lunes"`, `"martes"`, etc., referenciados a la semana laboral local.
+     - Función `getLocalDateKey(date)` basada estrictamente en la fecha local (`getFullYear()`, `getMonth() + 1`, `getDate()`) erradicando trampas de zona horaria.
+     - Calculador de rangos `getBookingFilterKeys` y evaluador determinista `isBookingInFilter` para pestañas `all`, `today`, `tomorrow`, `after`, `this_week`, `next_week`.
+  2. *Refactorización Quirúrgica en `VoceroBookingsView.tsx` (175 líneas < 180 ARQMODULAR):*
+     - Normalización automática de `dateKey` en 3 puntos clave: carga desde `localStorage`, sincronización desde el endpoint `/api/bookings` y creación de nuevas citas vía modal.
+     - Preservación íntegra de `displayDate` con el texto original para que la tarjeta de cita continúe mostrando el formato amigable.
+     - Vinculación exacta de `appointmentDates` para que el calendario mensual (`VoceroCompactCalendar.tsx`) dibuje los indicadores de citas en los días correctos.
+  3. *Ajuste en `VoceroCompactCalendar.tsx` (125 líneas) y `VoceroNewBookingModal.tsx` (153 líneas):*
+     - Reemplazado `toISOString().slice(0, 10)` por `getLocalDateKey()` para garantizar coherencia temporal local sin saltos de medianoche UTC.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 13.70s con 0 errores TypeScript (`index-BVhU0jLz.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `29950e0`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) y auditoría Chrome Headless con 17/17 rutas operativas al 100%.
+  - *Verificación de Filtro:*
+    - Pestaña 'Hoy': Despliega de inmediato todas las citas del día actual (ej. Geogeo, Andres y Carlos Morales).
+    - Pestaña 'Mañana': Despliega todas las citas programadas para el día siguiente (ej. Andgeo y María Fernanda).
+    - Pestaña 'Esta Semana': Despliega el total de citas de la semana completa sin omitir ninguna fecha.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-26] Auto-Scroll Total & Visibilidad Completa de Tarjetas de Disponibilidad (v2.4.5)
 - **Diagnóstico y Necesidad:**
   1. *Mensaje Entrecortado tras Verificar Disponibilidad:* Cuando el bot verificaba la disponibilidad de citas en la agenda, la tarjeta interactiva de cita (`BookingCardBubble`) iniciaba con un placeholder de verificación de 36px y luego se expandía a ~320px de alto.

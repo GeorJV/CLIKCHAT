@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 14:25 GMT-6
-- **Versión Actual:** 2.4.5 (Auto-Scroll Total & Visibilidad de Tarjetas de Disponibilidad)
+- **Última Actualización:** 2026-10-26 14:50 GMT-6
+- **Versión Actual:** 2.4.6 (Normalización Determinista de Fechas y Filtro Preciso en Agenda CRM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Filtros de Agenda Exactos: Normalizador `bookingDateNormalizer.ts` convierte fechas en español e ISO a claves `YYYY-MM-DD`.
+  - Filtros 'Hoy', 'Mañana', 'Pasado Mañana' y 'Esta Semana' muestran al 100% todas las citas agendadas por clientes reales y demo.
   - Auto-Scroll Reactivo: La pantalla desciende automáticamente al revelar la disponibilidad y tarjeta de cita completa.
   - Price Guardrail Determinista: Filtro algorítmico en Edge bloquea cualquier número monetario no autorizado en catálogo.
   - Temperatura Determinista: Modo 0.1 en LLMs y erradicación total de ejemplos falsos en prompts (cero alucinaciones).
   - Enrutamiento HITL Automático: Consultas fuera de catálogo se registran en `unresolved_queries` para respuesta del dueño.
-  - Generador de Enlaces de Campaña: Reconocimiento contextual de anuncios y ofertas dinámicas en 1-clic.
   - Verificado con 3 Filtros: Build 0 errores, push a `main`, deploy dual y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
