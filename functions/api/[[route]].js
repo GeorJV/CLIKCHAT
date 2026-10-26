@@ -4451,13 +4451,13 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
 
-  if (clean === 'manana' || clean === 'mañana') {
+  if (clean === 'manana' || clean === 'mañana' || clean === 'maana' || clean === 'mamana') {
     const d = new Date(refDate);
     d.setDate(d.getDate() + 1);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
 
-  if (clean.includes('pasado manana') || clean.includes('pasado mañana')) {
+  if (clean.includes('pasado manana') || clean.includes('pasado mañana') || clean.includes('pasado maana')) {
     const d = new Date(refDate);
     d.setDate(d.getDate() + 2);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
@@ -4481,7 +4481,7 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
     return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
   }
 
-  const textDateMatch = str.match(/(?:(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)[,\s]+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del?\s+)?(\d{4}))?/i);
+  const textDateMatch = str.match(/(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)[,\s]+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del?\s+)?(\d{4}))?/i);
   if (textDateMatch) {
     const dayNum = parseInt(textDateMatch[2], 10);
     const monthName = textDateMatch[3].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -4489,7 +4489,8 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
       enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
       julio: 6, agosto: 7, setiembre: 8, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
     };
-    const m = monthMap[monthName] !== undefined ? monthMap[monthName] : refDate.getMonth();
+    if (monthMap[monthName] === undefined) return str;
+    const m = monthMap[monthName];
     const y = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : refDate.getFullYear();
     const d = new Date(y, m, dayNum, 12, 0, 0);
     const dayOfWeekName = daysOfWeek[d.getDay()];
@@ -4608,6 +4609,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   let time = null;
 
   // 0. Recuperar datos de cualquier tarjeta de cita previa en el historial
+  let cardDate = null;
+  let cardTime = null;
+  let cardIndexInHistory = -1;
   if (Array.isArray(history)) {
     for (let i = history.length - 1; i >= 0; i--) {
       const hText = history[i].message || history[i].content || '';
@@ -4618,7 +4622,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
           if (!name && card.customerName) name = card.customerName.trim();
           if (!email && card.customerEmail) email = card.customerEmail.trim();
           if (!phone && card.customerPhone) phone = card.customerPhone.trim();
-          if (!date && card.date) date = card.date.trim();
+          if (card.date) cardDate = card.date.trim();
+          if (card.time) cardTime = card.time.trim();
+          cardIndexInHistory = i;
         } catch (e) {}
         break;
       }
@@ -4666,19 +4672,54 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   // 4. Extracción de Fecha / Día
-  const compositeDateRegex = /\b(?:el\s+)?(?:(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+)?(\d{1,2}\s+de\s+[a-záéíóú]+|\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|mañana|hoy|pasado\s+mañana)\b/i;
-  const simpleDayRegex = /\b(?:el\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/i;
-  for (let i = allUserMessages.length - 1; i >= 0; i--) {
-    const msg = allUserMessages[i];
-    const compMatch = msg.match(compositeDateRegex);
+  const monthsRegex = '(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre|septiembre|octubre|noviembre|diciembre)';
+  const compositeDateRegex = new RegExp(
+    '\\b(?:el\\s+)?(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\\s+)?(?:(\\d{1,2}\\s+de\\s+' + monthsRegex + '(?:\\s+(?:del?\\s+)?\\d{4})?|\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?|pasado\\s+mañana|pasado\\s+manana|mañana|manana|maana|mamana|hoy))\\b',
+    'i'
+  );
+  const simpleDayRegex = /\b(?:el\s+)?(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\b/i;
+
+  const messagesToCheckDate = [];
+  if (currentMessage) messagesToCheckDate.push(currentMessage);
+  if (cardIndexInHistory >= 0 && Array.isArray(history)) {
+    for (let i = history.length - 1; i > cardIndexInHistory; i--) {
+      if (history[i].sender === 'user' || history[i].role === 'user') {
+        messagesToCheckDate.push(history[i].message || history[i].content || '');
+      }
+    }
+  }
+
+  for (const msg of messagesToCheckDate) {
+    const cleanMsg = msg.replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
+    const compMatch = cleanMsg.match(compositeDateRegex);
     if (compMatch) {
       date = formatFullDayAndDate(compMatch[0].replace(/^el\s+/i, '').trim());
       break;
     }
-    const dayMatch = msg.match(simpleDayRegex);
+    const dayMatch = cleanMsg.match(simpleDayRegex);
     if (dayMatch) {
       date = formatFullDayAndDate(dayMatch[0].replace(/^el\s+/i, '').trim());
       break;
+    }
+  }
+
+  if (!date && cardDate) {
+    date = cardDate;
+  }
+
+  if (!date) {
+    for (let i = allUserMessages.length - 1; i >= 0; i--) {
+      const cleanMsg = allUserMessages[i].replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
+      const compMatch = cleanMsg.match(compositeDateRegex);
+      if (compMatch) {
+        date = formatFullDayAndDate(compMatch[0].replace(/^el\s+/i, '').trim());
+        break;
+      }
+      const dayMatch = cleanMsg.match(simpleDayRegex);
+      if (dayMatch) {
+        date = formatFullDayAndDate(dayMatch[0].replace(/^el\s+/i, '').trim());
+        break;
+      }
     }
   }
 
@@ -4725,8 +4766,16 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   const hasNoTarde = /\b(?:no\s+(?:en\s+la\s+|por\s+la\s+)?tardes?)\b/i.test(currentMessage || '');
   const hasNoManana = /\b(?:no\s+(?:en\s+la\s+|por\s+la\s+)?mañanas?|no\s+(?:en\s+la\s+|por\s+la\s+)?mananas?)\b/i.test(currentMessage || '');
-  const wantsMorning = (/\b(?:en\s+la\s+mañana|en\s+la\s+manana|por\s+la\s+mañana|por\s+la\s+manana|de\s+la\s+mañana|de\s+la\s+manana|en\s+las\s+mañanas|en\s+las\s+mananas|temprano|matutin[oa])\b/i.test(currentMessage || '') || hasNoTarde) && !hasNoManana;
+  const wantsMorning = (/\b(?:en\s+la\s+mañana|en\s+la\s+manana|en\s+la\s+maana|en\s+la\s+mamana|por\s+la\s+mañana|por\s+la\s+manana|de\s+la\s+mañana|de\s+la\s+manana|en\s+las\s+mañanas|en\s+las\s+mananas|temprano|matutin[oa])\b/i.test(currentMessage || '') || hasNoTarde) && !hasNoManana;
   const wantsAfternoon = (/\b(?:en\s+la\s+tarde|por\s+la\s+tarde|de\s+la\s+tarde|en\s+las\s+tardes|tardecita|vespertin[oa])\b/i.test(currentMessage || '') || hasNoManana) && !hasNoTarde;
+
+  const recentUserSnippet = allUserMessages.slice(-3).join(' ');
+  const recentContextWantsMorning = /\b(?:en\s+la\s+mañana|en\s+la\s+manana|en\s+la\s+mamana|por\s+la\s+mañana|por\s+la\s+manana|de\s+la\s+mañana|de\s+la\s+manana|matutin[oa]|no\s+(?:en\s+la\s+|por\s+la\s+)?tardes?)\b/i.test(recentUserSnippet);
+
+  // Si el usuario expresó preferencia matutina, nunca arrastrar una hora de la tarde (PM)
+  if ((wantsMorning || recentContextWantsMorning) && time && /pm|p\.m\./i.test(time)) {
+    time = null;
+  }
 
   // Si el usuario expresó preferencia de turno sin dar una hora fija, anular la hora previa para ofrecer opciones del turno deseado
   if (!hasNewTimeInMsg) {
@@ -4738,7 +4787,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   // Detección contextual de fecha para "mañana" (día siguiente)
-  if (/\b(?:mañana|manana)\b/i.test(currentMessage || '')) {
+  const cleanCurrMsg = (currentMessage || '').replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
+  if (/\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg)) {
     date = formatFullDayAndDate('mañana');
   } else if (!date && wantsMorning) {
     date = formatFullDayAndDate('mañana');
@@ -4868,6 +4918,33 @@ function generateDynamicDaySlots(startHour, endHour, duration, breakBuffer, busy
   return slots;
 }
 
+function areDatesMatching(normReqDate, bDate) {
+  if (!normReqDate || !bDate) return false;
+  if (normReqDate === bDate) return true;
+
+  const rDayMatch = normReqDate.match(/\b(\d{1,2})\s+de\s+([a-z]+)|\b\d{4}-\d{2}-(\d{2})\b|\b(\d{1,2})[/-]\d{1,2}\b/);
+  const bDayMatch = bDate.match(/\b(\d{1,2})\s+de\s+([a-z]+)|\b\d{4}-\d{2}-(\d{2})\b|\b(\d{1,2})[/-]\d{1,2}\b/);
+
+  const rDay = rDayMatch ? parseInt(rDayMatch[1] || rDayMatch[3] || rDayMatch[4], 10) : null;
+  const bDay = bDayMatch ? parseInt(bDayMatch[1] || bDayMatch[3] || bDayMatch[4], 10) : null;
+
+  if (rDay !== null && bDay !== null) {
+    if (rDay !== bDay) return false;
+    const monthMap = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, setiembre: 9, septiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+    const rMonthMatch = normReqDate.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre|septiembre|octubre|noviembre|diciembre)\b/);
+    const bMonthMatch = bDate.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre|septiembre|octubre|noviembre|diciembre)\b/);
+    if (rMonthMatch && bMonthMatch && monthMap[rMonthMatch[1]] !== monthMap[bMonthMatch[1]]) return false;
+    return true;
+  }
+
+  const weekdays = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  const rWk = weekdays.find(w => normReqDate.includes(w));
+  const bWk = weekdays.find(w => bDate.includes(w));
+  if (rWk && bWk) return rWk === bWk && (rDay === null || bDay === null);
+
+  return normReqDate.includes(bDate) || bDate.includes(normReqDate);
+}
+
 function checkSlotAvailability(requestedDate, requestedTime, existingBookings = [], appointmentDuration = 30, breakBufferTime = 10) {
   const normReqTime = normalizeTimeSlot(requestedTime);
   const reqMinutes = parseTimeToMinutes(normReqTime);
@@ -4878,9 +4955,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
   for (const b of existingBookings) {
     if (b.status === 'cancelled') continue;
     const bDate = (b.booking_date || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const isSameDate = bDate === normReqDate ||
-      (normReqDate.length > 4 && bDate.includes(normReqDate)) ||
-      (bDate.length > 4 && normReqDate.includes(bDate));
+    const isSameDate = areDatesMatching(normReqDate, bDate);
 
     if (isSameDate) {
       const bMinutes = parseTimeToMinutes(b.booking_time);
