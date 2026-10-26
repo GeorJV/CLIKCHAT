@@ -20,13 +20,11 @@ interface Props {
 }
 
 export const ProductChatColumn: React.FC<Props> = ({
-  storeName, agentName, agentAvatar, messages, inputValue,
-  isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit, onResetChat
+  storeName, agentName, agentAvatar, messages, inputValue, isLoading, themeStyles, onInputChange, onSendMessage, onAudioRecorded, onExit, onResetChat
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null); const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,10 +33,7 @@ export const ProductChatColumn: React.FC<Props> = ({
   }, [messages, isLoading]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
-    };
+    const handleScroll = () => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); };
     window.addEventListener('clikchat:scroll-bottom', handleScroll);
     return () => window.removeEventListener('clikchat:scroll-bottom', handleScroll);
   }, []);
@@ -53,33 +48,33 @@ export const ProductChatColumn: React.FC<Props> = ({
 
   return (
     <section className={`flex flex-col h-full ${themeStyles.containerBg} border-b md:border-b-0 md:border-r ${themeStyles.chatColumnBorder} overflow-hidden relative min-h-0`}>
-      <header className={`h-11 px-3.5 ${themeStyles.headerBg} border-b ${themeStyles.headerBorder} flex items-center justify-between z-10 shrink-0 select-none`}>
+      <header className={`h-12 px-3.5 ${themeStyles.headerBg} border-b ${themeStyles.headerBorder} flex items-center justify-between z-10 shrink-0 select-none`}>
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
             {agentAvatar ? (
-              <img src={agentAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
+              <img src={agentAvatar} alt={agentName} className="w-9 h-9 sm:w-7 sm:h-7 rounded-full object-cover border border-emerald-500/50 shadow-sm" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs shadow-sm">
+              <div className="w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs shadow-sm">
                 {storeName ? storeName.charAt(0).toUpperCase() : 'C'}
               </div>
             )}
             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-[#1c1a1a]" />
           </div>
           <div className="flex items-center gap-1.5 min-w-0">
-            <h2 className={`text-xs sm:text-sm font-bold ${themeStyles.textPrimary} tracking-tight truncate`}>{storeName}</h2>
+            <h2 className={`text-sm sm:text-sm font-bold ${themeStyles.textPrimary} tracking-tight truncate`}>{storeName}</h2>
             <span className={`hidden sm:inline text-[11px] ${themeStyles.textSecondary} font-medium truncate`}>• {agentName}</span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> En línea</span>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           {onResetChat && (
-            <button type="button" onClick={onResetChat} className={`flex items-center gap-1 text-[11px] font-bold p-1 rounded-md cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Reiniciar chat">
-              <RotateCcw className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Reiniciar</span>
+            <button type="button" onClick={onResetChat} className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Reiniciar chat">
+              <RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
           )}
           {onExit && (
-            <button type="button" onClick={onExit} className={`flex items-center gap-1.5 text-xs font-bold p-1 cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Volver al panel">
-              <LogOut className="w-3.5 h-3.5" /> <span>Salir</span>
+            <button type="button" onClick={onExit} className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg cursor-pointer ${themeStyles.textSecondary} hover:${themeStyles.textPrimary} transition`} title="Volver al panel">
+              <LogOut className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
           )}
         </div>
@@ -146,31 +141,31 @@ export const ProductChatColumn: React.FC<Props> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <footer className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0`}>
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={`flex items-end gap-1.5 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-xl px-2.5 py-1 transition shadow-inner`}>
-          <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1 self-end mb-0.5 transition cursor-pointer" title="Adjuntar"><Paperclip className="w-3.5 h-3.5" /></button>
+      <footer className={`px-2.5 py-2 sm:px-3 sm:py-1.5 ${themeStyles.inputFooterBg} border-t shrink-0 pb-[max(0.625rem,env(safe-area-inset-bottom))]`}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={`flex items-end gap-2 ${themeStyles.inputBoxBg} border ${themeStyles.inputBoxBorder} rounded-2xl sm:rounded-xl px-3 py-1.5 sm:px-2.5 sm:py-1 transition shadow-inner`}>
+          <button type="button" className="text-zinc-500 hover:text-zinc-300 p-1.5 self-end mb-0.5 transition cursor-pointer" title="Adjuntar"><Paperclip className="w-4 h-4 sm:w-3.5 sm:h-3.5" /></button>
           {isAudioRecording ? (
-            <div className="flex-1 flex items-center justify-between gap-2 py-0.5 px-1 select-none animate-fade-in">
-              <div className="flex items-center gap-1.5 shrink-0"><span className="w-2 h-2 rounded-full bg-red-500 animate-ping" /><span className="text-[11px] font-mono font-bold text-red-400">Grabando...</span></div>
+            <div className="flex-1 flex items-center justify-between gap-2 py-1 px-1 select-none animate-fade-in min-h-[42px] sm:min-h-[22px]">
+              <div className="flex items-center gap-1.5 shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" /><span className="text-xs sm:text-[11px] font-mono font-bold text-red-400">Grabando...</span></div>
               <div className="flex-1 flex items-center justify-center gap-0.5 px-1 max-w-[120px]">
-                <span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse" />
-                <span className="w-0.5 h-4 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" />
-                <span className="w-0.5 h-1.5 bg-amber-400 rounded-full animate-pulse [animation-delay:150ms]" />
-                <span className="w-0.5 h-4.5 bg-red-500 rounded-full animate-pulse [animation-delay:100ms]" />
-                <span className="w-0.5 h-2.5 bg-amber-400 rounded-full animate-pulse [animation-delay:200ms]" />
+                <span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse" />
+                <span className="w-0.5 h-5 bg-red-500 rounded-full animate-pulse [animation-delay:75ms]" />
+                <span className="w-0.5 h-2 bg-amber-400 rounded-full animate-pulse [animation-delay:150ms]" />
+                <span className="w-0.5 h-5.5 bg-red-500 rounded-full animate-pulse [animation-delay:100ms]" />
+                <span className="w-0.5 h-3 bg-amber-400 rounded-full animate-pulse [animation-delay:200ms]" />
               </div>
-              <span className="text-[10px] text-zinc-400 truncate">Suelta para enviar</span>
+              <span className="text-[11px] sm:text-[10px] text-zinc-400 truncate">Suelta para enviar</span>
             </div>
           ) : (
             <textarea
               ref={textareaRef} rows={1} value={inputValue} onChange={handleTextChange} onKeyDown={handleKeyDown}
               placeholder="Pregúntale..."
-              className={`flex-1 bg-transparent text-xs sm:text-sm ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-0.5 min-h-[22px] max-h-[100px] overflow-y-auto block`}
+              className={`flex-1 bg-transparent text-[15px] sm:text-xs ${themeStyles.inputTextColor} ${themeStyles.inputPlaceholder} focus:outline-none resize-none leading-snug py-1.5 sm:py-0.5 min-h-[42px] sm:min-h-[22px] max-h-[120px] overflow-y-auto block`}
             />
           )}
           {inputValue.trim() ? (
-            <button type="submit" disabled={isLoading} className={`p-1.5 rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5`} title="Enviar">
-              <Send className={`w-3.5 h-3.5 ${themeStyles.sendIconColor}`} />
+            <button type="submit" disabled={isLoading} className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full sm:rounded-lg ${themeStyles.sendBtn} disabled:opacity-40 transition active:scale-95 shrink-0 cursor-pointer self-end mb-0.5 flex items-center justify-center`} title="Enviar">
+              <Send className={`w-5 h-5 sm:w-3.5 sm:h-3.5 ${themeStyles.sendIconColor}`} />
             </button>
           ) : (
             <ChatMicButton disabled={isLoading} onRecordingChange={setIsAudioRecording} onAudioRecorded={onAudioRecorded} onTranscription={(t) => onSendMessage(t, true)} />

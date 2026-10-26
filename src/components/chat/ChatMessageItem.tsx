@@ -31,7 +31,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
         <div
           className={`w-fit max-w-[92%] sm:max-w-[84%] min-w-0 rounded-2xl transition-all shadow-sm break-words overflow-hidden select-text cursor-text ${
-            msg.isAudio ? 'px-2 py-0.5' : isUser ? 'px-3 py-1.5 text-xs sm:text-sm' : 'p-3 text-xs leading-relaxed'
+            msg.isAudio ? 'px-2 py-0.5' : isUser ? 'px-3.5 py-2 text-sm sm:text-sm' : 'p-3.5 sm:p-3 text-sm sm:text-xs leading-relaxed'
           } ${
             isUser
               ? 'bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl border border-[#D79F4C]/30'
@@ -60,7 +60,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           ) : isUser ? (
             <div className="flow-root leading-snug">
               <span className="whitespace-pre-wrap break-words select-text">{msg.message}</span>
-              <span className="float-right ml-2.5 mt-0.5 text-[10px] shrink-0 select-none tabular-nums opacity-70">
+              <span className="float-right ml-2.5 mt-0.5 text-[11px] sm:text-[10px] shrink-0 select-none tabular-nums opacity-70">
                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -99,7 +99,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         </div>
 
         {!msg.isAudio && !isUser && (
-          <span className="text-[10px] text-slate-500 mt-1 px-1">
+          <span className="text-[11px] sm:text-[10px] text-slate-500 mt-1 px-1">
             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
@@ -116,7 +116,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         return (
           <div
             key={`chunk-${idx}`}
-            className="w-fit max-w-[92%] sm:max-w-[84%] min-w-0 rounded-2xl transition-all shadow-sm break-words overflow-hidden p-3 text-xs leading-relaxed bg-slate-800 text-slate-100 border border-slate-700/70 shadow-lg shadow-black/60 select-text cursor-text"
+            className="w-fit max-w-[92%] sm:max-w-[84%] min-w-0 rounded-2xl transition-all shadow-sm break-words overflow-hidden p-3.5 sm:p-3 text-sm sm:text-xs leading-relaxed bg-slate-800 text-slate-100 border border-slate-700/70 shadow-lg shadow-black/60 select-text cursor-text"
           >
             {isFirst && msg.levelLabel && (
               <div className="flex items-center space-x-1 mb-1.5 pb-1 border-b border-slate-700/50">

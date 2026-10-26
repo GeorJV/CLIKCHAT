@@ -81,34 +81,34 @@ export const BookingCardBubble: React.FC<Props> = ({
 
       {/* Details Grid */}
       <div className="space-y-1.5 text-xs text-zinc-300">
-        <div className="flex items-start gap-2 bg-[#121111] p-2 rounded-xl border border-white/[0.04]">
-          <span className="font-semibold text-emerald-400 shrink-0">📌 Servicio:</span>
-          <span className="font-bold text-white truncate">{bookingData.service?.title || 'Servicio Profesional'}</span>
+        <div className="flex items-start gap-2 bg-[#121111] p-2.5 sm:p-2 rounded-xl border border-white/[0.04]">
+          <span className="font-semibold text-emerald-400 shrink-0 text-xs">📌 Servicio:</span>
+          <span className="font-bold text-white text-xs sm:text-xs truncate">{bookingData.service?.title || 'Servicio Profesional'}</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-1.5 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
-            <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200 truncate">{bookingData.date}</span>
+          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+            <Calendar className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-xs sm:text-[11px] text-zinc-200 font-semibold truncate">{bookingData.date}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
-            <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200">{bookingData.timeSlot}</span>
+          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+            <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-xs sm:text-[11px] text-zinc-200 font-semibold">{bookingData.timeSlot}</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-1.5 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
-            <User className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200 truncate">{bookingData.customerName}</span>
+          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+            <User className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-zinc-400 shrink-0" />
+            <span className="text-xs sm:text-[11px] text-zinc-200 truncate">{bookingData.customerName}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
-            <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200 truncate">{bookingData.customerPhone}</span>
+          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+            <Phone className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-xs sm:text-[11px] text-zinc-200 truncate">{bookingData.customerPhone}</span>
           </div>
         </div>
         {bookingData.customerEmail && (
-          <div className="flex items-center gap-2 bg-[#121111] px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
-            <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="text-[11px] text-zinc-200 truncate">{bookingData.customerEmail}</span>
+          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+            <Mail className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-blue-400 shrink-0" />
+            <span className="text-xs sm:text-[11px] text-zinc-200 truncate">{bookingData.customerEmail}</span>
           </div>
         )}
       </div>
@@ -119,24 +119,24 @@ export const BookingCardBubble: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleConfirmClick}
-            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer ring-1 ring-emerald-300/30"
+            className="w-full py-3.5 px-4 sm:py-2.5 sm:px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-sm sm:text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer ring-1 ring-emerald-300/30 min-h-[46px] sm:min-h-[40px]"
           >
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-5 h-5 sm:w-4 sm:h-4" />
             <span>📅 Confirmo cita y guardar</span>
           </button>
         ) : (
           <div className="flex flex-col sm:flex-row items-center gap-2">
-            <div className="flex-1 w-full py-2 px-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5">
+            <div className="flex-1 w-full py-2.5 px-3 sm:py-2 sm:px-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-0">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>Cita Guardada y Confirmada</span>
             </div>
             <button
               type="button"
               onClick={openWhatsAppConfirmation}
-              className="w-full sm:w-auto py-2 px-3 rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-[#25D366] font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0"
+              className="w-full sm:w-auto py-2.5 px-3.5 sm:py-2 sm:px-3 rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-[#25D366] font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 min-h-[40px] sm:min-h-0"
               title="Abrir en WhatsApp"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
               <span>Ver en WhatsApp</span>
             </button>
           </div>

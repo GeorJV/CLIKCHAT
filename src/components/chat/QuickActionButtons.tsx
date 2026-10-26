@@ -65,7 +65,7 @@ export const QuickActionButtons: React.FC<QuickActionButtonsProps> = ({
             type="button"
             onClick={() => handleClick(act)}
             disabled={disabled || (clickedId !== null && !isClicked)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles(
+            className={`px-3.5 py-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs sm:text-[11px] font-bold min-h-[36px] sm:min-h-0 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs ${getVariantStyles(
               act.variant,
               isClicked
             )}`}

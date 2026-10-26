@@ -115,11 +115,11 @@ export const ChatMicButton: React.FC<ChatMicButtonProps> = ({
         onPointerCancel={() => { if (!isLocked) { cancelRecording(); setIsPressing(false); onRecordingChange?.(false); } }}
         disabled={disabled}
         title="Mantén presionado para hablar (suelta para enviar, desliza arriba para fijar)"
-        className={`p-1.5 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition cursor-pointer flex items-center justify-center shrink-0 ${
+        className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full sm:rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 hover:from-yellow-200 hover:to-amber-400 text-zinc-950 font-semibold shadow-md shadow-yellow-500/30 ring-1 ring-yellow-200/80 transition cursor-pointer flex items-center justify-center shrink-0 ${
           isPressing ? 'scale-110 ring-4 ring-yellow-400/50' : 'active:scale-95'
         }`}
       >
-        <Mic className="w-3.5 h-3.5 text-zinc-950 stroke-[2.4]" />
+        <Mic className="w-5 h-5 sm:w-3.5 sm:h-3.5 text-zinc-950 stroke-[2.4]" />
       </button>
 
       {feedback && (

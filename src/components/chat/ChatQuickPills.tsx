@@ -54,13 +54,13 @@ export const ChatQuickPills: React.FC<ChatQuickPillsProps> = ({
   };
 
   return (
-    <div className="px-3 py-1.5 bg-slate-900/90 border-t border-slate-800/80 overflow-x-auto flex space-x-2 scrollbar-none shrink-0 z-10">
+    <div className="px-3 py-2 sm:py-1.5 bg-slate-900/90 border-t border-slate-800/80 overflow-x-auto flex space-x-2 scrollbar-none shrink-0 z-10">
       {prompts.map((p, idx) => (
         <button
           key={idx}
           onClick={() => handleSelect(p.text)}
           disabled={disabled}
-          className="shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 transition cursor-pointer disabled:opacity-40"
+          className="shrink-0 text-xs sm:text-[11px] font-semibold px-3.5 sm:px-2.5 py-1.5 sm:py-1 rounded-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 transition cursor-pointer disabled:opacity-40 min-h-[34px] sm:min-h-0 flex items-center shadow-xs"
         >
           {p.label}
         </button>

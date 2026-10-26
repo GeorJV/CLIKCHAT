@@ -73,9 +73,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={onResetChat}
           title="Reiniciar conversación"
-          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-full transition-colors"
+          className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-full transition active:scale-95 cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
         </button>
       </div>
     </header>

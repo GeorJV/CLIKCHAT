@@ -21,9 +21,7 @@ function renderInlineFormatted(text: string, isUser: boolean): React.ReactNode[]
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(text.substring(lastIndex, match.index));
-    }
+    if (match.index > lastIndex) nodes.push(text.substring(lastIndex, match.index));
 
     if (match[2] && match[3]) {
       // Enlace markdown [label](url)
@@ -37,7 +35,7 @@ function renderInlineFormatted(text: string, isUser: boolean): React.ReactNode[]
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center gap-1 font-bold my-0.5 px-2 py-0.5 rounded-lg text-xs transition duration-200 break-all ${
+          className={`inline-flex items-center gap-1.5 font-bold my-0.5 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-xs sm:text-[11px] min-h-[30px] sm:min-h-0 transition duration-200 break-all ${
             isWhatsApp
               ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-950/40'
               : isUser
@@ -45,7 +43,7 @@ function renderInlineFormatted(text: string, isUser: boolean): React.ReactNode[]
               : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 underline decoration-indigo-400/50'
           }`}
         >
-          {isWhatsApp ? <MessageCircle className="w-3 h-3 shrink-0" /> : <ExternalLink className="w-3 h-3 shrink-0" />}
+          {isWhatsApp ? <MessageCircle className="w-3.5 h-3.5 sm:w-3 sm:h-3 shrink-0" /> : <ExternalLink className="w-3.5 h-3.5 sm:w-3 sm:h-3 shrink-0" />}
           <span className="truncate max-w-[220px]">{label}</span>
         </a>
       );
@@ -95,7 +93,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
 
   return (
     <div
-      className={`text-xs sm:text-sm leading-relaxed select-text space-y-1.5 break-words max-w-full ${
+      className={`text-sm sm:text-sm leading-relaxed select-text space-y-1.5 break-words max-w-full ${
         isUser ? 'text-white' : 'text-slate-100'
       } ${className}`}
     >

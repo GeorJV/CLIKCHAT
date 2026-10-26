@@ -21,22 +21,22 @@ export const PersistentCTA: React.FC<PersistentCTAProps> = ({ tenant, activeProd
   const actionText = isRestaurant ? 'Pedir Ahora' : 'Pagar Online';
 
   return (
-    <div className="px-3 py-1.5 bg-slate-900/95 border-t border-slate-800/80 z-20">
+    <div className="px-3 py-2 bg-slate-900/95 border-t border-slate-800/80 z-20">
       <a
         href={ctaUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs shadow-md shadow-emerald-950/60 active:scale-98 transition group"
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs shadow-md shadow-emerald-950/60 active:scale-98 transition group min-h-[42px]"
       >
         <div className="flex items-center space-x-2">
           <span className="p-1 rounded-lg bg-black/25">
-            <ShoppingBag className="w-3.5 h-3.5 text-white" />
+            <ShoppingBag className="w-4 h-4 text-white" />
           </span>
-          <span className="tracking-wide uppercase text-[11px] font-black">{label}</span>
+          <span className="tracking-wide uppercase text-xs font-black">{label}</span>
         </div>
-        <div className="flex items-center space-x-1 text-[11px] text-emerald-100 group-hover:translate-x-0.5 transition-transform">
+        <div className="flex items-center space-x-1 text-xs text-emerald-100 group-hover:translate-x-0.5 transition-transform">
           <span>{actionText}</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-4 h-4" />
         </div>
       </a>
     </div>
