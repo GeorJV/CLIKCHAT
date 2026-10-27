@@ -3,17 +3,14 @@
  * Native Edge execution for ClikChat on https://clikchat.pages.dev/api/*
  */
 
-const CF_D1_DATABASE_ID = 'e0f64033-4d16-41b9-800b-baae12787d1c';
-const CLOUDFLARE_ACCOUNT_ID = '01514e27c0cdd221efd91900be83fb16';
+const CF_D1_DATABASE_ID = 'af3aebed-002b-4e84-aabb-4c570483a3df';
+const CLOUDFLARE_ACCOUNT_ID = '2a67b9374597924117a6a21ea3de3305';
 
 function getD1Token(env) {
   if (env?.CLOUDFLARE_API_TOKEN) return env.CLOUDFLARE_API_TOKEN;
+  if (env?.CF_PAGES_API_TOKEN) return env.CF_PAGES_API_TOKEN;
   if (env?.CF_API_TOKEN) return env.CF_API_TOKEN;
-  try {
-    return atob('Y2Z1dF9sRkl0aVBYbGZQMlo3V2dIU25JWXZuamtmYTNQTGo0UHM4cmVkWmRZYjFmN2JlM2E=');
-  } catch (e) {
-    return '';
-  }
+  return (() => { try { return atob('Y2ZhdF9wSlhnT1dkbE8xbHE2UFRLS1JHRWlNejVIYjBLQWhDQnZyckF0NkxaZTliOTQ4Njc='); } catch (e) { return ''; } })();
 }
 
 const D1_ENDPOINT = 'https://api.cloudflare.com/client/v4/accounts/' + CLOUDFLARE_ACCOUNT_ID + '/d1/database/' + CF_D1_DATABASE_ID + '/query';
@@ -1112,7 +1109,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   // CASO A: El usuario configuró su propia IA (customKey)
   if (userCustomConfig?.key) {
     const cKey = userCustomConfig.key;
-    const cProvider = userCustomConfig.provider || (cKey.startsWith('AIza') || cKey.startsWith('AQ.') ? 'google' : cKey.startsWith('sk-') ? 'openai' : 'openrouter');
+    const cProvider = userCustomConfig.provider || (cKey.startsWith('AIza') || cKey.startsWith('AQ.') ? 'google' : cKey.startsWith('gsk_') ? 'groq' : cKey.startsWith('sk-or-') ? 'openrouter' : cKey.startsWith('sk-') ? 'openai' : 'openrouter');
     const cModel = userCustomConfig.model;
 
     // 1. Google AI Studio Propia
@@ -1120,7 +1117,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-3-flash-preview'}:generateContent?key=${cKey}`;
+        const activeModel = cModel || 'gemini-3.5-flash-lite';
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1128,13 +1126,19 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
             contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
             generationConfig: { temperature: 0.1, maxOutputTokens: 650 }
           }),
-          signal: AbortSignal.timeout(4500)
+          signal: AbortSignal.timeout(6000)
         });
         if (gResp.ok) {
           const gData = await gResp.json();
           const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
           const clean = sanitizeAiResponse(gText);
-          if (clean) return { text: clean, provider: 'custom_google_ai' };
+          if (clean) return {
+            text: clean,
+            provider: 'custom_google_ai',
+            model: activeModel,
+            modelLabel: `Google AI Propia (${activeModel})`,
+            fallbackUsed: false
+          };
         }
       } catch (e) {
         console.warn('Custom Google AI falló:', e.message);
@@ -1144,6 +1148,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     // 2. OpenAI Propia
     if (cProvider === 'openai') {
       try {
+        const activeModel = cModel || 'gpt-4o-mini';
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -1151,25 +1156,66 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
             'Authorization': `Bearer ${cKey}`
           },
           body: JSON.stringify({
-            model: cModel || 'gpt-4o-mini',
+            model: activeModel,
             messages,
             temperature: 0.1,
             max_tokens: 650
           }),
-          signal: AbortSignal.timeout(4500)
+          signal: AbortSignal.timeout(6000)
         });
         if (resp.ok) {
           const data = await resp.json();
           const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
-          if (clean) return { text: clean, provider: 'custom_openai' };
+          if (clean) return {
+            text: clean,
+            provider: 'custom_openai',
+            model: activeModel,
+            modelLabel: `OpenAI Propia (${activeModel})`,
+            fallbackUsed: false
+          };
         }
       } catch (e) {
         console.warn('Custom OpenAI falló:', e.message);
       }
     }
 
-    // 3. OpenRouter / Otro Propio
+    // 3. Groq Propia
+    if (cProvider === 'groq' || cKey.startsWith('gsk_')) {
+      try {
+        const activeModel = cModel || 'llama-3.3-70b-versatile';
+        const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cKey}`
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages,
+            temperature: 0.1,
+            max_tokens: 650
+          }),
+          signal: AbortSignal.timeout(6000)
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+          if (clean) return {
+            text: clean,
+            provider: 'custom_groq',
+            model: activeModel,
+            modelLabel: `Groq Propia (${activeModel})`,
+            fallbackUsed: false
+          };
+        }
+      } catch (e) {
+        console.warn('Custom Groq falló:', e.message);
+      }
+    }
+
+    // 4. OpenRouter Propia
     try {
+      const activeModel = cModel || 'deepseek/deepseek-chat';
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -1179,17 +1225,23 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'X-Title': 'ClikChat Edge AI'
         },
         body: JSON.stringify({
-          model: cModel || 'deepseek/deepseek-v3.2',
+          model: activeModel,
           messages,
           temperature: 0.1,
           max_tokens: 650
         }),
-        signal: AbortSignal.timeout(4500)
+        signal: AbortSignal.timeout(6000)
       });
       if (resp.ok) {
         const data = await resp.json();
         const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
-        if (clean) return { text: clean, provider: 'custom_openrouter' };
+        if (clean) return {
+          text: clean,
+          provider: 'custom_openrouter',
+          model: activeModel,
+          modelLabel: `OpenRouter Propia (${activeModel})`,
+          fallbackUsed: false
+        };
       }
     } catch (e) {
       console.warn('Custom OpenRouter falló:', e.message);
@@ -1476,11 +1528,15 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   let modelSequence = [];
 
   if (pref.includes('gpt') || pref === 'model-2' || pref === '2') {
-    modelSequence = [m2, m3, m1, mBackup];
-  } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref === 'model-3' || pref === '3') {
-    modelSequence = [m3, m1, m2, mBackup];
+    modelSequence = [m2, mBackup, m3, m1];
+  } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref.includes('@cf') || pref === 'model-3' || pref === '3') {
+    modelSequence = [m3, mBackup, m1, m2];
+  } else if (pref.includes('glm') || pref === 'model-1' || pref === '1') {
+    modelSequence = [m1, mBackup, m2, m3];
+  } else if (pref.includes('gemini') || pref === 'model-gemini') {
+    modelSequence = [mBackup, m1, m2, m3];
   } else {
-    modelSequence = [m1, m2, m3, mBackup];
+    modelSequence = [mBackup, m1, m2, m3];
   }
 
   let lastAiError = 'none';

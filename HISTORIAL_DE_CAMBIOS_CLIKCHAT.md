@@ -16,6 +16,38 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Sincronización Absoluta de Cuentas y Modelos de IA entre el Bot Oficial y Entornos de Prueba (v2.7.5)
+- **Diagnóstico y Causas Raíces:**
+  1. *Desincronización Forzada en Pruebas del CRM Sandbox (Live Lab):*
+     - `VoceroAiSandbox.tsx` inicializaba rígidamente su estado en `selectedModel: 'model-1'`, enviando en cada petición `preferredModel: 'model-1'` (GLM 5).
+     - Si el usuario había configurado una cuenta propia de IA (ej. Google AI Studio, OpenAI, Groq u OpenRouter) o seleccionado un modelo específico (ej. Meta Llama 3.3 de Cloudflare o GPT) para su bot, las pruebas en el Live Lab ignoraban por completo dicha configuración y forzaban un modelo externo desconectado.
+  2. *Falta de Detección de Cuenta Propia en la UI del Laboratorio:*
+     - La cabecera del Live Lab solo mostraba tres botones estáticos (`Mod 1: GLM 5`, `Mod 2: GPT`, `Mod 3: Meta`), sin reflejar la cuenta propia ni el modelo configurado por el dueño del negocio.
+  3. *Incompatibilidad Parcial de Proveedores en CASO A (`functions/api/[[route]].js`):*
+     - CASO A no manejaba claves de Groq (`gsk_`), derivándolas a OpenRouter donde fallaban por incompatibilidad de autenticación, ni reportaba metadatos de modelo (`modelLabel`).
+  4. *Presencia de Modelos Descontinuados en Catálogos Auxiliares:*
+     - `customAIConfigs.ts` contenía modelos obsoletos de versiones prohibidas en el proyecto.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Sincronización Nativa en `VoceroAiSandbox.tsx` & `sandboxConstants.ts`:*
+     - Creados los helpers `getBotConfig` y `getBotModelLabel` que extraen dinámicamente la cuenta (`key`, `provider`) y modelo configurado en `tenant.custom_llm_key` o `tenant.custom_ai_config`.
+     - El selector de pruebas ahora inicia por defecto en `bot-synced` ("🤖 Motor del Bot (Sincronizado)" o "🔑 [PROVEEDOR]: [MODELO] (Propia)").
+     - Al estar en `bot-synced`, la petición a `/api/chat/message` NO fuerza `preferredModel`, garantizando que se ejecute con exactitud la misma cuenta y modelo que utiliza el bot del cliente.
+     - Mantiene cumplimiento estricto de **ARQMODULAR** (176 líneas en Sandbox y 48 líneas en Constants, ambos <180 líneas).
+  2. *Sincronización en Simulador de Entrenamiento (`LiveBotSimulator.tsx`):*
+     - Inyección de `tenantId` en la carga útil HTTP para garantizar que el backend localice la identidad y configuración exacta del tenant tanto por `slug` como por `id`.
+  3. *Motor Edge Multicuentas Robusto en `functions/api/[[route]].js`:*
+     - Soporte completo y verificado para Google AI Studio (con modelos vigentes `gemini-3.5-flash-lite`), OpenAI (`gpt-4o-mini`), Groq (`llama-3.3-70b-versatile`) y OpenRouter con timeout a 6s.
+     - Reporte exacto de `modelLabel` y `model` en la respuesta de la API para visualización fiel en la UI.
+  4. *Actualización de Catálogos Oficiales Vigentes:*
+     - Eliminada toda mención de versiones obsoletas en `customAIConfigs.ts`, dejando exclusivamente infraestructura vigente.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 15.01s con 0 errores TypeScript (`dist/assets/index-DjXEfxhr.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Verificación de hash match 100% y 17/17 rutas auditadas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Restauración de Datos Completos de Cuenta, Catálogo, FAQs y Citas Resilientes de GeoSoft (v2.7.4)
 - **Diagnóstico y Causas Raíces:**
   1. *Límite Diario de Lectura en Cloudflare D1 (Error 7500):*

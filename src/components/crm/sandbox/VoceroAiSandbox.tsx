@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, FlaskConical, RefreshCw } from 'lucide-react';
-import { SandboxMsg, PERSONAS } from './sandboxConstants';
+import { SandboxMsg, PERSONAS, getBotConfig, getBotModelLabel } from './sandboxConstants';
 import { LiveLabCorrectionModal } from './LiveLabCorrectionModal';
 import { LiveLabMessageItem } from './LiveLabMessageItem';
 import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
@@ -20,7 +20,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
 
   const [messages, setMessages] = useState<SandboxMsg[]>([{ id: '1', sender: 'assistant', rag: 'L1 · Bienvenida', score: 98, isGolden: true, text: getWelcome() }]);
   const [input, setInput] = useState('');
-  const [selectedModel, setSelectedModel] = useState<'model-1' | 'model-2' | 'model-3'>('model-1');
+  const [selectedModel, setSelectedModel] = useState<string>('bot-synced');
   const [labSessionId, setLabSessionId] = useState(() => 'lab_' + Date.now().toString(36));
   const [loading, setLoading] = useState(false);
   const [activeCorrection, setActiveCorrection] = useState<{ msg: SandboxMsg; userQuestion: string } | null>(null);
@@ -30,9 +30,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
     if (tenant && messages.length === 1 && messages[0].sender === 'assistant') setMessages([{ ...messages[0], text: getWelcome() }]);
   }, [tenant]);
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior });
-  };
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior });
 
   useEffect(() => {
     scrollToBottom('smooth');
@@ -50,11 +48,14 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
 
     try {
       const hist = messages.map((m) => ({ sender: m.sender, message: m.text }));
+      const isSynced = selectedModel === 'bot-synced';
+      const botCfg = getBotConfig(tenant);
+      const effectiveReqModel = isSynced ? (botCfg.model || undefined) : selectedModel;
       const res = await fetch('/api/chat/message', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenantSlug, tenantId: tenant?.id || tenantId, sessionId: labSessionId,
-          message: txt, model: selectedModel, preferredModel: selectedModel,
+          tenantSlug, tenantId: tenant?.id || tenantId, sessionId: labSessionId, message: txt,
+          ...(isSynced ? {} : { model: effectiveReqModel, preferredModel: effectiveReqModel }),
           conversationHistory: hist, clientHour: new Date().getHours(),
           clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
         }),
@@ -62,7 +63,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       if (res.ok) {
         const d = await res.json();
         const score = Math.floor(Math.random() * 8) + 92;
-        const defaultLabel = selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : 'Modelo 3: Meta';
+        const defaultLabel = isSynced ? getBotModelLabel(tenant) : (selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : selectedModel === 'model-gemini' ? 'Google Gemini' : 'Modelo 3: Meta');
         const effectiveModel = d.fallbackUsed ? (d.modelLabel || 'Red de Contingencia') : (d.modelLabel || defaultLabel);
         if (d.answer?.includes('[BOOKING_CARD:')) {
           try {
@@ -72,7 +73,6 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
               const apt = { id: 'apt_' + Date.now(), clientName: p.customerName || 'Cliente', serviceName: p.service || 'Desarrollo Web & SaaS', date: p.date, dateKey: p.date, displayDate: p.date, time: p.time, status: 'confirmed', channel: 'web', phone: p.customerPhone || '', email: p.customerEmail || '', notes: 'Live Lab', price: p.price || 1200 };
               const ex = JSON.parse(localStorage.getItem('clikchat_bookings_geosoft') || '[]');
               localStorage.setItem('clikchat_bookings_geosoft', JSON.stringify([apt, ...ex]));
-              localStorage.setItem('clikchat_bookings_ten_geosoft_prod', JSON.stringify([apt, ...ex]));
               broadcastBookingCreated('geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
             }
           } catch {}
@@ -98,23 +98,25 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
     if (testQuestion) setTimeout(() => handleSendText(testQuestion), 400);
   };
 
+  const modelOptions = [
+    { id: 'bot-synced', label: getBotModelLabel(tenant), title: 'Prueba sincronizada con la cuenta y modelo activo del bot' },
+    { id: 'model-gemini', label: '⚡ Gemini', title: 'Google Gemini Oficial' },
+    { id: 'model-1', label: '🥇 GLM 5', title: 'GLM 5.3 Flash (OpenRouter)' },
+    { id: 'model-2', label: '🥈 GPT', title: 'ChatGPT 5 Mini (OpenRouter)' },
+    { id: 'model-3', label: '🥉 Meta', title: 'Meta Llama 3.3 (Cloudflare)' },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-3 sm:px-5 shadow-xs gap-2">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <FlaskConical className="h-4 w-4 text-[#0d5bff] shrink-0" />
           <h2 className="text-[15px] sm:text-[17px] font-bold tracking-tight text-[#0a1730] shrink-0">Live Lab</h2>
-          <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-1 sm:ml-2">
-            {[
-              { id: 'model-1' as const, label: '🥇 Mod 1: GLM 5', title: 'GLM 5.3 Flash (OpenRouter)' },
-              { id: 'model-2' as const, label: '🥈 Mod 2: GPT', title: 'ChatGPT 5 Mini (OpenRouter)' },
-              { id: 'model-3' as const, label: '🥉 Mod 3: Meta (CF)', title: 'Meta Llama 3.3 (Gratuito de Cloudflare)' },
-            ].map((m) => (
+          <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-1 sm:ml-2 overflow-x-auto max-w-full">
+            {modelOptions.map((m) => (
               <button
                 key={m.id} title={m.title} onClick={() => setSelectedModel(m.id)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
-                  selectedModel === m.id ? 'bg-[#0d5bff] text-white shadow-2xs' : 'text-[#62728d] hover:text-[#0a1730]'
-                }`}
+                className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${selectedModel === m.id ? 'bg-[#0d5bff] text-white shadow-2xs' : 'text-[#62728d] hover:text-[#0a1730]'}`}
               >
                 {m.label}
               </button>
@@ -143,7 +145,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       </div>
 
       <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas Vocero:</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas:</span>
         {PERSONAS.map((p) => (
           <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">
             {p.label}

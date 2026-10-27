@@ -60,6 +60,7 @@ export const LiveBotSimulator: React.FC<LiveBotSimulatorProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantSlug: tenantSlug || tenant?.slug || 'comida-callejera-xl',
+          tenantId: tenant?.id,
           sessionId: 'sim_' + (tenant?.id || 'default'),
           message: text,
           conversationHistory: clientHist

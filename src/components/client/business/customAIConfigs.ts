@@ -17,7 +17,7 @@ export interface BusinessEngineConfig {
 export const PROVIDER_MODELS: Record<string, string[]> = {
   openrouter: ['deepseek/deepseek-chat', 'z-ai/glm-5.3-flash', 'meta-llama/llama-3.3-70b-instruct', 'custom'],
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'custom'],
-  google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'custom'],
+  google: ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3.8-flash', 'custom'],
   groq: ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'custom'],
 };
 
