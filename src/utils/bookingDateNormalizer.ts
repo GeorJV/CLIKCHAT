@@ -87,6 +87,19 @@ export function normalizeToDateKey(rawDate?: string | null, refDate: Date = new 
   return null;
 }
 
+export function formatDisplayDate(rawDate?: string | null, refDate: Date = new Date()): string {
+  if (!rawDate) return '';
+  const normKey = normalizeToDateKey(rawDate, refDate);
+  if (!normKey) return rawDate;
+  const parts = normKey.split('-').map(Number);
+  if (parts.length !== 3) return rawDate;
+  const [y, m, d] = parts;
+  const realDate = new Date(y, m - 1, d, 12, 0, 0);
+  const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return `${days[realDate.getDay()]}, ${d} de ${months[m - 1]} de ${y}`;
+}
+
 export function getBookingFilterKeys(refDate: Date = new Date()): BookingFilterKeys {
   const addDays = (d: Date, n: number) => { const r = new Date(d); r.setDate(d.getDate() + n); return getLocalDateKey(r); };
   const todayKey = getLocalDateKey(refDate);

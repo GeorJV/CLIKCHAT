@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, RefreshCw, Bot } from 'lucide-react';
 import { BookingIntervalConfig } from '../crm/bookings/BookingIntervalConfig';
+import { formatDisplayDate } from '../../utils/bookingDateNormalizer';
 
 interface Appointment {
   id: string; clientName: string; serviceName: string; date: string; time: string; status: 'confirmed' | 'pending' | 'completed'; price: number;
@@ -18,7 +19,13 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
 
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
     if (typeof window !== 'undefined') {
-      try { const s = localStorage.getItem(storageKey); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length > 0) return p; } } catch (e) {}
+      try {
+        const s = localStorage.getItem(storageKey);
+        if (s) {
+          const p = JSON.parse(s);
+          if (Array.isArray(p)) return p.map((a: Appointment) => ({ ...a, date: formatDisplayDate(a.date) || a.date }));
+        }
+      } catch (e) {}
     }
     return [];
   });
@@ -34,12 +41,12 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
         if (data.bookings && Array.isArray(data.bookings)) {
           const apiApts: Appointment[] = data.bookings.map((b: any) => ({
             id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
-            date: b.booking_date || '', time: b.booking_time || '', status: (b.status || 'confirmed') as any, price: Number(b.price) || 0
+            date: formatDisplayDate(b.booking_date) || b.booking_date || '', time: b.booking_time || '',
+            status: (b.status || 'confirmed') as any, price: Number(b.price) || 0
           }));
           setAppointments((prev) => {
-            const seen = new Set(prev.map(p => p.id));
-            const fresh = apiApts.filter(a => !seen.has(a.id));
-            const merged = [...prev, ...fresh];
+            const apiIds = new Set(apiApts.map(a => a.id));
+            const merged = [...apiApts, ...prev.filter(p => !apiIds.has(p.id) && !p.id.startsWith('apt_'))];
             if (typeof window !== 'undefined') { try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch (e) {} }
             return merged;
           });
@@ -48,7 +55,13 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
     } catch (e) {} finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchBookings(); }, [activeSlug]);
+  useEffect(() => {
+    fetchBookings();
+    const handleFocus = () => fetchBookings();
+    window.addEventListener('focus', handleFocus);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 15000);
+    return () => { window.removeEventListener('focus', handleFocus); clearInterval(timer); };
+  }, [activeSlug]);
 
   const handleToggleAgentBooking = async () => {
     const nextVal = !allowAgentBooking;

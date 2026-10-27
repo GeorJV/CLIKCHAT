@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Clock, User, Mail, Phone, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { ServiceBookingData } from '../../../types/serviceChat';
+import { formatDisplayDate } from '../../../utils/bookingDateNormalizer';
 
 interface Props {
-  bookingData: ServiceBookingData;
-  isConfirmed?: boolean;
-  businessPhone?: string;
-  storeName?: string;
-  onConfirm: (data: ServiceBookingData) => void;
+  bookingData: ServiceBookingData; isConfirmed?: boolean; businessPhone?: string; storeName?: string; onConfirm: (data: ServiceBookingData) => void;
 }
 
 export const BookingCardBubble: React.FC<Props> = ({
@@ -17,6 +14,7 @@ export const BookingCardBubble: React.FC<Props> = ({
   const [isRevealed, setIsRevealed] = useState(isConfirmed);
   const cardRef = useRef<HTMLDivElement>(null);
   const cleanPhone = (businessPhone || '50672935612').replace(/[^\d]/g, '');
+  const displayDate = formatDisplayDate(bookingData.date) || bookingData.date || 'Próxima fecha';
 
   useEffect(() => {
     if (isRevealed) {
@@ -41,7 +39,7 @@ export const BookingCardBubble: React.FC<Props> = ({
   const openWhatsAppConfirmation = () => {
     const text = `📅 *CONFIRMACIÓN DE CITA - ${storeName.toUpperCase()}*\n\n` +
       `• *Servicio:* ${bookingData.service?.title || 'Servicio Especializado'}\n` +
-      `• *Fecha:* ${bookingData.date}\n` +
+      `• *Fecha:* ${displayDate}\n` +
       `• *Horario:* ${bookingData.timeSlot}\n` +
       `• *Cliente:* ${bookingData.customerName}\n` +
       (bookingData.customerEmail ? `• *Correo:* ${bookingData.customerEmail}\n` : '') +
@@ -101,7 +99,7 @@ export const BookingCardBubble: React.FC<Props> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
           <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
             <Calendar className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-xs sm:text-[11px] text-zinc-200 font-semibold truncate">{bookingData.date}</span>
+            <span className="text-xs sm:text-[11px] text-zinc-200 font-semibold truncate">{displayDate}</span>
           </div>
           <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
             <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />

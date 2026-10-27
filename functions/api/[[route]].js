@@ -4503,7 +4503,15 @@ function cleanBookingCardText(text) {
   if (!cardMatch) return text;
 
   let beforeCard = text.substring(0, cardMatch.index).trim();
-  const cardTag = cardMatch[0];
+  let cardTag = cardMatch[0];
+  try {
+    const rawCardJson = cardTag.replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, '');
+    const cardObj = JSON.parse(rawCardJson);
+    if (cardObj && cardObj.date) {
+      cardObj.date = formatFullDayAndDate(cardObj.date);
+      cardTag = `[BOOKING_CARD: ${JSON.stringify(cardObj)}]`;
+    }
+  } catch (e) {}
   let afterCard = text.substring(cardMatch.index + cardMatch[0].length).trim();
 
   // 1. Eliminar líneas que listen datos de la cita renglón por renglón
@@ -4558,6 +4566,36 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
     const d = new Date(refDate);
     d.setDate(d.getDate() + 2);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  }
+
+  const singleDayNumMatch = clean.match(/^(?:el\s+)?(\d{1,2})(?:\s+(?:de\s+este\s+mes|de\s+este))?$/);
+  if (singleDayNumMatch) {
+    const dayNum = parseInt(singleDayNumMatch[1], 10);
+    if (dayNum >= 1 && dayNum <= 31) {
+      const d = new Date(refDate);
+      let targetMonth = d.getMonth();
+      let targetYear = d.getFullYear();
+      if (dayNum < d.getDate() && (d.getDate() - dayNum > 15)) {
+        targetMonth += 1;
+        if (targetMonth > 11) { targetMonth = 0; targetYear += 1; }
+      }
+      const targetDate = new Date(targetYear, targetMonth, dayNum, 12, 0, 0);
+      return `${daysOfWeek[targetDate.getDay()]}, ${dayNum} de ${months[targetMonth]} de ${targetYear}`;
+    }
+  }
+
+  const dayNameAndNumMatch = clean.match(/(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})(?!\s+de\s+[a-z]+)/);
+  if (dayNameAndNumMatch) {
+    const dayNum = parseInt(dayNameAndNumMatch[2], 10);
+    const d = new Date(refDate);
+    let targetMonth = d.getMonth();
+    let targetYear = d.getFullYear();
+    if (dayNum < d.getDate() && (d.getDate() - dayNum > 15)) {
+      targetMonth += 1;
+      if (targetMonth > 11) { targetMonth = 0; targetYear += 1; }
+    }
+    const targetDate = new Date(targetYear, targetMonth, dayNum, 12, 0, 0);
+    return `${daysOfWeek[targetDate.getDay()]}, ${dayNum} de ${months[targetMonth]} de ${targetYear}`;
   }
 
   const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -6397,6 +6435,8 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           /\b(qu[eé]\s+(?:servicios?|hacen|ofrecen|desarrollan|incluye)|cu[aá]nto\s+(?:cuesta|vale|cobran|sale)|precios?|tarifas?|costos?|informaci[oó]n|planes?|paquetes?|garant[ií]a|tecnolog[ií]as?|lenguajes?|d[oó]nde\s+est[aá]n|qui[eé]nes?\s+son|c[oó]mo\s+trabajan)\b/i.test(message)
         ) && !isExplicitBookingIntent;
 
+        const cleanResolvedDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
+
         if (isInfoOrServiceQuery) {
           contextBlock += `\n\n[DIRECTIVA DE ASESORÍA Y CONSULTA COMERCIAL (MÁXIMA PRIORIDAD ACTUAL)]:
 El cliente está consultando información sobre tus servicios, tecnologías, productos, tarifas o capacidades de la empresa.
@@ -6410,7 +6450,7 @@ Ubicación actual de datos en la conversación:
 - 1. Nombre completo: ${bookingState.slots.name ? `OBTENIDO ("${bookingState.slots.name}")` : 'FALTANTE'}
 - 2. Correo electrónico: ${bookingState.slots.email ? `OBTENIDO ("${bookingState.slots.email}")` : 'FALTANTE'}
 - 3. Teléfono / WhatsApp: ${bookingState.slots.phone ? `OBTENIDO ("${bookingState.slots.phone}")` : 'FALTANTE'}
-- 4. Día / Fecha de cita: ${bookingState.slots.date ? `OBTENIDO ("${bookingState.slots.date}")` : 'FALTANTE'}
+- 4. Día / Fecha de cita: ${cleanResolvedDate ? `OBTENIDO ("${cleanResolvedDate}")` : 'FALTANTE'}
 - 5. Hora de la cita: ${bookingState.slots.time ? `OBTENIDO ("${bookingState.slots.time}")` : 'FALTANTE'}
 
 DATOS QUE FALTAN: [${bookingState.missing.join(', ') || 'NINGUNO - TODO COMPLETO'}]
@@ -6420,7 +6460,7 @@ DIRECTIVA OBLIGATORIA PARA TU RESPUESTA:
 
 ${isSlotUnavailable ? `
 [ALERTA DE DISPONIBILIDAD EN TIEMPO REAL - VERIFICACIÓN EN D1 EN MILISEGUNDOS]:
-- El usuario solicitó el día ${bookingState.slots.date}.
+- El usuario solicitó el día ${cleanResolvedDate}.
 - RESULTADO D1: ¡ESE HORARIO YA ESTÁ RESERVADO O EN INTERVALO DE DESCANSO ENTRE CITAS EN NUESTRA AGENDA!
 - Regla operativa del negocio: Citas de ${targetTenant.appointment_duration || 30} min + ${targetTenant.break_buffer_time !== undefined ? targetTenant.break_buffer_time : 10} min de descanso entre citas.
 - Siguiente horario libre recomendado: "${nextAvailableTime}"
@@ -6430,22 +6470,23 @@ DIRECTIVA OBLIGATORIA (MÁXIMA PRIORIDAD):
 Informa de forma clara, inteligente, cálida y profesional que ese espacio puntual ya se encuentra reservado.
 Pregúntale amablemente si le serviría la siguiente hora programada disponible: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
 Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado. Cero dramatismo o puntos suspensivos ("y...").
-` : (bookingState.slots.date && bookingState.slots.time ? `
+` : (cleanResolvedDate && bookingState.slots.time ? `
 [VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:
-- Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${bookingState.slots.date} a las ${bookingState.slots.time}!
+- Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${cleanResolvedDate} a las ${bookingState.slots.time}!
 
 DIRECTIVA OBLIGATORIA (CERO REPETICIÓN RENGLÓN POR RENGLÓN):
-1. Confirma con entusiasmo, amabilidad y en un único párrafo breve que verificaste la disponibilidad y que el espacio para el ${bookingState.slots.date} a las ${bookingState.slots.time} ha quedado reservado.
+1. Confirma con entusiasmo, amabilidad y en un único párrafo breve que verificaste la disponibilidad y que el espacio para el ${cleanResolvedDate} a las ${bookingState.slots.time} ha quedado reservado.
 2. PROHIBICIÓN ESTRICTA: Queda TERMINANTEMENTE PROHIBIDO redactar o listar en el texto los campos de la cita renglón por renglón (como "Servicio:", "Fecha:", "Hora:", "Nombre:", "Correo:", "Teléfono:"), ya que todos esos detalles aparecen de forma automática y visual en el cuadro interactivo de la cita.
 3. Tu mensaje de texto debe ser de 1 solo párrafo breve y amigable, cerrando exactamente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?"
-4. Inmediatamente después de esa pregunta, emite la tarjeta:
-   [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+4. Inmediatamente después de esa pregunta, emite la tarjeta con el día de la semana y fecha correspondiente:
+   [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
 Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o decir frases incoherentes como "no elegiste X sino Y". Confirma directamente con seguridad.
 ` : '')}
 
 REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
-0. DÍA DE LA SEMANA Y FECHA OBLIGATORIA (CERO ECO DEL CLIENTE):
-   - Al confirmar la cita, incluye OBLIGATORIAMENTE el DÍA DE LA SEMANA y la FECHA COMPLETA (ejemplo: "${bookingState.slots.date || 'Día y Fecha Completa'}").
+0. DÍA DE LA SEMANA Y FECHA OBLIGATORIA (MARTES 27, MIÉRCOLES 28, ETC.):
+   - Al confirmar la cita y al emitir [BOOKING_CARD], el campo "date" y toda mención en texto DEBE incluir OBLIGATORIAMENTE el DÍA DE LA SEMANA y el NÚMERO DE FECHA según corresponda al día (ejemplo: "${cleanResolvedDate || 'Martes, 27 de Octubre de 2026'}").
+   - Queda TERMINANTEMENTE PROHIBIDO poner solo el nombre del día (como "Martes") o solo un número sin el día. Siempre día y fecha juntos.
    - PROHIBIDO TERMINANTEMENTE repetir como loro la respuesta del usuario como parte de tu respuesta. Avanza de inmediato con tu mensaje sin hacer eco de lo que él escribió.
 1. ORDEN LÓGICO ESTRICTO:
    - Primero se recopila el NOMBRE y CORREO (si el usuario dio uno pero falta el otro, solicita puntualmente el que falta).
@@ -6462,9 +6503,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Prohibido hacer comparaciones confusas con horarios previos o decir frases como "no elegiste tal sino tal". Directo, claro y profesional.
 5. REPROGRAMACIÓN O CAMBIO DE CITA / HORARIO:
    - Si el usuario solicita cambiar, mover o reprogramar su cita (ej: "me puedes cambiar la cita para las 3 y 30 es que no voy a poder a las 3pm", "cambiemos a las 4pm", "la podemos mover"):
-     Acepta cordialmente la solicitud en un único párrafo breve confirmando el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${bookingState.slots.date || 'día acordado'}), indicando que acabas de verificar el nuevo espacio en agenda.
+     Acepta cordialmente la solicitud en un único párrafo breve confirmando el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${cleanResolvedDate || 'día acordado'}), indicando que acabas de verificar el nuevo espacio en agenda.
      PROHIBIDO terminantemente redactar listas o renglones de campos en texto. Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
-     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${bookingState.slots.date || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.`;
         }
 
@@ -6518,15 +6559,25 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               modality: 'online',
               price: targetTenant.name === 'GeoSoft' ? 1200 : 0
             };
-            const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${bookingState.slots.date}** a las **${bookingState.slots.time}** ha quedado reservado.`;
+            const formattedIntroDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
+            const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bookingState.slots.time}** ha quedado reservado.`;
             llmResult.text = `${intro}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
           } else {
             try {
               const cardMatch = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
               if (cardMatch) {
                 const parsedCard = JSON.parse(cardMatch[1]);
+                let updatedCard = false;
                 if (!parsedCard.customerEmail && bookingState.slots.email) {
                   parsedCard.customerEmail = bookingState.slots.email;
+                  updatedCard = true;
+                }
+                const formattedDate = formatFullDayAndDate(parsedCard.date || bookingState.slots.date);
+                if (formattedDate && formattedDate !== parsedCard.date) {
+                  parsedCard.date = formattedDate;
+                  updatedCard = true;
+                }
+                if (updatedCard) {
                   llmResult.text = llmResult.text.replace(cardMatch[0], '[BOOKING_CARD: ' + JSON.stringify(parsedCard) + ']');
                 }
               }

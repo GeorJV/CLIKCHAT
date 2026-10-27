@@ -8,6 +8,7 @@ import { BookingIntervalConfig } from './BookingIntervalConfig';
 import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
 import {
   normalizeToDateKey,
+  formatDisplayDate,
   getBookingFilterKeys,
   isBookingInFilter,
   BookingFilterType,
@@ -39,34 +40,37 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      const items = saved ? JSON.parse(saved) : getInitialAppointments();
-      return items.map((a: AppointmentItem) => ({
-        ...a,
-        dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey
+      const items = saved ? JSON.parse(saved) : [];
+      const clean = items.filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
+      const src = clean.length > 0 ? clean : getInitialAppointments();
+      return src.map((a: AppointmentItem) => ({
+        ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey,
+        displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate
       }));
-    } catch {
-      return getInitialAppointments();
-    }
+    } catch { return getInitialAppointments(); }
   });
 
+  const fetchBookings = () => {
+    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}`).then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.bookings && Array.isArray(d.bookings)) {
+        const apiApts = d.bookings.map((b: any) => ({
+          id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
+          dateKey: normalizeToDateKey(b.booking_date, now) || todayKey,
+          displayDate: formatDisplayDate(b.booking_date, now) || b.booking_date,
+          time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const,
+          phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
+        }));
+        setAppointments(prev => [...apiApts, ...prev.filter(p => !new Set(apiApts.map(a => a.id)).has(p.id) && !p.id.startsWith('apt_') && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id))]);
+      }
+    }).catch(() => {});
+  };
+
   useEffect(() => {
-    let isMounted = true;
-    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.bookings && Array.isArray(d.bookings) && isMounted) {
-          const apiApts = d.bookings.map((b: any) => {
-            const normKey = normalizeToDateKey(b.booking_date, now) || todayKey;
-            return {
-              id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
-              dateKey: normKey, displayDate: b.booking_date || normKey, time: b.booking_time || '10:00 AM',
-              status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
-            };
-          });
-          setAppointments(prev => { const seen = new Set(prev.map(p => p.id)); return [...apiApts.filter(a => !seen.has(a.id)), ...prev]; });
-        }
-      }).catch(() => {});
-    return () => { isMounted = false; };
+    fetchBookings();
+    const handleFocus = () => fetchBookings();
+    window.addEventListener('focus', handleFocus);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 15000);
+    return () => { window.removeEventListener('focus', handleFocus); clearInterval(timer); };
   }, [tId, todayKey, now]);
 
   useEffect(() => {
