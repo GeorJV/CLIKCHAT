@@ -16,6 +16,45 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Integración de OpenRouter con 3 Modelos Predeterminados, Failover de Seguridad en Cascada y Centro de Reportes de IA en la Web (v2.6.8)
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Selección Flexible de Modelos de OpenRouter:*
+     - La plataforma no permitía al usuario configurar fácilmente su modelo preferido de OpenRouter ni alternar entre los principales modelos del mercado para evaluar y comparar la calidad conversacional y comercial de cada uno.
+  2. *Requerimiento de 3 Modelos Predeterminados Oficiales:*
+     - Se requería que la plataforma tuviera 3 modelos predefinidos de fácil acceso:
+       - **Modelo 1: GLM 5** (GLM 5.3 Flash · Rápido y Económico para Ventas).
+       - **Modelo 2: GPT** (ChatGPT 5 Mini / GPT-4o Mini · Conversación Profesional y Razonamiento).
+       - **Modelo 3: Meta** (Meta Llama 3.3 · Cloudflare Clofer / OpenRouter).
+  3. *Sistema de Seguridad y Failover en Cascada (Cascading Ring):*
+     - En caso de que el modelo preferido sufriera una caída, error de cuota (HTTP 429/403) o timeout, el sistema debía saltar inmediatamente al siguiente modelo en anillo (ej: 1° ⟷ 2° ⟷ 3°) para que el cliente final jamás se quede sin respuesta.
+  4. *Registro de Fallos y Nueva Sección de Reportes de IA en la Web:*
+     - Ante cualquier fallo de modelo, se debía generar automáticamente un reporte en la web con el modelo fallido, modelo de rescate, causa del error y consulta del cliente, permitiendo dar seguimiento y resolver incidentes con 1 clic.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Motor de 3 Modelos y Anillo de Conmutación en Edge (`functions/api/[[route]].js`):*
+     - Funciones de llamada directa: `callModel1_GLM` (`z-ai/glm-5.3-flash:floor`), `callModel2_GPT` (`openai/gpt-4o-mini`), y `callModel3_Meta` (`@cf/meta/llama-3.3-70b-instruct-fp8-fast` y respaldo en OpenRouter).
+     - Conmutación en anillo según `preferredModel` / configuración del negocio con captura y salto transparente en 0ms.
+  2. *Persistencia Determinista Multinivel de Incidentes (`recordAiIncident`):*
+     - Registro de fallos en Cloudflare D1 (`ai_incident_reports`) complementado con memoria persistente en el borde para garantizar acceso a reportes incluso ante límites de cuota de lectura en D1.
+  3. *Endpoints Dedicados (`/api/ai-reports`):*
+     - `GET /api/ai-reports?tenant=:slug`: Cálculo en vivo de salud de disponibilidad (%), total de incidentes, consultas rescatadas y fallos por modelo.
+     - `POST /api/ai-reports/resolve`: Resolución instantánea de incidentes.
+     - `POST /api/ai-reports/simulate`: Herramienta de prueba en vivo para simular fallos y verificar la cascada de seguridad.
+  4. *Nueva Sección de Reportes en la Web (`VoceroAiReportsView.tsx` - 162 líneas):*
+     - Panel ejecutivo con tarjetas de salud, filtros interactivos (Todos, Pendientes, Solucionados), tarjetas de reporte con badges cromáticos, detalle de la consulta del cliente y acciones para atender en chat o marcar como resuelto.
+     - Componentes atómicos ARQMODULAR: `AiReportStats.tsx` (51 líneas) y `AiReportCard.tsx` (78 líneas).
+  5. *Selectores Interactivos de Modelo en CRM y Live Lab:*
+     - `VoceroAiModelSettings.tsx` (172 líneas): Configuración de API Key de OpenRouter y selector de los 3 modelos predeterminados.
+     - `VoceroAiSandbox.tsx` (179 líneas): Barra de conmutación rápida `[1. GLM 5]`, `[2. GPT]`, `[3. Meta]` para comparar respuestas en tiempo real, con badges de modelo utilizado y alerta de rescate por respaldo.
+     - Integración en navegación (`VoceroAppNav.tsx`, `SidebarSimpleNav.tsx` y `ClientDashboard.tsx`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) con 0 errores TypeScript (`dist/assets/index-egT3iKml.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commits `9df9b86`, `98eea9b`, `11d343f`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless + Prueba en vivo del endpoint `/api/ai-reports?tenant=geosoft` respondiendo HTTP 200, registrando incidentes de failover y resolviendo reportes con éxito.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Seguro Determinista Anti-Repetición en Edge, Optimización de Latencia y Cascada Inteligente de LLM (v2.6.7)
 - **Diagnóstico y Necesidad:**
   1. *Repetición Idéntica de Respuestas del Bot (3 veces seguidas):*
