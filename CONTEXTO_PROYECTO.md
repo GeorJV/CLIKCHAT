@@ -1,15 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 09:00 GMT-6
-- **Versión Actual:** 2.6.4 (Notificación de Cita Nueva en Panel, Resaltado y Retorno al Hover)
+- **Última Actualización:** 2026-10-27 09:16 GMT-6
+- **Versión Actual:** 2.6.5 (Botones Agregar Exclusivos para Productos Físicos, Ocultos en Servicios)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Aviso Visual de Cita Nueva: Banner destacado en color ámbar/dorado con detalles del agendamiento y botón directo "Ver cita ahora".
-  - Insignia de Citas en Menú: Notificación ámbar en el botón Agenda de Citas del Sidebar y CRM.
-  - Resaltado Cromático & Auto-Scroll: Al dar clic, desplaza y resalta la cita con borde dorado pulsante e insignia visible.
-  - Retorno Automático al Hover (`onMouseEnter`): Al colocar el ratón encima, la cita regresa suavemente a su color normal y el aviso se oculta.
+  - Botones Agregar Condicionales: Solo aparecen para productos físicos (comidas, artículos, combos); quedan completamente ocultos en servicios.
+  - Aislamiento en Chat: `ServiceChatColumn` desactiva botones de orden (`allowAddButtons={false}` y `businessType="servicios"`).
+  - Detección Inteligente: `ChatMessageContent` filtra términos de servicios y rutas `/servicio` para evitar botones de comanda en citas.
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

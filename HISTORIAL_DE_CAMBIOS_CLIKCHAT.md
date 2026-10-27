@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Exclusión Estricta de Botones "Agregar" en Servicios y Restricción Exclusiva a Productos Físicos (v2.6.5)
+- **Diagnóstico y Necesidad:**
+  1. *Aparición Inadecuada de Botones "Agregar" en Servicios:*
+     - En `ChatMessageContent.tsx`, cualquier viñeta o línea de texto con formato de precio generaba automáticamente un botón `[+ Agregar]`, provocando que en chats de servicios (ej: asesorías, desarrollo web, consultas, citas) se mostraran botones para "agregar al carrito/comanda" que no corresponden a un modelo de reservas o citas.
+  2. *Requerimiento del Usuario:*
+     - Los botones de agregar únicamente deben aparecer cuando se trate de productos físicos (comida, retail, mercancía), y quedar estrictamente prohibidos y ocultos cuando se trate de servicios.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Control de Propiedades y Heurística de Exclusión en `ChatMessageContent.tsx`:*
+     - Soporte explícito de `allowAddButtons?: boolean` y `businessType?: string`.
+     - Desactivación automática del botón si `allowAddButtons === false`, si `businessType === 'servicios'`, o si la ruta activa es `/servicio`.
+     - Clasificación inteligente de ítems y contexto de servicio (`isServiceItem` / `isServiceContext`), identificando términos como asesoría, consultoría, sesión, cita, agendar, desarrollo, mantenimiento, etc., renderizándolos como texto limpio sin botón.
+  2. *Aislamiento en Vistas de Chat:*
+     - `ServiceChatColumn.tsx` configurado con `allowAddButtons={false}` y `businessType="servicios"`.
+     - `ProductChatColumn.tsx` configurado con `allowAddButtons={true}` y `businessType="productos"` para preservar el flujo de comanda en productos físicos.
+  3. *Cumplimiento ARQMODULAR:*
+     - `ChatMessageContent.tsx` optimizado a 176 líneas (<180 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 13.30s con 0 errores TypeScript (`dist/assets/index-yDL0iaiU.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `482b411`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Notificación de Cita Nueva en Panel, Resaltado Visual y Retorno Automático al Pasar el Mouse (v2.6.4)
 - **Diagnóstico y Necesidad:**
   1. *Falta de Notificación Activa de Citas Nuevas:*
