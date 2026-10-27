@@ -4542,7 +4542,13 @@ function cleanBookingCardText(text) {
   return (beforeCard + '\n\n' + cardTag + (afterCard ? '\n\n' + afterCard : '')).trim();
 }
 
-function formatFullDayAndDate(dateInput, refDate = new Date()) {
+function getLocalBusinessDate(refDate = new Date()) {
+  const utcMs = refDate.getTime() + (refDate.getTimezoneOffset() * 60000);
+  // GMT-6 Costa Rica / Centroamérica / México (huso horario del tenant)
+  return new Date(utcMs + (3600000 * -6));
+}
+
+function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
   if (!dateInput) return '';
   let str = dateInput.trim();
 
@@ -4639,7 +4645,7 @@ function formatFullDayAndDate(dateInput, refDate = new Date()) {
     const d = new Date(refDate);
     const currentDay = d.getDay();
     let diff = targetDayIdx - currentDay;
-    if (diff <= 0) diff += 7;
+    if (diff < 0) diff += 7;
     d.setDate(d.getDate() + diff);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
@@ -4867,6 +4873,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       date = formatFullDayAndDate(dayMatch[0].replace(/^el\s+/i, '').trim());
       break;
     }
+    const numDateMatch = cleanMsg.match(/\b(?:el\s+|para\s+el\s+|del?\s+)([1-3]?[0-9])\b/i);
+    if (numDateMatch) {
+      const parsedNumDate = formatFullDayAndDate(numDateMatch[1]);
+      if (parsedNumDate && parsedNumDate !== numDateMatch[1]) {
+        date = parsedNumDate;
+        break;
+      }
+    }
   }
 
   if (!date && cardDate) {
@@ -4885,6 +4899,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (dayMatch) {
         date = formatFullDayAndDate(dayMatch[0].replace(/^el\s+/i, '').trim());
         break;
+      }
+      const numDateMatch = cleanMsg.match(/\b(?:el\s+|para\s+el\s+|del?\s+)([1-3]?[0-9])\b/i);
+      if (numDateMatch) {
+        const parsedNumDate = formatFullDayAndDate(numDateMatch[1]);
+        if (parsedNumDate && parsedNumDate !== numDateMatch[1]) {
+          date = parsedNumDate;
+          break;
+        }
       }
     }
   }
