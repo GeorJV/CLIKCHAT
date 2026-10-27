@@ -22,7 +22,7 @@
     "autoSync": true,
     "chatAudit": true,
     "ragEnabled": true,
-    "testUrl": "https://clikchat.pages.dev",
+    "testUrl": "https://clikchatcrm.pages.dev",
     "chatLogEndpoint": "https://arqaistudio.pages.dev/api/agent/chat-log",
     "ragContextEndpoint": "https://arqaistudio.pages.dev/api/agent/rag-context",
     "notifyEndpoint": "https://arqaistudio.pages.dev/api/agent/notify-user"

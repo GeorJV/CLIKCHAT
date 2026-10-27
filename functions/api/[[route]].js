@@ -5807,6 +5807,11 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = cardName;
   }
 
+  if (!name && (email || phone) && date && time) {
+    const rawFallback = (leadInfo?.name && leadInfo.name !== 'Cliente') ? leadInfo.name : (email ? email.split('@')[0] : 'Cliente');
+    name = rawFallback.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  }
+
   if (name) {
     name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
@@ -5855,29 +5860,28 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   const missing = [];
   if (!name) missing.push('Nombre completo');
-  if (!email) missing.push('Correo electrónico');
-  if (!phone) missing.push('Teléfono / WhatsApp');
+  if (!email && !phone) missing.push('Correo electrónico o Teléfono');
   if (!date) missing.push('Día / Fecha de la cita');
   if (!time) missing.push('Hora de la cita');
 
   let currentStep = 1;
   let stepInstruction = '';
 
-  if (!name || !email) {
+  if (!name || (!email && !phone)) {
     currentStep = 1;
-    if (!name && !email) {
+    if (!name && !email && !phone) {
       stepInstruction = 'PASO 1: Agradece con calidez el interés del cliente, hazlo sentir valorado y solicita amablemente su NOMBRE COMPLETO y CORREO ELECTRÓNICO para iniciar el registro. Queda PROHIBIDO solicitar teléfono, WhatsApp, fecha u hora en este turno; enfócate exclusivamente en Nombre y Correo.';
-    } else if (!email) {
-      stepInstruction = `PASO 1 (Incompleto): Ya tienes el nombre ("${name}"), pero FALTA el correo electrónico. Salúdalo con calidez por su nombre y pídele puntualmente su correo electrónico para enviarle los detalles. No pidas teléfono aún.`;
+    } else if (!email && !phone) {
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el nombre ("${name}"), pero FALTA el correo electrónico o teléfono. Salúdalo con calidez por su nombre y pídele puntualmente su correo electrónico o teléfono para enviarle los detalles.`;
     } else {
-      stepInstruction = `PASO 1 (Incompleto): Ya tienes el correo ("${email}"), pero FALTA el nombre completo. Agradece el correo con amabilidad y pídele cómo se llama. No pidas teléfono aún.`;
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el contacto ("${email || phone}"), pero FALTA el nombre completo. Agradece con amabilidad y pídele cómo se llama. No pidas fecha aún.`;
     }
-  } else if (!phone) {
+  } else if (!email && !phone) {
     currentStep = 2;
-    stepInstruction = `PASO 2: Ya tienes nombre ("${name}") y correo ("${email}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para recordatorios y confirmación. No pidas fecha u hora aún.`;
+    stepInstruction = `PASO 2: Ya tienes nombre ("${name}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para recordatorios y confirmación. No pidas fecha u hora aún.`;
   } else if (!date) {
     currentStep = 3;
-    stepInstruction = `PASO 3: Ya tienes nombre, correo y teléfono ("${phone}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión. No pidas hora aún.`;
+    stepInstruction = `PASO 3: Ya tienes nombre ("${name}") y contacto ("${phone || email}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión. No pidas hora aún.`;
   } else if (!time) {
     currentStep = 4;
     if (wantsMorning) {
@@ -7543,8 +7547,10 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
         const isNameCorrectionTurn = Boolean(bookingState.isNameCorrectionIntent || /\b(?:equivoqu[eé]|error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:dice|est[aá]|no\s+es)|cambia(?:r|me)?\s+(?:el\s+)?nombre|no\s+me\s+llamo|no\s+soy\s+[a-záéíóúñ]+|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+(?:me\s+llamo|soy)|mi\s+nombre\s+real\s+es)\b/i.test(message || ''));
         const isRescheduleTurn = bookingState.isRescheduleIntent || isNameCorrectionTurn || Boolean(parseFlexibleTime(message) || (message || '').match(GLOBAL_TIME_REGEX));
+        const hasCardInReply = Boolean(llmResult.text && llmResult.text.includes('[BOOKING_CARD:'));
+        const hasSufficientBookingSlots = Boolean(bookingState.slots.date && bookingState.slots.time && (bookingState.slots.phone || bookingState.slots.email || bookingState.slots.name));
 
-        if (bookingState.isComplete && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn) {
+        if ((bookingState.isComplete || hasCardInReply || hasSufficientBookingSlots) && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
               service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
@@ -7588,6 +7594,10 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               const bService = targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional');
               const bPrice = targetTenant.name === 'GeoSoft' ? 1200 : 0;
               let finalCardName = null;
+              let finalCardEmail = null;
+              let finalCardPhone = null;
+              let finalCardDate = null;
+              let finalCardTime = null;
               const cardMatchForName = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
               if (cardMatchForName) {
                 try {
@@ -7595,13 +7605,17 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                   if (parsedFinal.customerName && parsedFinal.customerName.toLowerCase() !== 'cliente') {
                     finalCardName = parsedFinal.customerName.trim();
                   }
+                  if (parsedFinal.customerEmail) finalCardEmail = parsedFinal.customerEmail.trim();
+                  if (parsedFinal.customerPhone) finalCardPhone = parsedFinal.customerPhone.trim();
+                  if (parsedFinal.date) finalCardDate = parsedFinal.date.trim();
+                  if (parsedFinal.time) finalCardTime = parsedFinal.time.trim();
                 } catch (e) {}
               }
-              const bName = (finalCardName || bookingState.slots.name || activeLeadInfo?.name || 'Cliente').trim();
-              const bEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim();
-              const bPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
-              const bDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
-              const bTime = bookingState.slots.time;
+              const bEmail = (finalCardEmail || bookingState.slots.email || activeLeadInfo?.email || '').trim();
+              const bPhone = (finalCardPhone || bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
+              const bName = (finalCardName || bookingState.slots.name || activeLeadInfo?.name || (bEmail ? bEmail.split('@')[0] : 'Cliente')).trim();
+              const bDate = formatFullDayAndDate(finalCardDate || bookingState.slots.date) || bookingState.slots.date;
+              const bTime = finalCardTime || bookingState.slots.time;
 
               const cleanPhoneDigits = bPhone.replace(/\D/g, '');
               const existingApt = await executeD1(
@@ -7636,9 +7650,11 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             }
           }
         } else {
-          // Si faltan datos, queda TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD]
-          if (llmResult.text.includes('[BOOKING_CARD:')) {
-            llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
+          // Si faltan datos críticos de fecha u hora, remover [BOOKING_CARD]
+          if (!bookingState.slots.date || !bookingState.slots.time) {
+            if (llmResult.text.includes('[BOOKING_CARD:')) {
+              llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
+            }
           }
         }
         if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {

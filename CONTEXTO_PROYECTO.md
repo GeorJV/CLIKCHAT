@@ -3,7 +3,7 @@
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
 - **Última Actualización:** 2026-10-27 17:38 GMT-6
 - **Versión Actual:** 2.8.3 (Homologación Dinámica de Enlaces de Canales y Webhooks al Dominio Activo CRM)
-- **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
+- **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
   - Enlaces de Canales 100% Homologados: "Copiar Enlace Web" en Chat Agente ClikChat y todos los enlaces del CRM generan URLs dinámicas con `window.location.origin` (`https://clikchatcrm.pages.dev`).

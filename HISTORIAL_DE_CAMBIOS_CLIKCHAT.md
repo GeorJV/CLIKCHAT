@@ -10,7 +10,7 @@
 - **Proyecto:** ClikchatWeb
 - **Repositorio:** https://github.com/GeorJV/CLIKCHAT.git
 - **Rama:** main
-- **URL Producción:** https://clikchat.pages.dev
+- **URL Producción:** https://clikchatcrm.pages.dev
 
 ---
 

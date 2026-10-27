@@ -70,10 +70,13 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
             const cardM = d.answer.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
             if (cardM) {
               const p = JSON.parse(cardM[1]);
-              const apt = { id: 'apt_' + Date.now(), clientName: p.customerName || 'Cliente', serviceName: p.service || 'Desarrollo Web & SaaS', date: p.date, dateKey: p.date, displayDate: p.date, time: p.time, status: 'confirmed', channel: 'web', phone: p.customerPhone || '', email: p.customerEmail || '', notes: 'Live Lab', price: p.price || 1200 };
-              const ex = JSON.parse(localStorage.getItem('clikchat_bookings_geosoft') || '[]');
-              localStorage.setItem('clikchat_bookings_geosoft', JSON.stringify([apt, ...ex]));
-              broadcastBookingCreated('geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
+              const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
+              const apt = { id: 'apt_' + Date.now(), clientName: p.customerName || 'Cliente', serviceName: p.service || 'Desarrollo Web & SaaS', date: p.date, dateKey: p.date, displayDate: p.date, time: p.time, status: 'confirmed', channel: 'web', phone: p.customerPhone || '', email: p.customerEmail || '', notes: 'Live Lab', price: Number(p.price) || 1200 };
+              fetch('/api/bookings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenant_id: tId, customer_name: apt.clientName, customer_email: apt.email, customer_phone: apt.phone, service_id: 'srv_gen', service_name: apt.serviceName, booking_date: apt.date, booking_time: apt.time, status: 'confirmed', price: apt.price, currency: 'USD', notes: 'Agendado en Live Lab' })
+              }).catch(() => {});
+              broadcastBookingCreated(tenantSlug || 'geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
             }
           } catch {}
         }
@@ -166,11 +169,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         </div>
       </div>
 
-      <LiveLabCorrectionModal
-        isOpen={Boolean(activeCorrection)} userQuestion={activeCorrection?.userQuestion || ''}
-        originalAnswer={activeCorrection?.msg.text || ''} messageId={activeCorrection?.msg.id || ''}
-        onClose={() => setActiveCorrection(null)} onSaveCorrection={handleSaveCorrection}
-      />
+      <LiveLabCorrectionModal isOpen={Boolean(activeCorrection)} userQuestion={activeCorrection?.userQuestion || ''} originalAnswer={activeCorrection?.msg.text || ''} messageId={activeCorrection?.msg.id || ''} onClose={() => setActiveCorrection(null)} onSaveCorrection={handleSaveCorrection} />
     </div>
   );
 };

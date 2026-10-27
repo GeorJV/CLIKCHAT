@@ -9,7 +9,7 @@ const path = require('path');
 const { spawn, execSync } = require('child_process');
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const BASE_URL = process.env.BASE_URL || 'https://clikchat.pages.dev';
+const BASE_URL = process.env.BASE_URL || 'https://clikchatcrm.pages.dev';
 
 const ROUTES = [
   { path: '/', label: 'Web Oficial / Landing' },
