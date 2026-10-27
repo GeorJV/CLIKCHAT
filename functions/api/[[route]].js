@@ -4748,6 +4748,8 @@ function parseFlexibleTime(str) {
 // ==============================================================================
 // EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
 // ==============================================================================
+const GLOBAL_TIME_REGEX = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:am|pm|a\.m\.|p\.m\.)\b|\b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b/i;
+
 function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   const allUserMessages = [];
   if (Array.isArray(history)) {
@@ -4768,6 +4770,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   let time = null;
 
   // 0. Recuperar datos de cualquier tarjeta de cita previa en el historial
+  let cardName = null;
+  let cardEmail = null;
+  let cardPhone = null;
   let cardDate = null;
   let cardTime = null;
   let cardIndexInHistory = -1;
@@ -4778,9 +4783,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (cardMatch) {
         try {
           const card = JSON.parse(cardMatch[1]);
-          if (!name && card.customerName) name = card.customerName.trim();
-          if (!email && card.customerEmail) email = card.customerEmail.trim();
-          if (!phone && card.customerPhone) phone = card.customerPhone.trim();
+          if (card.customerName) cardName = card.customerName.trim();
+          if (card.customerEmail) cardEmail = card.customerEmail.trim();
+          if (card.customerPhone) cardPhone = card.customerPhone.trim();
           if (card.date) cardDate = card.date.trim();
           if (card.time) cardTime = card.time.trim();
           cardIndexInHistory = i;
@@ -4789,6 +4794,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       }
     }
   }
+
+  if (!email && cardEmail) email = cardEmail;
+  if (!phone && cardPhone) phone = cardPhone;
 
   // 1. Extracción de Email
   const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i;
@@ -4816,7 +4824,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   // 3. Extracción de Hora (Flexibilidad Máxima & Sin Arrastre Erróneo de Pasado)
-  const timeRegex = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:am|pm|a\.m\.|p\.m\.)\b|\b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b/i;
+  const timeRegex = GLOBAL_TIME_REGEX;
   const messagesToCheckTime = [];
   if (currentMessage) messagesToCheckTime.push(currentMessage);
   if (cardIndexInHistory >= 0 && Array.isArray(history)) {
@@ -4929,24 +4937,56 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  // 5. Extracción de Nombre
-  const namePatterns = [
-    /(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i,
-    /nombre:\s*([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i
+  // 5. Extracción y Corrección Inteligente de Nombre
+  let extractedName = null;
+  let isNameCorrectionIntent = false;
+
+  const nameCorrectionPatterns = [
+    /\b(?:me\s+equivoqu[eé](?:\s+(?:en|de)(?:\s+el)?)?(?:\s+nombre)?[,\s]+(?:(?:en\s+realidad\s+)?(?:me\s+llamo|mi\s+nombre\s+es|soy|es|ponle|qued[oó]|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy)\s+)?([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}))/i,
+    /\b(?:error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:no\s+es|est[aá]\s+mal|dice\s+[a-záéíóúñ]+))[,\s]+(?:(?:en\s+realidad\s+)?(?:me\s+llamo|mi\s+nombre\s+es|soy|es|ponle|qued[oó]|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy)\s+)?([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2})/i,
+    /\b(?:cambia(?:r|me)?\s+(?:el\s+)?nombre\s+(?:a|por)|corrige\s+(?:el\s+)?nombre\s+(?:a|por)?|corregir\s+(?:el\s+)?nombre\s+(?:a|por)?|ponle\s+(?:el\s+nombre\s+de\s+|a\s+nombre\s+de\s+)?|pon\s+(?:la\s+cita\s+)?a\s+nombre\s+de|a\s+nombre\s+de)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2})/i,
+    /\b(?:no\s+me\s+llamo\s+[a-záéíóúñ]+(?:\s+sino)?|mi\s+nombre\s+no\s+es\s+[a-záéíóúñ]+(?:\s+sino)?|no\s+soy\s+[a-záéíóúñ]+(?:\s+sino)?)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2})/i,
+    /\b(?:te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+me\s+llamo|en\s+realidad\s+soy|mi\s+nombre\s+real\s+es)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2})/i,
+    /\b(?:me\s+llamo|mi\s+nombre\s+es|soy|nombre:\s*)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i
   ];
-  for (let i = allUserMessages.length - 1; i >= 0; i--) {
-    const msg = allUserMessages[i];
-    for (const pat of namePatterns) {
+
+  const messagesToCheckName = [];
+  if (currentMessage) messagesToCheckName.push(currentMessage);
+  if (cardIndexInHistory >= 0 && Array.isArray(history)) {
+    for (let i = history.length - 1; i > cardIndexInHistory; i--) {
+      if (history[i].sender === 'user' || history[i].role === 'user') {
+        messagesToCheckName.push(history[i].message || history[i].content || '');
+      }
+    }
+  }
+
+  for (const msg of messagesToCheckName) {
+    for (const pat of nameCorrectionPatterns) {
       const nm = msg.match(pat);
-      if (nm && !name) {
-        name = nm[1].trim();
+      if (nm) {
+        extractedName = nm[1].trim();
+        isNameCorrectionIntent = true;
         break;
       }
     }
-    if (name) break;
+    if (extractedName) break;
   }
 
-  if (!name) {
+  if (!extractedName) {
+    for (let i = allUserMessages.length - 1; i >= 0; i--) {
+      const msg = allUserMessages[i];
+      for (const pat of nameCorrectionPatterns) {
+        const nm = msg.match(pat);
+        if (nm) {
+          extractedName = nm[1].trim();
+          break;
+        }
+      }
+      if (extractedName) break;
+    }
+  }
+
+  if (!extractedName) {
     for (let i = 0; i < allUserMessages.length; i++) {
       let cleanMsg = allUserMessages[i].trim();
       if (email && cleanMsg.includes(email)) {
@@ -4955,11 +4995,17 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanMsg)) {
         const norm = cleanMsg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         if (!/^(hola|buenas|agendar|cita|reunion|gracias|claro|si|no|ok|perfecto|lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|hoy)$/.test(norm)) {
-          name = cleanMsg;
+          extractedName = cleanMsg;
           break;
         }
       }
     }
+  }
+
+  if (extractedName) {
+    name = extractedName;
+  } else if (!name && cardName) {
+    name = cardName;
   }
 
   if (name) {
@@ -5044,9 +5090,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
         ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
         : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
     }
-  } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
+  } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && !isNameCorrectionIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
     currentStep = 6;
     stepInstruction = `PASO 6 (CIERRE Y DESPEDIDA PROFESIONAL): La cita ya quedó agendada y confirmada en un turno anterior. El cliente está diciendo gracias, que así está bien, que eso es todo o despidiéndose. Responde con calidez y despedida profesional y cordial (ej: "¡Con muchísimo gusto! Estaremos muy atentos a tu sesión. Aquí estaremos a tu entera disposición para cualquier cambio cuando gustes. ¡Que tengas un excelente día!"). QUEDA TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y PROHIBIDO volver a confirmar la cita.`;
+  } else if (isNameCorrectionIntent) {
+    currentStep = 5;
+    stepInstruction = `PASO 5 (CORRECCIÓN DE NOMBRE): El cliente indicó que se equivocó de nombre o solicitó corregirlo/cambiarlo a "${name || 'su nombre correcto'}". Acepta la corrección con total amabilidad y calidez en un solo párrafo breve confirmando que has actualizado el nombre de la cita a "${name}" para el ${date} a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta actualizada [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"online","price":1200}].`;
   } else if (isRescheduleIntent) {
     currentStep = 5;
     stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
@@ -5061,6 +5110,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     isComplete: missing.length === 0,
     hasPriorBookingCard: cardIndexInHistory >= 0,
     isRescheduleIntent,
+    isNameCorrectionIntent,
     currentStep,
     stepInstruction
   };
@@ -5764,14 +5814,25 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }
 
       // 8. PASO 2 (NIVEL 3): RAG de Catálogo (Productos & Inventario D1) y Documentos/Manuales
-      // Score de productos (coincidencia con nombre, sku, descripción, categoría y stock)
+      // Score de productos (coincidencia con nombre, sku, descripción, categoría, stock y semántica)
       const scoredProducts = products.map(p => {
         const pText = `${p.name} ${p.name} ${p.short_description || ''} ${p.full_description || ''} ${p.details?.category || ''} ${p.details?.sku || ''}`;
         const score = computeOverlapScore(message, pText);
         const cleanName = p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const nameWords = cleanName.split(/\s+/).filter(w => w.length > 2);
         const hasNameMatch = nameWords.some(w => cleanUserQuery.includes(w));
-        const finalScore = hasNameMatch ? Math.max(score, 0.75) : score;
+
+        let semanticBoost = 0;
+        const normPText = pText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (/\b(web|p[aá]gina|sitio|portal|landing|tienda\s*(?:online|virtual)|ecommerce|saas)\b/i.test(cleanUserQuery) && /\b(web|plataforma|saas|sitio|portal|tienda)\b/i.test(normPText)) {
+          semanticBoost = 0.88;
+        } else if (/\b(app|aplicaci[oó]n|m[oó]vil|android|ios|celular)\b/i.test(cleanUserQuery) && /\b(app|aplicaci[oó]n|m[oó]vil)\b/i.test(normPText)) {
+          semanticBoost = 0.88;
+        } else if (/\b(ia|bot|agente|asistente|automatizaci[oó]n)\b/i.test(cleanUserQuery) && /\b(ia|bot|agente|asistente)\b/i.test(normPText)) {
+          semanticBoost = 0.88;
+        }
+
+        const finalScore = Math.max(score, hasNameMatch ? 0.75 : 0, semanticBoost);
         return { product: p, score: finalScore };
       }).sort((a, b) => b.score - a.score);
 
@@ -6501,20 +6562,40 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         const isExplicitBookingIntent = /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|reservar|reserva|calendario|disponibilidad|horario|espacio|reprogramar|reprogramaci[oó]n|cambiar\s+(?:la\s+)?cita|mover\s+(?:la\s+)?cita|otra\s+hora|otro\s+horario|otra\s+cita|nueva\s+cita)\b/i.test(message) ||
           (/\b(a\s+las?\s+\d+|el\s+(?:lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)|mañana|manana|hoy)\b/i.test(message) && isBookingContext);
 
+        const isNeedOrBuyingIntent = /\b(necesito|ocupo|busco|quiero|requiero|quisiera|me\s+interesa|deseo|solicito|cotizar|cotizaci[oó]n|crear|hacer|desarrollar|comprar|adquirir|contratar|informaci[oó]n|asesor[ií]a|consultar?)\b/i.test(message) ||
+          /\b(p[aá]gina\s*web|sitio\s*web|landing\s*page|tienda\s*(?:online|virtual)|e-?commerce|aplicaci[oó]n|app|software|plataforma|sistema|bot|agente\s*ia|ia|desarrollo)\b/i.test(message);
+
         const isInfoOrServiceQuery = (
           /\?|¿/.test(message) ||
+          isNeedOrBuyingIntent ||
           /\b(qu[eé]\s+(?:servicios?|hacen|ofrecen|desarrollan|incluye)|cu[aá]nto\s+(?:cuesta|vale|cobran|sale)|precios?|tarifas?|costos?|informaci[oó]n|planes?|paquetes?|garant[ií]a|tecnolog[ií]as?|lenguajes?|d[oó]nde\s+est[aá]n|qui[eé]nes?\s+son|c[oó]mo\s+trabajan)\b/i.test(message)
         ) && !isExplicitBookingIntent;
 
         const cleanResolvedDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
 
         if (isInfoOrServiceQuery) {
-          contextBlock += `\n\n[DIRECTIVA DE ASESORÍA Y CONSULTA COMERCIAL (MÁXIMA PRIORIDAD ACTUAL)]:
-El cliente está consultando información sobre tus servicios, tecnologías, productos, tarifas o capacidades de la empresa.
-1. Responde a su pregunta con total claridad, maestría técnica, detalle y amabilidad basándote en la información verificada del catálogo, FAQs y documentos oficiales.
-2. Explica con valor y transparencia lo que incluye el servicio y sus beneficios clave. Cita las tarifas oficiales correspondientes sin inventar precios.
-3. NO le exijas datos de agendamiento (nombre, teléfono, correo) en esta respuesta; primero satisface plenamente su consulta y aporta valor real.
-4. Cierra amablemente con una pregunta de seguimiento orientada a su proyecto (por ejemplo: "¿Tienes en mente alguna funcionalidad en específico para tu plataforma o te gustaría que coordinemos una llamada estratégica para analizar los detalles?").\n`;
+          const topProduct = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
+          const prodTitle = topProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS a Medida' : 'Servicio Profesional');
+          const prodPrice = topProduct?.price ? `$${topProduct.price} ${topProduct.currency || 'USD'}` : (targetTenant.name === 'GeoSoft' ? '$1200 USD' : '');
+          const prodDelivery = topProduct?.details?.tiempo_entrega || '2 a 4 semanas';
+          const prodWarranty = topProduct?.details?.soporte || 'Garantía oficial de 3 meses';
+
+          contextBlock += `\n\n[DIRECTIVA DE ASESORÍA COMERCIAL EXPERTA Y ENTENDIMIENTO DE NECESIDADES (MÁXIMA PRIORIDAD ACTUAL)]:
+El cliente acaba de manifestar una necesidad, interés o consulta sobre tus productos o servicios ("${message}").
+1. RECONOCE Y VALIDA LA NECESIDAD DEL CLIENTE DE INMEDIATO:
+   - Demuestra con entusiasmo, cercanía y seguridad técnica que comprendes su proyecto y que está en el lugar indicado.
+   - Si solicita una página web o desarrollo digital, destaca el impacto positivo en su negocio (credibilidad, captación de clientes y ventas 24/7).
+2. PRESENTA LA SOLUCIÓN OFICIAL DEL CATÁLOGO CON AUTORIDAD Y CLARIDAD:
+   - Solución idónea: "${prodTitle}".
+   - Explica con atractivo lo que incluye: diseño responsive premium (adaptado a celulares y computadoras), carga ultrarrápida, optimización SEO para Google, botón directo de WhatsApp y panel de administración para el dueño.
+   - Menciona de forma transparente la tarifa oficial (${prodPrice || 'según especificaciones'}) y tiempos de entrega estimados (${prodDelivery}, ${prodWarranty}).
+3. PREGUNTA CONSULTIVA INTELIGENTE PARA DIAGNOSTICAR SU PROYECTO:
+   - Hazle una o dos preguntas clave para entender su necesidad: ¿qué tipo de negocio tiene? ¿Desea vender productos en línea (catálogo/pagos), ofrecer servicios profesionales o captar prospectos? ¿Tiene ya logotipo o contenidos listos?
+4. OFRECE AGENDAR UNA REUNIÓN O ASESORÍA VIRTUAL DE FORMA CONSULTIVA (SIN FORZAR SLOTS):
+   - Puedes invitarlo amablemente a coordinar una breve videollamada de 15 minutos para ver una demo y estructurar la propuesta, o continuar resolviendo sus dudas directamente aquí según prefiera.
+5. PROHIBICIONES ESTRICTAS:
+   - Queda TERMINANTEMENTE PROHIBIDO responder preguntas genéricas o tontas como "¿Hay algún producto en específico...?" cuando el cliente ya indicó su necesidad.
+   - Queda TERMINANTEMENTE PROHIBIDO exigirle datos de agendamiento en frío (nombre, correo, teléfono) sin antes haber respondido a su requerimiento con valor y claridad.\n`;
         } else if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
           contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
 Ubicación actual de datos en la conversación:
@@ -6581,7 +6662,13 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 6. CIERRE AMABLE Y DESPEDIDA PROFESIONAL (CERO RE-EMISIÓN DE TARJETA TRAS CONFIRMAR):
    - Cuando la cita YA ha sido confirmada en un turno anterior y el usuario responde diciendo gracias, que así está bien, que no tiene más dudas, que eso es todo o despidiéndose (ej: "gracias", "muchas gracias", "así está bien", "eso es todo", "ninguna duda", "todo claro", "hasta luego"):
      Queda TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y queda TERMINANTEMENTE PROHIBIDO volver a redactar la confirmación de la cita.
-     Responde ÚNICAMENTE con un saludo y despedida profesional y cordial indicándole que estaremos muy atentos a su sesión y que quedamos a su entera disposición para cualquier cambio o consulta cuando guste.`;
+     Responde ÚNICAMENTE con un saludo y despedida profesional y cordial indicándole que estaremos muy atentos a su sesión y que quedamos a su entera disposición para cualquier cambio o consulta cuando guste.
+7. CORRECCIÓN DE NOMBRE O DATOS DEL CLIENTE (MÁXIMA INTELIGENCIA Y REACTIVIDAD):
+   - Si el usuario indica que se equivocó de nombre, que el nombre está mal, que en realidad se llama de otra forma, o solicita cambiar/corregir su nombre (ej: "me equivoqué de nombre, en realidad me llamo Andrea", "el nombre dice Geogeo y te dije que soy Andrea", "mi nombre está mal, ponle Carlos"):
+     Acepta la corrección con total amabilidad y cortesía en un solo párrafo breve confirmando que has actualizado el nombre a "${bookingState.slots.name || 'su nombre correcto'}" en el sistema oficial para su cita del ${cleanResolvedDate} a las ${bookingState.slots.time}.
+     Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
+     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+     Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -6624,7 +6711,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (SOLO EN FLUJOS DE AGENDAMIENTO, NO EN PREGUNTAS INFORMATIVAS NI EN CIERRES)
         const hasPriorBookingCardInHist = sessionHistory.some(h => (h.sender === 'assistant' || h.role === 'assistant') && (h.message || h.content || '').includes('[BOOKING_CARD:')) || bookingState.hasPriorBookingCard;
         const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
-        const isRescheduleTurn = bookingState.isRescheduleIntent || Boolean(parseFlexibleTime(message) || (message || '').match(timeRegex));
+        const isNameCorrectionTurn = Boolean(bookingState.isNameCorrectionIntent || /\b(?:equivoqu[eé]|error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:dice|est[aá]|no\s+es)|cambia(?:r|me)?\s+(?:el\s+)?nombre|no\s+me\s+llamo|no\s+soy\s+[a-záéíóúñ]+|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+(?:me\s+llamo|soy)|mi\s+nombre\s+real\s+es)\b/i.test(message || ''));
+        const isRescheduleTurn = bookingState.isRescheduleIntent || isNameCorrectionTurn || Boolean(parseFlexibleTime(message) || (message || '').match(GLOBAL_TIME_REGEX));
 
         if (bookingState.isComplete && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
@@ -6669,15 +6757,26 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             try {
               const bService = targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional');
               const bPrice = targetTenant.name === 'GeoSoft' ? 1200 : 0;
-              const bName = (bookingState.slots.name || activeLeadInfo?.name || 'Cliente').trim();
+              let finalCardName = null;
+              const cardMatchForName = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
+              if (cardMatchForName) {
+                try {
+                  const parsedFinal = JSON.parse(cardMatchForName[1]);
+                  if (parsedFinal.customerName && parsedFinal.customerName.toLowerCase() !== 'cliente') {
+                    finalCardName = parsedFinal.customerName.trim();
+                  }
+                } catch (e) {}
+              }
+              const bName = (finalCardName || bookingState.slots.name || activeLeadInfo?.name || 'Cliente').trim();
               const bEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim();
               const bPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
               const bDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
               const bTime = bookingState.slots.time;
 
+              const cleanPhoneDigits = bPhone.replace(/\D/g, '');
               const existingApt = await executeD1(
-                "SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != '' AND customer_phone = ?2) OR (customer_email != '' AND customer_email = ?3)) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
-                [actualTenantId, bPhone, bEmail]
+                "SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != '' AND (customer_phone = ?2 OR (?3 != '' AND REPLACE(REPLACE(REPLACE(REPLACE(customer_phone, ' ', ''), '-', ''), '+', ''), '(', '') LIKE '%' || ?3 || '%'))) OR (customer_email != '' AND LOWER(customer_email) = LOWER(?4))) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
+                [actualTenantId, bPhone, cleanPhoneDigits || 'NON_MATCHING', bEmail]
               ).catch(() => []);
 
               if (existingApt.length > 0) {
