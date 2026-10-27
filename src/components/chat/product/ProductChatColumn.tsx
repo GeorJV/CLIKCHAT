@@ -93,7 +93,7 @@ export const ProductChatColumn: React.FC<Props> = ({
                 {bubbles.map((chunk, bIdx) => (
                   <div key={`${msg.id}-b-${bIdx}`} className={`w-fit max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm animate-bubble-in break-words overflow-hidden min-w-0 ${themeStyles.botBubble} origin-bottom-left`}>
                     <div className="space-y-1.5 min-w-0">
-                      <ChatMessageContent content={chunk} isUser={false} onActionClick={onSendMessage} />
+                      <ChatMessageContent content={chunk} isUser={false} onActionClick={onSendMessage} allowAddButtons={true} businessType="productos" />
                       {bIdx === bubbles.length - 1 && msg.quickActions && msg.quickActions.length > 0 && (
                         <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />
                       )}
@@ -115,7 +115,7 @@ export const ProductChatColumn: React.FC<Props> = ({
               <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[88%] sm:max-w-[80%] px-3.5 py-2 text-xs sm:text-sm' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm'} ${isAssistant ? `${themeStyles.botBubble} origin-bottom-left` : `${themeStyles.userBubble} origin-bottom-right`}`}>
                 {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
-                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} />
+                    <ChatMessageContent content={msg.content} isUser={false} onActionClick={onSendMessage} allowAddButtons={true} businessType="productos" />
                     {msg.quickActions && msg.quickActions.length > 0 && <QuickActionButtons actions={msg.quickActions} onSelect={onSendMessage} disabled={isLoading} />}
                     {(!isNextSameSender || msg.ragTrace) && (
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">

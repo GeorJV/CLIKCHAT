@@ -6,6 +6,8 @@ interface ChatMessageContentProps {
   isUser?: boolean;
   className?: string;
   onActionClick?: (text: string) => void;
+  allowAddButtons?: boolean;
+  businessType?: string;
 }
 
 /**
@@ -36,11 +38,7 @@ function renderInlineFormatted(text: string, isUser: boolean): React.ReactNode[]
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-1.5 font-bold my-0.5 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-xs sm:text-[11px] min-h-[30px] sm:min-h-0 transition duration-200 break-all ${
-            isWhatsApp
-              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-950/40'
-              : isUser
-              ? 'bg-white/20 hover:bg-white/30 text-white underline decoration-white/50'
-              : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 underline decoration-indigo-400/50'
+            isWhatsApp ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-950/40' : isUser ? 'bg-white/20 hover:bg-white/30 text-white underline decoration-white/50' : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 underline decoration-indigo-400/50'
           }`}
         >
           {isWhatsApp ? <MessageCircle className="w-3.5 h-3.5 sm:w-3 sm:h-3 shrink-0" /> : <ExternalLink className="w-3.5 h-3.5 sm:w-3 sm:h-3 shrink-0" />}
@@ -70,20 +68,26 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
   content,
   isUser = false,
   className = '',
-  onActionClick
+  onActionClick,
+  allowAddButtons,
+  businessType
 }) => {
   const [recentlyAdded, setRecentlyAdded] = useState<number | null>(null);
 
   if (!content) return null;
+
+  // Los botones de agregar solo deben aparecer cuando son productos físicos, no cuando son servicios
+  const isServiceBusiness = allowAddButtons === false || businessType === 'servicios' || businessType === 'servicio' ||
+    (typeof window !== 'undefined' && (window.location.pathname.includes('/servicio') || localStorage.getItem('clikchat_business_type') === 'servicios'));
+  const isServiceContext = /\b(?:agendar\s+(?:tu\s+)?cita|reserva\s+de\s+servicio|nuestros\s+servicios|servicios\s+disponibles|modalidad\s+(?:presencial|online)|agendar\s+una\s+cita)\b/i.test(content);
+  const canShowAddButtons = !isServiceBusiness && !isServiceContext;
 
   const handleAdd = (rawItem: string, idx: number) => {
     setRecentlyAdded(idx);
     setTimeout(() => setRecentlyAdded(null), 2500);
     let cleanName = rawItem.replace(/\*\*/g, '').trim();
     const colonIdx = cleanName.indexOf(':');
-    if (colonIdx !== -1) {
-      cleanName = cleanName.substring(0, colonIdx).trim();
-    }
+    if (colonIdx !== -1) cleanName = cleanName.substring(0, colonIdx).trim();
     onActionClick?.(`Agregar ${cleanName}`);
   };
 
@@ -133,8 +137,9 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           const rawItem = bulletMatch[1];
           const isShippingOrPolicy = /\b(?:domicilio|express|env[ií]o|entrega|recoger|compras\s*\+|gratis\s*en|m[ií]nimo\s*de)\b/i.test(rawItem);
           const hasPrice = !isShippingOrPolicy && /(?:[\$₡¢€£]\s*[\d,.]+|[\d,.]+\s*(?:[\$₡¢€£]|USD|CRC|EUR|COP|MXN)|(?:CRC|colones?)\s*[\d,.]+)/i.test(rawItem);
+          const isServiceItem = /\b(?:servicio|servicios|sesi[oó]n|sesiones|asesor[ií]a|consultor[ií]a|cita|agendar|clase|curso|taller|capacitaci[oó]n|instalaci[oó]n|mantenimiento|reparaci[oó]n|dise[ñn]o|desarrollo|auditor[ií]a|coaching|terapia|tratamiento|honorarios|consulta\s+m[eé]dica|limpieza|diagn[oó]stico|revisi[oó]n|peritaje|soporte\s+t[eé]cnico)\b/i.test(rawItem);
 
-          if (hasPrice && onActionClick) {
+          if (canShowAddButtons && !isServiceItem && hasPrice && onActionClick) {
             const hasQuantity = /^\*{0,2}\d+\s*x\s+/i.test(rawItem);
             const isAdded = recentlyAdded === idx || (isOrderSummaryMessage && hasQuantity) || hasQuantity || isOrderSummaryMessage;
             return (
@@ -153,9 +158,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
                 <button
                   type="button" onClick={() => handleAdd(rawItem, idx)}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer ${
-                    isAdded
-                      ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]'
-                      : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-black shadow-orange-950/40 border border-amber-300/70'
+                    isAdded ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300' : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-black shadow-orange-950/40 border border-amber-300/70'
                   }`}
                   title={isAdded ? 'Producto en la orden. Clic para añadir otra unidad.' : `Agregar ${rawItem.replace(/\*\*/g, '').trim()} a la orden`}
                 >
@@ -166,11 +169,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           }
         }
 
-        return (
-          <div key={`line-${idx}`} className="break-words leading-snug">
-            {renderInlineFormatted(trimmed, isUser)}
-          </div>
-        );
+        return <div key={`line-${idx}`} className="break-words leading-snug">{renderInlineFormatted(trimmed, isUser)}</div>;
       })}
     </div>
   );

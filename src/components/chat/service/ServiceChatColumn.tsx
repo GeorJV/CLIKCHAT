@@ -97,7 +97,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
                 {bubbles.map((chunk, bIdx) => (
                   <div key={`${msg.id}-b-${bIdx}`} className="w-fit max-w-[92%] sm:max-w-[85%] px-3.5 py-2 text-xs sm:text-sm bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left animate-bubble-in break-words overflow-hidden min-w-0">
                     <div className="space-y-1.5 min-w-0">
-                      <ChatMessageContent content={chunk} isUser={false} onActionClick={onSendMessage} />
+                      <ChatMessageContent content={chunk} isUser={false} onActionClick={onSendMessage} allowAddButtons={false} businessType="servicios" />
                       {bIdx === bubbles.length - 1 && bookingData && (
                         <BookingCardBubble bookingData={bookingData} isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))} storeName={storeName} businessPhone={businessPhone} onConfirm={(d) => onConfirmBookingFromCard?.(d)} />
                       )}
@@ -119,7 +119,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
               <div className={`w-fit animate-bubble-in break-words overflow-hidden min-w-0 ${msg.isAudio ? 'px-2 py-0.5' : isAssistant ? 'max-w-[92%] sm:max-w-[85%] px-3.5 py-2 text-xs sm:text-sm bg-[#1e1d1d] text-slate-100 rounded-2xl rounded-bl-sm border border-white/[0.12] shadow-lg shadow-black/60 origin-bottom-left' : 'max-w-[85%] sm:max-w-[78%] px-3 py-1.5 text-xs sm:text-sm bg-[#D79F4C]/50 backdrop-blur-md text-white rounded-2xl rounded-br-sm border border-[#D79F4C]/30 shadow-md origin-bottom-right'}`}>
                 {msg.isAudio ? <ChatAudioPlayerBubble audioUrl={msg.audioUrl} duration={msg.audioDuration} timestamp={msg.timestamp} isUser={!isAssistant} /> : isAssistant ? (
                   <div className="space-y-1.5 min-w-0">
-                    {cleanContent && <ChatMessageContent content={cleanContent} isUser={false} onActionClick={onSendMessage} />}
+                    {cleanContent && <ChatMessageContent content={cleanContent} isUser={false} onActionClick={onSendMessage} allowAddButtons={false} businessType="servicios" />}
                     {bookingData && <BookingCardBubble bookingData={bookingData} isConfirmed={Boolean(confirmedBooking && (confirmedBooking.date === bookingData.date || confirmedBooking.timeSlot === bookingData.timeSlot))} storeName={storeName} businessPhone={businessPhone} onConfirm={(d) => onConfirmBookingFromCard?.(d)} />}
                     {(!isNextSameSender || msg.ragTrace) && (
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
