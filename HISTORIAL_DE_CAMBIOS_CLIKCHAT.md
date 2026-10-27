@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Estabilización Definitiva de Citas: Erradicación de Nombres Fantasma y Movimientos Anómalos (v2.8.0)
+- **Diagnóstico y Causas Raíces:**
+  1. *Bucle Infinito de Peticiones en `bookingSyncBus.ts`:* El parche global de `window.fetch` interceptaba indebidamente toda llamada GET a `/api/bookings` con `"success": true`, disparando `broadcastBookingCreated()` en cada lectura. Esto volvía a llamar a `fetchBookings()` inmediatamente en un bucle vertiginoso de re-peticiones cada pocos milisegundos.
+  2. *Re-renderizado Constante con Animación Desestabilizadora (`VoceroAppointmentCard.tsx`):* Cada tarjeta poseía la clase CSS `transition-all duration-500 scale-[1.01]`. Al re-renderizarse sin cesar por el bucle de polling, las tarjetas sufrían micro-expansiones y transiciones continuas de escala, provocando un temblor y salto constante en la vista ("movimiento extraño").
+  3. *Inyección de Nombres Ficticios (`bookingConstants.ts`):* El estado inicial de React cargaba citas de prueba (Carlos Morales, María Fernanda Ruiz, David Rodríguez). Al llegar la respuesta de la API una fracción de segundo después, los nombres eran reemplazados abruptamente por Andrex, Andres, etc., percibido como "cambio de nombre".
+  4. *Inestabilidad en la Fusión de Citas (Edge vs D1):* En `/api/bookings`, la cita de Esteban Solano existía en `GLOBAL_BOOKINGS` pero no en D1, por lo que el worker le aplicaba `rows.unshift()` insertándola al inicio, alternando de lugar con Andrex según la instancia Edge.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Filtro Quirúrgico de Intercepción (`src/utils/bookingSyncBus.ts`):* Limitado estrictamente a peticiones `POST` de creación de citas o confirmaciones de chat; nunca intercepta lecturas `GET`.
+  2. *Estabilidad Visual de Tarjetas (`VoceroAppointmentCard.tsx`):* Sustituido `transition-all duration-500` y `scale-[1.01]` por `transition-colors duration-200`, eliminando desplazamientos parásitos del layout.
+  3. *Eliminación de Nombres Ficticios (`bookingConstants.ts`):* `getInitialAppointments` ahora devuelve array vacío `[]`; la vista arranca limpia o con la caché real del tenant.
+  4. *Ordenamiento Determinista y Memoización Inmutable (`VoceroBookingsView.tsx` y Backend):*
+     - Backend (`functions/api/[[route]].js`): Ordenamiento canónico `ORDER BY created_at DESC, id DESC`.
+     - Frontend: Citas ordenadas de forma estable por fecha, hora e ID; se verifica igualdad previa para no disparar re-renderizados si los datos son idénticos.
+     - Polling inteligente ajustado a 15s con pausa automática en segundo plano (`document.hidden`).
+     - Sincronización de Esteban Solano en D1 para coherencia total.
+  5. *Cumplimiento ARQMODULAR:* `VoceroBookingsView.tsx` (177 líneas), `VoceroAppointmentCard.tsx` (100 líneas), `AgendaTab.tsx` (174 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 14.49s (`dist/assets/index-DCXEPfNW.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación runtime en Chrome Headless (17/17 rutas operativas al 100%).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Implementación de Eliminación Persistente y Modificación de Citas (v2.7.9)
 - **Diagnóstico y Causas Raíces:**
   1. *Falta de Endpoint DELETE en Backend:* En `functions/api/[[route]].js`, la ruta `bookings` solo implementaba `GET` y `POST`. No existía el método `DELETE`, por lo que ninguna petición de borrado llegaba a la base de datos D1 ni a la memoria Edge.

@@ -52,7 +52,8 @@ export const AgendaTab: React.FC<AgendaTabProps> = ({ tenantId, highlightedBooki
           }));
           setAppointments((prev) => {
             const apiIds = new Set(apiApts.map(a => a.id));
-            const merged = [...apiApts, ...prev.filter(p => !apiIds.has(p.id) && !p.id.startsWith('apt_'))];
+            const merged = [...apiApts, ...prev.filter(p => !apiIds.has(p.id) && !p.id.startsWith('apt_'))].sort((a, b) => b.id.localeCompare(a.id));
+            if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status)) return prev;
             if (typeof window !== 'undefined') { try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch (e) {} }
             return merged;
           });
@@ -67,20 +68,14 @@ export const AgendaTab: React.FC<AgendaTabProps> = ({ tenantId, highlightedBooki
     window.addEventListener('focus', handleActive);
     document.addEventListener('visibilitychange', handleActive);
     const unsub = subscribeBookingSync(() => fetchBookings(true));
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(true); }, 2500);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(true); }, 15000);
     return () => { window.removeEventListener('focus', handleActive); document.removeEventListener('visibilitychange', handleActive); unsub(); clearInterval(timer); };
   }, [activeSlug]);
 
   const handleToggleAgentBooking = async () => {
-    const nextVal = !allowAgentBooking;
-    setAllowAgentBooking(nextVal);
-    if (typeof window !== 'undefined') { try { localStorage.setItem(bookingSwitchKey, String(nextVal)); } catch (e) {} }
-    try {
-      await fetch('/api/tenant/booking-settings', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: activeSlug, allowAgentBooking: nextVal })
-      });
-    } catch (e) {}
+    const nextVal = !allowAgentBooking; setAllowAgentBooking(nextVal);
+    if (typeof window !== 'undefined') { try { localStorage.setItem(bookingSwitchKey, String(nextVal)); } catch {} }
+    try { await fetch('/api/tenant/booking-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: activeSlug, allowAgentBooking: nextVal }) }); } catch {}
   };
 
   const filtered = appointments.filter(a => filter === 'all' || a.status === filter);

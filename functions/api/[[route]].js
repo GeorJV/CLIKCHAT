@@ -3367,6 +3367,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           }
         }
 
+        rows.sort((a, b) => ((b.created_at || '').localeCompare(a.created_at || '')) || (b.id || '').localeCompare(a.id || ''));
         return jsonResponse({ success: true, bookings: rows });
       }
     }

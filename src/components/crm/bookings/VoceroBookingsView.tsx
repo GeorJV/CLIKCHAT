@@ -1,17 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CalendarDays, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard';
 import { VoceroNewBookingModal } from './VoceroNewBookingModal';
 import { VoceroCompactCalendar } from './VoceroCompactCalendar';
 import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
 import { BookingIntervalConfig } from './BookingIntervalConfig';
-import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
+import { BOOKING_FILTER_TABS } from './bookingConstants';
 import { normalizeToDateKey, formatDisplayDate, getBookingFilterKeys, isBookingInFilter, BookingFilterType } from '../../../utils/bookingDateNormalizer';
-import { subscribeBookingSync } from '../../../utils/bookingSyncBus';
+import { subscribeBookingSync, broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface VoceroBookingsViewProps {
   tenantId?: string; currency?: string; highlightedBookingId?: string | null; onAcknowledgeBooking?: (id: string) => void;
 }
+
+const sortApts = (list: AppointmentItem[]) => [...list].sort((a, b) => (b.dateKey || '').localeCompare(a.dateKey || '') || (b.time || '').localeCompare(a.time || '') || b.id.localeCompare(a.id));
 
 export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId, highlightedBookingId, onAcknowledgeBooking }) => {
   const [timeFilter, setTimeFilter] = useState<BookingFilterType>('all');
@@ -19,6 +21,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   const [showMonthCalendar, setShowMonthCalendar] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
+  const lastScrolledRef = useRef<string | null>(null);
   const now = useMemo(() => new Date(), []);
   const filterKeys = useMemo(() => getBookingFilterKeys(now), [now]);
   const todayKey = filterKeys.todayKey;
@@ -31,9 +34,10 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   });
 
   useEffect(() => {
-    if (highlightedBookingId) {
+    if (highlightedBookingId && lastScrolledRef.current !== highlightedBookingId) {
+      lastScrolledRef.current = highlightedBookingId;
       setTimeFilter('all'); setCalendarSelectedDate(null);
-      setTimeout(() => { document.getElementById(`vocero-apt-${highlightedBookingId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      setTimeout(() => { document.getElementById(`vocero-apt-${highlightedBookingId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
     }
   }, [highlightedBookingId]);
 
@@ -45,9 +49,8 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
         if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
       });
       const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
-      const src = unique.length > 0 ? unique : getInitialAppointments();
-      return src.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate }));
-    } catch { return getInitialAppointments(); }
+      return sortApts(unique.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate })));
+    } catch { return []; }
   });
 
   const fetchBookings = () => {
@@ -59,7 +62,13 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           dateKey: normalizeToDateKey(b.booking_date, now) || todayKey, displayDate: formatDisplayDate(b.booking_date, now) || b.booking_date,
           time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
-        setAppointments(prev => [...apiApts, ...prev.filter(p => !new Set(apiApts.map(a => a.id)).has(p.id) && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id))]);
+        setAppointments(prev => {
+          const apiIds = new Set(apiApts.map(a => a.id));
+          const rest = prev.filter(p => !apiIds.has(p.id) && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id));
+          const merged = sortApts([...apiApts, ...rest]);
+          if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status && p.clientName === merged[i].clientName && p.time === merged[i].time)) return prev;
+          return merged;
+        });
       }
     }).catch(() => {});
   };
@@ -70,7 +79,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     window.addEventListener('focus', handleActive);
     document.addEventListener('visibilitychange', handleActive);
     const unsub = subscribeBookingSync(fetchBookings);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 3500);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 15000);
     return () => { window.removeEventListener('focus', handleActive); document.removeEventListener('visibilitychange', handleActive); unsub(); clearInterval(timer); };
   }, [tId, todayKey, now]);
 
@@ -121,56 +130,48 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           <Plus className="w-3.5 h-3.5" /><span>Nueva Cita</span>
         </button>
       </header>
-
-        {/* Switch Agendamiento en Chat */}
-        <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${allowAgentBooking ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-            <span className="font-bold text-[#0a1730]">Permitir al agente agendar citas en el chat</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${allowAgentBooking ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'}`}>{allowAgentBooking ? 'Activo' : 'Inactivo'}</span>
-          </div>
-          <button type="button" onClick={handleToggleAgentBooking} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${allowAgentBooking ? 'bg-[#0d5bff]' : 'bg-slate-300'}`} role="switch" aria-checked={allowAgentBooking}>
-            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${allowAgentBooking ? 'translate-x-4' : 'translate-x-0'}`} />
-          </button>
+      <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${allowAgentBooking ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+          <span className="font-bold text-[#0a1730]">Permitir al agente agendar citas en el chat</span>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${allowAgentBooking ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'}`}>{allowAgentBooking ? 'Activo' : 'Inactivo'}</span>
         </div>
-
-        {/* Filtros Temporales */}
-        <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
-          {BOOKING_FILTER_TABS.map((tab) => (
-            <button key={tab.id} onClick={() => { setTimeFilter(tab.id as any); setCalendarSelectedDate(null); }} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${timeFilter === tab.id && !calendarSelectedDate ? 'bg-[#0d5bff] text-white shadow-xs' : 'bg-[#f1f5f9] text-[#62728d] hover:text-[#0a1730]'}`}>{tab.label}</button>
-          ))}
-          <div className="h-4 w-px bg-[#e2e8f0] mx-0.5 shrink-0" />
-          <button type="button" onClick={() => { setShowMonthCalendar(!showMonthCalendar); setCalendarSelectedDate(null); }} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${showMonthCalendar ? 'bg-[#0d5bff] text-white shadow-xs' : 'bg-[#f1f5f9] text-[#42506b] hover:text-[#0a1730] hover:bg-[#e2e8f0]'}`}>
-            <CalendarIcon className="w-3.5 h-3.5" /><span>{showMonthCalendar ? 'Ocultar Mes' : 'Mes Completo'}</span>
-          </button>
-        </div>
-
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl w-full mx-auto space-y-3">
-          <BookingIntervalConfig tenantId={tId} isDarkTheme={false} />
-          {showMonthCalendar && <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>}
-          {filtered.length === 0 ? (
-            <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs">
-              <CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p>
-            </div>
-          ) : (
-            filtered.map((apt) => (
-              <VoceroAppointmentCard
-                key={apt.id} appointment={apt}
-                isHighlighted={apt.id === highlightedBookingId}
-                onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)}
-                onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment}
-                onSelectAppointment={(item) => setSelectedAppointment(item)}
-              />
-            ))
-          )}
-        </main>
-
-        <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => {
-          const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
-          setAppointments(prev => [norm, ...prev]);
-          broadcastBookingCreated(tId);
-        }} />
-        <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={handleDeleteAppointment} />
+        <button type="button" onClick={handleToggleAgentBooking} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${allowAgentBooking ? 'bg-[#0d5bff]' : 'bg-slate-300'}`} role="switch" aria-checked={allowAgentBooking}>
+          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${allowAgentBooking ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
       </div>
-    );
-  };
+      <div className="bg-white border-b border-[#e8edf6] px-4 sm:px-6 py-2 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
+        {BOOKING_FILTER_TABS.map((tab) => (
+          <button key={tab.id} onClick={() => { setTimeFilter(tab.id as any); setCalendarSelectedDate(null); }} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${timeFilter === tab.id && !calendarSelectedDate ? 'bg-[#0d5bff] text-white shadow-xs' : 'bg-[#f1f5f9] text-[#62728d] hover:text-[#0a1730]'}`}>{tab.label}</button>
+        ))}
+        <div className="h-4 w-px bg-[#e2e8f0] mx-0.5 shrink-0" />
+        <button type="button" onClick={() => { setShowMonthCalendar(!showMonthCalendar); setCalendarSelectedDate(null); }} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${showMonthCalendar ? 'bg-[#0d5bff] text-white shadow-xs' : 'bg-[#f1f5f9] text-[#42506b] hover:text-[#0a1730] hover:bg-[#e2e8f0]'}`}>
+          <CalendarIcon className="w-3.5 h-3.5" /><span>{showMonthCalendar ? 'Ocultar Mes' : 'Mes Completo'}</span>
+        </button>
+      </div>
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl w-full mx-auto space-y-3">
+        <BookingIntervalConfig tenantId={tId} isDarkTheme={false} />
+        {showMonthCalendar && <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>}
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs">
+            <CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p>
+          </div>
+        ) : (
+          filtered.map((apt) => (
+            <VoceroAppointmentCard
+              key={apt.id} appointment={apt} isHighlighted={apt.id === highlightedBookingId}
+              onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)} onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment}
+              onSelectAppointment={(item) => setSelectedAppointment(item)}
+            />
+          ))
+        )}
+      </main>
+      <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => {
+        const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
+        setAppointments(prev => sortApts([norm, ...prev]));
+        broadcastBookingCreated(tId);
+      }} />
+      <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={handleDeleteAppointment} />
+    </div>
+  );
+};

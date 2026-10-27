@@ -36,9 +36,9 @@ export const VoceroAppointmentCard: React.FC<Props> = ({
     <div
       id={`vocero-apt-${apt.id}`}
       onMouseEnter={() => { if (isHighlighted && onHover) onHover(); }}
-      className={`rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 transition-all duration-500 font-sans ${
+      className={`rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 transition-colors duration-200 font-sans ${
         isHighlighted
-          ? 'bg-gradient-to-r from-amber-50/95 via-orange-50/80 to-white border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)] ring-2 ring-amber-400/30 scale-[1.01]'
+          ? 'bg-gradient-to-r from-amber-50/95 via-orange-50/80 to-white border-2 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/30'
           : 'border border-[#e2e8f0] bg-white hover:border-[#b8cced]'
       }`}
     >

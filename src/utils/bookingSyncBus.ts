@@ -68,10 +68,12 @@ if (typeof window !== 'undefined' && !(window as any).__clikchat_booking_sync_ho
     const res = await origFetch.apply(this, args);
     try {
       const url = typeof args[0] === 'string' ? args[0] : (args[0] && (args[0] as Request).url) || '';
-      if (typeof url === 'string' && (url.includes('/api/chat/message') || url.includes('/api/bookings'))) {
+      const method = (args[1]?.method || (args[0] && (args[0] as Request).method) || 'GET').toUpperCase();
+      // Solo interceptar chats con tarjetas de reserva o POST explícitos de creación de citas
+      if (typeof url === 'string' && (url.includes('/api/chat/message') || (url.includes('/api/bookings') && method === 'POST'))) {
         const cloned = res.clone();
         cloned.text().then(txt => {
-          if (txt.includes('[BOOKING_CARD:') || txt.includes('"bookingCard"') || (url.includes('/api/bookings') && txt.includes('"success":true'))) {
+          if (txt.includes('[BOOKING_CARD:') || txt.includes('"bookingCard"') || (method === 'POST' && txt.includes('"success":true'))) {
             try {
               const data = JSON.parse(txt);
               if (data?.booking) {
