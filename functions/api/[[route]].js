@@ -4663,9 +4663,6 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
   return str;
 }
 
-  return str;
-}
-
 function parseFlexibleTime(str) {
   if (!str) return null;
   const s = str.trim().toLowerCase();
