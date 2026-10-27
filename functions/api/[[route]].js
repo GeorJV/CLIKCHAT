@@ -1295,7 +1295,15 @@ export async function onRequest(context) {
   try {
     // Health check
     if (segments[0] === 'health') {
-      return jsonResponse({ status: 'ok', service: 'Clikchat Edge Functions', timestamp: new Date().toISOString() });
+      return jsonResponse({
+        status: 'ok',
+        service: 'Clikchat Edge Functions',
+        timestamp: new Date().toISOString(),
+        commit: 'test-dates',
+        testTuesday: formatFullDayAndDate('martes'),
+        testWednesday: formatFullDayAndDate('miercoles'),
+        test29: formatFullDayAndDate('29')
+      });
     }
 
     // ==============================================================================
