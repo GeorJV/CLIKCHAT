@@ -86,7 +86,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
               <optgroup label="✨ 3 Modelos Predeterminados (Cascada de Seguridad en Anillo)">
                 <option value="z-ai/glm-5.3-flash:floor">🥇 Modelo 1: GLM 5 (GLM 5.3 Flash · Rápido y Ventas)</option>
                 <option value="openai/gpt-4o-mini">🥈 Modelo 2: GPT (ChatGPT 5 Mini · Razonamiento)</option>
-                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">🥉 Modelo 3: Meta (Meta Llama 3.3 · Clofer)</option>
+                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">🥉 Modelo 3: Meta (Meta Llama 3.3 · Gratuito de Cloudflare)</option>
               </optgroup>
               <optgroup label="Modelos Adicionales de OpenRouter">
                 <option value="deepseek/deepseek-chat">DeepSeek Chat (OpenRouter Comercial)</option>

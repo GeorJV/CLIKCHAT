@@ -39,10 +39,10 @@ export const PREDEFINED_AI_MODELS: PredefinedAiModel[] = [
     key: 'meta',
     name: 'Modelo 3: Meta',
     shortLabel: 'Meta Llama 3.3',
-    subtitle: 'Meta Llama 3.3 (Cloudflare Clofer)',
+    subtitle: 'Meta Llama 3.3 (Gratuito de Cloudflare)',
     modelSlug: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
     provider: 'cloudflare',
-    description: 'Motor de código abierto de Meta servido en el borde de Cloudflare y OpenRouter.',
+    description: 'Motor de Inteligencia Artificial gratuito nativo de Cloudflare Workers AI.',
   },
 ];
 

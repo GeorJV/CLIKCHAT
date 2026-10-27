@@ -89,12 +89,13 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
           <h2 className="text-[15px] sm:text-[17px] font-bold tracking-tight text-[#0a1730] shrink-0">Live Lab</h2>
           <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-1 sm:ml-2">
             {[
-              { id: 'model-1' as const, label: '🥇 Mod 1: GLM 5' },
-              { id: 'model-2' as const, label: '🥈 Mod 2: GPT' },
-              { id: 'model-3' as const, label: '🥉 Mod 3: Meta' },
+              { id: 'model-1' as const, label: '🥇 Mod 1: GLM 5', title: 'GLM 5.3 Flash (OpenRouter)' },
+              { id: 'model-2' as const, label: '🥈 Mod 2: GPT', title: 'ChatGPT 5 Mini (OpenRouter)' },
+              { id: 'model-3' as const, label: '🥉 Mod 3: Meta (CF)', title: 'Meta Llama 3.3 (Gratuito de Cloudflare)' },
             ].map((m) => (
               <button
                 key={m.id}
+                title={m.title}
                 onClick={() => setSelectedModel(m.id)}
                 className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
                   selectedModel === m.id

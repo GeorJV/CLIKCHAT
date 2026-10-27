@@ -1158,6 +1158,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   };
 
   const callModel3_Meta = async () => {
+    // 1. Enlace nativo Cloudflare Workers AI en el Edge (env.AI)
     if (env?.AI) {
       try {
         const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
@@ -1178,7 +1179,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
               text: clean,
               provider: 'cloudflare_workers_ai',
               model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-              modelLabel: 'Modelo 3: Meta',
+              modelLabel: 'Modelo 3: Meta (Cloudflare)',
               neurons,
               costUsd: Number(((neurons / 1000) * 0.011).toFixed(6)),
               tokens: inTokens + outTokens
@@ -1186,46 +1187,59 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           }
         }
       } catch (cfErr) {
-        console.warn('Cloudflare Workers AI Llama falló, probando Meta en OpenRouter:', cfErr.message);
+        console.warn('Cloudflare Workers AI (env.AI) error:', cfErr.message);
+        throw new Error(`Cloudflare Workers AI: ${cfErr.message}`);
       }
     }
 
-    if (!openRouterKey) throw new Error('API Key no disponible para Meta Llama 3.3');
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openRouterKey}`,
-        'HTTP-Referer': 'https://clikchat.pages.dev',
-        'X-Title': 'ClikChat Edge AI'
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-70b-instruct',
-        messages,
-        temperature: 0.1,
-        max_tokens: 1000,
-        provider: { sort: 'price', allow_fallbacks: false }
-      }),
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!resp.ok) {
-      const errTxt = await resp.text().catch(() => '');
-      throw new Error(`OpenRouter Meta HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
+    // 2. Fallback directo a la API REST de Cloudflare Workers AI (gratuito con credenciales de Cloudflare)
+    const cfToken = env?.CLOUDFLARE_API_TOKEN || env?.CF_PAGES_API_TOKEN;
+    const cfAccount = env?.CLOUDFLARE_ACCOUNT_ID || env?.CF_PAGES_ACCOUNT_ID || '2a67b9374597924117a6a21ea3de3305';
+    if (cfToken && cfAccount) {
+      try {
+        const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`;
+        const cfFetchResp = await fetch(cfUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${cfToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: systemContent },
+              ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+              { role: 'user', content: userMessage }
+            ],
+            max_tokens: 1024
+          }),
+          signal: AbortSignal.timeout(7000)
+        });
+        const cfData = await cfFetchResp.json().catch(() => ({}));
+        if (cfData?.result?.response) {
+          const clean = sanitizeAiResponse(cfData.result.response);
+          if (clean) {
+            const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
+            const outTokens = Math.round(clean.length / 4);
+            const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
+            return {
+              text: clean,
+              provider: 'cloudflare_workers_ai',
+              model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+              modelLabel: 'Modelo 3: Meta (Cloudflare)',
+              neurons,
+              costUsd: Number(((neurons / 1000) * 0.011).toFixed(6)),
+              tokens: inTokens + outTokens
+            };
+          }
+        }
+        const errDetail = cfData?.errors?.[0]?.message || `HTTP ${cfFetchResp.status}`;
+        throw new Error(`Cloudflare Workers AI: ${errDetail}`);
+      } catch (restErr) {
+        throw new Error(`Cloudflare Workers AI: ${restErr.message}`);
+      }
     }
-    const data = await resp.json();
-    const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
-    if (!clean) throw new Error('Meta Llama 3.3 devolvió respuesta vacía');
-    const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
-    const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
-    return {
-      text: clean,
-      provider: 'openrouter',
-      model: 'meta-llama/llama-3.3-70b-instruct',
-      modelLabel: 'Modelo 3: Meta',
-      neurons: 0,
-      costUsd: Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6)),
-      tokens: pTokens + cTokens
-    };
+
+    throw new Error('Cloudflare Workers AI: binding de IA no disponible en este entorno');
   };
 
   const pref = (preferredModel || userCustomConfig?.model || '').toLowerCase();
