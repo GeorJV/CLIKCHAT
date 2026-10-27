@@ -33,28 +33,20 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   useEffect(() => {
     if (highlightedBookingId) {
       setTimeFilter('all'); setCalendarSelectedDate(null);
-      setTimeout(() => {
-        const el = document.getElementById(`vocero-apt-${highlightedBookingId}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
+      setTimeout(() => { document.getElementById(`vocero-apt-${highlightedBookingId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
     }
   }, [highlightedBookingId]);
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
     try {
-      const keys = [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'];
       let allFound: any[] = [];
-      for (const k of keys) {
+      [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
         const s = localStorage.getItem(k);
-        if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound = [...allFound, ...arr]; } catch {} }
-      }
-      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values());
-      const clean = unique.filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
-      const src = clean.length > 0 ? clean : getInitialAppointments();
-      return src.map((a: AppointmentItem) => ({
-        ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey,
-        displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate
-      }));
+        if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
+      });
+      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
+      const src = unique.length > 0 ? unique : getInitialAppointments();
+      return src.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate }));
     } catch { return getInitialAppointments(); }
   });
 
@@ -64,10 +56,8 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       if (d?.bookings && Array.isArray(d.bookings)) {
         const apiApts = d.bookings.map((b: any) => ({
           id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
-          dateKey: normalizeToDateKey(b.booking_date, now) || todayKey,
-          displayDate: formatDisplayDate(b.booking_date, now) || b.booking_date,
-          time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const,
-          phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
+          dateKey: normalizeToDateKey(b.booking_date, now) || todayKey, displayDate: formatDisplayDate(b.booking_date, now) || b.booking_date,
+          time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
         setAppointments(prev => [...apiApts, ...prev.filter(p => !new Set(apiApts.map(a => a.id)).has(p.id) && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id))]);
       }
@@ -80,7 +70,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     window.addEventListener('focus', handleActive);
     document.addEventListener('visibilitychange', handleActive);
     const unsub = subscribeBookingSync(fetchBookings);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 2500);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 3500);
     return () => { window.removeEventListener('focus', handleActive); document.removeEventListener('visibilitychange', handleActive); unsub(); clearInterval(timer); };
   }, [tId, todayKey, now]);
 
@@ -100,15 +90,24 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     try { await fetch('/api/tenant/booking-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tId, allowAgentBooking: nextVal }) }); } catch {}
   };
 
-  const handleToggleStatus = (id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: a.status === 'confirmed' ? 'pending' : 'confirmed' } : a));
+  const handleDeleteAppointment = async (id: string) => {
+    setAppointments(prev => prev.filter(a => a.id !== id));
+    if (selectedAppointment?.id === id) setSelectedAppointment(null);
+    [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
+      try { const s = localStorage.getItem(k); if (s) { const arr = JSON.parse(s); if (Array.isArray(arr)) localStorage.setItem(k, JSON.stringify(arr.filter((a: any) => a.id !== id))); } } catch {}
+    });
+    try { await fetch(`/api/bookings/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch (e) {}
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    const apt = appointments.find(a => a.id === id);
+    const next = apt?.status === 'confirmed' ? 'pending' : 'confirmed';
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: next } : a));
+    try { await fetch(`/api/bookings/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) }); } catch (e) {}
   };
 
   const appointmentDates = useMemo(() => appointments.map(a => normalizeToDateKey(a.dateKey, now) || a.dateKey), [appointments, now]);
-  const filtered = useMemo(() => {
-    if (calendarSelectedDate) return appointments.filter(a => (normalizeToDateKey(a.dateKey, now) || a.dateKey) === calendarSelectedDate);
-    return appointments.filter(a => isBookingInFilter(a.dateKey, timeFilter, filterKeys, now));
-  }, [appointments, timeFilter, calendarSelectedDate, filterKeys, now]);
+  const filtered = useMemo(() => calendarSelectedDate ? appointments.filter(a => (normalizeToDateKey(a.dateKey, now) || a.dateKey) === calendarSelectedDate) : appointments.filter(a => isBookingInFilter(a.dateKey, timeFilter, filterKeys, now)), [appointments, timeFilter, calendarSelectedDate, filterKeys, now]);
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
@@ -159,7 +158,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
                 key={apt.id} appointment={apt}
                 isHighlighted={apt.id === highlightedBookingId}
                 onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)}
-                onToggleStatus={handleToggleStatus} onDelete={(id) => setAppointments(prev => prev.filter(a => a.id !== id))}
+                onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment}
                 onSelectAppointment={(item) => setSelectedAppointment(item)}
               />
             ))
@@ -171,7 +170,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           setAppointments(prev => [norm, ...prev]);
           broadcastBookingCreated(tId);
         }} />
-        <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={(id) => { setAppointments(prev => prev.filter(a => a.id !== id)); setSelectedAppointment(null); }} />
+        <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={handleDeleteAppointment} />
       </div>
     );
   };

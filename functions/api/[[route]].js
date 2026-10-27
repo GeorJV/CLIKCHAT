@@ -3215,6 +3215,45 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       )`).catch(() => {});
       await executeD1('ALTER TABLE bookings ADD COLUMN customer_email TEXT').catch(() => {});
 
+      if (request.method === 'DELETE') {
+        let aptId = segments[1] || url.searchParams.get('id') || '';
+        if (!aptId) {
+          const body = await request.json().catch(() => ({}));
+          aptId = body.id || body.bookingId || '';
+        }
+        if (!aptId) {
+          return jsonResponse({ success: false, error: 'ID de cita requerido' }, 400);
+        }
+
+        await executeD1('DELETE FROM bookings WHERE id = ?1', [aptId]).catch(err => {
+          console.warn('[D1 Delete Booking Error]:', err.message);
+        });
+
+        const bIdx = GLOBAL_BOOKINGS.findIndex(b => b.id === aptId);
+        if (bIdx !== -1) {
+          GLOBAL_BOOKINGS.splice(bIdx, 1);
+        }
+
+        return jsonResponse({
+          success: true,
+          message: 'Cita eliminada correctamente',
+          deletedId: aptId
+        }, 200);
+      }
+
+      if (request.method === 'PATCH') {
+        let aptId = segments[1] || url.searchParams.get('id') || '';
+        const body = await request.json().catch(() => ({}));
+        if (!aptId) aptId = body.id || '';
+        if (aptId && body.status) {
+          await executeD1('UPDATE bookings SET status = ?1 WHERE id = ?2', [body.status, aptId]).catch(() => {});
+          const m = GLOBAL_BOOKINGS.find(b => b.id === aptId);
+          if (m) m.status = body.status;
+          return jsonResponse({ success: true, updated: true, id: aptId, status: body.status }, 200);
+        }
+        return jsonResponse({ success: false, error: 'Faltan parámetros' }, 400);
+      }
+
       if (request.method === 'POST') {
         const body = await request.json().catch(() => ({}));
         let tenantId = body.tenantId || '';

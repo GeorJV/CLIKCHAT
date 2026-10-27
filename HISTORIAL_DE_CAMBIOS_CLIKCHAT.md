@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Implementación de Eliminación Persistente y Modificación de Citas (v2.7.9)
+- **Diagnóstico y Causas Raíces:**
+  1. *Falta de Endpoint DELETE en Backend:* En `functions/api/[[route]].js`, la ruta `bookings` solo implementaba `GET` y `POST`. No existía el método `DELETE`, por lo que ninguna petición de borrado llegaba a la base de datos D1 ni a la memoria Edge.
+  2. *Reaparición Inmediata de Citas Borradas:* En `VoceroBookingsView.tsx`, al pulsar el botón de papelera o eliminar en el modal de detalle, solo se filtraba el estado React en memoria. Como el componente consulta el backend periódicamente (`fetchBookings`), la cita no eliminada en el servidor volvía a aparecer automáticamente tras 3.5 segundos.
+  3. *LocalStorage Desincronizado:* La eliminación local no limpiaba de inmediato las claves de respaldo en `localStorage`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Backend Edge Robusto (`functions/api/[[route]].js`):*
+     - Añadido `DELETE /api/bookings/:id` (soportando ID por parámetro de ruta, query string `?id=` o cuerpo JSON).
+     - Elimina la cita físicamente de Cloudflare D1 (`DELETE FROM bookings WHERE id = ?1`) y del array en memoria `GLOBAL_BOOKINGS`.
+     - Añadido `PATCH /api/bookings/:id` para alternar estado (`confirmed` vs `pending`).
+  2. *Controlador Frontend Completo (`VoceroBookingsView.tsx`):*
+     - Creado `handleDeleteAppointment`: aplica actualización optimista en UI, limpia de inmediato las 3 claves de `localStorage`, y envía la petición DELETE al backend.
+     - Actualizado `handleToggleStatus` con persistencia PATCH al backend.
+     - Cumplimiento estricto de **ARQMODULAR**: `VoceroBookingsView.tsx` se mantuvo en 176 líneas (<180 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 11.73s con 0 errores (`dist/assets/index-D8R_BcrY.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación runtime en Chrome Headless (17/17 rutas operativas). Verificación en vivo de eliminación vía `DELETE /api/bookings/apt_geosoft_init_1` (retornando `success: true`) y confirmación de que no reaparece al recargar la agenda.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Corrección de Contraste y Legibilidad en Tarjeta de Intervalos y Descansos (v2.7.8)
 - **Diagnóstico y Causas Raíces:**
   1. *Falta de Contraste en Modo Claro (`isDarkTheme === false`):* En `BookingIntervalConfig.tsx`, el banner del ciclo de agenda utilizaba clases duras `text-emerald-300` y el pill/badge empleaba `bg-emerald-500/20 text-emerald-200`. Al renderizarse sobre fondo blanco/claro del panel CRM, las letras resultaban casi invisibles por carecer de contraste.
