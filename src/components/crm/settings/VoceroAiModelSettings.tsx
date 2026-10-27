@@ -53,11 +53,12 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
     const isGoogle = model.includes('gemini') || trimmedKey.startsWith('AIza') || trimmedKey.startsWith('AQ.');
     const provider = model.startsWith('@cf') ? 'cloudflare' : isGoogle ? 'google' : model.includes('gpt') ? 'openai' : 'openrouter';
 
-    const custom_llm_key = JSON.stringify({ key: trimmedKey, provider, model, deliveryMode, cadence: Number(cadence) || 0 });
-    const custom_ai_config = { enabled: Boolean(trimmedKey), provider, model, apiKey: trimmedKey, deliveryMode, cadence: Number(cadence) || 0, temperature: 0.3 };
+    const normalizedCadence = Math.min(Math.max(Number(cadence) || 1, 1), 10);
+    const custom_llm_key = JSON.stringify({ key: trimmedKey, provider, model, deliveryMode, cadence: normalizedCadence });
+    const custom_ai_config = { enabled: Boolean(trimmedKey), provider, model, apiKey: trimmedKey, deliveryMode, cadence: normalizedCadence, temperature: 0.3 };
 
     try {
-      const ok = await onUpdateSettings({ response_delay_sec: Number(cadence) || 0, tone_of_voice: tone, message_delivery_mode: deliveryMode, custom_llm_key, custom_ai_config } as any);
+      const ok = await onUpdateSettings({ response_delay_sec: normalizedCadence, tone_of_voice: tone, message_delivery_mode: deliveryMode, custom_llm_key, custom_ai_config } as any);
       if (ok) {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
@@ -88,13 +89,13 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
               <optgroup label="Infraestructura ClikChat (Sin costo de API)">
                 <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Por Defecto)</option>
               </optgroup>
-              <optgroup label="Google AI Studio">
-                <option value="gemini-1.5-flash">Google Gemini Flash (Ultra Rápido)</option>
-                <option value="gemini-1.5-pro">Google Gemini Pro (Alta Capacidad)</option>
+              <optgroup label="Google AI Studio (Oficial Vigente)">
+                <option value="gemini-flash-official">Google Gemini Flash (Ultra Rápido Oficial)</option>
+                <option value="gemini-pro-official">Google Gemini Pro (Alta Capacidad Oficial)</option>
               </optgroup>
               <optgroup label="OpenRouter">
-                <option value="z-ai/glm-5.3-flash:floor">GLM-5.3-Flash (Floor Económico)</option>
-                <option value="deepseek/deepseek-chat">DeepSeek V3 (Chat Comercial)</option>
+                <option value="deepseek/deepseek-chat">DeepSeek Chat (Comercial)</option>
+                <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B Instruct</option>
               </optgroup>
               <optgroup label="OpenAI">
                 <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
@@ -104,17 +105,23 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
 
           <div>
             <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-[#0d5bff]" /> Cadencia de Respuesta
+              <Clock className="h-3.5 w-3.5 text-[#0d5bff]" /> Intervalo entre Mensajes (1 a 10 segundos)
             </label>
             <select
               value={cadence}
               onChange={(e) => setCadence(e.target.value)}
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             >
-              <option value="1">1 segundo (Respuesta rápida)</option>
-              <option value="2">2 segundos (Pausa natural de lectura recomendada)</option>
-              <option value="3">3 segundos (Humanizada realista)</option>
-              <option value="0">0 segundos (Inmediata, sin espera)</option>
+              <option value="1">1 segundo (Instantáneo)</option>
+              <option value="2">2 segundos (Rápido)</option>
+              <option value="3">3 segundos (Lectura natural)</option>
+              <option value="4">4 segundos (Cadencia humana)</option>
+              <option value="5">5 segundos (Pausa equilibrada)</option>
+              <option value="6">6 segundos (Conversación pausada)</option>
+              <option value="7">7 segundos (Reflexivo)</option>
+              <option value="8">8 segundos (Escritura pausada)</option>
+              <option value="9">9 segundos (Cadencia extendida)</option>
+              <option value="10">10 segundos (Máximo permitido)</option>
             </select>
           </div>
 

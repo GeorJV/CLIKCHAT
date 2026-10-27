@@ -33,10 +33,10 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchBookings = async () => {
-    setIsLoading(true);
+  const fetchBookings = async (silent = true) => {
+    if (!silent) setIsLoading(true);
     try {
-      const res = await fetch(`/api/bookings?tenant=${encodeURIComponent(activeSlug)}`);
+      const res = await fetch(`/api/bookings?tenant=${encodeURIComponent(activeSlug)}&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.bookings && Array.isArray(data.bookings)) {
@@ -53,16 +53,17 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
           });
         }
       }
-    } catch (e) {} finally { setIsLoading(false); }
+    } catch (e) {} finally { if (!silent) setIsLoading(false); }
   };
 
   useEffect(() => {
-    fetchBookings();
-    const handleFocus = () => fetchBookings();
-    window.addEventListener('focus', handleFocus);
-    const unsub = subscribeBookingSync(fetchBookings);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 5000);
-    return () => { window.removeEventListener('focus', handleFocus); unsub(); clearInterval(timer); };
+    fetchBookings(false);
+    const handleActive = () => { if (!document.hidden) fetchBookings(true); };
+    window.addEventListener('focus', handleActive);
+    document.addEventListener('visibilitychange', handleActive);
+    const unsub = subscribeBookingSync(() => fetchBookings(true));
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(true); }, 2500);
+    return () => { window.removeEventListener('focus', handleActive); document.removeEventListener('visibilitychange', handleActive); unsub(); clearInterval(timer); };
   }, [activeSlug]);
 
   const handleToggleAgentBooking = async () => {
@@ -121,7 +122,7 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
           <p className="text-xs text-zinc-400 mt-0.5">Gestión de citas reales agendadas por tus clientes a través del bot</p>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={fetchBookings} disabled={isLoading} className="p-1.5 rounded-xl border border-[#2d2b2b] text-zinc-400 hover:text-white bg-[#201e1e] transition cursor-pointer" title="Actualizar agenda">
+          <button type="button" onClick={() => fetchBookings(false)} disabled={isLoading} className="p-1.5 rounded-xl border border-[#2d2b2b] text-zinc-400 hover:text-white bg-[#201e1e] transition cursor-pointer" title="Actualizar agenda">
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
           </button>
           {(['all', 'confirmed', 'pending'] as const).map(tab => (

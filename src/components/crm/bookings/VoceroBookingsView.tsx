@@ -48,7 +48,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   });
 
   const fetchBookings = () => {
-    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}`).then(r => r.ok ? r.json() : null).then(d => {
+    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.bookings && Array.isArray(d.bookings)) {
         const apiApts = d.bookings.map((b: any) => ({
           id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
@@ -64,11 +64,12 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
 
   useEffect(() => {
     fetchBookings();
-    const handleFocus = () => fetchBookings();
-    window.addEventListener('focus', handleFocus);
+    const handleActive = () => { if (!document.hidden) fetchBookings(); };
+    window.addEventListener('focus', handleActive);
+    document.addEventListener('visibilitychange', handleActive);
     const unsub = subscribeBookingSync(fetchBookings);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 5000);
-    return () => { window.removeEventListener('focus', handleFocus); unsub(); clearInterval(timer); };
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 2500);
+    return () => { window.removeEventListener('focus', handleActive); document.removeEventListener('visibilitychange', handleActive); unsub(); clearInterval(timer); };
   }, [tId, todayKey, now]);
 
   useEffect(() => {

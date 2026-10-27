@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import './utils/bookingSyncBus';
 import { registerPWA } from './services/pwaPush';
 
 // Register Progressive Web App Service Worker

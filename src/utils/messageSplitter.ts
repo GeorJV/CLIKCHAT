@@ -137,8 +137,8 @@ export async function deliverStaggeredBubbles<T>({
   // Entrega la primera burbuja
   onDeliver(createMessage(bubbles[0], false, 0));
 
-  // Retraso entre burbujas (entre 1s y 2s según cadencia para fluidez orgánica)
-  const interBubbleDelayMs = Math.min(Math.max((responseDelaySec ?? 1.2) * 1000, 1000), 2000);
+  // Retraso entre burbujas (intervalo configurable de 1s a 10s según la cadencia definida por el usuario)
+  const interBubbleDelayMs = Math.min(Math.max((responseDelaySec ?? 1) * 1000, 1000), 10000);
 
   for (let i = 1; i < bubbles.length; i++) {
     onSetLoading(true);
