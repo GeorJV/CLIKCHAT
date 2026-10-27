@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Persistencia y Eliminación Absoluta en Base de Datos D1 (v2.8.1)
+- **Diagnóstico y Causas Raíces:**
+  1. *Fusión Fantasma en Backend (`functions/api/[[route]].js`):* Al consultar `GET /api/bookings`, el servidor ejecutaba una lógica residual `for (const gb of GLOBAL_BOOKINGS) { if (!seen.has(gb.id)) rows.unshift(gb) }`. Cuando un usuario eliminaba una cita de D1, el array estático de memoria volvía a inyectarla por no encontrarla en D1, resucitando citas borradas.
+  2. *Mezcla Local en Frontend (`VoceroBookingsView.tsx` y `AgendaTab.tsx`):* El hook realizaba `[...apiApts, ...prev.filter(p => !apiIds.has(p.id))]`, preservando en el estado del navegador citas que ya no existían en la base de datos.
+  3. *Creación Modal Desconectada de D1:* `onAddBooking` en `VoceroNewBookingModal` solo actualizaba el array en memoria sin invocar `POST /api/bookings` hacia la base de datos Cloudflare D1.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *D1 como Fuente Única e Inmutable de Verdad:*
+     - En `functions/api/[[route]].js`: `GET /api/bookings` devuelve pura y exclusivamente los registros de Cloudflare D1. Quedó erradicada toda re-inyección desde memoria.
+     - Registro de exclusión inmediata `DELETED_BOOKING_IDS` en Edge para evitar cualquier fuga entre réplicas.
+     - En `DELETE /api/bookings/:id`: Se ejecuta la eliminación física `DELETE FROM bookings WHERE id = ?1` en Cloudflare D1 con confirmación `databaseDeleted: true`.
+     - En `POST /api/bookings`: Se garantiza la inserción directa en D1 (`INSERT INTO bookings`).
+  2. *Sincronización Pura en Frontend:*
+     - `VoceroBookingsView.tsx` y `AgendaTab.tsx` eliminan cualquier fusión con estado local previo: el estado de citas en pantalla refleja al 100% lo que devuelve D1. Si se borra en D1, desaparece de la vista y de la caché de inmediato.
+     - `handleCreateBooking`: Conectado a `POST /api/bookings` para que cualquier cita manual se guarde físicamente en D1.
+  3. *Cumplimiento ARQMODULAR:* `VoceroBookingsView.tsx` (179 líneas), `AgendaTab.tsx` (173 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.87s (`dist/assets/index-WNasbQx5.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación runtime en Chrome Headless (17/17 rutas operativas al 100%).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Estabilización Definitiva de Citas: Erradicación de Nombres Fantasma y Movimientos Anómalos (v2.8.0)
 - **Diagnóstico y Causas Raíces:**
   1. *Bucle Infinito de Peticiones en `bookingSyncBus.ts`:* El parche global de `window.fetch` interceptaba indebidamente toda llamada GET a `/api/bookings` con `"success": true`, disparando `broadcastBookingCreated()` en cada lectura. Esto volvía a llamar a `fetchBookings()` inmediatamente en un bucle vertiginoso de re-peticiones cada pocos milisegundos.

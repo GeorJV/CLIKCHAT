@@ -51,8 +51,7 @@ export const AgendaTab: React.FC<AgendaTabProps> = ({ tenantId, highlightedBooki
             status: (b.status || 'confirmed') as any, price: Number(b.price) || 0
           }));
           setAppointments((prev) => {
-            const apiIds = new Set(apiApts.map(a => a.id));
-            const merged = [...apiApts, ...prev.filter(p => !apiIds.has(p.id) && !p.id.startsWith('apt_'))].sort((a, b) => b.id.localeCompare(a.id));
+            const merged = [...apiApts].sort((a, b) => b.id.localeCompare(a.id));
             if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status)) return prev;
             if (typeof window !== 'undefined') { try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch (e) {} }
             return merged;

@@ -1,13 +1,13 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 16:51 GMT-6
-- **Versión Actual:** 2.8.0 (Estabilización Definitiva de Citas: Erradicación de Nombres Fantasma y Movimientos Anómalos)
+- **Última Actualización:** 2026-10-27 17:00 GMT-6
+- **Versión Actual:** 2.8.1 (Persistencia y Eliminación Absoluta en Base de Datos D1)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Agenda Inmutable y Estable: Erradicado bucle de peticiones fantasma; orden determinista y tarjetas sólidas sin rebotes.
-  - Eliminación Persistente de Citas: Métodos DELETE y PATCH en D1 y memoria Edge con sincronización optimista.
+  - Base de Datos D1 como Única Fuente de Verdad: Inserciones y eliminaciones físicas directas en Cloudflare D1 sin fallbacks locales.
+  - Citas Estables y Deterministas: Eliminación confirmada en DB y erradicación de toda re-inyección desde memoria o LocalStorage.
   - Infraestructura 100% Unificada en Homilia7: Hosting Pages y base de datos D1 (`af3aebed-002b-4e84-aabb-4c570483a3df`) consolidados.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**

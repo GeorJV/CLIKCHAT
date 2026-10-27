@@ -45,8 +45,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     try {
       let allFound: any[] = [];
       [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
-        const s = localStorage.getItem(k);
-        if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
+        const s = localStorage.getItem(k); if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
       });
       const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
       return sortApts(unique.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate })));
@@ -63,9 +62,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
         setAppointments(prev => {
-          const apiIds = new Set(apiApts.map(a => a.id));
-          const rest = prev.filter(p => !apiIds.has(p.id) && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id));
-          const merged = sortApts([...apiApts, ...rest]);
+          const merged = sortApts(apiApts);
           if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status && p.clientName === merged[i].clientName && p.time === merged[i].time)) return prev;
           return merged;
         });
@@ -105,12 +102,21 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
       try { const s = localStorage.getItem(k); if (s) { const arr = JSON.parse(s); if (Array.isArray(arr)) localStorage.setItem(k, JSON.stringify(arr.filter((a: any) => a.id !== id))); } } catch {}
     });
-    try { await fetch(`/api/bookings/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch (e) {}
+    try { const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, { method: 'DELETE' }); if (res.ok) fetchBookings(); } catch (e) {}
+  };
+
+  const handleCreateBooking = async (apt: AppointmentItem) => {
+    const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
+    setAppointments(prev => sortApts([norm, ...prev]));
+    try {
+      await fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tId === 'geosoft' ? 'ten_geosoft_prod' : tId, customerName: norm.clientName, customerPhone: norm.phone || '', serviceName: norm.serviceName, bookingDate: norm.displayDate || norm.dateKey, bookingTime: norm.time, modality: 'online', price: norm.price || 0, notes: norm.notes || '' }) });
+      fetchBookings();
+    } catch {}
+    broadcastBookingCreated(tId);
   };
 
   const handleToggleStatus = async (id: string) => {
-    const apt = appointments.find(a => a.id === id);
-    const next = apt?.status === 'confirmed' ? 'pending' : 'confirmed';
+    const apt = appointments.find(a => a.id === id); const next = apt?.status === 'confirmed' ? 'pending' : 'confirmed';
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: next } : a));
     try { await fetch(`/api/bookings/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) }); } catch (e) {}
   };
@@ -166,11 +172,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           ))
         )}
       </main>
-      <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => {
-        const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
-        setAppointments(prev => sortApts([norm, ...prev]));
-        broadcastBookingCreated(tId);
-      }} />
+      <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={handleCreateBooking} />
       <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={handleDeleteAppointment} />
     </div>
   );

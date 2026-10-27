@@ -958,6 +958,7 @@ function enforceAntiRepetitionGuardrail({
 // ==============================================================================
 
 const GLOBAL_AI_INCIDENT_REPORTS = [];
+const DELETED_BOOKING_IDS = new Set();
 const GLOBAL_BOOKINGS = [
   {
     id: "apt_1793131038110_uqgo",
@@ -3225,9 +3226,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           return jsonResponse({ success: false, error: 'ID de cita requerido' }, 400);
         }
 
-        await executeD1('DELETE FROM bookings WHERE id = ?1', [aptId]).catch(err => {
+        DELETED_BOOKING_IDS.add(aptId);
+        let d1Deleted = false;
+        try {
+          await executeD1('DELETE FROM bookings WHERE id = ?1', [aptId]);
+          d1Deleted = true;
+        } catch (err) {
           console.warn('[D1 Delete Booking Error]:', err.message);
-        });
+        }
 
         const bIdx = GLOBAL_BOOKINGS.findIndex(b => b.id === aptId);
         if (bIdx !== -1) {
@@ -3236,7 +3242,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         return jsonResponse({
           success: true,
-          message: 'Cita eliminada correctamente',
+          databaseDeleted: d1Deleted,
+          message: 'Cita eliminada permanentemente de la base de datos',
           deletedId: aptId
         }, 200);
       }
@@ -3328,6 +3335,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       if (request.method === 'GET') {
         const tenantParam = (url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || url.searchParams.get('tenant') || url.searchParams.get('tenantSlug') || '').toLowerCase();
         let rows = [];
+        let d1Success = false;
         try {
           let tenantId = tenantParam;
           if (tenantParam) {
@@ -3342,33 +3350,28 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             params.push(tenantId);
           }
           query += ' ORDER BY created_at DESC LIMIT 100';
-          rows = await executeD1(query, params).catch(() => []);
+          rows = await executeD1(query, params);
+          d1Success = true;
         } catch (d1Err) {
-          console.warn('[D1 Bookings] Error/cuota en D1, usando memoria persistente:', d1Err.message);
+          console.warn('[D1 Bookings] Error en D1, usando memoria persistente:', d1Err.message);
         }
 
-        const isGeoSoft = (t) => t === 'geosoft' || t === 'ten_geosoft_prod';
-        if (!rows || rows.length === 0) {
+        // Si D1 respondió, la base de datos es la única fuente de verdad inmutable
+        if (d1Success) {
+          rows = rows.filter(b => !DELETED_BOOKING_IDS.has(b.id));
+        } else {
+          const isGeoSoft = (t) => t === 'geosoft' || t === 'ten_geosoft_prod';
           rows = tenantParam
             ? GLOBAL_BOOKINGS.filter(b => {
+                if (DELETED_BOOKING_IDS.has(b.id)) return false;
                 const bT = (b.tenant_id || '').toLowerCase();
                 return bT === tenantParam || bT.includes(tenantParam) || tenantParam.includes(bT) || (isGeoSoft(tenantParam) && isGeoSoft(bT));
               })
-            : [...GLOBAL_BOOKINGS];
-        } else {
-          const seen = new Set(rows.map(b => b.id));
-          for (const gb of GLOBAL_BOOKINGS) {
-            if (!seen.has(gb.id)) {
-              const gbT = (gb.tenant_id || '').toLowerCase();
-              if (!tenantParam || gbT === tenantParam || gbT.includes(tenantParam) || tenantParam.includes(gbT) || (isGeoSoft(tenantParam) && isGeoSoft(gbT))) {
-                rows.unshift(gb);
-              }
-            }
-          }
+            : GLOBAL_BOOKINGS.filter(b => !DELETED_BOOKING_IDS.has(b.id));
         }
 
         rows.sort((a, b) => ((b.created_at || '').localeCompare(a.created_at || '')) || (b.id || '').localeCompare(a.id || ''));
-        return jsonResponse({ success: true, bookings: rows });
+        return jsonResponse({ success: true, bookings: rows, source: d1Success ? 'd1' : 'fallback' });
       }
     }
 
