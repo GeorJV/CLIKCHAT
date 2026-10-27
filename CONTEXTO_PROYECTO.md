@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 09:50 GMT-6
-- **Versión Actual:** 2.6.8 (Integración de OpenRouter con 3 Modelos Predeterminados, Failover en Cascada y Centro de Reportes de IA)
+- **Última Actualización:** 2026-10-27 09:55 GMT-6
+- **Versión Actual:** 2.6.9 (Velocidad de Respuesta Inicial del Bot Independiente de la Cadencia)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - 3 Modelos Predeterminados Oficiales: Modelo 1: GLM 5 (GLM 5.3 Flash), Modelo 2: GPT (ChatGPT 5 Mini) y Modelo 3: Meta (Meta Llama 3.3).
-  - Cascada de Seguridad en Anillo: Conmutación automática ante fallos de modelo (1° ⟷ 2° ⟷ 3°) con registro determinista de incidentes.
-  - Centro de Reportes de IA en la Web: Sección interactiva con KPIs de salud, lista de fallos, seguimiento inmediato de consultas y solución con 1 clic.
-  - Soporte de Clave OpenRouter Propia: Configuración flexible en Ajustes de IA y selector dinámico de modelos en Live Lab para comparar calidad.
+  - Velocidad de Respuesta Inicial Independiente: `BotResponseSpeedSettingCard` permite configurar el retardo del primer mensaje (0s inmediato a 6s pausado).
+  - Aislamiento en Runtime: `targetDelayMs` del primer mensaje desacoplado de `deliverStaggeredBubbles` (cadencia entre burbujas subsecuentes).
+  - Doble Punto de Ajuste: Configurable tanto en el Panel de Negocio (*"Cadencia & Velocidad"*) como en Ajustes de IA del CRM Vocero.
+  - 3 Modelos Predeterminados Oficiales: Modelo 1: GLM 5, Modelo 2: GPT y Modelo 3: Meta con failover en cascada y centro de reportes.
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

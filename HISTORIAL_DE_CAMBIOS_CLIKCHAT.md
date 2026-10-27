@@ -16,6 +16,43 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Velocidad de Respuesta Inicial del Bot Independiente del Intervalo entre Mensajes (v2.6.9)
+- **Diagnóstico y Necesidad:**
+  1. *Confusión entre Intervalo entre Mensajes y Velocidad de Respuesta:*
+     - Anteriormente, el parámetro `response_delay_sec` controlaba de forma unificada tanto el tiempo de espera antes de que el bot respondiera por primera vez al usuario como el intervalo de cadencia entre burbujas consecutivas.
+  2. *Requerimiento del Usuario:*
+     - El intervalo entre mensajes (cadencia entre burbujas) es conceptual y técnicamente diferente a la velocidad de respuesta inicial del bot.
+     - Se requería agregar la **velocidad de respuesta del bot** como una configuración completamente independiente y configurable, permitiendo definir a qué velocidad responde el bot por primera vez cuando el cliente escribe (desde instantáneo / 0 seg sin espera hasta 1s, 2s, 3s, o más segundos con simulación de lectura).
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Nuevo Componente Atómico `BotResponseSpeedSettingCard.tsx` (145 líneas):*
+     - Creado en `src/components/client/business/` con diseño dark onyx-card.
+     - Insignia dinámica y 4 accesos directos por niveles:
+       - ⚡ **0 seg (Instantáneo / Sin Espera)**: responde de inmediato en cuanto procesa el servidor.
+       - 🚀 **1 seg (Ultra Rápido)**: mínima espera ágil.
+       - 🤝 **2 seg (Natural)**: sensación de lectura y tipeo humano.
+       - 🧘 **4 seg (Pausado)**: simulación de redacción reflexiva.
+     - Control deslizante manual de 0 a 6 segundos para ajuste fino.
+     - Persistencia reactiva en `Tenant.bot_response_speed_sec` y `localStorage` (`clikchat_bot_response_speed`).
+  2. *Integración en Panel de Negocio y CRM Vocero:*
+     - En `BusinessSettingsTab.tsx`: la subpestaña *"Cadencia & Velocidad"* ahora aloja de forma modular e independiente ambas tarjetas:
+       1. `BotResponseSpeedSettingCard`: Velocidad de respuesta inicial (primer mensaje).
+       2. `ChatCadenceSettingCard`: Intervalo entre mensajes y modo de burbujas.
+     - En `VoceroAiModelSettings.tsx`: añadido selector de *"Velocidad de Respuesta Inicial (Primer Mensaje)"* junto al selector de cadencia.
+  3. *Aislamiento en el Runtime del Chat (`ServiceChatView.tsx` & `ProductChatView.tsx`):*
+     - `targetDelayMs` del primer mensaje ahora se calcula exclusivamente con `botResponseSpeedSec` (0s a 6s), permitiendo respuesta inmediata cuando se configura en 0s.
+     - `deliverStaggeredBubbles` preserva `responseDelaySec` para la cadencia entre burbujas subsecuentes.
+     - Resuelto y propagado de forma reactiva en `useProductResolver.ts` y `App.tsx`.
+  4. *Persistencia Resiliente en Edge (`functions/api/[[route]].js`):*
+     - Almacenamiento seguro en `botResponseSpeed` dentro del JSON de `custom_llm_key`, en `memoryTenants` y retorno en endpoints de tenants.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 17.18s con 0 errores (`dist/assets/index-egT3iKml.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `b37e6c5`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Integración de OpenRouter con 3 Modelos Predeterminados, Failover de Seguridad en Cascada y Centro de Reportes de IA en la Web (v2.6.8)
 - **Diagnóstico y Necesidad:**
   1. *Falta de Selección Flexible de Modelos de OpenRouter:*
