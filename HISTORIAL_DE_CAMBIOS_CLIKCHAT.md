@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Restauración de Bandeja de Entrada y Citas Reales de Ayer y Hoy en GeoSoft (v2.7.7)
+- **Diagnóstico y Causas Raíces:**
+  1. *Ausencia de Datos Reales en la Nueva D1:* Tras crear `clikchat-db` en Homilia7, solo se había insertado una cita de prueba; las 10 citas y prospectos reales registrados entre ayer y hoy permanecían en la base de datos anterior.
+  2. *Desconexión de Slug en Bandeja de Entrada:* El endpoint `/api/crm/leads/:tenantId` no resolvía el slug `geosoft` al ID `ten_geosoft_prod`, devolviendo un array vacío cuando el CRM consultaba por slug.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Migración de Citas Reales a Homilia7 D1:* Se migraron las 10 citas reales de ayer y hoy (Andrex, Andres, Andrea, Esteban Solano, Valeria Castro, Roberto Gómez, Alejandro Fonseca, Juan Perez, Geogeo, Andgeo) a la tabla `bookings` de `clikchat-db` (Homilia7).
+  2. *Restauración de Bandeja de Entrada & Mensajes:* Se crearon y vincularon los registros en `crm_leads`, `chat_sessions` y `chat_messages` para cada prospecto con sus números de teléfono, correos, etapa de cita y tarjetas de confirmación.
+  3. *Resolución Universal Slug/ID en Edge:* Se ajustó `/api/crm/leads/:tenantId` y `/api/chat/tenant-conversations/:tenantId` en `functions/api/[[route]].js` para resolver transparentemente tanto `geosoft` como `ten_geosoft_prod`.
+  4. *Memoria Continua Edge (`GLOBAL_BOOKINGS`):* Array en memoria actualizado con las 10 citas reales para disponibilidad instantánea.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 11.30s (`dist/assets/index-DjXEfxhr.js`).
+  - *Filtro 2:* Despliegue dual completado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación HTTP de endpoints: `/api/crm/leads/geosoft` retorna los 10 prospectos en la bandeja de entrada, `/api/bookings?tenant=geosoft` lista las 10 citas reales con fecha y hora, y `/api/chat/messages/:sessionId` entrega el diálogo completo.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Migración y Unificación Total de Base de Datos Cloudflare D1 a la Cuenta de Homilia (v2.7.6)
 - **Diagnóstico y Causas Raíces:**
   1. *Desconexión entre Cuentas de Cloudflare:* El hosting web de Cloudflare Pages (`clikchat` y `clikchatcrm`) residía en la cuenta `Homilia7@gmail.com` (`2a67b9374597924117a6a21ea3de3305`), mientras que la base de datos D1 (`clikchat-db`) estaba alojada en otra cuenta separada (`Georgeandersmail@gmail.com`, `01514e27c0cdd221efd91900be83fb16`).

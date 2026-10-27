@@ -960,21 +960,174 @@ function enforceAntiRepetitionGuardrail({
 const GLOBAL_AI_INCIDENT_REPORTS = [];
 const GLOBAL_BOOKINGS = [
   {
-    id: 'apt_geosoft_init_1',
-    tenant_id: 'ten_geosoft_prod',
-    customer_name: 'David Rodríguez',
-    customer_email: 'david.rodriguez@techmail.com',
-    customer_phone: '+506 7293-5612',
-    service_id: 'prod_geosoft_web_saas',
-    service_name: 'Desarrollo Web & SaaS',
-    booking_date: new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }),
-    booking_time: '10:00 AM',
-    modality: 'online',
-    status: 'confirmed',
+    id: "apt_1793131038110_uqgo",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Andrex",
+    customer_phone: "+506 7293-5612",
+    customer_email: "soporte@geosoft.lat",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "02:30 PM",
+    modality: "online",
+    status: "confirmed",
     price: 1200,
-    currency: 'USD',
-    notes: 'Sesión diagnóstica de arquitectura SaaS y cotización de plataforma empresarial.',
-    created_at: new Date().toISOString()
+    currency: "USD",
+    notes: "Sesión de consultoría de plataforma SaaS",
+    created_at: "2026-10-27 19:57:18"
+  },
+  {
+    id: "apt_1793112363918_3ok8",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Andres",
+    customer_phone: "55557788",
+    customer_email: "HOMMILIA7@GMAIL.COM",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "01:50 PM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Cotización de sistema web empresarial",
+    created_at: "2026-10-27 14:46:03"
+  },
+  {
+    id: "apt_1793064605913_sr0i",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Andrea",
+    customer_phone: "55557777",
+    customer_email: "A@A.COM",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "12:30 AM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "",
+    created_at: "2026-10-27 01:30:05"
+  },
+  {
+    id: "apt_1793063391600_q6hs",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Esteban Solano",
+    customer_phone: "88991122",
+    customer_email: "esteban@solano.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "01:00 PM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Revisión de arquitectura y cotización",
+    created_at: "2026-10-27 01:09:51"
+  },
+  {
+    id: "apt_1793063155854_8u31",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Valeria Castro",
+    customer_phone: "66554433",
+    customer_email: "valeria@castro.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Jueves, 29 de Octubre de 2026",
+    booking_time: "04:00 PM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Desarrollo de plataforma a medida",
+    created_at: "2026-10-27 01:05:55"
+  },
+  {
+    id: "apt_1793062012559_3a5o",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Roberto Gómez",
+    customer_phone: "77889900",
+    customer_email: "roberto@gomez.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Lunes, 2 de Noviembre de 2026",
+    booking_time: "04:00 PM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Cotización de sistema",
+    created_at: "2026-10-27 00:46:52"
+  },
+  {
+    id: "apt_1793058895509_q0tc",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Alejandro Fonseca",
+    customer_phone: "88776655",
+    customer_email: "alejandro@dental.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "11:00 AM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Plataforma web para clínica",
+    created_at: "2026-10-26 23:54:55"
+  },
+  {
+    id: "apt_1793056825357_ldwv",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Juan Perez",
+    customer_phone: "88887777",
+    customer_email: "roberto@taller.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "10:00 AM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "Integración web",
+    created_at: "2026-10-26 23:20:25"
+  },
+  {
+    id: "apt_1793046863992_yiiz",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Geogeo",
+    customer_phone: "333333333",
+    customer_email: "djdjdjd@gmail.com",
+    service_id: "prod_geosoft_web_saas",
+    service_name: "Desarrollo Web & SaaS",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "08:00 AM",
+    modality: "online",
+    status: "confirmed",
+    price: 1200,
+    currency: "USD",
+    notes: "",
+    created_at: "2026-10-26 20:34:24"
+  },
+  {
+    id: "apt_1792981229153_3ypx",
+    tenant_id: "ten_geosoft_prod",
+    customer_name: "Andgeo",
+    customer_phone: "72935612",
+    customer_email: "homilia7@gmail.com",
+    service_id: "prod_geosoft_agentes_ia",
+    service_name: "Desarrollo de Chatbot",
+    booking_date: "Martes, 27 de Octubre de 2026",
+    booking_time: "09:00 AM",
+    modality: "online",
+    status: "confirmed",
+    price: 450,
+    currency: "USD",
+    notes: "Bot conversacional 24/7",
+    created_at: "2026-10-26 02:20:29"
   }
 ];
 
@@ -4285,7 +4438,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
     // CHAT: GET /api/chat/tenant-conversations/:tenantId
     if (segments[0] === 'chat' && segments[1] === 'tenant-conversations' && segments.length === 3 && request.method === 'GET') {
-      const tenantId = segments[2];
+      const tenantParam = segments[2];
+      let tenantId = tenantParam;
+      if (tenantParam === 'geosoft' || tenantParam === 'ten_geosoft_prod') {
+        tenantId = 'ten_geosoft_prod';
+      } else {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+        if (tRows.length > 0) tenantId = tRows[0].id;
+      }
       const rows = await executeD1(
         `SELECT s.id, s.user_name, s.user_phone, s.user_email, s.status, s.created_at, s.updated_at,
                 (SELECT message FROM chat_messages WHERE session_id = s.id AND sender = 'user' ORDER BY created_at ASC LIMIT 1) as first_user_message,
@@ -4293,10 +4453,10 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
                 (SELECT rag_level_used FROM chat_messages WHERE session_id = s.id AND sender = 'assistant' ORDER BY created_at DESC LIMIT 1) as last_rag_level,
                 (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as total_messages
          FROM chat_sessions s
-         WHERE s.tenant_id = ?1 AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
+         WHERE (s.tenant_id = ?1 OR s.tenant_id = ?2) AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
          ORDER BY s.updated_at DESC
          LIMIT 50`,
-        [tenantId]
+        [tenantId, tenantParam]
       );
       return jsonResponse({ conversations: rows });
     }
@@ -4522,8 +4682,16 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
     // CRM: GET /api/crm/leads/:tenantId
     if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'GET') {
-      const tenantId = segments[2];
+      const tenantParam = segments[2];
       await ensureCrmLeadsTable();
+
+      let tenantId = tenantParam;
+      if (tenantParam === 'geosoft' || tenantParam === 'ten_geosoft_prod') {
+        tenantId = 'ten_geosoft_prod';
+      } else {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+        if (tRows.length > 0) tenantId = tRows[0].id;
+      }
 
       // Sincronización transparente de chat_sessions existentes hacia crm_leads si no existen
       try {
@@ -4549,8 +4717,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             s.created_at,
             s.updated_at
           FROM chat_sessions s
-          WHERE s.tenant_id = ?1 AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
-        `, [tenantId]);
+          WHERE (s.tenant_id = ?1 OR s.tenant_id = ?2) AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
+        `, [tenantId, tenantParam]);
       } catch (syncErr) {
         console.warn('Sync crm_leads warning:', syncErr.message);
       }
@@ -4558,9 +4726,9 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const rows = await executeD1(
         `SELECT id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at
          FROM crm_leads
-         WHERE tenant_id = ?1
+         WHERE tenant_id = ?1 OR tenant_id = ?2
          ORDER BY updated_at DESC`,
-        [tenantId]
+        [tenantId, tenantParam]
       );
 
       const parsedLeads = rows.map(r => {
