@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, RefreshCw, Filter, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Filter, CheckCircle2 } from 'lucide-react';
 import { AiIncidentReport, AiReportsSummary } from '../../../types/aiReports';
 import { AiReportStats } from './AiReportStats';
 import { AiReportCard } from './AiReportCard';
@@ -17,7 +17,6 @@ export const VoceroAiReportsView: React.FC<VoceroAiReportsViewProps> = ({ tenant
   });
   const [filter, setFilter] = useState<'all' | 'pending' | 'resolved'>('all');
   const [loading, setLoading] = useState(true);
-  const [simulating, setSimulating] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -61,28 +60,6 @@ export const VoceroAiReportsView: React.FC<VoceroAiReportsViewProps> = ({ tenant
     }
   };
 
-  const handleSimulateFallback = async () => {
-    setSimulating(true);
-    try {
-      const res = await fetch('/api/ai-reports/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantSlug,
-          failedModel: 'Modelo 1: GLM 5 (GLM 5.3 Flash)',
-          fallbackModel: 'Modelo 2: GPT (ChatGPT 5 Mini)',
-          errorMessage: 'HTTP 429 Cuota agotada en OpenRouter (Simulación de Seguridad)',
-          userQuery: '¿Tienen citas disponibles para mañana y cuál es el precio?'
-        })
-      });
-      if (res.ok) await fetchReports();
-    } catch (e) {
-      console.warn('Simulation failed:', e);
-    } finally {
-      setSimulating(false);
-    }
-  };
-
   const filteredReports = reports.filter(r => {
     if (filter === 'pending') return r.status !== 'resolved';
     if (filter === 'resolved') return r.status === 'resolved';
@@ -97,18 +74,10 @@ export const VoceroAiReportsView: React.FC<VoceroAiReportsViewProps> = ({ tenant
             <ShieldAlert className="h-5 w-5 text-rose-500" /> Centro de Reportes & Monitoreo de IA
           </h2>
           <p className="text-xs text-[#62728d]">
-            Supervisión continua de los 3 modelos (GLM 5, GPT y Meta). Salto automático en caso de fallo.
+            Supervisión continua en tiempo real de los 3 modelos (GLM 5, GPT y Meta). Salto automático en caso de fallo.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSimulateFallback}
-            disabled={simulating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>{simulating ? 'Probando...' : 'Simular Fallo & Respaldo'}</span>
-          </button>
           <button
             onClick={fetchReports}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#d8e2f0] bg-white hover:bg-[#f1f5f9] text-[#42506b] text-xs font-semibold transition cursor-pointer"

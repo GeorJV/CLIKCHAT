@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
-import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase';
-import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal';
+import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase'; import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal';
 import { BookedAppointmentModal } from './BookedAppointmentModal'; import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
-import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
-import { generateClientChatFallback } from '../../../services/clientChatFallback';
+import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher'; import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
 import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
 import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
@@ -75,9 +73,10 @@ export const ServiceChatView: React.FC<Props> = ({
       setIsLoading(true);
       const startTime = Date.now();
       try {
+        const clientHist = messages.slice(-10).map((m) => ({ sender: m.sender, message: m.content }));
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
+          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, conversationHistory: clientHist, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();

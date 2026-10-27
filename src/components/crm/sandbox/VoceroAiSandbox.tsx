@@ -10,23 +10,14 @@ interface VoceroAiSandboxProps {
   onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
 }
 
-export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
-  tenantSlug,
-  tenantName,
-  onCreateFaq,
-}) => {
-  const [messages, setMessages] = useState<SandboxMsg[]>([
-    {
-      id: '1',
-      sender: 'assistant',
-      text: `¡Hola! Soy tu agente virtual para ${tenantName || 'tu negocio'}. Estoy configurado con RAG y embudo de ventas. ¿En qué te puedo asesorar hoy?`,
-      rag: 'L1 · Bienvenida',
-      score: 98,
-      isGolden: true,
-    },
-  ]);
+export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, tenantName, onCreateFaq }) => {
+  const [messages, setMessages] = useState<SandboxMsg[]>([{
+    id: '1', sender: 'assistant', rag: 'L1 · Bienvenida', score: 98, isGolden: true,
+    text: `¡Hola! Soy tu agente virtual para ${tenantName || 'tu negocio'}. Estoy configurado con RAG y embudo de ventas. ¿En qué te puedo asesorar hoy?`,
+  }]);
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState<'model-1' | 'model-2' | 'model-3'>('model-1');
+  const [labSessionId, setLabSessionId] = useState(() => 'lab_' + Date.now().toString(36));
   const [loading, setLoading] = useState(false);
   const [activeCorrection, setActiveCorrection] = useState<{ msg: SandboxMsg; userQuestion: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,19 +41,21 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
     setTimeout(() => scrollToBottom('smooth'), 40);
 
     try {
+      const hist = messages.map((m) => ({ sender: m.sender, message: m.text }));
       const res = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, sessionId: 'sandbox_' + Date.now(), message: txt, model: selectedModel, preferredModel: selectedModel }),
+        body: JSON.stringify({ tenantSlug, sessionId: labSessionId, message: txt, model: selectedModel, preferredModel: selectedModel, conversationHistory: hist }),
       });
       if (res.ok) {
         const d = await res.json();
         const score = Math.floor(Math.random() * 8) + 92;
-        const fallbackLabel = selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : 'Modelo 3: Meta';
+        const defaultLabel = selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : 'Modelo 3: Meta';
+        const effectiveModel = d.fallbackUsed ? (d.modelLabel || 'Red de Contingencia') : (d.modelLabel || defaultLabel);
         setMessages((prev) => [...prev, {
           id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.',
           rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false,
-          modelUsed: d.modelLabel || fallbackLabel, fallbackUsed: d.fallbackUsed,
+          modelUsed: effectiveModel, fallbackUsed: d.fallbackUsed,
         }]);
       }
     } catch (e) {
@@ -90,11 +83,11 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-5 shadow-xs">
-        <div className="flex items-center gap-2">
-          <FlaskConical className="h-4 w-4 text-[#0d5bff]" />
-          <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Live Lab</h2>
-          <div className="hidden sm:flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-2">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-3 sm:px-5 shadow-xs gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <FlaskConical className="h-4 w-4 text-[#0d5bff] shrink-0" />
+          <h2 className="text-[15px] sm:text-[17px] font-bold tracking-tight text-[#0a1730] shrink-0">Live Lab</h2>
+          <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-1 sm:ml-2">
             {[
               { id: 'model-1' as const, label: '🥇 Mod 1: GLM 5' },
               { id: 'model-2' as const, label: '🥈 Mod 2: GPT' },
@@ -103,7 +96,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
               <button
                 key={m.id}
                 onClick={() => setSelectedModel(m.id)}
-                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
                   selectedModel === m.id
                     ? 'bg-[#0d5bff] text-white shadow-2xs'
                     : 'text-[#62728d] hover:text-[#0a1730]'
@@ -115,11 +108,14 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
           </div>
         </div>
         <button
-          onClick={() => setMessages(messages.slice(0, 1))}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer"
+          onClick={() => {
+            setLabSessionId('lab_' + Date.now().toString(36));
+            setMessages(messages.slice(0, 1));
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0"
         >
           <RefreshCw className="h-3 w-3" />
-          <span>Reiniciar</span>
+          <span className="hidden sm:inline">Reiniciar</span>
         </button>
       </header>
 

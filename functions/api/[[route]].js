@@ -689,16 +689,16 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     if (/\b(?:tienda|vender\s*online|ecommerce|carrito|comercio\s*electronico|vender\s*por\s*internet|pasarela|pagos)\b/i.test(normUser)) {
       return 'Excelente elección.\n\nUna tienda online es la herramienta definitiva para escalar tus ventas y proyectar profesionalismo 24/7.\n\nEn GeoSoft desarrollamos plataformas SaaS a medida con diseño premium, carga ultrarrápida, optimización SEO y un panel de administración intuitivo para que gestiones tus productos y pedidos con total autonomía.\n\nEste servicio tiene una inversión de $1200 USD, incluye garantía de 3 meses y un tiempo de entrega estimado de 2 a 4 semanas.\n\nPara entender mejor tu visión y asegurarnos de que la arquitectura sea la ideal para tu negocio, cuéntame, qué tipo de productos planeas vender y si ya cuentas con una estructura de catálogo o logotipo definido?';
     }
-    // 2. Servicios al detalle, sitio web corporativo, catálogo web
-    if (/\b(?:servicios\s*al\s*detalle|conozcan\s*mis\s*servicios|sitio\s*web|pagina\s*web|corporativ[oa]|landing|software|plataforma)\b/i.test(normUser)) {
+    // 2. Servicios al detalle, sitio web corporativo, catálogo web, aweb
+    if (/\b(?:servicios?\s*(?:al\s*detalle)?|conozcan\s*mis\s*servicios|sitios?\s*web|p[aá]ginas?\s*web|aweb|web|corporativ[oa]s?|landing|software|plataformas?)\b/i.test(normUser)) {
       return 'Excelente iniciativa.\n\nDiseñamos sitios web y aplicaciones SaaS de alto rendimiento enfocados en presentar cada uno de tus servicios con máxima claridad, diseño visual exclusivo y autoridad para convertir visitas en clientes reales.\n\nNuestra solución parte desde $1200 USD con arquitectura optimizada y 3 meses de garantía integral.\n\nCuántos servicios principales tienes contemplados o ya cuentas con el contenido y logotipo de tu empresa?';
     }
     // 3. Precios, tarifas, presupuesto, inversión
-    if (/\b(?:precio|cuanto\s*cuesta|cuanto\s*vale|tarifa|costo|inversion|presupuesto|cotizacion)\b/i.test(normUser)) {
+    if (/\b(?:precios?|cuanto\s*cuesta|cuanto\s*vale|tarifas?|costos?|inversi[oó]n|presupuestos?|cotizaci[oó]n|planes?)\b/i.test(normUser)) {
       return 'Nuestras soluciones de Desarrollo Web & SaaS parten desde una inversión oficial de $1200 USD para proyectos a la medida, incluyendo diseño exclusivo, arquitectura ultrarrápida, panel de administración autogestionable y garantía de 3 meses.\n\nTe gustaría agendar una breve sesión de 15 minutos para estructurar la propuesta formal de tu proyecto?';
     }
     // 4. Agendamiento, cita, reunión, llamada
-    if (/\b(?:agendar|cita|reunion|llamada|demo|videollamada|horario|espacio)\b/i.test(normUser)) {
+    if (/\b(?:agendar|citas?|reuni[oó]n|reuniones|llamadas?|demos?|videollamadas?|horarios?|espacios?)\b/i.test(normUser)) {
       return 'Con mucho gusto coordinamos tu sesión. Podemos revisar los requerimientos exactos de tu proyecto tecnológico y mostrarte cómo lo estructuraríamos.\n\nQué día de esta semana te vendría mejor y en qué horario prefieres conectarte?';
     }
     // 5. Respuestas progresivas en conversación en curso para evitar repetición
@@ -827,19 +827,7 @@ function enforceAntiRepetitionGuardrail({
 // REGISTRO DE INCIDENTES DE IA & FALLOS DE MODELO (REPORTES DE IA)
 // ==============================================================================
 
-const GLOBAL_AI_INCIDENT_REPORTS = [
-  {
-    id: 'rep_init_1',
-    tenant_id: 'geosoft',
-    session_id: 'ses_audit_demo',
-    failed_model: 'Modelo 1: GLM 5 (GLM 5.3 Flash)',
-    fallback_model: 'Modelo 2: GPT (ChatGPT 5 Mini)',
-    error_message: 'HTTP 429 Cuota agotada en OpenRouter (Atendido por Cascada de Seguridad)',
-    user_query: 'Hola, ocupo cotización de desarrollo web a la medida',
-    status: 'rescued_by_fallback',
-    created_at: new Date(Date.now() - 3600000).toISOString()
-  }
-];
+const GLOBAL_AI_INCIDENT_REPORTS = [];
 
 async function recordAiIncident({ tenantId, tenantSlug, sessionId, failedModel, fallbackModel, errorMessage, userQuery }) {
   try {
@@ -1307,6 +1295,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     text: fallbackText,
     provider: 'context_template',
     model: 'template_fallback',
+    modelLabel: 'Red de Contingencia (Offline)',
+    fallbackUsed: true,
+    failedModel: firstFailedLabel || 'Modelos 1, 2 y 3',
     neurons: 0,
     costUsd: 0,
     tokens: 0,
@@ -2944,28 +2935,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         return jsonResponse({ success: true });
       }
 
-      if (segments[1] === 'simulate' && request.method === 'POST') {
-        const body = await request.json().catch(() => ({}));
-        const id = 'rep_sim_' + Date.now();
-        const tId = body.tenantSlug || body.tenantId || 'geosoft';
-        const simReport = {
-          id,
-          tenant_id: tId,
-          session_id: 'sim_session_' + Date.now(),
-          failed_model: body.failedModel || 'Modelo 1: GLM 5 (GLM 5.3 Flash)',
-          fallback_model: body.fallbackModel || 'Modelo 2: GPT (ChatGPT 5 Mini)',
-          error_message: body.errorMessage || 'HTTP 429 Cuota excedida (Simulación de Seguridad)',
-          user_query: body.userQuery || '¿Tienen citas disponibles para mañana y cuál es el precio?',
-          status: 'rescued_by_fallback',
-          created_at: new Date().toISOString()
-        };
-        GLOBAL_AI_INCIDENT_REPORTS.unshift(simReport);
-        await executeD1(
-          'INSERT INTO ai_incident_reports (id, tenant_id, session_id, failed_model, fallback_model, error_message, user_query, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
-          [id, tId, simReport.session_id, simReport.failed_model, simReport.fallback_model, simReport.error_message, simReport.user_query, 'rescued_by_fallback']
-        ).catch(() => {});
-        return jsonResponse({ success: true, simulatedId: id });
-      }
+
     }
 
     // BOOKING SETTINGS: GET & POST /api/tenant/booking-settings (con descansos e intervalos)
@@ -7361,7 +7331,12 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           products: prodsToInclude,
           provider: llmResult.provider,
           model: llmResult.model,
-          modelLabel: llmResult.modelLabel || (llmResult.model?.includes('glm') ? 'Modelo 1: GLM 5' : llmResult.model?.includes('gpt') ? 'Modelo 2: GPT' : 'Modelo 3: Meta'),
+          modelLabel: llmResult.modelLabel || (
+            llmResult.model === 'template_fallback' ? 'Red de Contingencia (Offline)' :
+            llmResult.model?.includes('glm') ? 'Modelo 1: GLM 5' :
+            llmResult.model?.includes('gpt') ? 'Modelo 2: GPT' :
+            'Modelo 3: Meta'
+          ),
           fallbackUsed: Boolean(llmResult.fallbackUsed),
           failedModel: llmResult.failedModel || null,
           lastAiError: llmResult.lastAiError || 'none',
