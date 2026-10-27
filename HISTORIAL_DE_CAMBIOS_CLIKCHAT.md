@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Notificación de Cita Nueva en Panel, Resaltado Visual y Retorno Automático al Pasar el Mouse (v2.6.4)
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Notificación Activa de Citas Nuevas:*
+     - Al confirmarse una cita desde el bot de chat o la interfaz web, el dueño del negocio en el panel no recibía un aviso visual destacado que le informara de la nueva cita agendada de inmediato.
+  2. *Dificultad de Ubicación Inmediata:*
+     - Cuando el usuario navegaba a la agenda, la nueva cita se mostraba con el mismo diseño que las citas previas sin un color distintivo ni auto-desplazamiento.
+  3. *Requerimiento de Transición Dinámica al Visualizar:*
+     - Se requería que al hacer clic en el aviso, el sistema llevara al usuario a la cita exacta con un color destacado, y que al poner el cursor encima (`onMouseEnter`) la cita cambiara a su color/estado normal y se considerara leída.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Banner y Bus de Notificación Reactivo (`useNewBookingAlert.ts` & `NewBookingBanner.tsx`):*
+     - Componente banner llamativo en color ámbar/dorado con campana pulsante (`BellRing`), detalles del cliente, fecha y hora de la cita y botón de acción directa *"Ver cita ahora"*.
+     - Sincronización en tiempo real con `bookingSyncBus.ts` ante reservas creadas por el bot o la API.
+  2. *Insignias en Navegación (Sidebar & CRM):*
+     - Insignia en color ámbar en el botón de *"Agenda de Citas"* (`SidebarSimpleNav`, `SidebarProNav` y `VoceroAppNav`) indicando citas nuevas pendientes de revisión.
+  3. *Resaltado Cromático & Auto-Scroll en Agenda (`AgendaTab.tsx` & `VoceroBookingsView.tsx`):*
+     - Al hacer clic en el banner o la notificación, el sistema navega a la pestaña de agenda y hace scroll suave al elemento de la cita.
+     - La tarjeta de la cita se resalta con un marco dorado pulsante (`border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-[0_0_25px_rgba(245,158,11,0.35)]`) y la insignia *"✨ NUEVA CITA · Pasa el cursor aquí"*.
+  4. *Retorno Automático al Pasar el Mouse (`onMouseEnter`):*
+     - En cuanto el usuario coloca el cursor sobre la tarjeta de la cita, se dispara `onAcknowledgeBooking`, retirando el resaltado y haciendo que la cita regrese suavemente a su color y estado normal sin recargar la página.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 23.57s con 0 errores TypeScript (`dist/assets/index-C--BkdF0.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `7f2efe3`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Rediseño Compacto Sin Scroll del Pop-up de Agendar Cita (v2.6.3)
 - **Diagnóstico y Necesidad:**
   1. *Scroll Vertical Forzado en Modal de Citas:*
