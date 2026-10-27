@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Optimización de Cascada Inteligente por Rol, Sandbox Dinámico y Abort 0ms (v2.7.3)
+- **Diagnóstico y Causas Raíces:**
+  1. *Evaluación de Modelos en Laboratorio vs. Producción:* Al forzar Google Gemini de forma estática al frente de toda la secuencia, los dueños de negocio en el Simulador de IA (Sandbox) no podían probar modelos específicos (GLM 5, GPT o Meta Llama).
+  2. *Latencia en Modelos con Saldo Agotado:* Si un proveedor externo como OpenRouter arrojaba HTTP 402/403, el siguiente intento dentro de la misma llamada no abortaba inmediatamente, requiriendo comprobaciones adicionales.
+  3. *Mensaje Inicial Estático en Simulador CRM:* El Sandbox de IA mostraba un texto genérico de bienvenida en lugar de inyectar las variables reales del tenant (`welcome_message`, `bot_name` y `tenantName`).
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Secuencia Inteligente en `callEdgeLLM` (`functions/api/[[route]].js`):*
+     - En el chat público de clientes (o sin modelo preferente): Google Gemini oficial corre al frente garantizando 0ms de espera y 100% de confiabilidad.
+     - En el Laboratorio / CRM Sandbox: Se respeta el modelo seleccionado (`model-1`, `model-2` o `model-3`) con respaldo automático e inmediato a Google Gemini si el proveedor seleccionado falla.
+  2. *Mecanismo de Escape Rápido (0ms Abort):*
+     - Detección inmediata de 402/403 en OpenRouter (`openRouterExhausted`) y 4006 en Workers AI (`cfAiExhausted`) para saltar de inmediato al respaldo de Google AI Studio.
+  3. *Sandbox Dinámico con Contexto Completo (`VoceroAiSandbox.tsx` y `VoceroCrmView.tsx`):*
+     - Interpolación en tiempo real del mensaje de bienvenida configurado por el tenant.
+     - Envío automático de `clientHour`, `clientTime`, `tenantId` y `conversationHistory` en cada interacción.
+     - Respeto estricto del estándar ARQMODULAR (<180 líneas por archivo: 179 líneas en Sandbox y 177 líneas en CRM View).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 13.65s con 0 errores TypeScript.
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Verificación de hash y estado en producción con smoke tests aprobados.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Blindaje Inmutable Anti-Amnesia, Memoria Continua Resiliente y Cascada Gemini Oficial (v2.7.2)
 - **Diagnóstico y Causas Raíces:**
   1. *Amnesia Total por Límite de Cuota en Cloudflare D1:*

@@ -6,21 +6,28 @@ import { LiveLabMessageItem } from './LiveLabMessageItem';
 
 interface VoceroAiSandboxProps {
   tenantSlug: string;
+  tenantId?: string;
+  tenant?: any;
   tenantName?: string;
   onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
 }
 
-export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, tenantName, onCreateFaq }) => {
-  const [messages, setMessages] = useState<SandboxMsg[]>([{
-    id: '1', sender: 'assistant', rag: 'L1 · Bienvenida', score: 98, isGolden: true,
-    text: `¡Hola! Soy tu agente virtual para ${tenantName || 'tu negocio'}. Estoy configurado con RAG y embudo de ventas. ¿En qué te puedo asesorar hoy?`,
-  }]);
+export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, tenantId, tenant, tenantName, onCreateFaq }) => {
+  const getWelcome = () => tenant?.welcome_message
+    ? tenant.welcome_message.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, tenantName || 'GeoSoft').replace(/\{asesor\}|\{bot\}/gi, tenant?.bot_name || 'Asesor Virtual')
+    : `¡Hola! 👋 Bienvenido a **${tenantName || 'GeoSoft'}**. ¿En qué te podemos colaborar el día de hoy?`;
+
+  const [messages, setMessages] = useState<SandboxMsg[]>([{ id: '1', sender: 'assistant', rag: 'L1 · Bienvenida', score: 98, isGolden: true, text: getWelcome() }]);
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState<'model-1' | 'model-2' | 'model-3'>('model-1');
   const [labSessionId, setLabSessionId] = useState(() => 'lab_' + Date.now().toString(36));
   const [loading, setLoading] = useState(false);
   const [activeCorrection, setActiveCorrection] = useState<{ msg: SandboxMsg; userQuestion: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (tenant && messages.length === 1 && messages[0].sender === 'assistant') setMessages([{ ...messages[0], text: getWelcome() }]);
+  }, [tenant]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior });
@@ -43,9 +50,8 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
     try {
       const hist = messages.map((m) => ({ sender: m.sender, message: m.text }));
       const res = await fetch('/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, sessionId: labSessionId, message: txt, model: selectedModel, preferredModel: selectedModel, conversationHistory: hist }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantSlug, tenantId: tenant?.id || tenantId, sessionId: labSessionId, message: txt, model: selectedModel, preferredModel: selectedModel, conversationHistory: hist, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) }),
       });
       if (res.ok) {
         const d = await res.json();
@@ -68,9 +74,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
   const handleOpenCorrection = (m: SandboxMsg) => {
     const idx = messages.findIndex((item) => item.id === m.id);
     let question = 'Consulta sobre servicios';
-    for (let i = idx - 1; i >= 0; i--) {
-      if (messages[i].sender === 'user') { question = messages[i].text; break; }
-    }
+    for (let i = idx - 1; i >= 0; i--) { if (messages[i].sender === 'user') { question = messages[i].text; break; } }
     setActiveCorrection({ msg: m, userQuestion: question });
   };
 
@@ -111,7 +115,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         <button
           onClick={() => {
             setLabSessionId('lab_' + Date.now().toString(36));
-            setMessages(messages.slice(0, 1));
+            setMessages([{ id: String(Date.now()), sender: 'assistant', rag: 'L1 · Bienvenida', score: 98, isGolden: true, text: getWelcome() }]);
           }}
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0"
         >

@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 11:00 GMT-6
-- **Versión Actual:** 2.7.2 (Blindaje Anti-Amnesia, Memoria Continua Resiliente y Cascada Gemini Oficial)
+- **Última Actualización:** 2026-10-27 11:10 GMT-6
+- **Versión Actual:** 2.7.3 (Optimización de Cascada Inteligente por Rol, Sandbox Dinámico y Abort 0ms)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Blindaje Anti-Amnesia Multicapa: Envío de `conversationHistory` desde frontend ante fallo o límite de cuota en D1.
-  - Cascada Google AI Studio Oficial: Prioridad inmediata a `gemini-3.5-flash-lite`, `gemini-3-flash-preview` y `gemini-3.8-flash`.
-  - Prohibición Determinista de Repetición: Erradicado reinicio de apertura; el bot nunca vuelve a preguntar qué proyecto busca si ya se indicó.
-  - Reconocimiento Inteligente de Contacto: Captura inmediata de correos y teléfonos con progresión contextual a agendamiento.
-  - Filtro Antifalsos Nombres: Bloqueo estricto de frases conversacionales ("me parece bien", "desarrollo web") como nombres propios.
+  - Cascada Inteligente Dual: Chat público corre con Google Gemini al frente (cero latencia); CRM Sandbox respeta el modelo elegido con fallback inmediato a Gemini.
+  - Abort en 0ms: Detección preventiva de cuota agotada en OpenRouter (402/403) y Workers AI (4006) para evitar bloqueos en cola.
+  - Sandbox de Pruebas Dinámico: Carga el mensaje de bienvenida y asesor real del tenant, enviando hora local y contexto completo.
+  - Blindaje Anti-Amnesia y Memoria Continua: Rescate garantizado con `conversationHistory` y guardrail determinista contra preguntas repetitivas.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

@@ -1192,6 +1192,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       signal: AbortSignal.timeout(6000)
     });
     if (!resp.ok) {
+      if (resp.status === 402 || resp.status === 403) openRouterExhausted = true;
       const errTxt = await resp.text().catch(() => '');
       throw new Error(`OpenRouter GLM HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
     }
@@ -1276,6 +1277,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   };
 
   const callModel3_Meta = async () => {
+    if (cfAiExhausted) throw new Error('Cloudflare Workers AI cuota diaria alcanzada (4006)');
     // 1. Enlace nativo Cloudflare Workers AI en el Edge (env.AI)
     if (env?.AI) {
       try {
@@ -1305,6 +1307,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           }
         }
       } catch (cfErr) {
+        if (cfErr.message?.includes('4006') || cfErr.message?.includes('daily')) cfAiExhausted = true;
         console.warn('Cloudflare Workers AI (env.AI) error:', cfErr.message);
         throw new Error(`Cloudflare Workers AI: ${cfErr.message}`);
       }
@@ -1361,30 +1364,20 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   };
 
   const pref = (preferredModel || userCustomConfig?.model || '').toLowerCase();
-  const geminiItem = { id: 'model-gemini', label: 'Google Gemini', run: callModel_Gemini };
+  const m1 = { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM };
+  const m2 = { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT };
+  const m3 = { id: 'model-3', label: 'Modelo 3: Meta (Cloudflare)', run: callModel3_Meta };
+  const mBackup = { id: 'model-backup', label: 'Google Gemini', run: callModel_Gemini };
   let modelSequence = [];
 
   if (pref.includes('gpt') || pref === 'model-2' || pref === '2') {
-    modelSequence = [
-      geminiItem,
-      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
-      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
-      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM }
-    ];
+    modelSequence = [m2, mBackup, m3, m1];
   } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref === 'model-3' || pref === '3') {
-    modelSequence = [
-      geminiItem,
-      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
-      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
-      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT }
-    ];
+    modelSequence = [m3, mBackup, m1, m2];
+  } else if (pref.includes('glm') || pref === 'model-1' || pref === '1') {
+    modelSequence = [m1, mBackup, m2, m3];
   } else {
-    modelSequence = [
-      geminiItem,
-      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
-      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
-      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta }
-    ];
+    modelSequence = [mBackup, m1, m2, m3];
   }
 
   let lastAiError = 'none';

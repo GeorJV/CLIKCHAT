@@ -147,7 +147,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onResolveQuery={resolveQuery}
           />
         )}
-        {activeTab === 'lab' && <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />}
+        {activeTab === 'lab' && <VoceroAiSandbox tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} tenant={tenant} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />}
         {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
         {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} onOpenInboxLead={() => handleSelectTab('inbox')} />}
         {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
