@@ -7,12 +7,9 @@ import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
 import { BookingIntervalConfig } from './BookingIntervalConfig';
 import { getInitialAppointments, BOOKING_FILTER_TABS } from './bookingConstants';
 import {
-  normalizeToDateKey,
-  formatDisplayDate,
-  getBookingFilterKeys,
-  isBookingInFilter,
-  BookingFilterType,
+  normalizeToDateKey, formatDisplayDate, getBookingFilterKeys, isBookingInFilter, BookingFilterType
 } from '../../../utils/bookingDateNormalizer';
+import { subscribeBookingSync } from '../../../utils/bookingSyncBus';
 
 interface VoceroBookingsViewProps {
   tenantId?: string;
@@ -69,8 +66,9 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     fetchBookings();
     const handleFocus = () => fetchBookings();
     window.addEventListener('focus', handleFocus);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 15000);
-    return () => { window.removeEventListener('focus', handleFocus); clearInterval(timer); };
+    const unsub = subscribeBookingSync(fetchBookings);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 5000);
+    return () => { window.removeEventListener('focus', handleFocus); unsub(); clearInterval(timer); };
   }, [tId, todayKey, now]);
 
   useEffect(() => {
@@ -172,6 +170,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={(apt) => {
         const norm = { ...apt, dateKey: normalizeToDateKey(apt.dateKey, now) || apt.dateKey };
         setAppointments(prev => [norm, ...prev]);
+        broadcastBookingCreated(tId);
       }} />
       <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => setSelectedAppointment(null)} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={(id) => { setAppointments(prev => prev.filter(a => a.id !== id)); setSelectedAppointment(null); }} />
     </div>

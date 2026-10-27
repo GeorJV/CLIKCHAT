@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, RefreshCw, Bot } from 'lucide-react';
 import { BookingIntervalConfig } from '../crm/bookings/BookingIntervalConfig';
 import { formatDisplayDate } from '../../utils/bookingDateNormalizer';
+import { subscribeBookingSync } from '../../utils/bookingSyncBus';
 
 interface Appointment {
   id: string; clientName: string; serviceName: string; date: string; time: string; status: 'confirmed' | 'pending' | 'completed'; price: number;
@@ -59,8 +60,9 @@ export const AgendaTab: React.FC<{ tenantId?: string }> = ({ tenantId }) => {
     fetchBookings();
     const handleFocus = () => fetchBookings();
     window.addEventListener('focus', handleFocus);
-    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 15000);
-    return () => { window.removeEventListener('focus', handleFocus); clearInterval(timer); };
+    const unsub = subscribeBookingSync(fetchBookings);
+    const timer = setInterval(() => { if (!document.hidden) fetchBookings(); }, 5000);
+    return () => { window.removeEventListener('focus', handleFocus); unsub(); clearInterval(timer); };
   }, [activeSlug]);
 
   const handleToggleAgentBooking = async () => {

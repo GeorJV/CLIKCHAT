@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
-import { ServiceChatColumn } from './ServiceChatColumn';
-import { ServiceShowcase } from './ServiceShowcase';
-import { ServiceDetailModal } from './ServiceDetailModal';
-import { ServiceBookingModal } from './ServiceBookingModal';
-import { BookedAppointmentModal } from './BookedAppointmentModal';
-import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
+import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase';
+import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal';
+import { BookedAppointmentModal } from './BookedAppointmentModal'; import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
 import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher';
 import { generateClientChatFallback } from '../../../services/clientChatFallback';
 import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
 import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
+import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
@@ -99,6 +97,7 @@ export const ServiceChatView: React.FC<Props> = ({
             };
             setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
+            broadcastBookingCreated(tenantSlug);
           } catch (e) {}
           setMessages((prev) => [...prev, {
             id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`,
@@ -145,6 +144,7 @@ export const ServiceChatView: React.FC<Props> = ({
       const k = `clikchat_bookings_${tenantSlug || 'default'}`;
       const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
       localStorage.setItem(k, JSON.stringify([apt, ...JSON.parse(localStorage.getItem(k) || '[]')]));
+      broadcastBookingCreated(tenantSlug);
     } catch (e) {}
     setMessages((prev) => [...prev, { id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     setMobileTab('chat');

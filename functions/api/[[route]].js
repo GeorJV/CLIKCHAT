@@ -5044,6 +5044,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
         ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
         : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
     }
+  } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
+    currentStep = 6;
+    stepInstruction = `PASO 6 (CIERRE Y DESPEDIDA PROFESIONAL): La cita ya quedó agendada y confirmada en un turno anterior. El cliente está diciendo gracias, que así está bien, que eso es todo o despidiéndose. Responde con calidez y despedida profesional y cordial (ej: "¡Con muchísimo gusto! Estaremos muy atentos a tu sesión. Aquí estaremos a tu entera disposición para cualquier cambio cuando gustes. ¡Que tengas un excelente día!"). QUEDA TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y PROHIBIDO volver a confirmar la cita.`;
   } else if (isRescheduleIntent) {
     currentStep = 5;
     stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
@@ -5056,6 +5059,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     slots: { name, email, phone, date, time },
     missing,
     isComplete: missing.length === 0,
+    hasPriorBookingCard: cardIndexInHistory >= 0,
+    isRescheduleIntent,
     currentStep,
     stepInstruction
   };
@@ -5452,13 +5457,42 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         } catch (syncSlotsErr) {}
       }
 
-      // 4.2 DETECCIÓN DE CORTESÍA, GRATITUD Y CONSULTAS DE CITA YA CONFIRMADA
+      // 4.2 DETECCIÓN DE CORTESÍA, GRATITUD, CONFORMIDAD Y CONSULTAS DE CITA YA CONFIRMADA
       const cleanMsgNorm = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-      const isGratitude = /^(?:gracias|muchas\s*gracias|muchisimas\s*gracias|ok\s*gracias|perfecto\s*gracias|listo\s*gracias|excelente\s*gracias|gracias\s*amig[oa]|mil\s*gracias|te\s*lo\s*agradezco|gracias\s*por\s*todo|entendido\s*gracias)\s*$/i.test(cleanMsgNorm);
+      const hasPriorBookingCard = sessionHistory.some(h => (h.sender === 'assistant' || h.role === 'assistant') && (h.message || h.content || '').includes('[BOOKING_CARD:')) || bookingState.hasPriorBookingCard;
+
+      const isClosingOrGratitude = (
+        /^(?:gracias|muchas\s*gracias|muchisimas\s*gracias|ok\s*gracias|perfecto\s*gracias|listo\s*gracias|excelente\s*gracias|mil\s*gracias|te\s*lo\s*agradezco|gracias\s*por\s*todo|entendido\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien\s*as[ií]|est[aá]\s*bien|esta\s*bien|as[ií]\s*queda\s*bien|as[ií]\s*d[eé]jalo|asi\s*dejalo|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|no\s*ser[ií]a\s*m[aá]s|nada\s*m[aá]s|todo\s*bien|todo\s*en\s*orden|todo\s*claro|est[aá]\s*perfecto|esta\s*perfecto|no\s*ninguna|ninguna\s*gracias|no\s*gracias|ninguna\s*consulta|ninguna\s*duda|por\s*ahora\s*no|de\s*momento\s*no|estamos\s*listos|listo|perfecto|excelente|hasta\s*luego|nos\s*vemos|chao|adi[oó]s|buen\s*d[ií]a|excelente\s*d[ií]a)(?:\s+(?:gracias|amig[oa]|por\s*todo|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|hasta\s*luego|buen\s*d[ií]a|buenas\s*tardes|buenas\s*noches|pura\s*vida|(?:que\s+pases?|que\s+tengas?)\s+(?:un\s+)?(?:buen|excelente|lindo|bonito)\s+d[ií]a))*\s*$/i.test(cleanMsgNorm) ||
+        /\b(?:as[ií]\s*est[aá]\s*bien|est[aá]\s*bien\s*as[ií]|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|no\s*(?:tengo\s*)?m[aá]s\s*(?:dudas?|consultas?|preguntas?)|ninguna\s*(?:duda|consulta|pregunta)|no\s*por\s*ahora|de\s*momento\s*no|no\s*gracias|todo\s*claro|todo\s*bien|(?:que\s+pases?|que\s+tengas?)\s+(?:un\s+)?(?:buen|excelente|lindo|bonito)\s+d[ií]a)\b/i.test(cleanMsgNorm)
+      );
       const isConfirmationCheck = /(?:ya\s*est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])|est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])\s*(?:la\s*cita|el\s*espacio)|la\s*cita\s*ya\s*qued[oó]|ya\s*qued[oó]\s*(?:la\s*cita|agendad[oa]|confirmad[oa]))/i.test(cleanMsgNorm);
       const isDateClarification = /(?:de\s+(?:qu[eé]\s+)?(?:f[eé]ch?a|fehca|d[ií]a)|qu[eé]\s+(?:f[eé]ch?a|fehca|d[ií]a)|para\s+cu[aá]ndo)/i.test(cleanMsgNorm);
 
-      if (isGratitude || isConfirmationCheck || isDateClarification) {
+      if ((hasPriorBookingCard || Boolean(bookingState.slots.date && bookingState.slots.time)) && isClosingOrGratitude && !bookingState.isRescheduleIntent) {
+        const clientName = bookingState.slots.name || activeLeadInfo?.name || '';
+        const farewell = userTimeInfo?.farewellPhrase || '¡Que tengas un excelente día!';
+        const closingReply = `¡Con muchísimo gusto${clientName ? ', ' + clientName : ''}! Estaremos muy atentos a tu sesión. Aquí estaremos a tu completa disposición para cualquier cambio o consulta cuando gustes. ${farewell} ¡Nos vemos pronto! 😊`;
+
+        const botMsgId = 'msg_' + Date.now() + '_b';
+        try {
+          await executeD1(
+            'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', closingReply, 'level_1']
+          );
+        } catch (e) {}
+
+        return jsonResponse({
+          sessionId: currentSessionId,
+          level: 'level_1',
+          levelLabel: 'Nivel 1: Despedida Profesional & Cierre de Cita',
+          confidence: 0.99,
+          answer: closingReply,
+          orderTotal: null,
+          isRestaurant
+        });
+      }
+
+      if (isConfirmationCheck || isDateClarification) {
         let confirmedApt = null;
         try {
           const cPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').replace(/\D/g, '');
@@ -5477,10 +5511,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         if (aptDate && aptTime) {
           let directReply = '';
           let levelLabel = '';
-          if (isGratitude) {
-            directReply = `¡Con muchísimo gusto${clientName ? ', ' + clientName : ''}! Tu cita para el **${aptDate} a las ${aptTime}** está 100% confirmada y guardada en nuestra agenda oficial. Quedamos a tu completa disposición para lo que necesites en tu proyecto. ¡Nos vemos en la sesión! 😊`;
-            levelLabel = 'Nivel 1: Gratitud & Confirmación Cerrada';
-          } else if (isConfirmationCheck) {
+          if (isConfirmationCheck) {
             directReply = `¡Sí, totalmente confirmada! Tu cita para el **${aptDate} a las ${aptTime}** ya está agendada y registrada en nuestro sistema oficial${clientName ? ' a nombre de ' + clientName : ''}. ¿Deseas hacer algún cambio o tienes alguna otra consulta?`;
             levelLabel = 'Nivel 1: Estado de Cita Confirmada';
           } else if (isDateClarification) {
@@ -6546,7 +6577,11 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
      Acepta cordialmente la solicitud en un único párrafo breve confirmando el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${cleanResolvedDate || 'día acordado'}), indicando que acabas de verificar el nuevo espacio en agenda.
      PROHIBIDO terminantemente redactar listas o renglones de campos en texto. Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
      [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
-     Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.`;
+     Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.
+6. CIERRE AMABLE Y DESPEDIDA PROFESIONAL (CERO RE-EMISIÓN DE TARJETA TRAS CONFIRMAR):
+   - Cuando la cita YA ha sido confirmada en un turno anterior y el usuario responde diciendo gracias, que así está bien, que no tiene más dudas, que eso es todo o despidiéndose (ej: "gracias", "muchas gracias", "así está bien", "eso es todo", "ninguna duda", "todo claro", "hasta luego"):
+     Queda TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y queda TERMINANTEMENTE PROHIBIDO volver a redactar la confirmación de la cita.
+     Responde ÚNICAMENTE con un saludo y despedida profesional y cordial indicándole que estaremos muy atentos a su sesión y que quedamos a su entera disposición para cualquier cambio o consulta cuando guste.`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -6586,8 +6621,12 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         llmResult.text = guardrailResult.text;
         const isPriceGuardrailBlocked = guardrailResult.triggered;
 
-        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (SOLO EN FLUJOS DE AGENDAMIENTO, NO EN PREGUNTAS INFORMATIVAS)
-        if (bookingState.isComplete && !isInfoOrServiceQuery) {
+        // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (SOLO EN FLUJOS DE AGENDAMIENTO, NO EN PREGUNTAS INFORMATIVAS NI EN CIERRES)
+        const hasPriorBookingCardInHist = sessionHistory.some(h => (h.sender === 'assistant' || h.role === 'assistant') && (h.message || h.content || '').includes('[BOOKING_CARD:')) || bookingState.hasPriorBookingCard;
+        const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
+        const isRescheduleTurn = bookingState.isRescheduleIntent || Boolean(parseFlexibleTime(message) || (message || '').match(timeRegex));
+
+        if (bookingState.isComplete && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
               service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
