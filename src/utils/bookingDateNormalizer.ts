@@ -30,6 +30,7 @@ export function getLocalDateKey(d: Date = new Date()): string {
 export function normalizeToDateKey(rawDate?: string | null, refDate: Date = new Date()): string | null {
   if (!rawDate || typeof rawDate !== 'string') return null;
   const s = rawDate.trim().toLowerCase();
+  const clean = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   // 1. Direct ISO YYYY-MM-DD or YYYY/MM/DD
   const isoMatch = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
@@ -37,41 +38,46 @@ export function normalizeToDateKey(rawDate?: string | null, refDate: Date = new 
 
   // 2. Format DD/MM/YYYY or DD-MM-YYYY
   const dmyMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmyMatch) {
-    const d = dmyMatch[1].padStart(2, '0');
-    const m = dmyMatch[2].padStart(2, '0');
-    return `${dmyMatch[3]}-${m}-${d}`;
-  }
+  if (dmyMatch) return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
 
-  // 3. Spanish text with month name: e.g. 'Lunes, 26 de Octubre de 2026', '26 de octubre', 'Hoy, 26 oct'
+  // 3. Spanish text with month name: e.g. 'Lunes, 26 de Octubre de 2026', '26 de octubre'
   const textDateMatch = s.match(/(\d{1,2})\s+(?:de\s+)?([a-záéíóúñ]+)(?:\s+(?:de\s+)?(\d{4}))?/i);
   if (textDateMatch) {
     const mName = textDateMatch[2].normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (MONTH_MAP[mName]) {
-      const day = textDateMatch[1].padStart(2, '0');
-      const month = MONTH_MAP[mName];
       const year = textDateMatch[3] || String(refDate.getFullYear());
-      return `${year}-${month}-${day}`;
+      return `${year}-${MONTH_MAP[mName]}-${textDateMatch[1].padStart(2, '0')}`;
     }
   }
 
-  // 4. Relative terms: hoy, manana, pasado manana
-  const clean = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  if (clean.includes('pasado manana')) {
-    const d = new Date(refDate);
-    d.setDate(d.getDate() + 2);
-    return getLocalDateKey(d);
-  }
-  if (clean.includes('manana')) {
-    const d = new Date(refDate);
-    d.setDate(d.getDate() + 1);
-    return getLocalDateKey(d);
-  }
-  if (clean.includes('hoy')) {
-    return getLocalDateKey(refDate);
+  // 4. Day name with day number: e.g. 'martes 27', 'miercoles, 28'
+  const dayNameAndNumMatch = clean.match(/(?:^|\b)(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})\b(?!\s+de\b)/i);
+  if (dayNameAndNumMatch) {
+    const dayNum = parseInt(dayNameAndNumMatch[2], 10);
+    if (dayNum >= 1 && dayNum <= 31) {
+      let tm = refDate.getMonth(), ty = refDate.getFullYear();
+      if (dayNum < refDate.getDate() && (refDate.getDate() - dayNum > 15)) { tm += 1; if (tm > 11) { tm = 0; ty += 1; } }
+      return getLocalDateKey(new Date(ty, tm, dayNum, 12, 0, 0));
+    }
   }
 
-  // 5. Day names: lunes, martes, etc.
+  // 5. Single day number: e.g. '29', 'el 28', 'para el 29'
+  const singleNumMatch = clean.match(/^(?:el\s+|para\s+el\s+|del?\s+)?(\d{1,2})\b(?!\s+de\b)/i);
+  if (singleNumMatch) {
+    const dayNum = parseInt(singleNumMatch[1], 10);
+    if (dayNum >= 1 && dayNum <= 31) {
+      let tm = refDate.getMonth(), ty = refDate.getFullYear();
+      if (dayNum < refDate.getDate() && (refDate.getDate() - dayNum > 15)) { tm += 1; if (tm > 11) { tm = 0; ty += 1; } }
+      return getLocalDateKey(new Date(ty, tm, dayNum, 12, 0, 0));
+    }
+  }
+
+  // 6. Relative terms: hoy, manana, pasado manana
+  if (clean.includes('pasado manana')) { const d = new Date(refDate); d.setDate(d.getDate() + 2); return getLocalDateKey(d); }
+  if (clean.includes('manana')) { const d = new Date(refDate); d.setDate(d.getDate() + 1); return getLocalDateKey(d); }
+  if (clean.includes('hoy')) return getLocalDateKey(refDate);
+
+  // 7. Day names: lunes, martes, etc.
   for (const [dayName, targetDayNum] of Object.entries(DAY_MAP)) {
     if (clean.includes(dayName)) {
       const rawCurDay = refDate.getDay();

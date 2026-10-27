@@ -4557,6 +4557,45 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
 
   const clean = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+  // 1. Fecha completa en texto: ej. 'Martes, 27 de Octubre de 2026', '27 de octubre', 'martes 27 de octubre'
+  const textDateMatch = str.match(/(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)[,\s]+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del?\s+)?(\d{4}))?/i);
+  if (textDateMatch) {
+    const dayNum = parseInt(textDateMatch[2], 10);
+    const monthName = textDateMatch[3].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const monthMap = {
+      enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+      julio: 6, agosto: 7, setiembre: 8, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+    };
+    if (monthMap[monthName] !== undefined) {
+      const m = monthMap[monthName];
+      const y = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : refDate.getFullYear();
+      const d = new Date(y, m, dayNum, 12, 0, 0);
+      const dayOfWeekName = daysOfWeek[d.getDay()];
+      return `${dayOfWeekName}, ${dayNum} de ${months[m]} de ${y}`;
+    }
+  }
+
+  // 2. Formato ISO YYYY-MM-DD
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const dayNum = parseInt(isoMatch[3], 10);
+    const d = new Date(y, m, dayNum, 12, 0, 0);
+    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
+  }
+
+  // 3. Formato con barras DD/MM o DD/MM/YYYY
+  const slashMatch = str.match(/^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$/);
+  if (slashMatch) {
+    const dayNum = parseInt(slashMatch[1], 10);
+    const m = parseInt(slashMatch[2], 10) - 1;
+    const y = slashMatch[3] ? (slashMatch[3].length === 2 ? 2000 + parseInt(slashMatch[3], 10) : parseInt(slashMatch[3], 10)) : refDate.getFullYear();
+    const d = new Date(y, m, dayNum, 12, 0, 0);
+    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
+  }
+
+  // 4. Términos relativos (hoy, mañana, pasado mañana)
   if (clean === 'hoy') {
     const d = new Date(refDate);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
@@ -4574,7 +4613,25 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
 
-  const singleDayNumMatch = clean.match(/^(?:el\s+)?(\d{1,2})(?:\s+(?:de\s+este\s+mes|de\s+este))?$/);
+  // 5. Día con número sin mes explícito (ej: 'martes 27', 'miercoles, 28')
+  const dayNameAndNumMatch = clean.match(/(?:^|\b)(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})\b(?!\s+de\b)/i);
+  if (dayNameAndNumMatch) {
+    const dayNum = parseInt(dayNameAndNumMatch[2], 10);
+    if (dayNum >= 1 && dayNum <= 31) {
+      const d = new Date(refDate);
+      let targetMonth = d.getMonth();
+      let targetYear = d.getFullYear();
+      if (dayNum < d.getDate() && (d.getDate() - dayNum > 15)) {
+        targetMonth += 1;
+        if (targetMonth > 11) { targetMonth = 0; targetYear += 1; }
+      }
+      const targetDate = new Date(targetYear, targetMonth, dayNum, 12, 0, 0);
+      return `${daysOfWeek[targetDate.getDay()]}, ${dayNum} de ${months[targetMonth]} de ${targetYear}`;
+    }
+  }
+
+  // 6. Número de día suelto (ej: 'el 29', '28', 'para el 29')
+  const singleDayNumMatch = clean.match(/^(?:el\s+|para\s+el\s+|del?\s+)?(\d{1,2})\b(?!\s+de\b)(?:\s+(?:de\s+este\s+mes|de\s+este))?$/i);
   if (singleDayNumMatch) {
     const dayNum = parseInt(singleDayNumMatch[1], 10);
     if (dayNum >= 1 && dayNum <= 31) {
@@ -4590,58 +4647,11 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
     }
   }
 
-  const dayNameAndNumMatch = clean.match(/(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})(?!\s+de\s+[a-z]+)/);
-  if (dayNameAndNumMatch) {
-    const dayNum = parseInt(dayNameAndNumMatch[2], 10);
-    const d = new Date(refDate);
-    let targetMonth = d.getMonth();
-    let targetYear = d.getFullYear();
-    if (dayNum < d.getDate() && (d.getDate() - dayNum > 15)) {
-      targetMonth += 1;
-      if (targetMonth > 11) { targetMonth = 0; targetYear += 1; }
-    }
-    const targetDate = new Date(targetYear, targetMonth, dayNum, 12, 0, 0);
-    return `${daysOfWeek[targetDate.getDay()]}, ${dayNum} de ${months[targetMonth]} de ${targetYear}`;
-  }
-
-  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const y = parseInt(isoMatch[1], 10);
-    const m = parseInt(isoMatch[2], 10) - 1;
-    const dayNum = parseInt(isoMatch[3], 10);
-    const d = new Date(y, m, dayNum, 12, 0, 0);
-    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
-  }
-
-  const slashMatch = str.match(/^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$/);
-  if (slashMatch) {
-    const dayNum = parseInt(slashMatch[1], 10);
-    const m = parseInt(slashMatch[2], 10) - 1;
-    const y = slashMatch[3] ? (slashMatch[3].length === 2 ? 2000 + parseInt(slashMatch[3], 10) : parseInt(slashMatch[3], 10)) : refDate.getFullYear();
-    const d = new Date(y, m, dayNum, 12, 0, 0);
-    return `${daysOfWeek[d.getDay()]}, ${dayNum} de ${months[m]} de ${y}`;
-  }
-
-  const textDateMatch = str.match(/(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)[,\s]+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del?\s+)?(\d{4}))?/i);
-  if (textDateMatch) {
-    const dayNum = parseInt(textDateMatch[2], 10);
-    const monthName = textDateMatch[3].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const monthMap = {
-      enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
-      julio: 6, agosto: 7, setiembre: 8, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
-    };
-    if (monthMap[monthName] === undefined) return str;
-    const m = monthMap[monthName];
-    const y = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : refDate.getFullYear();
-    const d = new Date(y, m, dayNum, 12, 0, 0);
-    const dayOfWeekName = daysOfWeek[d.getDay()];
-    return `${dayOfWeekName}, ${dayNum} de ${months[m]} de ${y}`;
-  }
-
-  const dayOnlyMatch = clean.match(/(lunes|martes|miercoles|jueves|viernes|sabado|domingo)/);
+  // 7. Nombre de día de la semana sin número (ej: 'martes', 'el miercoles')
+  const dayOnlyMatch = clean.match(/\b(lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b/i);
   if (dayOnlyMatch) {
     const targetDayName = dayOnlyMatch[1];
-    const targetDayIdx = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6 }[targetDayName];
+    const targetDayIdx = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueve: 4, jueves: 4, viernes: 5, sabado: 6 }[targetDayName];
     const d = new Date(refDate);
     const currentDay = d.getDay();
     let diff = targetDayIdx - currentDay;
@@ -4649,6 +4659,9 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
     d.setDate(d.getDate() + diff);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
+
+  return str;
+}
 
   return str;
 }
