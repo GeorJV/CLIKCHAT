@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Product, FAQ, UnresolvedQuery } from '../types';
 import { TenantListItem } from '../types/client';
 import { getCachedTenant, saveCachedTenant } from '../utils/fallbackTenant';
+import { DEFAULT_GEOSOFT_PRODUCTS, DEFAULT_GEOSOFT_FAQS } from '../utils/geosoftCatalogDefaults';
 import { useSmartPolling } from './useSmartPolling';
 import { subscribeToProductMetrics, broadcastProductMetric } from '../utils/metricsSync';
 
@@ -19,26 +20,36 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(`clikchat_products_${tenantSlug}`);
-        if (saved !== null) return JSON.parse(saved);
+        if (saved !== null) {
+          const p = JSON.parse(saved);
+          if (Array.isArray(p) && p.length > 0) return p;
+        }
+        if (tenantSlug === 'geosoft' || tenantSlug === 'ten_geosoft_prod') return DEFAULT_GEOSOFT_PRODUCTS;
         if (tenantSlug === 'comida-callejera-xl') {
           const old = localStorage.getItem('clikchat_products');
           if (old) return JSON.parse(old);
         }
       } catch (e) {}
     }
+    if (tenantSlug === 'geosoft' || tenantSlug === 'ten_geosoft_prod') return DEFAULT_GEOSOFT_PRODUCTS;
     return [];
   });
   const [faqs, setFaqs] = useState<FAQ[]>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(`clikchat_faqs_${tenantSlug}`);
-        if (saved !== null) return JSON.parse(saved);
+        if (saved !== null) {
+          const f = JSON.parse(saved);
+          if (Array.isArray(f) && f.length > 0) return f;
+        }
+        if (tenantSlug === 'geosoft' || tenantSlug === 'ten_geosoft_prod') return DEFAULT_GEOSOFT_FAQS;
         if (tenantSlug === 'comida-callejera-xl') {
           const old = localStorage.getItem('clikchat_faqs');
           if (old) return JSON.parse(old);
         }
       } catch (e) {}
     }
+    if (tenantSlug === 'geosoft' || tenantSlug === 'ten_geosoft_prod') return DEFAULT_GEOSOFT_FAQS;
     return [];
   });
   const [unresolved, setUnresolved] = useState<UnresolvedQuery[]>([]);
@@ -77,17 +88,21 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
             return next;
           });
         }
-        if (Array.isArray(tData.products)) {
+        if (Array.isArray(tData.products) && tData.products.length > 0) {
           setProducts(tData.products);
           if (typeof window !== 'undefined') {
             localStorage.setItem(`clikchat_products_${slugToLoad}`, JSON.stringify(tData.products));
           }
+        } else if (slugToLoad === 'geosoft' || slugToLoad === 'ten_geosoft_prod') {
+          setProducts(prev => prev.length > 0 ? prev : DEFAULT_GEOSOFT_PRODUCTS);
         }
-        if (Array.isArray(tData.faqs)) {
+        if (Array.isArray(tData.faqs) && tData.faqs.length > 0) {
           setFaqs(tData.faqs);
           if (typeof window !== 'undefined') {
             localStorage.setItem(`clikchat_faqs_${slugToLoad}`, JSON.stringify(tData.faqs));
           }
+        } else if (slugToLoad === 'geosoft' || slugToLoad === 'ten_geosoft_prod') {
+          setFaqs(prev => prev.length > 0 ? prev : DEFAULT_GEOSOFT_FAQS);
         }
         if (tData.tenant?.id) {
           const uRes = await fetch(`/api/audit/unresolved?tenantId=${tData.tenant.id}`);

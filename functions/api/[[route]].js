@@ -365,6 +365,7 @@ function getFallbackTenant(slug = '') {
       bot_name: 'Agente GeoSoft',
       avatar_url: '',
       plan: 'pro',
+      monthly_price: 99,
       status: 'active',
       business_type: 'servicios',
       currency: 'USD',
@@ -375,7 +376,10 @@ function getFallbackTenant(slug = '') {
       system_prompt: 'Eres el Agente GeoSoft oficial de GeoSoft. Asesoras con calidez, empatía y excelencia técnica en desarrollo web, apps móviles e inteligencia artificial. Tu prioridad es comprender la necesidad real del cliente, hacerlo sentir valioso e importante, y orientarlo con honestidad hacia la mejor solución antes de invitarlo a agendar una sesión estratégica paso a paso en el chat.',
       sales_flow_rules: 'PASO 1 (Escucha Empática & Diagnóstico): Comprende la necesidad y metas del cliente, hazlo sentir valorado y brinda asesoría de alto valor sin presionar. PASO 2 (Propuesta a la Medida): Explica la solución recomendada con transparencia. PASO 3 (Agendamiento Guiado): Invita cordialmente a agendar una cita solicitando datos en orden estricto (1° Nombre y Correo -> 2° Teléfono/WhatsApp -> 3° Día -> 4° Horario con opciones). PASO 4 (Confirmación & Tarjeta): Verifica disponibilidad en D1, confirma con entusiasmo y emite [BOOKING_CARD: {...}]. Prohibido mandar a WhatsApp por fuera.',
       order_ticket_format: '',
-      phone: '+506 7293-5612'
+      tone_of_voice: 'Profesional, Cálido y Tecnológico',
+      phone: '+506 7293-5612',
+      address: 'San José, Costa Rica · Cobertura Global',
+      custom_llm_key: JSON.stringify({ provider: 'cloudflare', model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', deliveryMode: 'moderate', cadence: 2 })
     };
   }
   if (slug === 'comida-callejera-xl' || slug === 'ten_1790438865714_53ytu') {
@@ -482,6 +486,88 @@ function getFallbackFaqs() {
       id: 'faq_sinpe',
       question: '¿Tienen pago por Sinpe Móvil?',
       answer: 'Sí, aceptamos pagos por Sinpe Móvil de forma inmediata. Al confirmar tu pedido recibirás los datos para realizar la transferencia.'
+    }
+  ];
+}
+
+function getFallbackGeoSoftProducts() {
+  return [
+    {
+      id: 'prod_geosoft_web_saas',
+      tenant_id: 'ten_geosoft_prod',
+      name: 'Desarrollo Web & Plataformas SaaS a Medida',
+      slug: 'desarrollo-web-saas',
+      price: 1200,
+      currency: 'USD',
+      short_description: 'Desarrollo de aplicaciones web de alto rendimiento, portales empresariales y sistemas SaaS completos construidos con arquitectura modular, escalabilidad en la nube y máxima velocidad.',
+      full_description: 'Creamos aplicaciones web profesionales y escalables utilizando las tecnologías más avanzadas del mercado (React, TypeScript, Cloudflare Edge, Node.js y bases de datos distribuidas). Incluye diseño responsivo premium, autenticación segura, panel de administración para el dueño, optimización SEO y despliegue global con 99.9% de uptime.',
+      images: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80'],
+      benefits: ['Entrega en 2 a 4 semanas', 'Garantía de 3 meses incluida', 'Arquitectura modular escalable'],
+      details: { category: 'Desarrollo de Software', tiempo_entrega: '2 a 4 semanas', soporte: 'Garantía de 3 meses incluida' },
+      cta_label: 'Cotizar Proyecto',
+      cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20Desarrollo%20Web',
+      is_active: 1
+    },
+    {
+      id: 'prod_geosoft_agentes_ia',
+      tenant_id: 'ten_geosoft_prod',
+      name: 'Agentes de Inteligencia Artificial & Bots de Ventas 24/7',
+      slug: 'agentes-ia-ventas',
+      price: 450,
+      currency: 'USD',
+      short_description: 'Implementación de asistentes conversacionales con IA avanzada, calibrados con la base de conocimiento de tu empresa (RAG) para atención, captura de prospectos y ventas automáticas en WhatsApp y Web.',
+      full_description: 'Automatiza la atención y captación de clientes de tu empresa con un Agente de IA personalizado. Capaz de entender contexto comercial, consultar catálogos en tiempo real, responder preguntas complejas sobre políticas o precios, y sincronizar leads calificados directamente a tu CRM.',
+      images: ['https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80'],
+      benefits: ['Operativo 24/7 sin descanso', 'Integración WhatsApp y Web', 'Sincronizado a CRM'],
+      details: { category: 'Inteligencia Artificial', canales: 'WhatsApp, Web, Instagram', integracion: 'CRM y base de datos' },
+      cta_label: 'Implementar Agente',
+      cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20un%20Agente%20de%20IA',
+      is_active: 1
+    },
+    {
+      id: 'prod_geosoft_apps_moviles',
+      tenant_id: 'ten_geosoft_prod',
+      name: 'Desarrollo de Aplicaciones Móviles (iOS & Android)',
+      slug: 'apps-moviles-ios-android',
+      price: 1800,
+      currency: 'USD',
+      short_description: 'Aplicaciones móviles nativas y multiplataforma fluidas, intuitivas y conectadas en tiempo real a tus sistemas empresariales.',
+      full_description: 'Desarrollo integral de apps móviles para iOS y Android con Flutter o React Native. Experiencias táctiles de primer nivel, notificaciones push, modo offline, pasarelas de pago y publicación guiada en App Store y Google Play.',
+      images: ['https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&auto=format&fit=crop&q=80'],
+      benefits: ['iOS y Android nativo', 'Notificaciones Push y Pagos', 'Asistencia en tiendas App Store / Play Store'],
+      details: { category: 'Aplicaciones Móviles', plataformas: 'iOS y Android', publicacion: 'Asistencia en tiendas incluida' },
+      cta_label: 'Crear App Móvil',
+      cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20una%20App%20Móvil',
+      is_active: 1
+    }
+  ];
+}
+
+function getFallbackGeoSoftFaqs() {
+  return [
+    {
+      id: 'faq_geosoft_1',
+      tenant_id: 'ten_geosoft_prod',
+      question: '¿Qué incluye el servicio de desarrollo web y SaaS?',
+      answer: 'Incluye arquitectura modular moderna en React/TypeScript, despliegue global en la nube (Cloudflare Edge / Vercel), panel administrativo para el dueño, base de datos en tiempo real, SEO técnico y 3 meses de garantía y soporte total.'
+    },
+    {
+      id: 'faq_geosoft_2',
+      tenant_id: 'ten_geosoft_prod',
+      question: '¿Cuáles son los tiempos de entrega de los proyectos?',
+      answer: 'El desarrollo de plataformas web y SaaS toma de 2 a 4 semanas según el alcance. Los Agentes de IA y bots de ventas se entregan e integran en 5 a 7 días hábiles.'
+    },
+    {
+      id: 'faq_geosoft_3',
+      tenant_id: 'ten_geosoft_prod',
+      question: '¿Cómo se agenda una cita de asesoría estratégica?',
+      answer: 'Puedes agendarla directamente a través de nuestro chat conversacional indicando tu nombre, correo, WhatsApp y el día/horario de tu preferencia. Nuestro asesor virtual verificará la disponibilidad y confirmará tu espacio en tiempo real.'
+    },
+    {
+      id: 'faq_geosoft_4',
+      tenant_id: 'ten_geosoft_prod',
+      question: '¿Qué métodos de pago y modalidades ofrecen?',
+      answer: 'Trabajamos con pagos por hitos (50% anticipo al iniciar y 50% contra entrega a satisfacción). Aceptamos transferencia bancaria, tarjetas de crédito/débito y pagos internacionales vía Stripe o PayPal.'
     }
   ];
 }
@@ -875,6 +961,25 @@ function enforceAntiRepetitionGuardrail({
 // ==============================================================================
 
 const GLOBAL_AI_INCIDENT_REPORTS = [];
+const GLOBAL_BOOKINGS = [
+  {
+    id: 'apt_geosoft_init_1',
+    tenant_id: 'ten_geosoft_prod',
+    customer_name: 'David Rodríguez',
+    customer_email: 'david.rodriguez@techmail.com',
+    customer_phone: '+506 7293-5612',
+    service_id: 'prod_geosoft_web_saas',
+    service_name: 'Desarrollo Web & SaaS',
+    booking_date: new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }),
+    booking_time: '10:00 AM',
+    modality: 'online',
+    status: 'confirmed',
+    price: 1200,
+    currency: 'USD',
+    notes: 'Sesión diagnóstica de arquitectura SaaS y cotización de plataforma empresarial.',
+    created_at: new Date().toISOString()
+  }
+];
 
 async function recordAiIncident({ tenantId, tenantSlug, sessionId, failedModel, fallbackModel, errorMessage, userQuery }) {
   try {
@@ -2932,6 +3037,15 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         if (existingApt.length > 0) {
           const prevId = existingApt[0].id;
+          const updObj = {
+            id: prevId, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
+            service_name: serviceName, service_id: serviceId, booking_date: bookingDate, booking_time: bookingTime,
+            modality, status: 'confirmed', price, currency, notes, created_at: new Date().toISOString()
+          };
+          const mIdx = GLOBAL_BOOKINGS.findIndex(b => b.id === prevId);
+          if (mIdx !== -1) GLOBAL_BOOKINGS[mIdx] = updObj;
+          else GLOBAL_BOOKINGS.unshift(updObj);
+
           await executeD1(
             'UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, service_id = ?5, price = ?6, status = \'confirmed\', notes = ?7 WHERE id = ?8',
             [customerName, bookingDate, bookingTime, serviceName, serviceId, price, notes, prevId]
@@ -2940,13 +3054,17 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           return jsonResponse({
             success: true,
             updated: true,
-            booking: {
-              id: prevId, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
-              service_name: serviceName, booking_date: bookingDate, booking_time: bookingTime,
-              modality, status: 'confirmed', price, currency, notes
-            }
+            booking: updObj
           }, 200);
         }
+
+        const newBookingRecord = {
+          id, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
+          service_name: serviceName, service_id: serviceId, booking_date: bookingDate, booking_time: bookingTime,
+          modality, status: 'confirmed', price, currency, notes, created_at: new Date().toISOString()
+        };
+        GLOBAL_BOOKINGS.unshift(newBookingRecord);
+        if (GLOBAL_BOOKINGS.length > 100) GLOBAL_BOOKINGS.pop();
 
         await executeD1(
           'INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)',
@@ -2955,31 +3073,52 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         return jsonResponse({
           success: true,
-          booking: {
-            id, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
-            service_name: serviceName, booking_date: bookingDate, booking_time: bookingTime,
-            modality, status: 'confirmed', price, currency, notes
-          }
+          booking: newBookingRecord
         }, 201);
       }
 
       if (request.method === 'GET') {
-        const tenantParam = url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || url.searchParams.get('tenant') || '';
-        let tenantId = tenantParam;
-        if (tenantParam) {
-          const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
-          if (tRows.length > 0) tenantId = tRows[0].id;
+        const tenantParam = (url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || url.searchParams.get('tenant') || url.searchParams.get('tenantSlug') || '').toLowerCase();
+        let rows = [];
+        try {
+          let tenantId = tenantParam;
+          if (tenantParam) {
+            const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+            if (tRows.length > 0) tenantId = tRows[0].id;
+          }
+
+          let query = 'SELECT * FROM bookings';
+          const params = [];
+          if (tenantId) {
+            query += ' WHERE tenant_id = ?1';
+            params.push(tenantId);
+          }
+          query += ' ORDER BY created_at DESC LIMIT 100';
+          rows = await executeD1(query, params).catch(() => []);
+        } catch (d1Err) {
+          console.warn('[D1 Bookings] Error/cuota en D1, usando memoria persistente:', d1Err.message);
         }
 
-        let query = 'SELECT * FROM bookings';
-        const params = [];
-        if (tenantId) {
-          query += ' WHERE tenant_id = ?1';
-          params.push(tenantId);
+        const isGeoSoft = (t) => t === 'geosoft' || t === 'ten_geosoft_prod';
+        if (!rows || rows.length === 0) {
+          rows = tenantParam
+            ? GLOBAL_BOOKINGS.filter(b => {
+                const bT = (b.tenant_id || '').toLowerCase();
+                return bT === tenantParam || bT.includes(tenantParam) || tenantParam.includes(bT) || (isGeoSoft(tenantParam) && isGeoSoft(bT));
+              })
+            : [...GLOBAL_BOOKINGS];
+        } else {
+          const seen = new Set(rows.map(b => b.id));
+          for (const gb of GLOBAL_BOOKINGS) {
+            if (!seen.has(gb.id)) {
+              const gbT = (gb.tenant_id || '').toLowerCase();
+              if (!tenantParam || gbT === tenantParam || gbT.includes(tenantParam) || tenantParam.includes(gbT) || (isGeoSoft(tenantParam) && isGeoSoft(gbT))) {
+                rows.unshift(gb);
+              }
+            }
+          }
         }
-        query += ' ORDER BY created_at DESC LIMIT 100';
 
-        const rows = await executeD1(query, params).catch(() => []);
         return jsonResponse({ success: true, bookings: rows });
       }
     }
@@ -3730,8 +3869,9 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             );
           }
         } catch (e) {
-          products = slug === 'comida-callejera-xl' ? getFallbackProducts() : [];
+          products = (slug === 'geosoft' || slug === 'ten_geosoft_prod') ? getFallbackGeoSoftProducts() : (slug === 'comida-callejera-xl' ? getFallbackProducts() : []);
         }
+        if (!products.length && (slug === 'geosoft' || slug === 'ten_geosoft_prod' || tenant?.name === 'GeoSoft')) products = getFallbackGeoSoftProducts();
         if (!products.length && slug === 'comida-callejera-xl') products = getFallbackProducts();
 
         let faqs = [];
@@ -3743,8 +3883,9 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             );
           }
         } catch (e) {
-          faqs = slug === 'comida-callejera-xl' ? getFallbackFaqs() : [];
+          faqs = (slug === 'geosoft' || slug === 'ten_geosoft_prod') ? getFallbackGeoSoftFaqs() : (slug === 'comida-callejera-xl' ? getFallbackFaqs() : []);
         }
+        if (!faqs.length && (slug === 'geosoft' || slug === 'ten_geosoft_prod' || tenant?.name === 'GeoSoft')) faqs = getFallbackGeoSoftFaqs();
         if (!faqs.length && slug === 'comida-callejera-xl') faqs = getFallbackFaqs();
 
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
@@ -3774,8 +3915,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         console.warn('D1 error in GET tenant, serving fallback:', err.message);
         const tenant = memoryTenants.get(slug) || getFallbackTenant(slug);
         const isCRC = (tenant.currency || '').toUpperCase() === 'CRC';
-        const fallbackProds = slug === 'comida-callejera-xl' ? getFallbackProducts() : [];
-        const fallbackFaqs = slug === 'comida-callejera-xl' ? getFallbackFaqs() : [];
+        const fallbackProds = (slug === 'geosoft' || slug === 'ten_geosoft_prod' || tenant?.name === 'GeoSoft') ? getFallbackGeoSoftProducts() : (slug === 'comida-callejera-xl' ? getFallbackProducts() : []);
+        const fallbackFaqs = (slug === 'geosoft' || slug === 'ten_geosoft_prod' || tenant?.name === 'GeoSoft') ? getFallbackGeoSoftFaqs() : (slug === 'comida-callejera-xl' ? getFallbackFaqs() : []);
         return jsonResponse({
           tenant,
           products: fallbackProds.map(p => ({
@@ -7201,16 +7342,26 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                 [actualTenantId, bPhone, cleanPhoneDigits || 'NON_MATCHING', bEmail]
               ).catch(() => []);
 
+              const aptIdToUse = existingApt.length > 0 ? existingApt[0].id : ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+              const aptMemObj = {
+                id: aptIdToUse, tenant_id: actualTenantId, customer_name: bName, customer_email: bEmail, customer_phone: bPhone,
+                service_id: 'srv_gen', service_name: bService, booking_date: bDate, booking_time: bTime, modality: 'online', status: 'confirmed',
+                price: bPrice, currency: 'USD', notes: 'Agendado automáticamente desde el chat.', created_at: new Date().toISOString()
+              };
+              const memIdx = GLOBAL_BOOKINGS.findIndex(g => g.id === aptIdToUse || (g.customer_phone && g.customer_phone === bPhone));
+              if (memIdx !== -1) GLOBAL_BOOKINGS[memIdx] = { ...GLOBAL_BOOKINGS[memIdx], ...aptMemObj };
+              else GLOBAL_BOOKINGS.unshift(aptMemObj);
+              if (GLOBAL_BOOKINGS.length > 100) GLOBAL_BOOKINGS.pop();
+
               if (existingApt.length > 0) {
                 await executeD1(
                   "UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, price = ?5, status = 'confirmed' WHERE id = ?6",
                   [bName, bDate, bTime, bService, bPrice, existingApt[0].id]
                 ).catch(() => {});
               } else {
-                const newAptId = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
                 await executeD1(
                   "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD')",
-                  [newAptId, actualTenantId, bName, bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice]
+                  [aptIdToUse, actualTenantId, bName, bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice]
                 ).catch(() => {});
               }
             } catch (autoSaveErr) {

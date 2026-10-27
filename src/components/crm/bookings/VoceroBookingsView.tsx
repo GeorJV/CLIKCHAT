@@ -42,9 +42,14 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
-      const items = saved ? JSON.parse(saved) : [];
-      const clean = items.filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
+      const keys = [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'];
+      let allFound: any[] = [];
+      for (const k of keys) {
+        const s = localStorage.getItem(k);
+        if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound = [...allFound, ...arr]; } catch {} }
+      }
+      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values());
+      const clean = unique.filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
       const src = clean.length > 0 ? clean : getInitialAppointments();
       return src.map((a: AppointmentItem) => ({
         ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey,
@@ -54,7 +59,8 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   });
 
   const fetchBookings = () => {
-    fetch(`/api/bookings?tenant=${encodeURIComponent(tId)}&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
+    const bParam = tId === 'ten_geosoft_prod' ? 'geosoft' : tId;
+    fetch(`/api/bookings?tenant=${encodeURIComponent(bParam)}&tenantId=ten_geosoft_prod&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.bookings && Array.isArray(d.bookings)) {
         const apiApts = d.bookings.map((b: any) => ({
           id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
@@ -63,7 +69,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const,
           phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
-        setAppointments(prev => [...apiApts, ...prev.filter(p => !new Set(apiApts.map(a => a.id)).has(p.id) && !p.id.startsWith('apt_') && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id))]);
+        setAppointments(prev => [...apiApts, ...prev.filter(p => !new Set(apiApts.map(a => a.id)).has(p.id) && !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(p.id))]);
       }
     }).catch(() => {});
   };
@@ -79,34 +85,28 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   }, [tId, todayKey, now]);
 
   useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(appointments)); } catch (e) {}
-  }, [appointments, storageKey]);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(appointments));
+      if (tId === 'geosoft' || tId === 'ten_geosoft_prod') {
+        localStorage.setItem('clikchat_bookings_geosoft', JSON.stringify(appointments));
+        localStorage.setItem('clikchat_bookings_ten_geosoft_prod', JSON.stringify(appointments));
+      }
+    } catch (e) {}
+  }, [appointments, storageKey, tId]);
 
   const handleToggleAgentBooking = async () => {
-    const nextVal = !allowAgentBooking;
-    setAllowAgentBooking(nextVal);
-    if (typeof window !== 'undefined') { try { localStorage.setItem(bookingSwitchKey, String(nextVal)); } catch (e) {} }
-    try {
-      await fetch('/api/tenant/booking-settings', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: tId, allowAgentBooking: nextVal })
-      });
-    } catch (e) {}
+    const nextVal = !allowAgentBooking; setAllowAgentBooking(nextVal);
+    if (typeof window !== 'undefined') { try { localStorage.setItem(bookingSwitchKey, String(nextVal)); } catch {} }
+    try { await fetch('/api/tenant/booking-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tId, allowAgentBooking: nextVal }) }); } catch {}
   };
 
   const handleToggleStatus = (id: string) => {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: a.status === 'confirmed' ? 'pending' : 'confirmed' } : a));
   };
 
-  const appointmentDates = useMemo(
-    () => appointments.map(a => normalizeToDateKey(a.dateKey, now) || a.dateKey),
-    [appointments, now]
-  );
-
+  const appointmentDates = useMemo(() => appointments.map(a => normalizeToDateKey(a.dateKey, now) || a.dateKey), [appointments, now]);
   const filtered = useMemo(() => {
-    if (calendarSelectedDate) {
-      return appointments.filter(a => (normalizeToDateKey(a.dateKey, now) || a.dateKey) === calendarSelectedDate);
-    }
+    if (calendarSelectedDate) return appointments.filter(a => (normalizeToDateKey(a.dateKey, now) || a.dateKey) === calendarSelectedDate);
     return appointments.filter(a => isBookingInFilter(a.dateKey, timeFilter, filterKeys, now));
   }, [appointments, timeFilter, calendarSelectedDate, filterKeys, now]);
 
@@ -148,9 +148,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl w-full mx-auto space-y-3">
           <BookingIntervalConfig tenantId={tId} isDarkTheme={false} />
-          {showMonthCalendar && (
-            <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>
-          )}
+          {showMonthCalendar && <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>}
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs">
               <CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p>

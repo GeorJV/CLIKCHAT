@@ -3,6 +3,7 @@ import { Send, FlaskConical, RefreshCw } from 'lucide-react';
 import { SandboxMsg, PERSONAS } from './sandboxConstants';
 import { LiveLabCorrectionModal } from './LiveLabCorrectionModal';
 import { LiveLabMessageItem } from './LiveLabMessageItem';
+import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface VoceroAiSandboxProps {
   tenantSlug: string;
@@ -63,17 +64,24 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         const score = Math.floor(Math.random() * 8) + 92;
         const defaultLabel = selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : 'Modelo 3: Meta';
         const effectiveModel = d.fallbackUsed ? (d.modelLabel || 'Red de Contingencia') : (d.modelLabel || defaultLabel);
-        setMessages((prev) => [...prev, {
-          id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.',
-          rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false,
-          modelUsed: effectiveModel, fallbackUsed: d.fallbackUsed,
-        }]);
+        if (d.answer?.includes('[BOOKING_CARD:')) {
+          try {
+            const cardM = d.answer.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
+            if (cardM) {
+              const p = JSON.parse(cardM[1]);
+              const apt = { id: 'apt_' + Date.now(), clientName: p.customerName || 'Cliente', serviceName: p.service || 'Desarrollo Web & SaaS', date: p.date, dateKey: p.date, displayDate: p.date, time: p.time, status: 'confirmed', channel: 'web', phone: p.customerPhone || '', email: p.customerEmail || '', notes: 'Live Lab', price: p.price || 1200 };
+              const ex = JSON.parse(localStorage.getItem('clikchat_bookings_geosoft') || '[]');
+              localStorage.setItem('clikchat_bookings_geosoft', JSON.stringify([apt, ...ex]));
+              localStorage.setItem('clikchat_bookings_ten_geosoft_prod', JSON.stringify([apt, ...ex]));
+              broadcastBookingCreated('geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
+            }
+          } catch {}
+        }
+        setMessages((prev) => [...prev, { id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.', rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false, modelUsed: effectiveModel, fallbackUsed: d.fallbackUsed }]);
       }
     } catch (e) {
       console.warn('Sandbox error:', e);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleOpenCorrection = (m: SandboxMsg) => {
@@ -120,15 +128,12 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
           }}
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0"
         >
-          <RefreshCw className="h-3 w-3" />
-          <span className="hidden sm:inline">Reiniciar</span>
+          <RefreshCw className="h-3 w-3" /><span className="hidden sm:inline">Reiniciar</span>
         </button>
       </header>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4 max-w-3xl w-full mx-auto space-y-3 pb-8">
-        {messages.map((m) => (
-          <LiveLabMessageItem key={m.id} message={m} onOpenCorrection={handleOpenCorrection} />
-        ))}
+        {messages.map((m) => (<LiveLabMessageItem key={m.id} message={m} onOpenCorrection={handleOpenCorrection} />))}
         {loading && (
           <div className="text-xs text-[#8391aa] flex items-center gap-2 py-2">
             <div className="w-3.5 h-3.5 border-2 border-[#0d5bff] border-t-transparent rounded-full animate-spin" />
@@ -140,10 +145,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas Vocero:</span>
         {PERSONAS.map((p) => (
-          <button
-            key={p.label} onClick={() => handleSendText(p.text)} disabled={loading}
-            className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer"
-          >
+          <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">
             {p.label}
           </button>
         ))}
@@ -156,10 +158,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
             placeholder="Escribe como un comprador para probar la respuesta del agente…"
             className="flex-1 rounded-full border border-[#dde5f1] bg-[#f6f8fc] px-4 py-2 text-[13px] text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white"
           />
-          <button
-            onClick={() => handleSendText()} disabled={loading || !input.trim()}
-            className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer"
-          >
+          <button onClick={() => handleSendText()} disabled={loading || !input.trim()} className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer">
             <Send className="h-4 w-4" />
           </button>
         </div>
