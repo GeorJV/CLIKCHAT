@@ -12,6 +12,20 @@
     <meta http-equiv="Expires" content="0" />
     <link rel="manifest" href="/manifest.json" />
     <title>Clikchat | Conversational Sales AI SaaS</title>
+    <script>
+      (function() {
+        try {
+          var h = window.location.hostname.toLowerCase();
+          var p = window.location.pathname.toLowerCase();
+          var m = localStorage.getItem('clikchat_view_mode');
+          var isCrm = h.includes('clikchatcrm') || h.startsWith('crm.') || p.startsWith('/crm') || p.startsWith('/user/mi-negocio') || p === '/dashboard' || m === 'vocero_crm' || (!m && !p.startsWith('/super-admin'));
+          if (isCrm && m !== 'clikchat_classic') {
+            document.documentElement.setAttribute('data-theme', 'crm');
+            document.documentElement.style.backgroundColor = '#f6f8fc';
+          }
+        } catch(e) {}
+      })();
+    </script>
     <!-- Google Fonts Inter & Cinzel -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

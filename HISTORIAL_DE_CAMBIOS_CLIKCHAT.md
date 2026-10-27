@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Erradicación del Salto de Modo Oscuro Clásico a CRM en Refresco (v2.8.2)
+- **Diagnóstico y Causas Raíces:**
+  1. *FOUC por Retardo en Validación de Sesión (`src/hooks/useAuth.ts`):* `useAuth` inicializaba el estado `user` en `null` e `isAuthenticated` en `false`. En el primer ciclo de render tras pulsar F5, `App.tsx` evaluaba `isAuthenticated && isVoceroMode`. Al ser falso por milisegundos, montaba `<ClientDashboard />` (modo oscuro clásico `#151414`), y cuando el `useEffect` terminaba de validar el token, desmontaba el panel clásico y montaba de golpe `<VoceroCrmView />` (CRM azul `#f6f8fc`), generando el salto brusco de pantallas percibido por el usuario.
+  2. *Condicional Inadecuado en `src/App.tsx`:* Cuando la aplicación ya estaba en modo CRM (`isVoceroMode === true`), delegaba la vista a `ClientDashboard` si el usuario no estaba todavía cargado, en lugar de mantener la interfaz CRM correspondiente.
+  3. *Resolución de Modo Incompleta (`src/hooks/useVoceroMode.ts`):* Si `clikchat_view_mode` no estaba inicializado en `localStorage`, la función `checkInitialMode` retornaba `false` (modo clásico) antes de detectar rutas como `/user/mi-negocio/...`.
+  4. *Fondo HTML Pre-montaje Oscuro (`index.html`):* `index.html` tenía estático `bg-slate-950` en el body, mostrando un destello negro antes de que React leyera el tema.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Hidratación Síncrona de Sesión (`src/hooks/useAuth.ts`):*
+     - Creado `resolveInitialUser`: Lee e hidrata síncronamente el usuario y rol desde `localStorage` (`clikchat_cached_user` o token activo) desde el milisegundo cero (`frame 0`).
+     - `isAuthenticated` arranca en `true` inmediatamente si el usuario ya tenía sesión iniciada; cero retardo y cero parpadeo.
+  2. *Enrutamiento Estable e Incondicional en `src/App.tsx`:*
+     - `{isVoceroMode ? <VoceroCrmView /> : <ClientDashboard />}`: Si el usuario está en el CRM, NUNCA se renderiza el panel clásico oscuro ni siquiera durante transiciones.
+  3. *Detección de Rutas CRM en `src/hooks/useVoceroMode.ts`:*
+     - Detección inmediata de rutas `/user/mi-negocio`, `/crm`, `/dashboard` y subdominios `crm` o `clikchatcrm`, con valor predeterminado CRM.
+  4. *Script Pre-Mount Anti-FOUC en `index.html`:*
+     - Script inline en `<head>` que aplica `backgroundColor = '#f6f8fc'` y `data-theme="crm"` antes de pintar el DOM si la sesión o ruta es de CRM.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.35s (`dist/assets/index-PRlF0AeR.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación runtime en Chrome Headless (17/17 rutas operativas al 100%, renderizando el CRM directamente desde el primer instante).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Persistencia y Eliminación Absoluta en Base de Datos D1 (v2.8.1)
 - **Diagnóstico y Causas Raíces:**
   1. *Fusión Fantasma en Backend (`functions/api/[[route]].js`):* Al consultar `GET /api/bookings`, el servidor ejecutaba una lógica residual `for (const gb of GLOBAL_BOOKINGS) { if (!seen.has(gb.id)) rows.unshift(gb) }`. Cuando un usuario eliminaba una cita de D1, el array estático de memoria volvía a inyectarla por no encontrarla en D1, resucitando citas borradas.

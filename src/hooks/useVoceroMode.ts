@@ -4,7 +4,7 @@ const STORAGE_KEY = 'clikchat_view_mode';
 
 export function useVoceroMode() {
   const checkInitialMode = (): boolean => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return true;
 
     // 1. Dominio específico clikchatcrm.pages.dev o subdominio crm
     const host = window.location.hostname.toLowerCase();
@@ -12,9 +12,10 @@ export function useVoceroMode() {
       return true;
     }
 
-    // 2. Parámetro en URL ?mode=crm o ruta /crm
+    // 2. Rutas específicas de panel CRM (/user/mi-negocio, /crm, /dashboard) o ?mode=crm
     const params = new URLSearchParams(window.location.search);
-    if (params.get('mode') === 'crm' || window.location.pathname.startsWith('/crm')) {
+    const path = window.location.pathname.toLowerCase();
+    if (params.get('mode') === 'crm' || path.startsWith('/crm') || path.startsWith('/user/mi-negocio') || path === '/dashboard') {
       return true;
     }
 
@@ -23,7 +24,8 @@ export function useVoceroMode() {
     if (saved === 'vocero_crm') return true;
     if (saved === 'clikchat_classic') return false;
 
-    return false;
+    // 4. Interfaz predeterminada en ClikChat: ClikChat CRM (menú azul)
+    return true;
   };
 
   const [isVoceroMode, setIsVoceroMode] = useState<boolean>(checkInitialMode);

@@ -4,11 +4,45 @@ import { saveCachedTenant } from '../utils/fallbackTenant';
 
 const TOKEN_KEY = 'clikchat_auth_token';
 const USERS_KEY = 'clikchat_local_users';
+const CACHED_USER_KEY = 'clikchat_cached_user';
+const CACHED_TENANT_KEY = 'clikchat_cached_auth_tenant';
+
+function resolveInitialUser(): AuthUser | null {
+  if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  if (token.startsWith('local-token-')) {
+    const userId = token.replace('local-token-', '');
+    if (userId === 'usr_admin_001') {
+      return { id: 'usr_admin_001', email: 'admin@clikchat.com', name: 'Super Administrador', role: 'superadmin', tenantId: 'ten_clikchat_admin', tenantSlug: 'clikchat-admin' };
+    }
+    if (userId === 'usr_ccxl_001') {
+      return { id: 'usr_ccxl_001', email: 'ccxl@gmail.com', name: 'COMIDA CALLEJERA XL', role: 'tenant_owner', tenantId: 'ten_1790438865714_53ytu', tenantSlug: 'comida-callejera-xl' };
+    }
+    try {
+      const localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const matched = localUsers.find((u: any) => u.id === userId);
+      if (matched) {
+        return { id: matched.id, email: matched.email, name: matched.name, role: matched.role || 'tenant_owner', tenantId: matched.tenantId, tenantSlug: matched.tenantSlug || localStorage.getItem('clikchat_active_tenant_slug') || 'mi-negocio' };
+      }
+    } catch (e) {}
+  }
+  try {
+    const raw = localStorage.getItem(CACHED_USER_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [tenant, setTenant] = useState<AuthTenant | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const initialUser = resolveInitialUser();
+  const [user, setUser] = useState<AuthUser | null>(initialUser);
+  const [tenant, setTenant] = useState<AuthTenant | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { const raw = localStorage.getItem(CACHED_TENANT_KEY); if (raw) return JSON.parse(raw); } catch {}
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(!initialUser);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,11 +109,17 @@ export function useAuth() {
         if (data.success && data.user) {
           setUser(data.user);
           localStorage.setItem('clikchat_role', data.user.role);
+          localStorage.setItem(CACHED_USER_KEY, JSON.stringify(data.user));
           if (data.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', data.user.tenantSlug);
-          if (data.tenant) setTenant(data.tenant);
+          if (data.tenant) {
+            setTenant(data.tenant);
+            localStorage.setItem(CACHED_TENANT_KEY, JSON.stringify(data.tenant));
+          }
         } else if (!token.startsWith('local-')) {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem('clikchat_role');
+          localStorage.removeItem(CACHED_USER_KEY);
+          localStorage.removeItem(CACHED_TENANT_KEY);
         }
       })
       .catch(() => {
@@ -113,10 +153,12 @@ export function useAuth() {
           if (resData.user) {
             setUser(resData.user);
             localStorage.setItem('clikchat_role', resData.user.role);
+            localStorage.setItem(CACHED_USER_KEY, JSON.stringify(resData.user));
             if (resData.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
           }
           if (resData.tenant) {
             setTenant(resData.tenant);
+            localStorage.setItem(CACHED_TENANT_KEY, JSON.stringify(resData.tenant));
             saveCachedTenant(resData.tenant as any);
           }
           setIsLoading(false);
@@ -210,10 +252,12 @@ export function useAuth() {
           if (resData.user) {
             setUser(resData.user);
             localStorage.setItem('clikchat_role', resData.user.role);
+            localStorage.setItem(CACHED_USER_KEY, JSON.stringify(resData.user));
             if (resData.user.tenantSlug) localStorage.setItem('clikchat_active_tenant_slug', resData.user.tenantSlug);
           }
           if (resData.tenant) {
             setTenant(resData.tenant);
+            localStorage.setItem(CACHED_TENANT_KEY, JSON.stringify(resData.tenant));
             saveCachedTenant(resData.tenant as any);
           }
           setIsLoading(false);
@@ -303,6 +347,8 @@ export function useAuth() {
       localStorage.removeItem('clikchat_role');
       localStorage.removeItem('clikchat_active_tenant_slug');
       localStorage.removeItem('clikchat_active_tab');
+      localStorage.removeItem(CACHED_USER_KEY);
+      localStorage.removeItem(CACHED_TENANT_KEY);
       sessionStorage.clear();
     } catch (e) {}
     setUser(null);

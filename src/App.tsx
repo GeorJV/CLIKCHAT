@@ -105,7 +105,9 @@ export function App() {
         {currentView === 'rider' && <div className="h-full w-full overflow-hidden bg-[#121214]"><ErrorBoundary fallbackTitle="Motorizados"><RiderDispatchView riderName="Repartidor Express" /></ErrorBoundary></div>}
         {currentView === 'client' && (
           <div className={`h-full w-full ${isVoceroMode ? 'bg-[#f6f8fc] text-[#0a1730] overflow-hidden' : 'bg-[#151414] text-slate-100 overflow-y-auto'}`}>
-            {isAuthenticated && isVoceroMode ? <ErrorBoundary fallbackTitle="ClikChat CRM"><VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} onLogout={logout} /></ErrorBoundary> : (
+            {isVoceroMode ? (
+              <ErrorBoundary fallbackTitle="ClikChat CRM"><VoceroCrmView tenantSlug={selectedTenantSlug} tenantName={storeName} onLogout={logout} /></ErrorBoundary>
+            ) : (
               <ErrorBoundary fallbackTitle="Panel del Negocio"><ClientDashboard tenantSlug={selectedTenantSlug} onOpenLiveChat={() => navigate(`/chat/${selectedTenantSlug}`)} onSelectTenant={(slug) => { setSelectedTenantSlug(slug); if (typeof window !== 'undefined') localStorage.setItem('clikchat_active_tenant_slug', slug); }} /></ErrorBoundary>
             )}
           </div>
