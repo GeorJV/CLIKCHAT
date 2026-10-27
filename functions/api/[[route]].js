@@ -2900,13 +2900,17 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         if (!rows || rows.length === 0) {
           rows = tenantParam
-            ? GLOBAL_AI_INCIDENT_REPORTS.filter(r => (r.tenant_id || '').toLowerCase() === tenantParam || tenantParam.includes(r.tenant_id?.toLowerCase() || ''))
+            ? GLOBAL_AI_INCIDENT_REPORTS.filter(r => {
+                const rT = (r.tenant_id || '').toLowerCase();
+                return rT === tenantParam || rT.includes(tenantParam) || tenantParam.includes(rT);
+              })
             : [...GLOBAL_AI_INCIDENT_REPORTS];
         } else {
           const seen = new Set(rows.map(r => r.id));
           for (const m of GLOBAL_AI_INCIDENT_REPORTS) {
             if (!seen.has(m.id)) {
-              if (!tenantParam || (m.tenant_id || '').toLowerCase() === tenantParam || tenantParam.includes(m.tenant_id?.toLowerCase() || '')) {
+              const mT = (m.tenant_id || '').toLowerCase();
+              if (!tenantParam || mT === tenantParam || mT.includes(tenantParam) || tenantParam.includes(mT)) {
                 rows.push(m);
               }
             }
@@ -3611,6 +3615,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
           try {
             const pK = JSON.parse(tenant.custom_llm_key);
             if (pK.deliveryMode) tenant.message_delivery_mode = pK.deliveryMode;
+            if (pK.botResponseSpeed !== undefined) tenant.bot_response_speed_sec = Number(pK.botResponseSpeed);
+            if (pK.bot_response_speed_sec !== undefined) tenant.bot_response_speed_sec = Number(pK.bot_response_speed_sec);
           } catch (e) {}
         }
         if (tenant && tenant.id) {
@@ -3690,7 +3696,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format, custom_ai_config, message_delivery_mode } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, bot_response_speed_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format, custom_ai_config, message_delivery_mode } = body;
 
       let resolvedCustomKey = custom_llm_key;
       if (resolvedCustomKey === undefined && custom_ai_config) {
@@ -3699,17 +3705,22 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             key: custom_ai_config.apiKey.trim(),
             provider: custom_ai_config.provider || (custom_ai_config.apiKey.startsWith('AIza') || custom_ai_config.apiKey.startsWith('AQ.') ? 'google' : custom_ai_config.apiKey.startsWith('sk-or') ? 'openrouter' : 'openai'),
             model: custom_ai_config.model,
-            deliveryMode: message_delivery_mode || custom_ai_config.deliveryMode
+            deliveryMode: message_delivery_mode || custom_ai_config.deliveryMode,
+            botResponseSpeed: bot_response_speed_sec !== undefined ? Math.min(Math.max(Number(bot_response_speed_sec) || 0, 0), 10) : undefined
           });
-        } else if (message_delivery_mode) {
-          resolvedCustomKey = JSON.stringify({ deliveryMode: message_delivery_mode });
+        } else if (message_delivery_mode || bot_response_speed_sec !== undefined) {
+          resolvedCustomKey = JSON.stringify({
+            deliveryMode: message_delivery_mode,
+            botResponseSpeed: bot_response_speed_sec !== undefined ? Math.min(Math.max(Number(bot_response_speed_sec) || 0, 0), 10) : undefined
+          });
         } else {
           resolvedCustomKey = null;
         }
-      } else if (message_delivery_mode) {
+      } else if (message_delivery_mode || bot_response_speed_sec !== undefined) {
         let cfg = {};
         try { if (typeof custom_llm_key === 'string' && custom_llm_key.startsWith('{')) cfg = JSON.parse(custom_llm_key); } catch (e) {}
-        cfg.deliveryMode = message_delivery_mode;
+        if (message_delivery_mode) cfg.deliveryMode = message_delivery_mode;
+        if (bot_response_speed_sec !== undefined) cfg.botResponseSpeed = Math.min(Math.max(Number(bot_response_speed_sec) || 0, 0), 10);
         resolvedCustomKey = JSON.stringify(cfg);
       }
 
@@ -3791,7 +3802,11 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         try {
           const pK = JSON.parse(finalTenant.custom_llm_key);
           if (pK.deliveryMode) finalTenant.message_delivery_mode = pK.deliveryMode;
+          if (pK.botResponseSpeed !== undefined) finalTenant.bot_response_speed_sec = Number(pK.botResponseSpeed);
         } catch (e) {}
+      }
+      if (bot_response_speed_sec !== undefined) {
+        finalTenant.bot_response_speed_sec = Math.min(Math.max(Number(bot_response_speed_sec) || 0, 0), 10);
       }
 
       if (finalTenant.id) memoryTenants.set(finalTenant.id, finalTenant);
