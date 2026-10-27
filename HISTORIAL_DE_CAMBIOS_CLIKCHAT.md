@@ -16,6 +16,39 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Reconciliación de Calendario, Panel en Tiempo Real y Sincronización de Agenda (v2.5.6)
+- **Diagnóstico y Causas Raíces:**
+  1. *Discrepancia de Día de la Semana ("Lunes 27" vs "Martes 27"):*
+     - En una sesión temprana se guardó en `localStorage` y en un registro antiguo de D1 la cadena literal *"Lunes, 27 de octubre de 2026"*. Matemáticamente, el 27 de octubre de 2026 es un **Martes**. Al generar el bot nuevas citas con cálculo dinámico correcto (*"Martes, 27 de Octubre de 2026"*), las vistas del CRM mostraban `displayDate` de forma literal sin recomputar el día de la semana respecto al calendario astronómico real.
+  2. *Bloqueo de Citas Actualizadas por Deduplicación Invertida:*
+     - En `VoceroBookingsView.tsx` y `AgendaTab.tsx`, la combinación de citas utilizaba `[...apiApts.filter(a => !seen.has(a.id)), ...prev]`. Como `prev` se inicializaba con `localStorage`, si una cita ya existía localmente, la versión fresca del servidor era descartada y se preservaba la versión vieja y obsoleta de `localStorage` con la hora o fecha desactualizada.
+  3. *Ausencia de Sondeo y Eventos de Foco en el Panel:*
+     - Ni `VoceroBookingsView.tsx` ni `AgendaTab.tsx` contaban con escucha al evento `focus` de la ventana ni sondeo inteligente en segundo plano. Cuando el usuario interactuaba con el bot en una pestaña y volvía al CRM, la vista continuaba congelada en el estado inicial sin reflejar las nuevas citas.
+  4. *Contaminación de Datos Mock en Filtros:*
+     - Las citas fijas de plantilla de barbería (`apt-1`, `apt-2`, `apt-3`, `apt-4`) persistían en memoria local y copaban el filtro *"Hoy"*, ocultando o distorsionando las citas reales de software de GeoSoft en los filtros temporales.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Formateo Calendario Autónomo (`formatDisplayDate`):*
+     - En `src/utils/bookingDateNormalizer.ts`, se implementó `formatDisplayDate(rawDate, refDate)` que descompone la fecha normalizada y calcula matemáticamente con `new Date(y, m - 1, d, 12, 0, 0).getDay()` el día real en español. Transforma de forma indestructible cualquier *"2026-10-27"* o *"Lunes, 27 de octubre de 2026"* en el matemáticamente exacto: **"Martes, 27 de Octubre de 2026"**.
+  2. *Autoridad del Servidor (Server-First Merge):*
+     - Modificado el fusionado en `VoceroBookingsView.tsx` y `AgendaTab.tsx` para que `apiApts` tome precedencia absoluta (`[...apiApts, ...localOnly]`), actualizando al instante cualquier cambio de hora o estado.
+  3. *Recarga en Foco y Polling Inteligente (`polling-inteligente`):*
+     - Integrado listener de `window.addEventListener('focus', fetchBookings)` y temporizador de sondeo cada 15 segundos que solo se activa si `!document.hidden`, garantizando cero consumo fantasma y actualización en vivo inmediata al cambiar de pestaña.
+  4. *Erradicación de Mocks Obsoletos:*
+     - Purga automática de IDs de plantilla (`apt-1` a `apt-4`) ante la presencia de citas reales de producción en D1.
+  5. *Normalización en D1:*
+     - Actualizados los registros en D1 (`apt_1792863658207_51bv` a *"Lunes, 26 de Octubre de 2026"* y citas del 27 a *"Martes, 27 de Octubre de 2026"*).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 11.22s con 0 errores TypeScript (`index-zIEoBSoG.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `4270647`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`) + Hash Match al 100% y 17/17 rutas operativas en Chrome Headless.
+  - *Pruebas en Vivo Verificadas:*
+    - Endpoint `/api/bookings?tenant=geosoft` consultado en vivo: citas del 27 de octubre rotuladas como *"Martes, 27 de Octubre de 2026"* y cita del 26 como *"Lunes, 26 de Octubre de 2026"*.
+    - Notificación enviada a ARQ AI Studio (`status: "ready_for_review"`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-26] Desacoplamiento de Consultas RAG vs Agendamiento, Memoria Contextual Sin Bucles y Blindaje Multiturno (v2.5.5)
 - **Diagnóstico y Causas Raíces:**
   1. *Forzamiento Invasivo de Slots de Cita en Preguntas Informativas:* Si el tenant era de servicios (`GeoSoft`), el sistema inyectaba ciegamente la directiva obligatoria de captura de slots (`stepInstruction`: "PASO 2: Solicita teléfono..."). Cuando el cliente preguntaba por servicios, tecnologías, precios o soporte, el bot ignoraba la consulta del usuario y le exigía un teléfono o correo.

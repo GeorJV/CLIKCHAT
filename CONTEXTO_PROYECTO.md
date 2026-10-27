@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 17:56 GMT-6
-- **Versión Actual:** 2.5.5 (Desacoplamiento RAG vs Agendamiento, Memoria Contextual y Cero Bucles)
+- **Última Actualización:** 2026-10-26 18:48 GMT-6
+- **Versión Actual:** 2.5.6 (Reconciliación de Calendario, Panel en Tiempo Real y Sincronización de Agenda)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Desacoplamiento RAG vs Agendamiento: Preguntas de servicios/precios se responden con la Base de Conocimiento sin exigir datos de citas ni emitir tarjetas.
-  - Memoria Contextual Fluida: El bot recuerda el negocio, nombre y necesidades del cliente, recomendando soluciones a la medida.
-  - Cero Bucles o Tarjetas Invasivas: Supresión de [BOOKING_CARD] en turnos informativos post-cita y bloqueo de arrastre de horas viejas (`cardTime`).
-  - Google AI Studio Robusto: Garantía de turno inicial 'user' y modelos oficiales vigentes (`gemini-3.5-flash` / `gemini-3.1-flash-lite`).
-  - Persistencia Confirmada en D1: Guardado automático de citas con status confirmed y panel cronológico de 100 mensajes.
-  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless y suite de inteligencia aprobada.
+  - Reconciliación de Calendario: `formatDisplayDate` calcula matemáticamente el día de la semana (`2026-10-27` = Martes), eliminando discrepancias.
+  - Sincronización Server-First: El panel prioriza citas frescas de D1 sobre `localStorage`, erradicando bloqueos y datos viejos.
+  - Polling Inteligente & Enfoque: Recarga automática al volver a la pestaña (`focus`) y sondeo cada 15s si `!document.hidden`.
+  - Mocks Purgados: Eliminadas citas de prueba de barbería para no contaminar filtros de clientes de GeoSoft.
+  - Persistencia Confirmada en D1: Guardado y reprogramación automática con status confirmed.
+  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
