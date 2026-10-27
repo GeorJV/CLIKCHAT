@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 15:25 GMT-6
-- **Versión Actual:** 2.7.7 (Restauración de Bandeja de Entrada y Citas Reales en GeoSoft)
+- **Última Actualización:** 2026-10-27 16:20 GMT-6
+- **Versión Actual:** 2.7.8 (Corrección de Contraste y Legibilidad en Intervalos y Descansos)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - UI de Intervalos Accesible: Máximo contraste y legibilidad en banner y badge de ciclo de agenda en modo claro y oscuro.
   - Bandeja de Entrada & Citas 100% Restauradas: 10 citas y prospectos reales de ayer y hoy migrados y activos en D1 Homilia7 (`clikchat-db`).
-  - Resolución Slug/ID en Edge: `/api/crm/leads` y conversaciones atienden con fidelidad tanto `geosoft` como `ten_geosoft_prod`.
   - Infraestructura 100% Unificada en Homilia7: Hosting Pages y base de datos D1 (`af3aebed-002b-4e84-aabb-4c570483a3df`) consolidados.
-  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y endpoints verificados en vivo.
+  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

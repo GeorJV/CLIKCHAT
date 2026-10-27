@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Corrección de Contraste y Legibilidad en Tarjeta de Intervalos y Descansos (v2.7.8)
+- **Diagnóstico y Causas Raíces:**
+  1. *Falta de Contraste en Modo Claro (`isDarkTheme === false`):* En `BookingIntervalConfig.tsx`, el banner del ciclo de agenda utilizaba clases duras `text-emerald-300` y el pill/badge empleaba `bg-emerald-500/20 text-emerald-200`. Al renderizarse sobre fondo blanco/claro del panel CRM, las letras resultaban casi invisibles por carecer de contraste.
+  2. *Etiquetas y Separadores:* Las etiquetas `<label>` estaban forzadas en `text-zinc-300` (gris muy claro) y el separador en `border-white/[0.06]`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Estilos Adaptativos Light/Dark:*
+     - Banner informativo: en modo claro aplica `bg-emerald-50 border-emerald-200 text-emerald-900` para máxima legibilidad WCAG AAA.
+     - Badge/Pill ("Cita cada X min"): en modo claro utiliza `bg-emerald-700 text-white font-bold shadow-xs`, destacando con contraste perfecto e inmediato.
+     - Etiquetas descriptivas: adaptadas con `text-slate-700` en modo claro y `text-zinc-300` en oscuro.
+  2. *Cumplimiento ARQMODULAR:* `BookingIntervalConfig.tsx` se mantuvo en 160 líneas (<180 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.25s con 0 errores (`dist/assets/index-CfyB9Nu8.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Verificación de hash match 100% y 17/17 rutas auditadas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Restauración de Bandeja de Entrada y Citas Reales de Ayer y Hoy en GeoSoft (v2.7.7)
 - **Diagnóstico y Causas Raíces:**
   1. *Ausencia de Datos Reales en la Nueva D1:* Tras crear `clikchat-db` en Homilia7, solo se había insertado una cita de prueba; las 10 citas y prospectos reales registrados entre ayer y hoy permanecían en la base de datos anterior.
