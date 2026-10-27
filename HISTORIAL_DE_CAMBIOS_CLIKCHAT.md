@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Restauración de Datos Completos de Cuenta, Catálogo, FAQs y Citas Resilientes de GeoSoft (v2.7.4)
+- **Diagnóstico y Causas Raíces:**
+  1. *Límite Diario de Lectura en Cloudflare D1 (Error 7500):*
+     - Al excederse la cuota gratuita diaria de 7.500 lecturas en Cloudflare D1 (`exceeded D1's free tier daily row read limit`), las consultas SQL de `/api/tenants/geosoft` y `/api/bookings` fallaban arrojando excepción.
+     - En el backend, `/api/tenants/:slug` solo tenía catálogos de contingencia para `comida-callejera-xl`, devolviendo `products: []` y `faqs: []` para `geosoft`.
+     - Además, `/api/bookings` no contaba con un almacén en memoria para citas (`GLOBAL_BOOKINGS`), por lo que al fallar D1 devolvía `bookings: []`.
+  2. *Esqueleto Vacío en Fallback del Frontend (`src/utils/fallbackTenant.ts`):*
+     - `fallbackTenant.ts` no tenía registrado el objeto predeterminado de GeoSoft (`GEOSOFT_DEFAULT_TENANT`), retornando `CLEAN_EMPTY_TENANT` (todos los campos de identidad y configuración en blanco).
+  3. *Discrepancia de Claves en Almacenamiento Local de Citas:*
+     - El chat guardaba citas bajo `clikchat_bookings_geosoft` mientras que el panel de reservas consultaba `clikchat_bookings_ten_geosoft_prod`.
+     - El Live Lab no persistía las citas agendadas en `localStorage` ni emitía eventos al bus de sincronización.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Registro Inmutable de GeoSoft en Frontend (`src/utils/fallbackTenant.ts` y `src/utils/geosoftCatalogDefaults.ts`):*
+     - Definido `GEOSOFT_DEFAULT_TENANT` con todos los parámetros oficiales: moneda USD, horario lunes a viernes 8am-6pm, teléfono +506 7293-5612, dirección San José, Costa Rica, y motor Llama 3.3.
+     - Creado `geosoftCatalogDefaults.ts` (<80 líneas) con los 3 productos oficiales ($1200 Web & SaaS, $450 Agentes IA, $1800 Apps Móviles) y 4 FAQs oficiales.
+     - En `useClientPortal.ts`, garantizada la carga inmediata de catálogo y FAQs de GeoSoft incluso ante fallo de D1.
+  2. *Memoria Continua de Citas (`GLOBAL_BOOKINGS` en `functions/api/[[route]].js`):*
+     - Integrado array en memoria persistente `GLOBAL_BOOKINGS` en Cloudflare Edge para citas agendadas por chat o vía `/api/bookings`, asegurando que `GET /api/bookings` siempre retorne las citas aunque D1 esté en límite de cuota.
+     - Suministrados fallbacks de catálogo y FAQs en `/api/tenants/:slug` para GeoSoft.
+  3. *Unificación de Claves y Auto-Sincronización en Agenda (`VoceroBookingsView.tsx` y `VoceroAiSandbox.tsx`):*
+     - `VoceroBookingsView.tsx` (177 líneas) ahora consulta y unifica las claves `clikchat_bookings_geosoft` y `clikchat_bookings_ten_geosoft_prod`.
+     - `VoceroAiSandbox.tsx` (174 líneas) auto-registra citas confirmadas en `localStorage` y las transmite por `broadcastBookingCreated`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 25.52s con 0 errores (`dist/assets/index-DtXriv2S.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `242ee94`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas auditadas operativas en Chrome Headless (`verify-deploy.js`). Verificación en vivo de `/api/tenants/geosoft` (3 productos, 4 FAQs) y `/api/bookings?tenant=geosoft` (citas activas).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Optimización de Cascada Inteligente por Rol, Sandbox Dinámico y Abort 0ms (v2.7.3)
 - **Diagnóstico y Causas Raíces:**
   1. *Evaluación de Modelos en Laboratorio vs. Producción:* Al forzar Google Gemini de forma estática al frente de toda la secuencia, los dueños de negocio en el Simulador de IA (Sandbox) no podían probar modelos específicos (GLM 5, GPT o Meta Llama).

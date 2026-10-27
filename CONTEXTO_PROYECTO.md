@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 11:10 GMT-6
-- **Versión Actual:** 2.7.3 (Optimización de Cascada Inteligente por Rol, Sandbox Dinámico y Abort 0ms)
+- **Última Actualización:** 2026-10-27 14:15 GMT-6
+- **Versión Actual:** 2.7.4 (Restauración de Datos de Cuenta, Catálogo, FAQs y Citas Resilientes de GeoSoft)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Cascada Inteligente Dual: Chat público corre con Google Gemini al frente (cero latencia); CRM Sandbox respeta el modelo elegido con fallback inmediato a Gemini.
-  - Abort en 0ms: Detección preventiva de cuota agotada en OpenRouter (402/403) y Workers AI (4006) para evitar bloqueos en cola.
-  - Sandbox de Pruebas Dinámico: Carga el mensaje de bienvenida y asesor real del tenant, enviando hora local y contexto completo.
-  - Blindaje Anti-Amnesia y Memoria Continua: Rescate garantizado con `conversationHistory` y guardrail determinista contra preguntas repetitivas.
-  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
+  - Resiliencia Total de Datos GeoSoft: Identidad, catálogo oficial (3 servicios), 4 FAQs y citas blindados ante límites de cuota de Cloudflare D1.
+  - Citas Resilientes y Sincronizadas: Memoria Edge `GLOBAL_BOOKINGS`, persistencia unificada en LocalStorage y auto-registro en Live Lab.
+  - Cascada Inteligente Dual: Chat público con Google Gemini prioritario; Sandbox CRM respeta modelo seleccionado con fallback instantáneo.
+  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
