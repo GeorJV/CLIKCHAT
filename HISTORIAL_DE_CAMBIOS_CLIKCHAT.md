@@ -16,6 +16,38 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Eliminación de Mocks/Demo, Rescate Factual en Red de Contingencia y Selector de 3 Modelos Visible (v2.7.0)
+- **Diagnóstico y Necesidad:**
+  1. *Falso Positivo en Live Lab y Repetición de Mensajes:*
+     - Al agotarse el balance/saldo de la API key de OpenRouter por defecto ($3.05 gastados de $3.00), los 3 modelos LLM (GLM 5, GPT y Meta) fallaron de forma consecutiva al no poder conectarse al proveedor externo.
+     - El sistema activó su mecanismo de seguridad de contingencia determinista (`generateSmartFallbackReply`), pero debido a que `VoceroAiSandbox` generaba un nuevo `sessionId` en cada mensaje, no existía memoria de turnos previos. Además, las expresiones regulares buscaban términos estrictamente en singular (`\bprecio\b`, `pagina\s*web`), haciendo que consultas en plural o con erratas ("QUIERO UN AWEB", "SI QUIERO SABER LOS PRECIOS", "QUIERO SABER LOS PRECIOS DE LAS PAGINAS WEB") cayeran en el saludo de bienvenida una y otra vez.
+     - En el backend, al retornar la contingencia sin `modelLabel`, el fallback de etiquetas asignaba por defecto `'Modelo 3: Meta'`, mostrando erróneamente el badge de Meta.
+  2. *Ubicación del Selector de Modelos:*
+     - El selector de modelos estaba oculto en dispositivos móviles y anchos de pantalla reducidos (`hidden sm:flex`) en la cabecera del Live Lab.
+  3. *Eliminación de Elementos de Simulación / Demo:*
+     - El usuario solicitó expresamente que todo funcione 100% en real, eliminando el incidente de prueba `rep_init_1` y el botón de simular fallos.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Limpieza de Mocks y Modo 100% Real:*
+     - En `functions/api/[[route]].js`: `GLOBAL_AI_INCIDENT_REPORTS` inicializado como array vacío `[]` (eliminado `rep_init_1`). Eliminado endpoint `POST /api/ai-reports/simulate`.
+     - En `VoceroAiReportsView.tsx` (130 líneas): Eliminado botón y lógica de "Simular Fallo & Respaldo". Centro de Reportes opera 100% con incidentes reales.
+  2. *Memoria Episódica en Live Lab (`VoceroAiSandbox.tsx` - 174 líneas):*
+     - `labSessionId` persistente a lo largo de toda la conversación de prueba.
+     - Envío automático de `conversationHistory` en el payload de `/api/chat/message`.
+     - Selector de los 3 modelos (`🥇 Mod 1: GLM 5`, `🥈 Mod 2: GPT`, `🥉 Mod 3: Meta`) ahora visible en todas las resoluciones (eliminado `hidden sm:flex`).
+     - Al reiniciar, se genera un nuevo `labSessionId` para pruebas limpias.
+  3. *Ampliación de Reglas Factuales en Red de Contingencia (`functions/api/[[route]].js`):*
+     - Regexes ampliadas para capturar plurales y coloquialismos: "precios", "aweb", "paginas web", "costos", "cotizaciones".
+     - Respuestas de contingencia devuelven explícitamente `modelLabel: 'Red de Contingencia (Offline)'` y `fallbackUsed: true`, impidiendo etiquetas falsas de Meta o GPT cuando responde la contingencia local.
+  4. *Aclaración y Visibilidad del Cambio de Modelo:*
+     - Explicado de forma rotunda dónde cambiar de modelo: 1) En la barra superior del Live Lab con 1 clic (`🥇 Mod 1`, `🥈 Mod 2`, `🥉 Mod 3`), y 2) En `Ajustes -> Motor de IA`, donde además el usuario puede colocar su propia API Key de OpenRouter.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación limpia (`npm run build`) en 12.80s con 0 errores (`dist/assets/index-DSiwnY9Y.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `e4c5356`) y despliegue dual en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas auditadas operativas en Chrome Headless (`verify-deploy.js`).
+- Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
+---
+
 ### [2026-10-27] Velocidad de Respuesta Inicial del Bot Independiente del Intervalo entre Mensajes (v2.6.9)
 - **Diagnóstico y Necesidad:**
   1. *Confusión entre Intervalo entre Mensajes y Velocidad de Respuesta:*

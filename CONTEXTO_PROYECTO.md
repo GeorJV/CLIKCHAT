@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 09:55 GMT-6
-- **Versión Actual:** 2.6.9 (Velocidad de Respuesta Inicial del Bot Independiente de la Cadencia)
+- **Última Actualización:** 2026-10-27 10:15 GMT-6
+- **Versión Actual:** 2.7.0 (Live Lab en Real, Red de Contingencia y Selector de 3 Modelos Visible)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit e4c5356)
 - **Estado Actual del Sistema:**
-  - Velocidad de Respuesta Inicial Independiente: `BotResponseSpeedSettingCard` permite configurar el retardo del primer mensaje (0s inmediato a 6s pausado).
-  - Aislamiento en Runtime: `targetDelayMs` del primer mensaje desacoplado de `deliverStaggeredBubbles` (cadencia entre burbujas subsecuentes).
-  - Doble Punto de Ajuste: Configurable tanto en el Panel de Negocio (*"Cadencia & Velocidad"*) como en Ajustes de IA del CRM Vocero.
-  - 3 Modelos Predeterminados Oficiales: Modelo 1: GLM 5, Modelo 2: GPT y Modelo 3: Meta con failover en cascada y centro de reportes.
-  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas en Chrome Headless.
+  - 3 Modelos Predeterminados Activos: Modelo 1: GLM 5, Modelo 2: GPT y Modelo 3: Meta con cascada Failover Ring y Centro de Reportes de Incidentes.
+  - Cero Datos Mock / Demo: Eliminado registro demo `rep_init_1` y botón de simulación; monitoreo y reportes 100% reales.
+  - Memoria Episódica en Live Lab: `sessionId` persistente por sesión y transmisión de historial; selector de modelos visible en móviles y desktop.
+  - Red de Contingencia Robusta: Regexes ampliadas para variantes plurales/coloquiales ("precios", "aweb", "paginas web") respondiendo factual y transparente.
+  - Verificado con 3 Filtros: Build local limpio, commit e4c5356, dual deploy en Pages y 17/17 rutas auditadas sin errores (index-DSiwnY9Y.js).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
