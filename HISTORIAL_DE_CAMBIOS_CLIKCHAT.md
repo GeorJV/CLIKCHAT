@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Supresión de Re-emisión de Tarjeta de Cita y Despedida Profesional Post-Confirmación (v2.5.8)
+- **Diagnóstico y Necesidad:**
+  1. *Re-emisión Indeseada de Tarjeta [BOOKING_CARD]:*
+     - Una vez que la cita quedaba formalmente confirmada, cuando el usuario respondía con expresiones de cortesía, agradecimiento o conformidad ("gracias", "muchas gracias", "así está bien", "eso es todo", "todo claro", "ninguna duda"), la condición `bookingState.isComplete` seguía evaluándose como `true`. El sistema caía en el bloque post-LLM y reinyectaba innecesariamente la tarjeta interactiva `[BOOKING_CARD: {...}]` acompañada del texto de confirmación, creando la percepción de bucle o de que el bot no entendía el cierre de la conversación.
+  2. *Falta de Despedida Cálida y Profesional:*
+     - El bot no ofrecía un cierre humano y empático que despidiera al usuario cordialmente, asegurándole que el equipo estará muy atento a su sesión y que queda a su entera disposición para cualquier cambio futuro.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Detección Ampliada de Gratitud, Conformidad y Cierre (`isClosingOrGratitude`):*
+     - En `functions/api/[[route]].js`, se incorporó un patrón exhaustivo de captura que detecta expresiones de cierre ("gracias", "muchas gracias", "así está bien", "eso es todo", "todo bien", "todo claro", "que pases buen día", "excelente día", "nos vemos", "chao", "hasta luego", "ninguna consulta", "por ahora no", "de momento no").
+  2. *Atención Instantánea en Nivel 1 (20ms, 0 Costo LLM):*
+     - Si la cita ya cuenta con tarjeta previa en el historial (`hasPriorBookingCard: true`) y el usuario envía un mensaje de cierre/agradecimiento sin reprogramación, el Nivel 1 responde de inmediato con una despedida profesional, cálida y contextualizada (`farewellPhrase` adaptada a día/tarde/noche):
+       *"¡Con muchísimo gusto...! Estaremos muy atentos a tu sesión del [Día y Hora]. Aquí estaremos a tu completa disposición para cualquier cambio o consulta cuando gustes. ¡Que tengas un excelente día! ¡Nos vemos pronto! 😊"*.
+  3. *Regla 6 en Instrucciones para Gemini:*
+     - Inyectada la regla inquebrantable de "CIERRE AMABLE Y DESPEDIDA PROFESIONAL (CERO RE-EMISIÓN DE TARJETA TRAS CONFIRMAR)" prohibiendo volver a emitir `[BOOKING_CARD]` y prohibiendo repetir la confirmación de la cita si el usuario solo está agradeciendo o cerrando.
+  4. *Blindaje Estricto Post-LLM:*
+     - Condicionada la emisión de la tarjeta interactiva a `(!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn`, garantizando que bajo ninguna circunstancia se adjunte una tarjeta interactiva en turnos de gratitud o cierre.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite (`npm run build`) en 16.77s con 0 errores TypeScript (`dist/assets/index-GsdKzx04.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `64d9c56`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Suite de verificación (`npm run verify`) con 17/17 rutas operativas en Chrome Headless + Pruebas conversacionales en vivo contra API de producción:
+    - Test 1 ("muchas gracias"): Bot responde con despedida profesional cálida, 0 tarjetas re-emitidas (`OK: SIN TARJETA`).
+    - Test 2 ("asi esta bien"): Bot responde con despedida profesional cálida, 0 tarjetas re-emitidas (`OK: SIN TARJETA`).
+    - Test 3 ("eso es todo, gracias"): Bot responde con despedida profesional cálida, 0 tarjetas re-emitidas (`OK: SIN TARJETA`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-26] Resolución Definitiva de Backtracking Regex en Fechas y Garantía Estricta de Día de la Semana y Fecha Calendario (v2.5.7)
 - **Diagnóstico y Causa Raíz:**
   1. *Backtracking en la Expresión Regular de Fechas:*
@@ -44,8 +72,6 @@
 *Agregado al historial de cambios aplicando el filtro de los tres pasos.*
 
 ---
-
-## 📦 REGISTRO DE HITOS APROBADOS
 
 ### [2026-10-26] Reconciliación de Calendario, Panel en Tiempo Real y Sincronización de Agenda (v2.5.6)
 - **Diagnóstico y Causas Raíces:**

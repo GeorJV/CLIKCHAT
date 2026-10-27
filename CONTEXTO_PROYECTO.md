@@ -1,16 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 19:10 GMT-6
-- **Versión Actual:** 2.5.7 (Resolución de Backtracking Regex en Fechas y Día+Fecha Estricto en Confirmación)
+- **Última Actualización:** 2026-10-26 19:42 GMT-6
+- **Versión Actual:** 2.5.8 (Supresión de Re-emisión de Tarjeta y Cierre Profesional Post-Confirmación)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Backtracking Regex Erradicado: Word boundary `\b` en `(\d{1,2})\b` impide truncamiento parcial a día 2 ("Lunes 2 de Nov").
-  - Formato Día + Fecha Exacto: Toda tarjeta y mención del bot incluye siempre día de la semana y fecha ("Martes 27", "Miércoles 28").
-  - Soporte de Días Numéricos: Captura inteligente de "el 29", "el 28", resolviendo día y mes del calendario actual.
-  - Sincronización Server-First & D1: Verificación de disponibilidad en tiempo real, reprogramaciones sin colisión y guardado en D1.
-  - Polling Inteligente & Enfoque: Sondeo cada 15s si `!document.hidden` y recarga en foco de pestaña sin consumo fantasma.
+  - Cierre Amable y Despedida Profesional: Nivel 1 intercepta gratitud y conformidad ("gracias", "así está bien", "eso es todo") en 20ms con despedida cordial sin re-emitir tarjeta de cita.
+  - Supresión de Tarjeta Post-Confirmación: Bloque post-LLM blindado; impide re-emitir [BOOKING_CARD] si la cita ya fue confirmada previamente y no hay solicitud de reprogramación.
+  - Sincronización Reactiva Inmediata (0ms): Panel de agenda escucha BroadcastChannel y sondeo activo cada 15s en pestañas visibles.
+  - Formato Día + Fecha Exacto: Normalización matemática estricta de días ("Martes, 27 de Octubre de 2026") sin truncamiento regex.
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
