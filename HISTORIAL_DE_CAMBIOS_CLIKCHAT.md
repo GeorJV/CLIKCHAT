@@ -16,6 +16,36 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Corrección Inteligente de Nombre de Cliente, Actualización Determinista en D1 y Refresco en Tiempo Real (v2.5.9)
+- **Diagnóstico y Causas Raíces:**
+  1. *Bloqueo de Nombre Previo en Memoria (`cardCustomerName` vs `name`):*
+     - En `extractBookingSlots`, si existía una tarjeta de cita previa en el historial, la variable `name` se inicializaba de inmediato con `card.customerName`. Al evaluar mensajes posteriores del usuario donde indicaba una corrección de nombre ("pero el nombre dice Geogeo y te dije que soy Andrea", "me equivoqué de nombre, me llamo Andrea", "el nombre está mal, ponle Carlos"), la condición `if (nm && !name)` evaluaba como falsa, impidiendo que el nuevo nombre sobreescribiera el anterior.
+  2. *Falta de Patrones de Captura de Corrección de Nombre:*
+     - Las expresiones regulares solo reconocían saludos introductorios iniciales (`me llamo`, `soy`), ignorando fórmulas de equivocación ("me equivoqué de nombre", "el nombre dice X y soy Y", "no me llamo X sino Y", "en realidad me llamo", "cambia el nombre a").
+  3. *Persistencia Estancada en D1 por Variable Desfasada:*
+     - Al auto-registrar la cita en Cloudflare D1 en el bloque post-LLM, el código ejecutaba `UPDATE bookings SET customer_name = ?1` utilizando `bookingState.slots.name` (que continuaba con el nombre antiguo) en lugar de tomar el nombre rectificado de la tarjeta emitida `finalCardName`.
+  4. *Exclusión del Flujo de Agendamiento en Correcciones:*
+     - La condición de emisión de tarjeta exigía `(!hasPriorBookingCardInHist || isRescheduleTurn)`. Como el cambio de nombre no incluía cambio de hora/fecha, `isRescheduleTurn` evaluaba como falso, suprimiendo la actualización en base de datos.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Extracción y Corrección Proactiva de Nombre (`nameCorrectionPatterns`):*
+     - Implementado escaneo prioritario en el mensaje actual y turnos posteriores a la tarjeta previa para capturar cualquier corrección de nombre ("me equivoqué de nombre", "el nombre dice X y soy Y", "mi nombre no es X sino Y", "en realidad me llamo Y", "a nombre de Y").
+     - Si el usuario corrige su nombre, el nuevo nombre toma precedencia absoluta sobre cualquier registro histórico.
+  2. *Paso 5 de Corrección de Nombre en Instrucciones:*
+     - Añadida directiva operativa para responder con total cordialidad confirmando el cambio de nombre sin bucles ni repeticiones renglón por renglón, emitiendo la tarjeta actualizada `[BOOKING_CARD: ...]`.
+  3. *Sincronización Determinista en Cloudflare D1:*
+     - Al guardar en D1, se extrae el nombre oficial del bloque `[BOOKING_CARD]` (`finalCardName`), garantizando que la base de datos se actualice de inmediato con el nuevo nombre (`customer_name = ?1`).
+     - Búsqueda resiliente de la cita existente por teléfono normalizado (dígitos limpios) y correo.
+  4. *Emisión y Sincronización en Tiempo Real:*
+     - Conexión con `broadcastBookingCreated` y `subscribeBookingSync`, actualizando instantáneamente la tarjeta en el panel de ClikChat y CRM en 0ms.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite (`npm run build`) en 24.34s con 0 errores TypeScript (`dist/assets/index-Bx_RQS7a.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `779de98`) y despliegue dual en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Suite de verificación (`npm run verify`) con 17/17 rutas operativas en Chrome Headless + Consulta en vivo de `/api/bookings?tenant=geosoft` verificando que la cita de prueba del usuario (`apt_1793064605913_sr0i`) ahora refleja con exactitud el nombre corregido: **"Andrea"**.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-26] Supresión de Re-emisión de Tarjeta de Cita y Despedida Profesional Post-Confirmación (v2.5.8)
 - **Diagnóstico y Necesidad:**
   1. *Re-emisión Indeseada de Tarjeta [BOOKING_CARD]:*

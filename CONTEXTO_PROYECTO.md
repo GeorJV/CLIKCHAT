@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 19:42 GMT-6
-- **Versión Actual:** 2.5.8 (Supresión de Re-emisión de Tarjeta y Cierre Profesional Post-Confirmación)
+- **Última Actualización:** 2026-10-27 07:52 GMT-6
+- **Versión Actual:** 2.5.9 (Corrección Inteligente de Nombre de Cliente y Actualización en Vivo)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Cierre Amable y Despedida Profesional: Nivel 1 intercepta gratitud y conformidad ("gracias", "así está bien", "eso es todo") en 20ms con despedida cordial sin re-emitir tarjeta de cita.
-  - Supresión de Tarjeta Post-Confirmación: Bloque post-LLM blindado; impide re-emitir [BOOKING_CARD] si la cita ya fue confirmada previamente y no hay solicitud de reprogramación.
-  - Sincronización Reactiva Inmediata (0ms): Panel de agenda escucha BroadcastChannel y sondeo activo cada 15s en pestañas visibles.
-  - Formato Día + Fecha Exacto: Normalización matemática estricta de días ("Martes, 27 de Octubre de 2026") sin truncamiento regex.
-  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless.
+  - Corrección Inteligente de Nombre: Detección proactiva de equivocaciones en nombre ("me equivoqué de nombre", "el nombre dice X y soy Y", "en realidad me llamo"), con sobreescritura inmediata del slot.
+  - Persistencia Determinista en D1: Extracción del nombre corregido de la tarjeta emitida (`finalCardName`), garantizando actualización en base de datos (`UPDATE bookings SET customer_name = ?`).
+  - Sincronización en Tiempo Real: Conexión con `broadcastBookingCreated` y sondeo inteligente cada 5s en pestañas activas para reflejar el cambio en el panel instantáneamente.
+  - Cierre y Despedida Profesional: Nivel 1 responde con cordialidad sin re-emitir tarjetas redundantes en expresiones de gratitud o conformidad.
+  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless y cita de prueba actualizada a "Andrea".
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
