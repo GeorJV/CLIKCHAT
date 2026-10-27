@@ -16,6 +16,35 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Sincronización Ultrarrápida de Citas en Tiempo Real, Bus Global de Eventos y Refrescamiento Automático sin F5 (v2.6.1)
+- **Diagnóstico y Causas Raíces:**
+  1. *Cierre Prematuro de `BroadcastChannel`:*
+     - En `bookingSyncBus.ts`, invocar `bc.postMessage(...)` seguido síncronamente de `bc.close()` provocaba que en navegadores Chromium el puerto IPC se cerrara antes de propagar el evento entre pestañas, impidiendo la reactividad en 0ms.
+  2. *Puntos Ciegos de Emisión en Chats:*
+     - Solo `ServiceChatView` contaba con llamadas explícitas a `broadcastBookingCreated`. Reservas gestionadas desde `ProductChatView`, `LiveBotSimulator` o `VoceroAiSandbox` no notificaban al panel en vivo.
+  3. *Invisibilidad de Cambio de Pestaña:*
+     - Los componentes de agenda escuchaban únicamente `window.focus`, ignorando el evento estándar `document.visibilitychange`. Al conmutar entre pestañas del navegador, la interfaz no forzaba una actualización instantánea.
+  4. *Micro-Caché HTTP en Peticiones GET:*
+     - Las llamadas a `/api/bookings` carecían de directiva `{ cache: 'no-store' }` y parámetro dinámico anti-caché, permitiendo que el navegador sirviera respuestas en caché hasta un refresco manual con F5.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Canal Singleton y Auto-Interceptor Global en `bookingSyncBus.ts` (63 líneas):*
+     - Instancia compartida persistente de `BroadcastChannel` evitando cierres síncronos prematuros.
+     - Interceptor transparente sobre `window.fetch` que detecta respuestas con `[BOOKING_CARD:` o éxito en `/api/bookings`, disparando `broadcastBookingCreated()` de forma universal para cualquier componente de chat.
+     - Inicialización global garantizada desde `src/main.tsx`.
+  2. *Sincronización Reactiva en `VoceroBookingsView.tsx` (179 líneas) y `AgendaTab.tsx` (173 líneas):*
+     - Escucha dual de `visibilitychange` y `focus` que gatilla `fetchBookings()` en 0ms al enfocar la pestaña.
+     - Polling activo acelerado a 2500ms mientras la agenda está visible en pantalla, con pausa automática al ocultarse (`document.hidden`) según la skill `polling-inteligente`.
+     - Directiva `{ cache: 'no-store' }` y timestamp `&_t=${Date.now()}` en cada consulta a la API de citas.
+     - Refresco silencioso de fondo sin parpadeos de carga intrusivos.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 15.30s con 0 errores TypeScript.
+  - *Filtro 2:* Sincronización en `main` (commits `1b9c2f4` y `91e2b52`).
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`), hash match confirmado y 17/17 rutas operativas en Chrome Headless. Verificación en vivo de `/api/bookings?tenant=geosoft` retornando las citas reales con nombres y fechas exactas.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Comprensión Inteligente de Requerimientos y Necesidades Comerciales, Eliminación de Exception Scope y Fallback Experto (v2.6.0)
 - **Diagnóstico y Causas Raíces:**
   1. *Excepción en Runtime Edge (`ReferenceError: timeRegex is not defined`):*
