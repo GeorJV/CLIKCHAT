@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Persistencia Inmediata en D1 de Citas Agendadas en Live Lab y Erradicación de Fallos de Inserción (v2.8.5)
+- **Diagnóstico y Causas Raíces:**
+  1. *Desconexión de D1 en Live Lab (`VoceroAiSandbox.tsx`):* Al detectarse una tarjeta `[BOOKING_CARD:]` en las respuestas de prueba de Live Lab, el componente únicamente persistía la cita en `localStorage` (`clikchat_bookings_geosoft`) sin invocar `POST /api/bookings`. Al haber migrado en v2.8.1 la vista de Agenda a consultar exclusivamente Cloudflare D1 como única fuente de verdad, cualquier cita probada en Live Lab no se reflejaba en el panel.
+  2. *Bloqueo por Nombre Faltante en Backend (`functions/api/[[route]].js`):* La función `extractBookingSlots` exigía obligatoriamente `name` para considerar `bookingState.isComplete = true`. Cuando un usuario ingresaba su fecha, hora, teléfono y correo sin escribir expresamente su nombre, el backend stripping `[BOOKING_CARD:]` y omitía el `INSERT INTO bookings` en D1 a pesar de que el LLM le confirmaba en texto: *"el espacio ha quedado reservado"*.
+  3. *Error de Schema en `chat_sessions`:* La consulta `INSERT INTO chat_sessions` incluía la columna `status`, la cual no existía en la base de datos D1, provocando fallas silenciosas y bloqueando por llave foránea la inserción de mensajes en `chat_messages`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Doble Garantía de Guardado Físico en Live Lab (`VoceroAiSandbox.tsx` - 175 líneas):*
+     - Al generarse o recibirse una tarjeta `[BOOKING_CARD:]`, se invoca inmediatamente `POST /api/bookings` persistiendo la cita en Cloudflare D1 con estatus `confirmed` y notas `'Agendado en Live Lab'`.
+     - Se dispara el bus de sincronización `broadcastBookingCreated(tenantSlug)` actualizando reactivamente las vistas de Agenda y Citas del CRM.
+  2. *Fallback Inteligente y Cero Bloqueos de Citas en Edge (`functions/api/[[route]].js`):*
+     - En `extractBookingSlots`, si se cuenta con fecha, hora y datos de contacto (correo o teléfono), el nombre se resuelve automáticamente desde el contacto o por defecto como `'Cliente'`, marcando la cita como completa y autorizada para guardado.
+     - En el evaluador post-LLM, cualquier respuesta con fecha y hora confirmadas ejecuta deterministamente el guardado físico en D1 `bookings`, preservando la tarjeta interactiva intacta.
+  3. *Migración de Columna `status` en D1:*
+     - Ejecutada migración `ALTER TABLE chat_sessions ADD COLUMN status TEXT DEFAULT 'active'` en la base remota de Cloudflare D1, normalizando la persistencia de sesiones y mensajes de chat.
+  4. *Cita de Prueba Rescatada:*
+     - Registrada directamente en D1 la cita de prueba del usuario para el Martes, 27 de Octubre de 2026 a las 05:30 PM (`apt_lab_mvrb5cmd`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 15.55s con 0 errores TypeScript (`dist/assets/index-ox24bt9I.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless. Prueba E2E en vivo verificó la creación automática de citas en D1 y su consulta instantánea en `/api/bookings`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-27] Homologación Dinámica de Enlaces de Canales y Webhooks al Dominio Activo CRM (v2.8.3)
 - **Diagnóstico y Causas Raíces:**
   1. *Host Estático en Tarjeta de Canal Agente ClikChat (`VoceroClikChatChannelCard.tsx`):*

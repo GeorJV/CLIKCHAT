@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 17:38 GMT-6
-- **Versión Actual:** 2.8.3 (Homologación Dinámica de Enlaces de Canales y Webhooks al Dominio Activo CRM)
+- **Última Actualización:** 2026-10-27 17:48 GMT-6
+- **Versión Actual:** 2.8.5 (Persistencia Universal de Citas de Live Lab y Chat en Cloudflare D1)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Enlaces de Canales 100% Homologados: "Copiar Enlace Web" en Chat Agente ClikChat y todos los enlaces del CRM generan URLs dinámicas con `window.location.origin` (`https://clikchatcrm.pages.dev`).
-  - Webhooks Dinámicos Multicanal: URLs de integración de WhatsApp, Instagram, Messenger y Zernio resueltas desde el host activo sin URLs fijas.
-  - Cero Parpadeo en Refresco (Anti-FOUC): Hidratación síncrona de sesión y enrutamiento incondicional al CRM azul sin saltos.
+  - Persistencia Real de Live Lab en D1: Las citas agendadas desde Live Lab o chats se guardan directamente en Cloudflare D1 y se reflejan al instante en Agenda/Citas.
+  - Corrección de Schema en `chat_sessions`: Migrada columna `status` en Cloudflare D1, garantizando inserción sin errores en sesiones y mensajes.
+  - Fallback Inteligente de Nombre: Citas con fecha, hora y datos de contacto confirmados se registran de forma determinista sin omitir el guardado físico en D1.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
