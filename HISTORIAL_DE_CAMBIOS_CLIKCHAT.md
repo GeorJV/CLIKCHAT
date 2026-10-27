@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Comprensión Inteligente de Requerimientos y Necesidades Comerciales, Eliminación de Exception Scope y Fallback Experto (v2.6.0)
+- **Diagnóstico y Causas Raíces:**
+  1. *Excepción en Runtime Edge (`ReferenceError: timeRegex is not defined`):*
+     - En `functions/api/[[route]].js`, la expresión regular `timeRegex` estaba declarada únicamente dentro de la función `extractBookingSlots`. Al evaluarse la condición post-LLM en la línea 6627 (`(message || '').match(timeRegex)`), el motor JavaScript de Cloudflare Pages Functions arrojaba un error 500 no controlado.
+  2. *Degradación a Fallback Rígido en el Cliente:*
+     - Al fallar la ruta `/api/chat/message` con 500, `useChatRAG.ts` entraba en `catch (err)` y ejecutaba `generateClientChatFallback`. Si la llamada a OpenRouter fallaba o hacía timeout, el fallback caía en una plantilla genérica que decía: *"Entendido. En GeoSoft estamos para servirte. ¿Hay algún producto o consulta en específico sobre la que te gustaría que te oriente?"*, ignorando por completo que el cliente acababa de escribir: *"NECESITO UNA PAGINA WEB PARA MI NEGOCIO"*.
+  3. *Invisibilidad de Necesidades Comerciales en el Router de Intenciones:*
+     - `isInfoOrServiceQuery` solo se activaba con signos de interrogación (`?`, `¿`) o fórmulas literales como *"cuánto cuesta"* o *"qué servicios"*. Frases de necesidad directa como *"necesito una página web"*, *"quiero una tienda virtual"*, *"busco un software"*, *"ocupo una app"* no eran reconocidas como consultas de catálogo y caían en el protocolo de agendamiento en frío pidiendo nombre y teléfono sin haber brindado valor sobre el requerimiento.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Globalización y Aislamiento de `GLOBAL_TIME_REGEX`:*
+     - Declarada `GLOBAL_TIME_REGEX` en el ámbito de módulo en `functions/api/[[route]].js`, erradicando el error 500 en edge.
+  2. *Detección Integral de Requerimientos y Necesidades Comerciales (`isNeedOrBuyingIntent`):*
+     - Incorporado reconocedor semántico de necesidades (`necesito`, `ocupo`, `busco`, `quiero`, `requiero`, `me interesa`, `cotizar`, `página web`, `sitio web`, `landing page`, `app`, `software`, `sistema`).
+     - Activación garantizada de `isInfoOrServiceQuery` ante cualquier necesidad explícita.
+  3. *Matching Semántico Reforzado de Catálogo:*
+     - Boost semántico de 0.88 en `scoredProducts` para asociar inmediatamente "página web" con "Desarrollo Web & Plataformas SaaS a Medida" ($1,200 USD).
+  4. *Directiva de Asesoría Comercial Experta en Gemini:*
+     - Validación entusiasta de la idea del cliente, presentación de la solución con autoridad y valor basada en el catálogo oficial (responsive móvil/PC, SEO, WhatsApp, panel de administración, tarifas transparentes y tiempos de entrega), preguntas de diagnóstico consultivo ("¿qué tipo de negocio tienes?") y ofrecimiento de reunión estratégica de forma no invasiva.
+  5. *Refactorización Inteligente de `clientChatFallback.ts` (168 líneas):*
+     - Reconocimiento semántico local de productos en memoria para que nunca vuelva a emitir plantillas genéricas. Si el cliente pide una página web, el fallback responde como consultor senior de proyectos digitales explicando la solución, beneficios y haciendo preguntas de diagnóstico.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 43.13s con 0 errores TypeScript (`dist/assets/index-Bx_RQS7a.js`).
+  - *Filtro 2:* Sincronización remota y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless + Prueba en vivo contra `/api/chat/message`:
+    - Mensaje: *"NECESITO UNA PAGINA WEB PARA MI NEGOCIO"*.
+    - Respuesta en vivo: Status 200, Nivel 3 RAG, selección del producto oficial "Desarrollo Web & Plataformas SaaS a Medida", asesoría técnica detallada ($1200 USD, 2-4 semanas, SEO, WhatsApp) y pregunta consultiva de cierre.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Corrección Inteligente de Nombre de Cliente, Actualización Determinista en D1 y Refresco en Tiempo Real (v2.5.9)
 - **Diagnóstico y Causas Raíces:**
   1. *Bloqueo de Nombre Previo en Memoria (`cardCustomerName` vs `name`):*
