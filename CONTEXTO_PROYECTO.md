@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 09:22 GMT-6
-- **Versión Actual:** 2.6.6 (Indicador Dinámico y Profesional de Carga en Chat de Servicios)
+- **Última Actualización:** 2026-10-27 09:35 GMT-6
+- **Versión Actual:** 2.6.7 (Seguro Anti-Repetición en Edge y Optimización de Latencia LLM)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Indicador Dinámico: `ServiceChatLoadingBubble` rota fases contextuales cada 2.2s con `agentName`, `storeName` y `serviceTitle`.
-  - Reemplazo de "Consultando agenda disponible": Ahora muestra estados conversacionales profesionales en tiempo real.
-  - Aislamiento & Modularidad: `ServiceChatColumn` optimizado a 171 líneas (<180 líneas ARQMODULAR).
-  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en Chrome Headless.
+  - Seguro Anti-Repetición Determinista: `enforceAntiRepetitionGuardrail` intercepta respuestas repetidas o >65% similares y genera progresiones contextuales.
+  - Cascada de IA Optimizada: `gemini-3-flash-preview` y `gemini-3.5-flash-lite` priorizados con `AbortSignal.timeout(4500)`.
+  - Fallo Rápido por Cuota: Detección 402/403 en OpenRouter y error 4006 en Workers AI suprimen reintentos redundantes a 0ms.
+  - Contingencia Dinámica RAG: Reemplazo de plantillas estáticas por respuestas contextualmente adaptadas con tarifas oficiales ($1200 USD GeoSoft).
+  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

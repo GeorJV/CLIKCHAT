@@ -16,6 +16,40 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Seguro Determinista Anti-Repetición en Edge, Optimización de Latencia y Cascada Inteligente de LLM (v2.6.7)
+- **Diagnóstico y Necesidad:**
+  1. *Repetición Idéntica de Respuestas del Bot (3 veces seguidas):*
+     - El bot repitió exactamente la misma frase tres veces consecutivas: *"Con mucho gusto te asesoro. Me podrías indicar más detalles sobre tu requerimiento tecnológico o proyecto para darte la mejor opción?"*.
+     - Causa raíz: En `functions/api/[[route]].js`, cuando los motores de IA fallaban por agotamiento de créditos o cuota, el sistema caía en una plantilla de contingencia fija (`template_fallback`) que devolvía la misma cadena estática en cada turno.
+  2. *Latencia Excesiva (15 a 20+ segundos):*
+     - En cada mensaje, el motor ejecutaba una cascada secuencial lenta de hasta 8 llamadas HTTP fallidas:
+       - OpenRouter: 403 Forbidden por límite de crédito alcanzado ($3.05 de $3.00). Intentaba 3 modelos sucesivos + 1 respaldo de emergencia.
+       - Cloudflare Workers AI: Error 4006 por cuota gratuita diaria de 10,000 neuronas agotada. Se ejecutaba 2 veces en la cadena.
+       - Google AI Studio: `gemini-3.5-flash` arrojaba 429 (límite alcanzado), mientras que los modelos rápidos y funcionales (`gemini-3-flash-preview` y `gemini-3.5-flash-lite`) no estaban priorizados al frente.
+  3. *Requerimiento del Usuario:*
+     - Eliminar definitivamente los retrasos de respuesta.
+     - Implementar un seguro inmutable contra respuestas repetidas para que el bot jamás repita la misma frase o pregunta en turnos consecutivos.
+- **Solución Quirúrgica Implementada (ARQMODULAR, KISS & YAGNI):**
+  1. *Priorización de Modelos Operativos y Timeouts Estrictos en `functions/api/[[route]].js`:*
+     - Prioridad inmediata a `gemini-3-flash-preview` y `gemini-3.5-flash-lite` al frente de la cadena de Google AI Studio (verificados con respuesta sub-2s).
+     - Incorporación de `signal: AbortSignal.timeout(4500)` en todas las llamadas HTTP a APIs de LLM para evitar bloqueos por cuelgue de red.
+     - Detección de fallo por cuota en OpenRouter (HTTP 402/403): marca `openRouterExhausted = true` y cancela inmediatamente los reintentos restantes en dicho proveedor en 0ms.
+     - Supresión de la llamada duplicada redundante a Cloudflare Workers AI si la cuota de neuronas ya fue superada.
+  2. *Seguro Determinista Anti-Repetición (`enforceAntiRepetitionGuardrail`):*
+     - Intercepta cualquier respuesta candidata antes de ser devuelta al usuario.
+     - Normaliza y compara el texto contra los últimos mensajes del asistente en `sessionHistory`.
+     - Si detecta coincidencia exacta, similitud léxica superior al 65% o apertura idéntica, intercepta y reemplaza la respuesta por una respuesta progresiva contextual adaptada al requerimiento puntual del cliente (ej. tienda online, servicios corporativos, cotización o agendamiento).
+  3. *Contingencia Dinámica RAG (`generateSmartFallbackReply`):*
+     - Reemplazo de la plantilla fija de una sola línea por un generador dinámico que detecta intenciones comerciales (ecommerce, servicios, tarifas oficiales de GeoSoft a $1200 USD con garantía de 3 meses y entrega en 2-4 semanas) o rota preguntas de forma progresiva.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 14.66s con 0 errores (`dist/assets/index-CZdbgdB0.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `ed2db30`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`). Verificación de chat en vivo en producción en 3 turnos sucesivos con respuesta en ~2s y 0 repeticiones.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Indicador de Estado Dinámico, Profesional y Conversacional en Chat de Servicios (v2.6.6)
 - **Diagnóstico y Necesidad:**
   1. *Mensaje Estático Inadecuado:*
