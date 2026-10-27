@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Configuración de Intervalo de Envío de Mensajes del Bot (1 a 10 Segundos) y Sincronización en Cascada (v2.6.2)
+- **Diagnóstico y Necesidad:**
+  1. *Intervalo Rígido o Fuera de Rango:*
+     - En `ChatCadenceSettingCard.tsx`, el control deslizante permitía hasta 20 segundos de forma poco intuitiva, y en `VoceroAiModelSettings.tsx` el selector solo ofrecía opciones fijas de 0 a 3 segundos, impidiendo que el usuario definiera intervalos superiores de 4 a 10 segundos.
+  2. *Tope Hardcodeado en el Motor de Entrega Escalonada:*
+     - En `src/utils/messageSplitter.ts`, la función `deliverStaggeredBubbles` tenía restringido el retraso entre burbujas a un máximo de 2 segundos (`Math.min(..., 2000)`), lo que provocaba que si el usuario configuraba 5 o 10 segundos, las burbujas intermedias se enviaran forzosamente a los 2 segundos.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Intervalo Estricto de 1 a 10 Segundos en `ChatCadenceSettingCard.tsx` (165 líneas):*
+     - Slider manual con rango exacto de 1 a 10 segundos (`min="1" max="10" step="1"`).
+     - 4 accesos rápidos intuitivos: `1 seg (Instantáneo)`, `3 seg (Dinámico)`, `5 seg (Humano)`, `10 seg (Pausa Máxima)`.
+     - Tiers visuales dinámicos adaptados a la escala de 1 a 10 segundos.
+  2. *Ampliación en CRM (`VoceroAiModelSettings.tsx`):*
+     - Selector completo de 1 a 10 segundos con normalización segura y actualización de modelos de IA vigentes.
+  3. *Motor de Entrega Escalonada de Mensajes (`messageSplitter.ts`):*
+     - `deliverStaggeredBubbles` ampliado para respetar fielmente el intervalo de 1 a 10 segundos configurado por el usuario (`Math.min(Math.max((responseDelaySec ?? 1) * 1000, 1000), 10000)`).
+  4. *Normalización Segura en Backend & D1:*
+     - En `functions/api/[[route]].js` (`PUT /api/tenants/:id`) y `src/hooks/useProductResolver.ts`, se normalizó `response_delay_sec` asegurando que siempre se almacene y consuma en el rango de 1 a 10 segundos.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 14.64s con 0 errores TypeScript (`dist/assets/index-DQ9gMv7X.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `91e2b52`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Sincronización Ultrarrápida de Citas en Tiempo Real, Bus Global de Eventos y Refrescamiento Automático sin F5 (v2.6.1)
 - **Diagnóstico y Causas Raíces:**
   1. *Cierre Prematuro de `BroadcastChannel`:*

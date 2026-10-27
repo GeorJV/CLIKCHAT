@@ -208,6 +208,7 @@ async function runFullSuite() {
         await testSingleRoute(fullUrl, route.label);
         passed++;
       } catch (err) {
+        console.error(`  ❌ [ERROR] ${route.label} (${fullUrl}):`, err.message);
         failed++;
       }
       await new Promise(r => setTimeout(r, 500));

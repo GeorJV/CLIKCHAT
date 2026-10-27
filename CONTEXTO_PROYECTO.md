@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 08:08 GMT-6
-- **Versión Actual:** 2.6.1 (Sincronización Ultrarrápida de Citas en Tiempo Real y Refrescamiento Automático sin F5)
+- **Última Actualización:** 2026-10-27 08:10 GMT-6
+- **Versión Actual:** 2.6.2 (Intervalo de Envío de Mensajes del Bot de 1 a 10 Segundos Configurable)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Sincronización Ultrarrápida de Citas: Bus global `bookingSyncBus` con `BroadcastChannel` persistente, storage y CustomEvents para refresco en 0ms.
-  - Auto-Interceptor Global: Monitor transparente de `fetch` que detecta confirmaciones de citas en cualquier chat (`ServiceChat`, `ProductChat`, simuladores).
-  - Refresco Reactivo en Agenda: `VoceroBookingsView` y `AgendaTab` con escucha de `visibilitychange`, polling de 2.5s visible y anti-caché HTTP (`no-store`).
-  - Intervalos de Mensajes: Ajuste de cadencia de 1s a 10s estrictamente normalizado en backend y frontend.
+  - Intervalo Configurable (1 a 10s): El usuario define en el panel el tiempo exacto (de 1s a un máximo de 10s) que el bot espera para enviar cada mensaje o burbuja.
+  - Accesos Rápidos y Slider: Opciones directas (1s Instantáneo, 3s Dinámico, 5s Humano, 10s Máximo) y slider de precisión de 1 a 10 segundos.
+  - Entrega Escalonada en Chat: `deliverStaggeredBubbles` respeta fielmente el retraso de 1 a 10s entre burbujas sin límites hardcodeados.
+  - Normalización en D1 & Hooks: Validación estricta en `PUT /api/tenants/:id` y `useProductResolver` para garantizar valores en rango [1, 10].
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en Chrome Headless operativas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
