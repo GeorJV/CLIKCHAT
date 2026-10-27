@@ -1,15 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 15:05 GMT-6
-- **Versión Actual:** 2.7.5 (Sincronización Absoluta de Modelos/Cuentas IA entre Bot Oficial y Entornos de Prueba)
+- **Última Actualización:** 2026-10-27 15:10 GMT-6
+- **Versión Actual:** 2.7.6 (Unificación Total de Base de Datos Cloudflare D1 en Cuenta Homilia)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Infraestructura 100% Unificada en Homilia7: Hosting Pages y base de datos D1 (`clikchat-db`, ID `af3aebed-002b-4e84-aabb-4c570483a3df`) consolidados en la misma cuenta Cloudflare.
+  - Base de Datos D1 Operativa con 14 Tablas: Esquema completo inicializado con datos oficiales de GeoSoft (perfil, catálogo, FAQs y citas).
   - Sincronización Total Bot-Pruebas: Toda cuenta (Google AI, OpenAI, Groq, OpenRouter) o modelo configurado por el usuario se usa idénticamente en las pruebas del Live Lab y Simulador.
-  - Live Lab Sincronizado: Modo predeterminado `bot-synced` que detecta y ejecuta la cuenta y modelo activo del bot sin forzar modelos externos desconectados.
-  - Compatibilidad Multicuentas en Edge: Soporte integral para Google AI Studio, OpenAI, Groq y OpenRouter en CASO A con reporte exacto de `modelLabel`.
-  - Modelos Vigentes Garantizados: Erradicación de versiones obsoletas en selectores de IA conforme a las normas del proyecto.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

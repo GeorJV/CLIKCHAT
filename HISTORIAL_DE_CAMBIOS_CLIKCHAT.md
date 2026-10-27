@@ -16,6 +16,24 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Migración y Unificación Total de Base de Datos Cloudflare D1 a la Cuenta de Homilia (v2.7.6)
+- **Diagnóstico y Causas Raíces:**
+  1. *Desconexión entre Cuentas de Cloudflare:* El hosting web de Cloudflare Pages (`clikchat` y `clikchatcrm`) residía en la cuenta `Homilia7@gmail.com` (`2a67b9374597924117a6a21ea3de3305`), mientras que la base de datos D1 (`clikchat-db`) estaba alojada en otra cuenta separada (`Georgeandersmail@gmail.com`, `01514e27c0cdd221efd91900be83fb16`).
+  2. *Límite de 10 Bases de Datos en Homilia7:* Al intentar crear `clikchat-db` en `Homilia7@gmail.com`, Cloudflare rechazaba la petición con el código `7406` (límite de 10 bases de datos D1 por cuenta gratuita alcanzado).
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Liberación de Cupo Autorizada:* Con aprobación explícita del usuario, se eliminó la base de datos vacía `prd-agent-db` (`2ed9ab7e-0618-4b7a-bc46-3f68f8e3cf6f`, 0 registros en todas sus tablas y sin proyecto Pages activo).
+  2. *Creación de `clikchat-db` en Homilia7:* Creada la nueva base de datos D1 oficial con ID `af3aebed-002b-4e84-aabb-4c570483a3df` en la cuenta `Homilia7@gmail.com` (`2a67b9374597924117a6a21ea3de3305`).
+  3. *Inicialización Completa de Esquema y Semillas:* Ejecutado script SQL completo creando las 14 tablas del sistema (`tenants`, `users`, `products`, `faqs`, `chat_sessions`, `chat_messages`, `unresolved_queries`, `audit_logs`, `orders`, `bookings`, `ai_incident_reports`, `knowledge_documents`, `document_chunks`). Sembrada la cuenta oficial de GeoSoft (`ten_geosoft_prod`) con teléfono, horario, moneda USD, sus 3 servicios oficiales, 4 FAQs y citas activas.
+  4. *Unificación de Variables y Endpoints:* Actualizado `.env` y `functions/api/[[route]].js` con `CF_D1_DATABASE_ID=af3aebed-002b-4e84-aabb-4c570483a3df` y `CLOUDFLARE_ACCOUNT_ID=2a67b9374597924117a6a21ea3de3305` empleando el token de Homilia.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 13.85s con 0 errores (`dist/assets/index-DjXEfxhr.js`).
+  - *Filtro 2:* Despliegue dual en Cloudflare Pages (`https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`).
+  - *Filtro 3:* Hash match 100% y 17/17 rutas auditadas operativas en Chrome Headless (`verify-deploy.js`). Verificación en vivo de `/api/tenants/geosoft` y `/api/bookings?tenant=geosoft` conectando fluidamente a la nueva D1 de Homilia7.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Sincronización Absoluta de Cuentas y Modelos de IA entre el Bot Oficial y Entornos de Prueba (v2.7.5)
 - **Diagnóstico y Causas Raíces:**
   1. *Desincronización Forzada en Pruebas del CRM Sandbox (Live Lab):*
