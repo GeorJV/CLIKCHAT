@@ -19,7 +19,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   onLogout
 }) => {
   const handleInvite = () => {
-    const inviteUrl = `https://clikchat.pages.dev/?ref=${tenantSlug || 'partner'}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
+    const inviteUrl = `${origin}/?ref=${tenantSlug || 'partner'}`;
     navigator.clipboard?.writeText(inviteUrl);
     showToast('🎁 ¡Enlace de invitación copiado al portapapeles!');
   };

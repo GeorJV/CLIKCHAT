@@ -50,7 +50,7 @@ export const VoceroClikChatChannelCard: React.FC<VoceroClikChatChannelCardProps>
     ? window.location.origin
     : 'https://clikchatcrm.pages.dev';
   const chatUrl = `${crmHost}/user/mi-negocio/${effectiveSlug}/clikchat`;
-  const publicWebChatUrl = `https://clikchat.pages.dev/${effectiveSlug}`;
+  const publicWebChatUrl = `${crmHost}/${effectiveSlug}`;
 
   const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url);

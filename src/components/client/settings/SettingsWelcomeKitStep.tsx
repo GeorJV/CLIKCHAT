@@ -13,7 +13,8 @@ export const SettingsWelcomeKitStep: React.FC<SettingsWelcomeKitStepProps> = ({
   onOpenWizard
 }) => {
   const [copied, setCopied] = useState(false);
-  const qlinkUrl = `https://clikchat.pages.dev/chat/${slug || 'mi-tienda'}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
+  const qlinkUrl = `${origin}/chat/${slug || 'mi-tienda'}`;
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(qlinkUrl);

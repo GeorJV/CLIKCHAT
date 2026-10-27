@@ -12,7 +12,7 @@ export const ProductsHeader: React.FC<ProductsHeaderProps> = ({
   onOpenExcelImport,
   tenantSlug = 'acme-store'
 }) => {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
   const storeUrl = `${origin}/chat/${tenantSlug}`;
 
   return (

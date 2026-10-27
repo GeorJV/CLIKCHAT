@@ -72,7 +72,7 @@ export const VoceroProductMetricsModal: React.FC<VoceroProductMetricsModalProps>
 
   const questionsAnswered = views > 0 ? Math.max(Math.round(views * 1.5), 1) : 0;
   const objectionsResolved = Math.max(warmLeads, views > 0 ? Math.round(views * 0.7) : 0);
-  const directLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev'}/chat/${tenantSlug}?p=${product.id}`;
+  const directLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev'}/chat/${tenantSlug}?p=${product.id}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(directLink);

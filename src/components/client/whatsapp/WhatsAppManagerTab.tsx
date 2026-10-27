@@ -16,13 +16,14 @@ export const WhatsAppManagerTab: React.FC<WhatsAppManagerTabProps> = ({
   tenant,
   tenantSlug
 }) => {
+  const host = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://clikchatcrm.pages.dev';
   const [config, setConfig] = useState<WhatsAppConfig>({
     phone_number_id: '',
     business_phone: '',
     verify_token: 'clikchat_wa_' + tenantSlug,
     access_token: '',
     status: 'disconnected',
-    webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${tenantSlug}`
+    webhook_url: `${host}/api/whatsapp/webhook?tenant=${tenantSlug}`
   });
 
   const [isCredsOpen, setIsCredsOpen] = useState(false);
@@ -45,7 +46,7 @@ export const WhatsAppManagerTab: React.FC<WhatsAppManagerTabProps> = ({
             setConfig(prev => ({
               ...prev,
               ...data.config,
-              webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${tenantSlug}`
+              webhook_url: `${host}/api/whatsapp/webhook?tenant=${tenantSlug}`
             }));
           }
         }

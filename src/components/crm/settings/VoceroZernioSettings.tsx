@@ -3,10 +3,11 @@ import { ZernioConfig } from '../../../types/zernio';
 import { Network, Copy, Check, ShieldCheck, Key, Radio, Zap, ExternalLink, RefreshCw } from 'lucide-react';
 
 export const VoceroZernioSettings: React.FC<{ tenantSlug: string }> = ({ tenantSlug }) => {
+  const host = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://clikchatcrm.pages.dev';
   const [config, setConfig] = useState<ZernioConfig>({
     api_key: '',
     account_id: '',
-    webhook_url: `https://clikchat.pages.dev/api/zernio/webhook?tenant=${tenantSlug}`,
+    webhook_url: `${host}/api/zernio/webhook?tenant=${tenantSlug}`,
     status: 'disconnected',
     channels: ['whatsapp', 'instagram', 'messenger', 'tiktok'],
     auto_reply: true
@@ -20,10 +21,10 @@ export const VoceroZernioSettings: React.FC<{ tenantSlug: string }> = ({ tenantS
     fetch(`/api/zernio/config?tenantSlug=${tenantSlug}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
-        if (d?.config) setConfig(prev => ({ ...prev, ...d.config, webhook_url: `https://clikchat.pages.dev/api/zernio/webhook?tenant=${tenantSlug}` }));
+        if (d?.config) setConfig(prev => ({ ...prev, ...d.config, webhook_url: `${host}/api/zernio/webhook?tenant=${tenantSlug}` }));
       })
       .catch(() => {});
-  }, [tenantSlug]);
+  }, [tenantSlug, host]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(config.webhook_url);

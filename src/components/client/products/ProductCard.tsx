@@ -14,10 +14,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [copied, setCopied] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
   const prodSlug = product.slug || (product.name ? product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '') || product.id;
   const qlinkUrl = `${origin}/chat/${tenantSlug}/${prodSlug}`;
-  const displayUrl = `https://clikchat.pages.dev/chat/${tenantSlug}/${prodSlug}`;
+  const displayUrl = `${origin}/chat/${tenantSlug}/${prodSlug}`;
   const storeUrl = `${origin}/chat/${tenantSlug}`;
   const imageUrl = product.images?.[0] || '';
   const sku = product.details?.sku || `SKU-${product.id.slice(0, 10)}`;

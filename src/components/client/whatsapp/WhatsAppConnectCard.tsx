@@ -21,7 +21,8 @@ export const WhatsAppConnectCard: React.FC<WhatsAppConnectCardProps> = ({
   const [copiedToken, setCopiedToken] = useState(false);
 
   const isConnected = config.status === 'connected';
-  const webhookUrl = config.webhook_url || `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${tenantSlug}`;
+  const host = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://clikchatcrm.pages.dev';
+  const webhookUrl = config.webhook_url || `${host}/api/whatsapp/webhook?tenant=${tenantSlug}`;
   const verifyToken = config.verify_token || 'clikchat_wa_' + tenantSlug;
 
   const copyToClipboard = (text: string, type: 'webhook' | 'token') => {

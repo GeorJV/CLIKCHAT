@@ -14,8 +14,9 @@ export const VoceroMetaChannelsGrid: React.FC<VoceroMetaChannelsGridProps> = ({ 
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const igWebhook = `https://clikchat.pages.dev/api/whatsapp/webhook?channel=instagram&tenant=${tenantSlug}`;
-  const fbWebhook = `https://clikchat.pages.dev/api/whatsapp/webhook?channel=messenger&tenant=${tenantSlug}`;
+  const host = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://clikchatcrm.pages.dev';
+  const igWebhook = `${host}/api/whatsapp/webhook?channel=instagram&tenant=${tenantSlug}`;
+  const fbWebhook = `${host}/api/whatsapp/webhook?channel=messenger&tenant=${tenantSlug}`;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

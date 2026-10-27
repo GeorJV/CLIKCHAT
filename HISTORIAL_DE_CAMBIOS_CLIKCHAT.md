@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Homologación Dinámica de Enlaces de Canales y Webhooks al Dominio Activo CRM (v2.8.3)
+- **Diagnóstico y Causas Raíces:**
+  1. *Host Estático en Tarjeta de Canal Agente ClikChat (`VoceroClikChatChannelCard.tsx`):*
+     - En "Ajustes del Sistema" -> "Canales de Chat" -> "Chat Agente ClikChat", la variable `publicWebChatUrl` estaba codificada estáticamente como `https://clikchat.pages.dev/${effectiveSlug}`.
+     - Al estar navegando dentro de la plataforma CRM (`https://clikchatcrm.pages.dev`), tanto el texto en pantalla como el botón "Copiar Enlace Web" copiaban el dominio `clikchat.pages.dev` en lugar del dominio activo `clikchatcrm.pages.dev`.
+  2. *Webhooks y QLinks con Dominios Rígidos en Configuración de Canales y Métricas:*
+     - Componentes como `VoceroChannelsSettings.tsx`, `VoceroMetaChannelsGrid.tsx`, `VoceroZernioSettings.tsx`, `BusinessLandingCard.tsx`, `ProductCard.tsx`, `ProductExactKpis.tsx`, `TenantExactMetrics.tsx` y los módulos de WhatsApp contenían cadenas fijas con `clikchat.pages.dev`, provocando que los enlaces de prueba, webhooks de Meta y links de copiado no respetaran el host activo `clikchatcrm.pages.dev`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Resolución Dinámica de Host en `VoceroClikChatChannelCard.tsx`:*
+     - `publicWebChatUrl` ahora se genera de forma 100% dinámica mediante `${crmHost}/${effectiveSlug}` donde `crmHost = window.location.origin` (con fallback a `https://clikchatcrm.pages.dev`).
+     - Al estar en `clikchatcrm.pages.dev`, el enlace visible y el portapapeles copian exactamente `https://clikchatcrm.pages.dev/geosoft`.
+  2. *Homologación Global de Enlaces y Webhooks en Todos los Componentes:*
+     - Actualizados 14 archivos componentes (`VoceroChannelsSettings.tsx`, `VoceroMetaChannelsGrid.tsx`, `VoceroZernioSettings.tsx`, `BusinessLandingCard.tsx`, `ProductCard.tsx`, `ProductExactKpis.tsx`, `TenantExactMetrics.tsx`, `SettingsWelcomeKitStep.tsx`, `SidebarFooter.tsx`, `WhatsAppConnectCard.tsx`, `WhatsAppManagerTab.tsx`, `VoceroProductMetricsModal.tsx`, `ProductsHeader.tsx`) para resolver siempre `window.location.origin` de manera reactiva y limpia.
+     - Cumplimiento estricto del estándar **ARQMODULAR** (<180 líneas por archivo en todos los componentes editados).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 10.68s con 0 errores TypeScript (`dist/assets/index-DQXT-F4X.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Verificación de hash match 100% y 17/17 rutas auditadas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Erradicación del Salto de Modo Oscuro Clásico a CRM en Refresco (v2.8.2)
 - **Diagnóstico y Causas Raíces:**
   1. *FOUC por Retardo en Validación de Sesión (`src/hooks/useAuth.ts`):* `useAuth` inicializaba el estado `user` en `null` e `isAuthenticated` en `false`. En el primer ciclo de render tras pulsar F5, `App.tsx` evaluaba `isAuthenticated && isVoceroMode`. Al ser falso por milisegundos, montaba `<ClientDashboard />` (modo oscuro clásico `#151414`), y cuando el `useEffect` terminaba de validar el token, desmontaba el panel clásico y montaba de golpe `<VoceroCrmView />` (CRM azul `#f6f8fc`), generando el salto brusco de pantallas percibido por el usuario.

@@ -20,13 +20,17 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({
 }) => {
   const effectiveSlug = tenantSlug || tenant?.slug || 'mi-negocio';
 
+  const host = typeof window !== 'undefined' && window.location.origin
+    ? window.location.origin
+    : 'https://clikchatcrm.pages.dev';
+
   const [config, setConfig] = useState<WhatsAppConfig>({
     phone_number_id: '',
     business_phone: '',
     verify_token: `clikchat_wa_${effectiveSlug}`,
     access_token: '',
     status: 'disconnected',
-    webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${effectiveSlug}`
+    webhook_url: `${host}/api/whatsapp/webhook?tenant=${effectiveSlug}`
   });
   const [isCredsOpen, setIsCredsOpen] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
@@ -42,7 +46,7 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({
             setConfig(prev => ({
               ...prev,
               ...data.config,
-              webhook_url: `https://clikchat.pages.dev/api/whatsapp/webhook?tenant=${effectiveSlug}`
+              webhook_url: `${host}/api/whatsapp/webhook?tenant=${effectiveSlug}`
             }));
           }
         }
@@ -51,7 +55,7 @@ export const VoceroChannelsSettings: React.FC<VoceroChannelsSettingsProps> = ({
       }
     }
     load();
-  }, [effectiveSlug]);
+  }, [effectiveSlug, host]);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);

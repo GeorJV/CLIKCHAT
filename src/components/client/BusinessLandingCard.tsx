@@ -9,9 +9,9 @@ export const BusinessLandingCard: React.FC<BusinessLandingCardProps> = ({ slug }
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchat.pages.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
   const publicUrl = `${origin}/chat/${slug}`;
-  const displayUrl = `https://clikchat.pages.dev/chat/${slug}`;
+  const displayUrl = `${origin}/chat/${slug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);

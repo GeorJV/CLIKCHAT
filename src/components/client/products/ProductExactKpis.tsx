@@ -27,7 +27,8 @@ export const ProductExactKpis: React.FC<ProductExactKpisProps> = ({
   const appointmentsCount = buyClicks;
 
   const prodSlug = product.slug || (product.name ? product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '') || product.id;
-  const productChatUrl = `https://clikchat.pages.dev/chat/${tenantSlug}/${prodSlug}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://clikchatcrm.pages.dev';
+  const productChatUrl = `${origin}/chat/${tenantSlug}/${prodSlug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(productChatUrl);
