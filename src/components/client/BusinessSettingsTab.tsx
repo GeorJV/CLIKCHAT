@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tenant, FAQ } from '../../types';
 import { ClientTab } from '../../types/client';
 import { BusinessIdentitySubTab } from './business/BusinessIdentitySubTab';
+import { BotResponseSpeedSettingCard } from './business/BotResponseSpeedSettingCard';
 import { ChatCadenceSettingCard } from './business/ChatCadenceSettingCard';
 import { CustomAISettingsCard } from './business/CustomAISettingsCard';
 import { FaqsManagerTab } from './FaqsManagerTab';
@@ -126,7 +127,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         <CustomAISettingsCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />
       )}
       {activeSubTab === 'cadence' && (
-        <ChatCadenceSettingCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />
+        <div className="space-y-4">
+          <BotResponseSpeedSettingCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />
+          <ChatCadenceSettingCard tenant={tenant} onUpdateSettings={onUpdateSettings} saveSuccess={saveSuccess} />
+        </div>
       )}
       {activeSubTab === 'faqs' && (
         <FaqsManagerTab

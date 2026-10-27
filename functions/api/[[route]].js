@@ -823,7 +823,38 @@ function enforceAntiRepetitionGuardrail({
   };
 }
 
-async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo }) {
+// ==============================================================================
+// REGISTRO DE INCIDENTES DE IA & FALLOS DE MODELO (REPORTES DE IA)
+// ==============================================================================
+
+async function recordAiIncident({ tenantId, tenantSlug, sessionId, failedModel, fallbackModel, errorMessage, userQuery }) {
+  try {
+    const id = 'rep_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    await executeD1(`CREATE TABLE IF NOT EXISTS ai_incident_reports (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      session_id TEXT,
+      failed_model TEXT NOT NULL,
+      fallback_model TEXT,
+      error_message TEXT,
+      user_query TEXT,
+      status TEXT DEFAULT 'rescued_by_fallback',
+      created_at TEXT DEFAULT (datetime('now'))
+    )`).catch(() => {});
+
+    await executeD1(
+      'INSERT INTO ai_incident_reports (id, tenant_id, session_id, failed_model, fallback_model, error_message, user_query, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
+      [id, tenantId || tenantSlug || 'geosoft', sessionId || '', failedModel || 'Modelo IA', fallbackModel || 'Respaldo', (errorMessage || '').slice(0, 300), (userQuery || '').slice(0, 500), 'rescued_by_fallback']
+    ).catch(err => console.warn('[AI Incident] Error saving to D1:', err.message));
+    console.warn(`[AI Incident Reportado] Falló: ${failedModel} -> Rescatado por: ${fallbackModel} (Error: ${errorMessage})`);
+    return id;
+  } catch (e) {
+    console.warn('[AI Incident] Catch warning:', e.message);
+    return null;
+  }
+}
+
+async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo, preferredModel, tenantId, tenantSlug, sessionId }) {
   let userCustomConfig = null;
   if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
     if (customKey.trim().startsWith('{')) {
@@ -997,262 +1028,242 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     }
   }
 
-  // CASO B: Motor Inteligente del Sistema (Orden Estricto: 1° GLM-5.3-Flash / 2° DeepSeek / 3° GPT-4o-mini)
-  const openRouterKey = env?.OPENROUTER_API_KEY || (() => {
-    try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
-  })();
-  const defaultGoogleKey = atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc=');
-  const googleKey = (env?.GOOGLE_AI_STUDIO_KEY && env.GOOGLE_AI_STUDIO_KEY.length >= 45 && !env.GOOGLE_AI_STUDIO_KEY.includes('...'))
-    ? env.GOOGLE_AI_STUDIO_KEY.trim()
-    : defaultGoogleKey;
+  // CASO B: MOTOR DE 3 MODELOS PREDETERMINADOS CON CASCADA DE SEGURIDAD EN ANILLO (FAILOVER RING)
+  // Modelo 1: GLM 5 (GLM 5.3 Flash · OpenRouter)
+  // Modelo 2: GPT (ChatGPT 5 Mini · OpenAI / OpenRouter)
+  // Modelo 3: Meta (Meta Llama 3.3 · Cloudflare Clofer / OpenRouter)
+  const openRouterKey = (userCustomConfig?.key && (userCustomConfig.key.startsWith('sk-or-') || userCustomConfig.provider === 'openrouter'))
+    ? userCustomConfig.key
+    : (env?.OPENROUTER_API_KEY || (() => {
+        try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
+      })());
 
-  // 1. Cadena de Alta Disponibilidad & Ultra Bajo Costo:
-  // PROHIBICIÓN ESTRICTA: Claude / Anthropic están terminantemente bloqueados en la clave del sistema.
-  const BANNED_EXPENSIVE_MODELS = ['claude', 'anthropic', 'o1-preview', 'o1-mini', 'gpt-4-turbo'];
+  const callModel1_GLM = async () => {
+    if (!openRouterKey) throw new Error('API Key de OpenRouter no configurada');
+    const openRouterPayload = {
+      model: 'z-ai/glm-5.3-flash:floor',
+      messages,
+      temperature: 0.1,
+      max_tokens: 1000,
+      reasoning: { effort: 'low' },
+      provider: { sort: 'price', allow_fallbacks: false }
+    };
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify(openRouterPayload),
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!resp.ok) {
+      const errTxt = await resp.text().catch(() => '');
+      throw new Error(`OpenRouter GLM HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
+    }
+    const data = await resp.json();
+    const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+    if (!clean) throw new Error('GLM 5 devolvió respuesta vacía');
+    const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
+    const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+    return {
+      text: clean,
+      provider: 'openrouter',
+      model: 'z-ai/glm-5.3-flash:floor',
+      modelLabel: 'Modelo 1: GLM 5',
+      neurons: 0,
+      costUsd: Number(((pTokens * 0.00000015) + (cTokens * 0.0000005)).toFixed(6)),
+      tokens: pTokens + cTokens
+    };
+  };
 
-  const cModel = userCustomConfig?.model || '';
-  const cProvider = userCustomConfig?.provider || '';
-  const wantsOnlyGLM = cModel.includes('glm') || (cProvider === 'openrouter' && !cModel.includes('llama'));
+  const callModel2_GPT = async () => {
+    const isDirectOpenAi = userCustomConfig?.key && userCustomConfig.key.startsWith('sk-') && !userCustomConfig.key.startsWith('sk-or-');
+    if (isDirectOpenAi) {
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userCustomConfig.key}` },
+        body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.1, max_tokens: 1000 }),
+        signal: AbortSignal.timeout(6000)
+      });
+      if (!resp.ok) throw new Error(`OpenAI HTTP ${resp.status}`);
+      const data = await resp.json();
+      const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+      if (!clean) throw new Error('GPT devolvió respuesta vacía');
+      return {
+        text: clean,
+        provider: 'openai',
+        model: 'openai/gpt-4o-mini',
+        modelLabel: 'Modelo 2: GPT',
+        neurons: 0,
+        costUsd: 0.0005,
+        tokens: 500
+      };
+    }
+
+    if (!openRouterKey) throw new Error('API Key de OpenRouter no configurada');
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages,
+        temperature: 0.1,
+        max_tokens: 1000,
+        provider: { sort: 'price', allow_fallbacks: false }
+      }),
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!resp.ok) {
+      const errTxt = await resp.text().catch(() => '');
+      throw new Error(`OpenRouter GPT HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
+    }
+    const data = await resp.json();
+    const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+    if (!clean) throw new Error('GPT devolvió respuesta vacía');
+    const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
+    const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+    return {
+      text: clean,
+      provider: 'openrouter',
+      model: 'openai/gpt-4o-mini',
+      modelLabel: 'Modelo 2: GPT',
+      neurons: 0,
+      costUsd: Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6)),
+      tokens: pTokens + cTokens
+    };
+  };
+
+  const callModel3_Meta = async () => {
+    if (env?.AI) {
+      try {
+        const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+          messages: [
+            { role: 'system', content: systemContent },
+            ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+            { role: 'user', content: userMessage }
+          ],
+          max_tokens: 1024
+        });
+        if (cfResp?.response) {
+          const clean = sanitizeAiResponse(cfResp.response);
+          if (clean) {
+            const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
+            const outTokens = Math.round(clean.length / 4);
+            const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
+            return {
+              text: clean,
+              provider: 'cloudflare_workers_ai',
+              model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+              modelLabel: 'Modelo 3: Meta',
+              neurons,
+              costUsd: Number(((neurons / 1000) * 0.011).toFixed(6)),
+              tokens: inTokens + outTokens
+            };
+          }
+        }
+      } catch (cfErr) {
+        console.warn('Cloudflare Workers AI Llama falló, probando Meta en OpenRouter:', cfErr.message);
+      }
+    }
+
+    if (!openRouterKey) throw new Error('API Key no disponible para Meta Llama 3.3');
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://clikchat.pages.dev',
+        'X-Title': 'ClikChat Edge AI'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.3-70b-instruct',
+        messages,
+        temperature: 0.1,
+        max_tokens: 1000,
+        provider: { sort: 'price', allow_fallbacks: false }
+      }),
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!resp.ok) {
+      const errTxt = await resp.text().catch(() => '');
+      throw new Error(`OpenRouter Meta HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
+    }
+    const data = await resp.json();
+    const clean = sanitizeAiResponse(data.choices?.[0]?.message?.content);
+    if (!clean) throw new Error('Meta Llama 3.3 devolvió respuesta vacía');
+    const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
+    const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+    return {
+      text: clean,
+      provider: 'openrouter',
+      model: 'meta-llama/llama-3.3-70b-instruct',
+      modelLabel: 'Modelo 3: Meta',
+      neurons: 0,
+      costUsd: Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6)),
+      tokens: pTokens + cTokens
+    };
+  };
+
+  const pref = (preferredModel || userCustomConfig?.model || '').toLowerCase();
+  let modelSequence = [];
+
+  if (pref.includes('gpt') || pref === 'model-2' || pref === '2') {
+    modelSequence = [
+      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
+      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
+      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM }
+    ];
+  } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref === 'model-3' || pref === '3') {
+    modelSequence = [
+      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
+      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
+      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT }
+    ];
+  } else {
+    modelSequence = [
+      { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
+      { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
+      { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta }
+    ];
+  }
 
   let lastAiError = 'none';
+  let firstFailedLabel = null;
 
-  // OPCIÓN 1 (MOTOR PRINCIPAL OFICIAL DE ALTA DISPONIBILIDAD): Google AI Studio Oficial Vigente
-  if (googleKey) {
-    const googleModels = [
-      'gemini-3-flash-preview',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-flash-lite',
-      'gemini-3.5-flash'
-    ];
-    for (const gModel of googleModels) {
-      try {
-        const rawHistory = Array.isArray(history) ? history.slice(-8) : [];
-        const normalizedTurns = [];
-        for (const h of rawHistory) {
-          const text = (h.message || h.content || '').trim();
-          if (!text) continue;
-          const role = (h.sender === 'user' || h.role === 'user') ? 'user' : 'model';
-          if (normalizedTurns.length > 0 && normalizedTurns[normalizedTurns.length - 1].role === role) {
-            normalizedTurns[normalizedTurns.length - 1].parts[0].text += `\n${text}`;
-          } else {
-            normalizedTurns.push({ role, parts: [{ text }] });
-          }
-        }
-
-        // Garantizar que el primer turno sea estrictamente 'user' (requisito obligatorio de Gemini API)
-        while (normalizedTurns.length > 0 && normalizedTurns[0].role === 'model') {
-          normalizedTurns.shift();
-        }
-
-        const currMsg = (userMessage || 'Hola').trim();
-        if (normalizedTurns.length > 0 && normalizedTurns[normalizedTurns.length - 1].role === 'user') {
-          normalizedTurns[normalizedTurns.length - 1].parts[0].text += `\n${currMsg}`;
-        } else {
-          normalizedTurns.push({ role: 'user', parts: [{ text: currMsg }] });
-        }
-
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${googleKey}`;
-        const gBody = {
-          contents: normalizedTurns,
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1024
-          }
-        };
-        if (systemContent && systemContent.trim()) {
-          gBody.systemInstruction = {
-            parts: [{ text: systemContent.trim() }]
-          };
-        }
-
-        const gResp = await fetch(gUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(gBody),
-          signal: AbortSignal.timeout(4500)
-        });
-
-        if (gResp.ok) {
-          const gData = await gResp.json();
-          const rawText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          const clean = sanitizeAiResponse(rawText);
-          if (clean) {
-            return {
-              text: clean,
-              provider: 'google_ai_studio',
-              model: gModel,
-              neurons: 0,
-              costUsd: 0,
-              tokens: 500
-            };
-          }
-        } else {
-          const errText = await gResp.text().catch(() => '');
-          lastAiError = `Google ${gModel} ${gResp.status}: ${errText.substring(0, 160)}`;
-          console.warn(lastAiError);
-        }
-      } catch (gErr) {
-        lastAiError = `Google ${gModel} catch: ${gErr.message}`;
-        console.warn(`Motor Google AI ${gModel} falló:`, gErr.message);
-      }
-    }
-  }
-
-  // OPCIÓN 2: Meta Llama 3.3 70B Fast en Cloudflare Workers AI
-  let cfAiFailed = false;
-  if (!wantsOnlyGLM && env?.AI) {
+  for (let i = 0; i < modelSequence.length; i++) {
+    const currentM = modelSequence[i];
+    const nextM = modelSequence[(i + 1) % modelSequence.length];
     try {
-      const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-        messages: [
-          { role: 'system', content: systemContent },
-          ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 1024
+      const result = await currentM.run();
+      if (result && result.text && result.text.trim()) {
+        if (i > 0) {
+          result.fallbackUsed = true;
+          result.failedModel = firstFailedLabel || modelSequence[0].label;
+        }
+        return result;
+      }
+      throw new Error(`Respuesta vacía o inválida de ${currentM.label}`);
+    } catch (err) {
+      lastAiError = err.message || `Fallo en ${currentM.label}`;
+      if (!firstFailedLabel) firstFailedLabel = currentM.label;
+      console.warn(`[Failover Seguridad] Falló ${currentM.label} (${lastAiError}). Saltando a ${nextM.label}...`);
+      await recordAiIncident({
+        tenantId,
+        tenantSlug,
+        sessionId,
+        failedModel: currentM.label,
+        fallbackModel: nextM.label,
+        errorMessage: lastAiError,
+        userQuery: userMessage
       });
-      if (cfResp?.response) {
-        const clean = sanitizeAiResponse(cfResp.response);
-        if (clean) {
-          const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
-          const outTokens = Math.round(clean.length / 4);
-          const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
-          const costUsd = Number(((neurons / 1000) * 0.011).toFixed(6));
-          return {
-            text: clean,
-            provider: 'cloudflare_workers_ai',
-            model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-            neurons,
-            costUsd,
-            tokens: inTokens + outTokens
-          };
-        }
-      }
-    } catch (cfErr) {
-      cfAiFailed = true;
-      console.warn('Llama 3.3 Cloudflare AI no disponible o cuota superada, procediendo al respaldo OpenRouter:', cfErr.message);
-    }
-  }
-
-  // OPCIÓN 3 (RESPALDO OPENROUTER): GLM-5.3-Flash / DeepSeek
-  let openRouterExhausted = false;
-  const modelPool = [
-    'z-ai/glm-5.3-flash:floor',
-    'deepseek/deepseek-chat',
-    'deepseek/deepseek-v3.2'
-  ];
-
-  if (openRouterKey) {
-    for (const dsModel of modelPool) {
-      if (openRouterExhausted) break;
-      if (BANNED_EXPENSIVE_MODELS.some(b => dsModel.toLowerCase().includes(b))) {
-        console.warn(`[BLINDAJE COSTOS] Modelo ${dsModel} estrictamente bloqueado en la clave del sistema.`);
-        continue;
-      }
-      try {
-        const openRouterPayload = {
-          model: dsModel,
-          messages,
-          temperature: 0.1,
-          max_tokens: 1000,
-          provider: {
-            sort: 'price',
-            allow_fallbacks: false
-          }
-        };
-        if (dsModel.includes('glm')) {
-          openRouterPayload.reasoning = { effort: 'low' };
-        }
-        const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKey}`,
-            'HTTP-Referer': 'https://clikchat.pages.dev',
-            'X-Title': 'ClikChat Edge AI'
-          },
-          body: JSON.stringify(openRouterPayload),
-          signal: AbortSignal.timeout(4000)
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          const choice = data.choices?.[0];
-          const isCutOff = choice?.finish_reason === 'length';
-          const clean = sanitizeAiResponse(choice?.message?.content);
-          if (clean && !isCutOff) {
-            const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
-            const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
-            const totalTokens = pTokens + cTokens;
-            const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000005)).toFixed(6));
-            return {
-              text: clean,
-              provider: 'openrouter',
-              model: dsModel,
-              neurons: 0,
-              costUsd,
-              tokens: totalTokens
-            };
-          }
-          if (isCutOff) {
-            console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
-          }
-        } else {
-          if (resp.status === 402 || resp.status === 403) {
-            console.warn(`[OpenRouter] Clave con límite de crédito superado (HTTP ${resp.status}). Cancelando llamadas restantes a OpenRouter.`);
-            openRouterExhausted = true;
-            break;
-          }
-        }
-      } catch (e) {
-        console.warn(`Intento con ${dsModel} falló:`, e.message);
-      }
-    }
-  }
-
-  // Respaldo de Emergencia GPT-4o-mini (solo si OpenRouter tiene crédito activo)
-  if (!openRouterExhausted && openRouterKey) {
-    try {
-      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openRouterKey}`,
-          'HTTP-Referer': 'https://clikchat.pages.dev',
-          'X-Title': 'ClikChat Edge AI'
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
-          messages,
-          temperature: 0.1,
-          max_tokens: 1000,
-          provider: {
-            sort: 'price',
-            allow_fallbacks: false
-          }
-        }),
-        signal: AbortSignal.timeout(4000)
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const choice = data.choices?.[0];
-        const isCutOff = choice?.finish_reason === 'length';
-        const clean = sanitizeAiResponse(choice?.message?.content);
-        if (clean && !isCutOff) {
-          const pTokens = data.usage?.prompt_tokens || 800;
-          const cTokens = data.usage?.completion_tokens || 150;
-          const totalTokens = pTokens + cTokens;
-          const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6));
-          return {
-            text: clean,
-            provider: 'openai/gpt-4o-mini',
-            model: 'openai/gpt-4o-mini',
-            neurons: 0,
-            costUsd,
-            tokens: totalTokens
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
     }
   }
 
@@ -2824,6 +2835,80 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
         const rows = await executeD1(query, params).catch(() => []);
         return jsonResponse({ success: true, bookings: rows });
+      }
+    }
+
+    // ==============================================================================
+    // REPORTES DE INCIDENTES DE IA & SALUD DE MODELOS: GET & POST /api/ai-reports
+    // ==============================================================================
+    if (segments[0] === 'ai-reports') {
+      await executeD1(`CREATE TABLE IF NOT EXISTS ai_incident_reports (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        session_id TEXT,
+        failed_model TEXT NOT NULL,
+        fallback_model TEXT,
+        error_message TEXT,
+        user_query TEXT,
+        status TEXT DEFAULT 'rescued_by_fallback',
+        created_at TEXT DEFAULT (datetime('now'))
+      )`).catch(() => {});
+
+      if (request.method === 'GET') {
+        const tenantParam = url.searchParams.get('tenant') || url.searchParams.get('tenantSlug') || url.searchParams.get('tenantId') || '';
+        let rows = [];
+        if (tenantParam) {
+          rows = await executeD1(
+            'SELECT * FROM ai_incident_reports WHERE tenant_id = ?1 OR tenant_id = (SELECT id FROM tenants WHERE slug = ?1 LIMIT 1) ORDER BY created_at DESC LIMIT 60',
+            [tenantParam]
+          ).catch(() => []);
+        } else {
+          rows = await executeD1('SELECT * FROM ai_incident_reports ORDER BY created_at DESC LIMIT 60').catch(() => []);
+        }
+
+        const total = rows.length;
+        const rescued = rows.filter(r => r.status === 'rescued_by_fallback' || r.status === 'resolved').length;
+        const pending = rows.filter(r => r.status !== 'resolved').length;
+        const resolved = rows.filter(r => r.status === 'resolved').length;
+        const healthRate = total > 0 ? Number((((total - pending) / total) * 100).toFixed(1)) : 100;
+        const failuresByModel = {};
+        for (const r of rows) {
+          failuresByModel[r.failed_model] = (failuresByModel[r.failed_model] || 0) + 1;
+        }
+
+        return jsonResponse({
+          success: true,
+          reports: rows,
+          summary: { total, rescued, pending, resolved, healthRate, failuresByModel }
+        });
+      }
+
+      if (segments[1] === 'resolve' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        if (body.id) {
+          await executeD1("UPDATE ai_incident_reports SET status = 'resolved' WHERE id = ?1", [body.id]).catch(() => {});
+        }
+        return jsonResponse({ success: true });
+      }
+
+      if (segments[1] === 'simulate' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const id = 'rep_sim_' + Date.now();
+        const tId = body.tenantSlug || body.tenantId || 'geosoft';
+        await executeD1(
+          'INSERT INTO ai_incident_reports (id, tenant_id, session_id, failed_model, fallback_model, error_message, user_query, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
+          [
+            id,
+            tId,
+            'sim_session_' + Date.now(),
+            body.failedModel || 'Modelo 1: GLM 5 (GLM 5.3 Flash)',
+            body.fallbackModel || 'Modelo 2: GPT (ChatGPT 5 Mini)',
+            body.errorMessage || 'HTTP 429 Cuota excedida (Simulación de Seguridad)',
+            body.userQuery || '¿Tienen citas disponibles para mañana y cuál es el precio?',
+            'rescued_by_fallback'
+          ]
+        ).catch(() => {});
+        return jsonResponse({ success: true, simulatedId: id });
       }
     }
 
@@ -5427,7 +5512,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
     if (segments[0] === 'chat' && segments[1] === 'message' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour, source, campaignContext } = body;
+      const { tenantSlug, tenantId, sessionId, message, leadInfo, clientTime, clientHour, source, campaignContext, model, preferredModel } = body;
       const campCtx = campaignContext && typeof campaignContext === 'object' ? campaignContext : {};
       const adSource = campCtx.source || source || (sessionId?.startsWith('wa_') ? 'whatsapp' : 'web');
       const adCamp = campCtx.campaign || '';
@@ -6821,7 +6906,11 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           userMessage: message,
           env,
           customKey: targetTenant.custom_llm_key,
-          userTimeInfo
+          userTimeInfo,
+          preferredModel: model || preferredModel || null,
+          tenantId: actualTenantId,
+          tenantSlug: targetTenant.slug,
+          sessionId: currentSessionId
         });
         let cleanReply = sanitizeAiResponse(llmResult?.text);
         if (cleanReply) {
@@ -7205,6 +7294,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           products: prodsToInclude,
           provider: llmResult.provider,
           model: llmResult.model,
+          modelLabel: llmResult.modelLabel || (llmResult.model?.includes('glm') ? 'Modelo 1: GLM 5' : llmResult.model?.includes('gpt') ? 'Modelo 2: GPT' : 'Modelo 3: Meta'),
+          fallbackUsed: Boolean(llmResult.fallbackUsed),
+          failedModel: llmResult.failedModel || null,
           lastAiError: llmResult.lastAiError || 'none',
           neurons: llmResult.neurons || 0,
           costUsd: llmResult.costUsd || 0,
