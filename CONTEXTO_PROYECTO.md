@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-26 18:48 GMT-6
-- **Versión Actual:** 2.5.6 (Reconciliación de Calendario, Panel en Tiempo Real y Sincronización de Agenda)
+- **Última Actualización:** 2026-10-26 19:10 GMT-6
+- **Versión Actual:** 2.5.7 (Resolución de Backtracking Regex en Fechas y Día+Fecha Estricto en Confirmación)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Reconciliación de Calendario: `formatDisplayDate` calcula matemáticamente el día de la semana (`2026-10-27` = Martes), eliminando discrepancias.
-  - Sincronización Server-First: El panel prioriza citas frescas de D1 sobre `localStorage`, erradicando bloqueos y datos viejos.
-  - Polling Inteligente & Enfoque: Recarga automática al volver a la pestaña (`focus`) y sondeo cada 15s si `!document.hidden`.
-  - Mocks Purgados: Eliminadas citas de prueba de barbería para no contaminar filtros de clientes de GeoSoft.
-  - Persistencia Confirmada en D1: Guardado y reprogramación automática con status confirmed.
-  - Verificado con 3 Filtros: Build local 0 errores, sincronizado en `main`, deploy dual en Cloudflare Pages, 17/17 rutas operativas en Chrome Headless.
+  - Backtracking Regex Erradicado: Word boundary `\b` en `(\d{1,2})\b` impide truncamiento parcial a día 2 ("Lunes 2 de Nov").
+  - Formato Día + Fecha Exacto: Toda tarjeta y mención del bot incluye siempre día de la semana y fecha ("Martes 27", "Miércoles 28").
+  - Soporte de Días Numéricos: Captura inteligente de "el 29", "el 28", resolviendo día y mes del calendario actual.
+  - Sincronización Server-First & D1: Verificación de disponibilidad en tiempo real, reprogramaciones sin colisión y guardado en D1.
+  - Polling Inteligente & Enfoque: Sondeo cada 15s si `!document.hidden` y recarga en foco de pestaña sin consumo fantasma.
+  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages, 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

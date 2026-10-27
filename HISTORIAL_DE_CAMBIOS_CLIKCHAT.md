@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-26] Resolución Definitiva de Backtracking Regex en Fechas y Garantía Estricta de Día de la Semana y Fecha Calendario (v2.5.7)
+- **Diagnóstico y Causa Raíz:**
+  1. *Backtracking en la Expresión Regular de Fechas:*
+     - En `functions/api/[[route]].js`, la expresión regular `/(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})(?!\s+de\s+[a-z]+)/` sufría de backtracking en cadenas completas como *"Martes, 27 de Octubre de 2026"*. Al fallar el lookahead negativo sobre `"27"` por tener `" de Octubre"`, el motor de regex de JavaScript retrocedía y hacía coincidir `\d{1,2}` solo con el primer dígito `"2"`, interpretando la fecha como día 2 del mes siguiente (*"Lunes, 2 de Noviembre de 2026"*).
+  2. *Orden de Evaluación de Fechas:*
+     - `textDateMatch` (patrón formal con nombre de mes) se evaluaba después de patrones parciales, lo que permitía que expresiones incompletas capturaran la cadena antes de validar el mes.
+  3. *Soporte de Días Numéricos Sueltos:*
+     - Expresiones como *"para el 29"*, *"el 28"* no se normalizaban consistentemente en el normalizador frontend (`bookingDateNormalizer.ts`) ni en el edge, provocando que se preservaran fechas históricas previas.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Límite de Palabra Estricto (`\b`) en Expresiones Numéricas:*
+     - En `functions/api/[[route]].js` y `src/utils/bookingDateNormalizer.ts`, se aplicó el límite de palabra `\b` obligatorio después de `\d{1,2}`: `/(?:^|\b)(lunes|martes|miercoles|jueves|viernes|sabado|domingo)[,\s]+(\d{1,2})\b(?!\s+de\b)/i`, erradicando por completo el backtracking parcial sobre números de dos dígitos.
+  2. *Priorización de Patrones Completos:*
+     - Reordenada la evaluación en `formatFullDayAndDate` y `normalizeToDateKey`: se valida en primer lugar la fecha completa formal en texto (`textDateMatch`), garantizando que cualquier formato *"Martes, 27 de Octubre de 2026"* retorne intacto y verificado.
+  3. *Soporte Integral de Días Numéricos Sueltos:*
+     - Incorporado soporte para números sueltos del mes actual (`singleDayNumMatch` y `singleNumMatch` para "29", "el 28", "para el 29"), resolviendo automáticamente su día de la semana y mes correspondientes.
+  4. *Garantía Estricta en Tarjetas Interactivas y Texto del Bot:*
+     - Tanto el texto del asistente como la tarjeta `[BOOKING_CARD]` normalizan la fecha mediante `formatFullDayAndDate`, emitiendo siempre el día de la semana y el número de fecha calendario exacto (*"Martes, 27 de Octubre de 2026"*, *"Miércoles, 28 de Octubre de 2026"*, *"Jueves, 29 de Octubre de 2026"*).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación TypeScript (`npm run build`) en 7.25s con 0 errores (`dist/assets/index-Dc1PNyac.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commits `cb2db25`, `fc11ffc`, `b1fd2f6`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Suite de verificación (`npm run verify`) con 17/17 rutas operativas en Chrome Headless + pruebas conversacionales en vivo:
+    - Test 1 (Miércoles): "el miercoles a las 2 pm" -> Tarjeta con **"Miércoles, 28 de Octubre de 2026"**.
+    - Test 2 (Reprogramación): "o mejor para el 29 a las 4 pm?" -> Tarjeta con **"Jueves, 29 de Octubre de 2026"**.
+    - Test 3 (Martes con conflicto): "el martes a las 11 am" -> Detecta ocupado en D1 para **"Martes, 27 de Octubre de 2026"**, ofrece opciones, el usuario elige "a la 1 pm" y confirma con tarjeta para el **"Martes, 27 de Octubre de 2026 a las 01:00 PM"**.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
+## 📦 REGISTRO DE HITOS APROBADOS
+
 ### [2026-10-26] Reconciliación de Calendario, Panel en Tiempo Real y Sincronización de Agenda (v2.5.6)
 - **Diagnóstico y Causas Raíces:**
   1. *Discrepancia de Día de la Semana ("Lunes 27" vs "Martes 27"):*
