@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 09:16 GMT-6
-- **Versión Actual:** 2.6.5 (Botones Agregar Exclusivos para Productos Físicos, Ocultos en Servicios)
+- **Última Actualización:** 2026-10-27 09:22 GMT-6
+- **Versión Actual:** 2.6.6 (Indicador Dinámico y Profesional de Carga en Chat de Servicios)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Botones Agregar Condicionales: Solo aparecen para productos físicos (comidas, artículos, combos); quedan completamente ocultos en servicios.
-  - Aislamiento en Chat: `ServiceChatColumn` desactiva botones de orden (`allowAddButtons={false}` y `businessType="servicios"`).
-  - Detección Inteligente: `ChatMessageContent` filtra términos de servicios y rutas `/servicio` para evitar botones de comanda en citas.
-  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas en Chrome Headless.
+  - Indicador Dinámico: `ServiceChatLoadingBubble` rota fases contextuales cada 2.2s con `agentName`, `storeName` y `serviceTitle`.
+  - Reemplazo de "Consultando agenda disponible": Ahora muestra estados conversacionales profesionales en tiempo real.
+  - Aislamiento & Modularidad: `ServiceChatColumn` optimizado a 171 líneas (<180 líneas ARQMODULAR).
+  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Indicador de Estado Dinámico, Profesional y Conversacional en Chat de Servicios (v2.6.6)
+- **Diagnóstico y Necesidad:**
+  1. *Mensaje Estático Inadecuado:*
+     - En `ServiceChatColumn.tsx`, la burbuja de espera de respuesta (`isLoading`) mostraba un texto estático: `"Consultando agenda disponible..."`, el cual no reflejaba el contexto de la conversación ni la identidad del negocio.
+  2. *Requerimiento del Usuario:*
+     - Reemplazar ese mensaje por un indicador dinámico, profesional, conversacional y enfocado al negocio y la asesoría en curso.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Nuevo Subcomponente Atómico `ServiceChatLoadingBubble.tsx`:*
+     - Creado componente atómico (47 líneas) con rotación automática de estados cada 2.2 segundos.
+     - Frases dinámicas que integran contexto real del negocio (`storeName`), asesor (`agentName`) y servicio (`serviceTitle`):
+       - `"${advisor} está escribiendo..."`
+       - `"Analizando tu consulta para ${business}..."`
+       - `"Preparando la mejor asesoría en ${serviceTitle}..."`
+       - `"${advisor} está redactando tu respuesta..."`
+     - Micro-animación de puntos esmeralda y accesibilidad con `role="status"` y `aria-live="polite"`.
+  2. *Integración y Aislamiento en `ServiceChatColumn.tsx`:*
+     - Reemplazo quirúrgico del bloque inline por `<ServiceChatLoadingBubble />`.
+     - Cumplimiento de ARQMODULAR con 171 líneas (<180 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación TypeScript/Vite limpia (`npm run build`) en 12.27s con 0 errores (`dist/assets/index-CpLY_Cff.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Exclusión Estricta de Botones "Agregar" en Servicios y Restricción Exclusiva a Productos Físicos (v2.6.5)
 - **Diagnóstico y Necesidad:**
   1. *Aparición Inadecuada de Botones "Agregar" en Servicios:*

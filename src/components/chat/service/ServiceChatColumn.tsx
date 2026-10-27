@@ -9,6 +9,7 @@ import { ChatMicButton } from '../audio/ChatMicButton';
 import { ChatAudioPlayerBubble } from '../audio/ChatAudioPlayerBubble';
 import { ChatMessageContent } from '../ChatMessageContent';
 import { BookingCardBubble } from './BookingCardBubble';
+import { ServiceChatLoadingBubble } from './ServiceChatLoadingBubble';
 import { splitMessageByDeliveryMode, DeliveryMode } from '../../../utils/messageSplitter';
 import { parseBookingCard } from '../../../utils/bookingCardParser';
 
@@ -135,13 +136,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
             </div>
           );
         })}
-        {isLoading && (
-          <div className="flex items-start justify-start animate-fade-in mt-1.5">
-            <div className="bg-[#1e1d1d] border border-white/[0.12] rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" /><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" /><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" /><span className="text-xs text-zinc-400 ml-1">Consultando agenda disponible...</span>
-            </div>
-          </div>
-        )}
+        {isLoading && <ServiceChatLoadingBubble agentName={agentName} storeName={storeName} serviceTitle={serviceTitle} />}
         <div ref={messagesEndRef} className="h-6 shrink-0" />
       </div>
 
