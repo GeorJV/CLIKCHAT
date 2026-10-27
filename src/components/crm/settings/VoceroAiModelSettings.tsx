@@ -86,19 +86,18 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
               onChange={(e) => setModel(e.target.value)}
               className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
             >
-              <optgroup label="Infraestructura ClikChat (Sin costo de API)">
-                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">Meta Llama 3.3 70B Fast (Cloudflare Workers AI - Por Defecto)</option>
+              <optgroup label="✨ 3 Modelos Predeterminados (Cascada de Seguridad en Anillo)">
+                <option value="z-ai/glm-5.3-flash:floor">🥇 Modelo 1: GLM 5 (GLM 5.3 Flash · OpenRouter - Rápido y Ventas)</option>
+                <option value="openai/gpt-4o-mini">🥈 Modelo 2: GPT (ChatGPT 5 Mini · OpenAI / OpenRouter - Razonamiento)</option>
+                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">🥉 Modelo 3: Meta (Meta Llama 3.3 · Cloudflare Clofer)</option>
+              </optgroup>
+              <optgroup label="Modelos Adicionales de OpenRouter">
+                <option value="deepseek/deepseek-chat">DeepSeek Chat (OpenRouter Comercial)</option>
+                <option value="meta-llama/llama-3.3-70b-instruct">Meta Llama 3.3 70B (OpenRouter Oficial)</option>
               </optgroup>
               <optgroup label="Google AI Studio (Oficial Vigente)">
-                <option value="gemini-flash-official">Google Gemini Flash (Ultra Rápido Oficial)</option>
-                <option value="gemini-pro-official">Google Gemini Pro (Alta Capacidad Oficial)</option>
-              </optgroup>
-              <optgroup label="OpenRouter">
-                <option value="deepseek/deepseek-chat">DeepSeek Chat (Comercial)</option>
-                <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B Instruct</option>
-              </optgroup>
-              <optgroup label="OpenAI">
-                <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                <option value="gemini-flash-official">Google Gemini Flash (Ultra Rápido)</option>
+                <option value="gemini-pro-official">Google Gemini Pro (Alta Capacidad)</option>
               </optgroup>
             </select>
           </div>

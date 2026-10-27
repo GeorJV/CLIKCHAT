@@ -664,6 +664,165 @@ function enforceFactualPriceGuardrail({
   };
 }
 
+// ==============================================================================
+// NORMALIZADOR Y GENERADOR DE CONTINGENCIA CONTEXTUAL INTELIGENTE (ANTI-LOOP)
+// ==============================================================================
+
+function normalizeTextForComparison(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[¿¡!?,.;:()\[\]{}"'«»\-—_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function generateSmartFallbackReply({ context = '', history = [], userMessage = '', isSrv = false }) {
+  const normUser = normalizeTextForComparison(userMessage);
+  const turns = Array.isArray(history) ? history.filter(h => h.message || h.content) : [];
+  const isOngoing = turns.length > 0;
+
+  if (isSrv) {
+    // 1. Tienda online, e-commerce, ventas en línea
+    if (/\b(?:tienda|vender\s*online|ecommerce|carrito|comercio\s*electronico|vender\s*por\s*internet|pasarela|pagos)\b/i.test(normUser)) {
+      return 'Excelente elección.\n\nUna tienda online es la herramienta definitiva para escalar tus ventas y proyectar profesionalismo 24/7.\n\nEn GeoSoft desarrollamos plataformas SaaS a medida con diseño premium, carga ultrarrápida, optimización SEO y un panel de administración intuitivo para que gestiones tus productos y pedidos con total autonomía.\n\nEste servicio tiene una inversión de $1200 USD, incluye garantía de 3 meses y un tiempo de entrega estimado de 2 a 4 semanas.\n\nPara entender mejor tu visión y asegurarnos de que la arquitectura sea la ideal para tu negocio, cuéntame, qué tipo de productos planeas vender y si ya cuentas con una estructura de catálogo o logotipo definido?';
+    }
+    // 2. Servicios al detalle, sitio web corporativo, catálogo web
+    if (/\b(?:servicios\s*al\s*detalle|conozcan\s*mis\s*servicios|sitio\s*web|pagina\s*web|corporativ[oa]|landing|software|plataforma)\b/i.test(normUser)) {
+      return 'Excelente iniciativa.\n\nDiseñamos sitios web y aplicaciones SaaS de alto rendimiento enfocados en presentar cada uno de tus servicios con máxima claridad, diseño visual exclusivo y autoridad para convertir visitas en clientes reales.\n\nNuestra solución parte desde $1200 USD con arquitectura optimizada y 3 meses de garantía integral.\n\nCuántos servicios principales tienes contemplados o ya cuentas con el contenido y logotipo de tu empresa?';
+    }
+    // 3. Precios, tarifas, presupuesto, inversión
+    if (/\b(?:precio|cuanto\s*cuesta|cuanto\s*vale|tarifa|costo|inversion|presupuesto|cotizacion)\b/i.test(normUser)) {
+      return 'Nuestras soluciones de Desarrollo Web & SaaS parten desde una inversión oficial de $1200 USD para proyectos a la medida, incluyendo diseño exclusivo, arquitectura ultrarrápida, panel de administración autogestionable y garantía de 3 meses.\n\nTe gustaría agendar una breve sesión de 15 minutos para estructurar la propuesta formal de tu proyecto?';
+    }
+    // 4. Agendamiento, cita, reunión, llamada
+    if (/\b(?:agendar|cita|reunion|llamada|demo|videollamada|horario|espacio)\b/i.test(normUser)) {
+      return 'Con mucho gusto coordinamos tu sesión. Podemos revisar los requerimientos exactos de tu proyecto tecnológico y mostrarte cómo lo estructuraríamos.\n\nQué día de esta semana te vendría mejor y en qué horario prefieres conectarte?';
+    }
+    // 5. Respuestas progresivas en conversación en curso para evitar repetición
+    if (isOngoing) {
+      const step = turns.length % 3;
+      if (step === 0) {
+        return 'Totalmente de acuerdo. Para orientarte de la manera más precisa con la arquitectura y tecnología ideal, cuál es el objetivo principal o funcionalidad clave que necesitas implementar en tu proyecto?';
+      } else if (step === 1) {
+        return 'Excelente. En GeoSoft creamos soluciones digitales a medida (desde sitios web corporativos hasta plataformas SaaS completas) pensadas para escalar tu negocio. Cuentas con una fecha estimada de lanzamiento o te gustaría ver ejemplos de proyectos similares?';
+      } else {
+        return 'Con mucho gusto te asesoramos paso a paso. Prefieres que coordinemos una breve demostración online o te gustaría comentarme más sobre las herramientas que utilizas actualmente en tu negocio?';
+      }
+    }
+    return 'Hola, con mucho gusto te atiendo y te asesoro en GeoSoft. En qué proyecto o requerimiento tecnológico te podemos colaborar el día de hoy?';
+  }
+
+  // Si es restaurante o comercio físico
+  if (isOngoing) {
+    const step = turns.length % 3;
+    if (step === 0) {
+      return 'Con mucho gusto te atiendo. Deseas que te recomiende las opciones más pedidas de nuestra casa o estás buscando algo en específico para ordenar?';
+    } else if (step === 1) {
+      return 'Excelente elección. Todos nuestros productos se preparan frescos al instante. Te gustaría añadir alguna bebida o acompañamiento a tu orden?';
+    } else {
+      return 'Perfecto. Tienes alguna preferencia de ingredientes o deseas que procedamos con tu orden para coordinar la entrega?';
+    }
+  }
+  return 'Hola, con mucho gusto te atiendo. Te gustaría conocer nuestras opciones o deseas consultar por algún producto en específico?';
+}
+
+// ==============================================================================
+// SEGURO DETERMINISTA ANTI-REPETICIÓN EN EDGE (PROHIBIDO REPETIR MENSAJES PREVIOS)
+// ==============================================================================
+
+function enforceAntiRepetitionGuardrail({
+  replyText,
+  sessionHistory = [],
+  userMessage = '',
+  targetTenant = {},
+  matchedProducts = [],
+  products = []
+}) {
+  if (!replyText || typeof replyText !== 'string') {
+    return { triggered: false, text: replyText };
+  }
+
+  const assistantHistory = (sessionHistory || [])
+    .filter(h => (h.sender === 'assistant' || h.role === 'assistant') && (h.message || h.content))
+    .map(h => (h.message || h.content || '').trim())
+    .filter(Boolean);
+
+  if (assistantHistory.length === 0) {
+    return { triggered: false, text: replyText };
+  }
+
+  const lastAssistantMsg = assistantHistory[assistantHistory.length - 1];
+  const secondLastAssistantMsg = assistantHistory.length > 1 ? assistantHistory[assistantHistory.length - 2] : null;
+
+  const normReply = normalizeTextForComparison(replyText);
+  const normLast = normalizeTextForComparison(lastAssistantMsg);
+  const normSecond = secondLastAssistantMsg ? normalizeTextForComparison(secondLastAssistantMsg) : null;
+
+  let isRepeated = false;
+  let reason = '';
+
+  if (normReply === normLast) {
+    isRepeated = true;
+    reason = 'Identical to last assistant response';
+  } else if (normSecond && normReply === normSecond) {
+    isRepeated = true;
+    reason = 'Identical to 2nd-to-last assistant response';
+  } else {
+    // Si tienen más de 30 caracteres y el 65% de palabras coinciden
+    const replyWords = new Set(normReply.split(' ').filter(w => w.length > 2));
+    const lastWords = new Set(normLast.split(' ').filter(w => w.length > 2));
+    if (replyWords.size > 3 && lastWords.size > 3) {
+      let intersection = 0;
+      for (const w of replyWords) {
+        if (lastWords.has(w)) intersection++;
+      }
+      const similarity = intersection / Math.min(replyWords.size, lastWords.size);
+      if (similarity >= 0.65) {
+        isRepeated = true;
+        reason = `High word similarity (${(similarity * 100).toFixed(0)}%) with last response`;
+      }
+    }
+    // Detección de prefijo idéntico (ej. "Con mucho gusto te asesoro Me podrias indicar mas detalles...")
+    if (!isRepeated && normReply.length >= 35 && normLast.length >= 35) {
+      if (normReply.slice(0, 35) === normLast.slice(0, 35)) {
+        isRepeated = true;
+        reason = 'Matching opening phrase prefix';
+      }
+    }
+  }
+
+  if (!isRepeated) {
+    return { triggered: false, text: replyText };
+  }
+
+  console.warn(`[ANTI-REPETITION GUARDRAIL ACTIVADO] Interceptada respuesta repetida (${reason}). Sustituyendo por respuesta progresiva contextual.`);
+
+  const isSrv = targetTenant.business_type === 'servicios' || /geosoft|software|asesor|servicios/i.test(targetTenant.name || '');
+  const progressiveReply = generateSmartFallbackReply({
+    context: targetTenant.description || targetTenant.system_prompt || '',
+    history: sessionHistory,
+    userMessage,
+    isSrv
+  });
+
+  let finalText = progressiveReply;
+  if (normalizeTextForComparison(finalText) === normLast) {
+    if (isSrv) {
+      finalText = 'Entendido perfectamente. Para ofrecerte la mejor alternativa técnica y comercial adaptada a tu caso puntual, te gustaría que te contactemos por WhatsApp o prefieres agendar una breve llamada de 15 minutos para estructurar tu proyecto?';
+    } else {
+      finalText = 'Perfecto. Estamos listos para preparar tu pedido con la mejor calidad. Deseas agregar alguna bebida o detalle adicional antes de confirmar tu entrega?';
+    }
+  }
+
+  return {
+    triggered: true,
+    text: finalText
+  };
+}
+
 async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo }) {
   let userCustomConfig = null;
   if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
@@ -762,14 +921,15 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       try {
         const historyText = history.slice(-4).map(h => `${h.sender === 'user' ? 'Cliente' : 'Asistente'}: ${h.message}`).join('\n');
         const fullPrompt = `${systemContent}\n\n${historyText ? `[HISTORIAL RECIENTE]:\n${historyText}\n\n` : ''}Cliente: ${userMessage}\nAsistente:`;
-        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-3.5-flash'}:generateContent?key=${cKey}`;
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cModel || 'gemini-3-flash-preview'}:generateContent?key=${cKey}`;
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
             generationConfig: { temperature: 0.1, maxOutputTokens: 650 }
-          })
+          }),
+          signal: AbortSignal.timeout(4500)
         });
         if (gResp.ok) {
           const gData = await gResp.json();
@@ -796,7 +956,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
             messages,
             temperature: 0.1,
             max_tokens: 650
-          })
+          }),
+          signal: AbortSignal.timeout(4500)
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -823,7 +984,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           messages,
           temperature: 0.1,
           max_tokens: 650
-        })
+        }),
+        signal: AbortSignal.timeout(4500)
       });
       if (resp.ok) {
         const data = await resp.json();
@@ -856,7 +1018,12 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
 
   // OPCIÓN 1 (MOTOR PRINCIPAL OFICIAL DE ALTA DISPONIBILIDAD): Google AI Studio Oficial Vigente
   if (googleKey) {
-    const googleModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+    const googleModels = [
+      'gemini-3-flash-preview',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash'
+    ];
     for (const gModel of googleModels) {
       try {
         const rawHistory = Array.isArray(history) ? history.slice(-8) : [];
@@ -901,7 +1068,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         const gResp = await fetch(gUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(gBody)
+          body: JSON.stringify(gBody),
+          signal: AbortSignal.timeout(4500)
         });
 
         if (gResp.ok) {
@@ -931,6 +1099,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   }
 
   // OPCIÓN 2: Meta Llama 3.3 70B Fast en Cloudflare Workers AI
+  let cfAiFailed = false;
   if (!wantsOnlyGLM && env?.AI) {
     try {
       const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
@@ -959,36 +1128,89 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         }
       }
     } catch (cfErr) {
-      console.warn('Llama 3.3 Cloudflare AI no disponible o cuota superada, procediendo al respaldo 2° OpenRouter (GLM-5.3-Flash):', cfErr.message);
+      cfAiFailed = true;
+      console.warn('Llama 3.3 Cloudflare AI no disponible o cuota superada, procediendo al respaldo OpenRouter:', cfErr.message);
     }
   }
 
-  // OPCIÓN 2 (SEGUNDO LUGAR / RESPALDO): OpenRouter con z-ai/glm-5.3-flash:floor ordenado por precio ("sort": "price")
+  // OPCIÓN 3 (RESPALDO OPENROUTER): GLM-5.3-Flash / DeepSeek
+  let openRouterExhausted = false;
   const modelPool = [
     'z-ai/glm-5.3-flash:floor',
     'deepseek/deepseek-chat',
     'deepseek/deepseek-v3.2'
   ];
 
-  for (const dsModel of modelPool) {
-    if (BANNED_EXPENSIVE_MODELS.some(b => dsModel.toLowerCase().includes(b))) {
-      console.warn(`[BLINDAJE COSTOS] Modelo ${dsModel} estrictamente bloqueado en la clave del sistema.`);
-      continue;
-    }
-    try {
-      const openRouterPayload = {
-        model: dsModel,
-        messages,
-        temperature: 0.1,
-        max_tokens: 1000,
-        provider: {
-          sort: 'price',
-          allow_fallbacks: false
-        }
-      };
-      if (dsModel.includes('glm')) {
-        openRouterPayload.reasoning = { effort: 'low' };
+  if (openRouterKey) {
+    for (const dsModel of modelPool) {
+      if (openRouterExhausted) break;
+      if (BANNED_EXPENSIVE_MODELS.some(b => dsModel.toLowerCase().includes(b))) {
+        console.warn(`[BLINDAJE COSTOS] Modelo ${dsModel} estrictamente bloqueado en la clave del sistema.`);
+        continue;
       }
+      try {
+        const openRouterPayload = {
+          model: dsModel,
+          messages,
+          temperature: 0.1,
+          max_tokens: 1000,
+          provider: {
+            sort: 'price',
+            allow_fallbacks: false
+          }
+        };
+        if (dsModel.includes('glm')) {
+          openRouterPayload.reasoning = { effort: 'low' };
+        }
+        const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openRouterKey}`,
+            'HTTP-Referer': 'https://clikchat.pages.dev',
+            'X-Title': 'ClikChat Edge AI'
+          },
+          body: JSON.stringify(openRouterPayload),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const choice = data.choices?.[0];
+          const isCutOff = choice?.finish_reason === 'length';
+          const clean = sanitizeAiResponse(choice?.message?.content);
+          if (clean && !isCutOff) {
+            const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
+            const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+            const totalTokens = pTokens + cTokens;
+            const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000005)).toFixed(6));
+            return {
+              text: clean,
+              provider: 'openrouter',
+              model: dsModel,
+              neurons: 0,
+              costUsd,
+              tokens: totalTokens
+            };
+          }
+          if (isCutOff) {
+            console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
+          }
+        } else {
+          if (resp.status === 402 || resp.status === 403) {
+            console.warn(`[OpenRouter] Clave con límite de crédito superado (HTTP ${resp.status}). Cancelando llamadas restantes a OpenRouter.`);
+            openRouterExhausted = true;
+            break;
+          }
+        }
+      } catch (e) {
+        console.warn(`Intento con ${dsModel} falló:`, e.message);
+      }
+    }
+  }
+
+  // Respaldo de Emergencia GPT-4o-mini (solo si OpenRouter tiene crédito activo)
+  if (!openRouterExhausted && openRouterKey) {
+    try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -997,7 +1219,17 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           'HTTP-Referer': 'https://clikchat.pages.dev',
           'X-Title': 'ClikChat Edge AI'
         },
-        body: JSON.stringify(openRouterPayload)
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          messages,
+          temperature: 0.1,
+          max_tokens: 1000,
+          provider: {
+            sort: 'price',
+            allow_fallbacks: false
+          }
+        }),
+        signal: AbortSignal.timeout(4000)
       });
       if (resp.ok) {
         const data = await resp.json();
@@ -1005,125 +1237,33 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         const isCutOff = choice?.finish_reason === 'length';
         const clean = sanitizeAiResponse(choice?.message?.content);
         if (clean && !isCutOff) {
-          const pTokens = data.usage?.prompt_tokens || Math.round((systemContent.length + userMessage.length) / 4);
-          const cTokens = data.usage?.completion_tokens || Math.round(clean.length / 4);
+          const pTokens = data.usage?.prompt_tokens || 800;
+          const cTokens = data.usage?.completion_tokens || 150;
           const totalTokens = pTokens + cTokens;
-          const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000005)).toFixed(6));
+          const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6));
           return {
             text: clean,
-            provider: 'openrouter',
-            model: dsModel,
+            provider: 'openai/gpt-4o-mini',
+            model: 'openai/gpt-4o-mini',
             neurons: 0,
             costUsd,
             tokens: totalTokens
           };
         }
-        if (isCutOff) {
-          console.warn(`[LLM] Intento con ${dsModel} cortado por límite de tokens (finish_reason: length). Probando siguiente modelo.`);
-        }
       }
     } catch (e) {
-      console.warn(`Intento con ${dsModel} falló:`, e.message);
+      console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
     }
   }
 
-  // 2. Respaldo Nativo de Cloudflare Workers AI: Meta Llama 3.3 70B Fast
-  if (env?.AI) {
-    try {
-      const validHistory = history
-        .filter(h => (h.message && h.message.trim()) || (h.content && h.content.trim()))
-        .slice(-12)
-        .map(h => ({
-          role: h.sender === 'user' || h.role === 'user' ? 'user' : 'assistant',
-          content: (h.message || h.content || '').trim()
-        }));
-
-      const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-        messages: [
-          { role: 'system', content: systemContent },
-          ...validHistory,
-          { role: 'user', content: userMessage.trim() || 'Hola' }
-        ],
-        max_tokens: 1024
-      });
-      if (cfResp?.response) {
-        const clean = sanitizeAiResponse(cfResp.response);
-        if (clean) {
-          const inTokens = Math.round((systemContent.length + userMessage.length) / 4);
-          const outTokens = Math.round(clean.length / 4);
-          const neurons = Math.max(120, Math.round(inTokens * 0.35 + outTokens * 0.7));
-          const costUsd = Number(((neurons / 1000) * 0.011).toFixed(6));
-          return {
-            text: clean,
-            provider: 'cloudflare_workers_ai',
-            model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-            neurons,
-            costUsd,
-            tokens: inTokens + outTokens
-          };
-        }
-        console.warn('Workers AI Llama 3.3 devolvió reporte de seguridad o CoT leak, descartando.');
-      }
-    } catch (e) {
-      console.warn('Workers AI Llama 3.3 falló en Edge:', e.message);
-    }
-  }
-
-  // 3. Respaldo de Emergencia GPT-4o-mini (Cero fallbacks a Claude)
-  try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openRouterKey}`,
-        'HTTP-Referer': 'https://clikchat.pages.dev',
-        'X-Title': 'ClikChat Edge AI'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        messages,
-        temperature: 0.1,
-        max_tokens: 1000,
-        provider: {
-          sort: 'price',
-          allow_fallbacks: false
-        }
-      })
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      const choice = data.choices?.[0];
-      const isCutOff = choice?.finish_reason === 'length';
-      const clean = sanitizeAiResponse(choice?.message?.content);
-      if (clean && !isCutOff) {
-        const pTokens = data.usage?.prompt_tokens || 800;
-        const cTokens = data.usage?.completion_tokens || 150;
-        const totalTokens = pTokens + cTokens;
-        const costUsd = Number(((pTokens * 0.00000015) + (cTokens * 0.0000006)).toFixed(6));
-        return {
-          text: clean,
-          provider: 'openai/gpt-4o-mini',
-          model: 'openai/gpt-4o-mini',
-          neurons: 0,
-          costUsd,
-          tokens: totalTokens
-        };
-      }
-    }
-  } catch (e) {
-    console.warn('Fallo en respaldo GPT-4o-mini:', e.message);
-  }
-
-  // 4. Plantilla de contingencia gastronómica/comercial humana
+  // 4. Plantilla de contingencia dinámica humana y contextual
   const isSrv = context && /servicios|geosoft|agenda|cita|software/i.test(context);
-  const isOngoing = Array.isArray(history) && history.length > 0;
-  const fallbackText = isSrv
-    ? (isOngoing
-        ? 'Con mucho gusto te asesoro. ¿Me podrías indicar más detalles sobre tu requerimiento tecnológico o proyecto para darte la mejor opción?'
-        : '¡Hola! Con mucho gusto te atiendo y te asesoro. ¿En qué proyecto o requerimiento tecnológico te podemos colaborar?')
-    : (isOngoing
-        ? 'Con mucho gusto te atiendo. ¿Qué más te gustaría consultar o qué se te antoja ordenar?'
-        : '¡Hola! Con mucho gusto te atiendo. ¿Te gustaría conocer nuestras opciones o deseas consultar por algún producto en específico?');
+  const fallbackText = generateSmartFallbackReply({
+    context,
+    history,
+    userMessage,
+    isSrv
+  });
   return {
     text: fallbackText,
     provider: 'context_template',
@@ -6707,6 +6847,17 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         });
         llmResult.text = guardrailResult.text;
         const isPriceGuardrailBlocked = guardrailResult.triggered;
+
+        // SEGURO DETERMINISTA ANTI-REPETICIÓN (POST-LLM EN EDGE / PROHIBIDO REPETIR MENSAJES PREVIOS)
+        const antiRepetitionResult = enforceAntiRepetitionGuardrail({
+          replyText: llmResult.text,
+          sessionHistory,
+          userMessage: message,
+          targetTenant,
+          matchedProducts,
+          products
+        });
+        llmResult.text = antiRepetitionResult.text;
 
         // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (SOLO EN FLUJOS DE AGENDAMIENTO, NO EN PREGUNTAS INFORMATIVAS NI EN CIERRES)
         const hasPriorBookingCardInHist = sessionHistory.some(h => (h.sender === 'assistant' || h.role === 'assistant') && (h.message || h.content || '').includes('[BOOKING_CARD:')) || bookingState.hasPriorBookingCard;

@@ -27,6 +27,16 @@ export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
               <CheckCircle className="h-2.5 w-2.5" /> Calidad {m.score}/100
             </span>
           )}
+          {m.modelUsed && (
+            <span className="text-[#7c3aed] bg-[#f5f3ff] border border-purple-200 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
+              ⚡ {m.modelUsed}
+            </span>
+          )}
+          {m.fallbackUsed && (
+            <span className="text-amber-700 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
+              🛡️ Rescate por Fallo
+            </span>
+          )}
           <button
             type="button"
             onClick={() => onOpenCorrection(m)}

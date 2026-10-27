@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   Inbox, Kanban, Users, CalendarDays, ListChecks, ShoppingBag,
-  UserCog, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, TrendingUp, LogOut, BookOpen
+  UserCog, FlaskConical, BarChart3, Settings, ArrowRightLeft, MessageSquareCode, TrendingUp, LogOut, BookOpen, ShieldAlert
 } from 'lucide-react';
 import { VoceroBrandLogo } from './VoceroBrandLogo';
 
-export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'faqs' | 'lab' | 'analyst' | 'results' | 'settings';
+export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'faqs' | 'lab' | 'analyst' | 'results' | 'reports' | 'settings';
 
 interface VoceroAppNavProps {
   activeTab: VoceroNavTab;
@@ -51,6 +51,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       title: 'PRUEBAS & MÉTRICAS',
       items: [
         { id: 'lab' as VoceroNavTab, label: 'Live Lab (Pruebas)', icon: FlaskConical },
+        { id: 'reports' as VoceroNavTab, label: 'Reportes de IA', icon: ShieldAlert },
         { id: 'results' as VoceroNavTab, label: 'Métricas & Clics', icon: BarChart3 },
         { id: 'clikchat' as VoceroNavTab, label: 'Canal Web ClikChat', icon: MessageSquareCode },
       ]

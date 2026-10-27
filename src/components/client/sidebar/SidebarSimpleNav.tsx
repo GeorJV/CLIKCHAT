@@ -2,7 +2,7 @@ import React from 'react';
 import { ClientTab } from '../../../types/client';
 import {
   Bot, Store, ShoppingBag, Brain, MessageSquare,
-  Users, Calendar, LifeBuoy, UserCheck, MessageCircle, Kanban
+  Users, Calendar, LifeBuoy, UserCheck, MessageCircle, Kanban, ShieldAlert
 } from 'lucide-react';
 
 interface SidebarSimpleNavProps {
@@ -34,7 +34,8 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
     { id: 'chatbot' as ClientTab, label: 'Dashboard & Métricas', icon: Bot },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
-    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar, badge: unreadBookingsCount, badgeColor: 'bg-amber-500' }
+    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar, badge: unreadBookingsCount, badgeColor: 'bg-amber-500' },
+    { id: 'reports' as ClientTab, label: 'Reportes de IA', icon: ShieldAlert }
   ];
 
   const systemItems = [

@@ -17,6 +17,7 @@ import { VoceroClikChatView } from './clikchat/VoceroClikChatView';
 import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
 import { VoceroProductsView } from './products/VoceroProductsView';
 import { VoceroFaqRagView } from './faqs/VoceroFaqRagView';
+import { VoceroAiReportsView } from './reports/VoceroAiReportsView';
 import { FlaskConical } from 'lucide-react';
 import { useNewBookingAlert } from '../../hooks/useNewBookingAlert';
 import { NewBookingBanner } from '../client/NewBookingBanner';
@@ -148,6 +149,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         )}
         {activeTab === 'lab' && <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />}
         {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
+        {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} onOpenInboxLead={() => handleSelectTab('inbox')} />}
         {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
         {activeTab === 'settings' && (
           <VoceroSettingsView

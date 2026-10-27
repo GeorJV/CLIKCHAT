@@ -26,6 +26,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
     },
   ]);
   const [input, setInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState<'model-1' | 'model-2' | 'model-3'>('model-1');
   const [loading, setLoading] = useState(false);
   const [activeCorrection, setActiveCorrection] = useState<{ msg: SandboxMsg; userQuestion: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,22 +53,17 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
       const res = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, sessionId: 'sandbox_' + Date.now(), message: txt }),
+        body: JSON.stringify({ tenantSlug, sessionId: 'sandbox_' + Date.now(), message: txt, model: selectedModel, preferredModel: selectedModel }),
       });
       if (res.ok) {
         const d = await res.json();
-        const calculatedScore = Math.floor(Math.random() * 8) + 92;
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: String(Date.now() + 1),
-            sender: 'assistant',
-            text: d.answer || 'Respuesta generada.',
-            rag: d.rag_level_used || 'RAG Híbrido D1',
-            score: calculatedScore,
-            isGolden: false,
-          },
-        ]);
+        const score = Math.floor(Math.random() * 8) + 92;
+        const fallbackLabel = selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : 'Modelo 3: Meta';
+        setMessages((prev) => [...prev, {
+          id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.',
+          rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false,
+          modelUsed: d.modelLabel || fallbackLabel, fallbackUsed: d.fallbackUsed,
+        }]);
       }
     } catch (e) {
       console.warn('Sandbox error:', e);
@@ -98,7 +94,25 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         <div className="flex items-center gap-2">
           <FlaskConical className="h-4 w-4 text-[#0d5bff]" />
           <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Live Lab</h2>
-          <span className="vocero-kicker ml-2">Prueba, Corrección & Validación en Vivo</span>
+          <div className="hidden sm:flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-xl border border-[#dde5f1] ml-2">
+            {[
+              { id: 'model-1' as const, label: '🥇 Mod 1: GLM 5' },
+              { id: 'model-2' as const, label: '🥈 Mod 2: GPT' },
+              { id: 'model-3' as const, label: '🥉 Mod 3: Meta' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setSelectedModel(m.id)}
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                  selectedModel === m.id
+                    ? 'bg-[#0d5bff] text-white shadow-2xs'
+                    : 'text-[#62728d] hover:text-[#0a1730]'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           onClick={() => setMessages(messages.slice(0, 1))}
@@ -155,12 +169,9 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
       </div>
 
       <LiveLabCorrectionModal
-        isOpen={Boolean(activeCorrection)}
-        userQuestion={activeCorrection?.userQuestion || ''}
-        originalAnswer={activeCorrection?.msg.text || ''}
-        messageId={activeCorrection?.msg.id || ''}
-        onClose={() => setActiveCorrection(null)}
-        onSaveCorrection={handleSaveCorrection}
+        isOpen={Boolean(activeCorrection)} userQuestion={activeCorrection?.userQuestion || ''}
+        originalAnswer={activeCorrection?.msg.text || ''} messageId={activeCorrection?.msg.id || ''}
+        onClose={() => setActiveCorrection(null)} onSaveCorrection={handleSaveCorrection}
       />
     </div>
   );

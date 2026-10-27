@@ -16,7 +16,8 @@ export type ClientTab =
   | 'soporte'
   | 'user'
   | 'account'
-  | 'crm';
+  | 'crm'
+  | 'reports';
 
 export interface DocumentChunk {
   id: string;

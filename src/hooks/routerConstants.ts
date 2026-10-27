@@ -15,6 +15,8 @@ export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
   '/soporte': 'soporte',
   '/mi-cuenta': 'account',
   '/crm': 'crm',
+  '/reportes': 'reports',
+  '/reportes-ia': 'reports',
 };
 
 export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
@@ -33,6 +35,7 @@ export const TAB_ROUTE_MAP: Record<ClientTab, string> = {
   user: '/mi-cuenta',
   account: '/mi-cuenta',
   crm: '/crm',
+  reports: '/reportes',
 };
 
 export const VOCERO_TAB_ROUTE_MAP: Record<VoceroNavTab, string> = {
@@ -48,6 +51,7 @@ export const VOCERO_TAB_ROUTE_MAP: Record<VoceroNavTab, string> = {
   lab: 'laboratorio',
   analyst: 'analista',
   results: 'resultados',
+  reports: 'reportes',
   settings: 'ajustes',
 };
 
@@ -87,6 +91,9 @@ export const ROUTE_VOCERO_TAB_MAP: Record<string, VoceroNavTab> = {
   resultados: 'results',
   results: 'results',
   metricas: 'results',
+  reportes: 'reports',
+  reports: 'reports',
+  'reportes-ia': 'reports',
   ajustes: 'settings',
   settings: 'settings',
   configuracion: 'settings',

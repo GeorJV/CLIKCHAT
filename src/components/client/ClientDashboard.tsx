@@ -18,6 +18,7 @@ import { MyAccountTab } from './account/MyAccountTab';
 import { WhatsAppManagerTab } from './whatsapp/WhatsAppManagerTab';
 import { SwitchTenantModal } from './modals/SwitchTenantModal';
 import { VoceroCrmView } from '../crm/VoceroCrmView';
+import { VoceroAiReportsView } from '../crm/reports/VoceroAiReportsView';
 import { useVoceroMode } from '../../hooks/useVoceroMode';
 import { useNewBookingAlert } from '../../hooks/useNewBookingAlert';
 import { NewBookingBanner } from './NewBookingBanner';
@@ -153,8 +154,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'agenda' && (
             <AgendaTab tenantId={tenant?.id} highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking} />
           )}
+          {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={currentSlug || activeSlug} tenantId={tenant?.id} />}
           {(activeTab === 'account' || activeTab === 'user') && <MyAccountTab tenant={tenant} user={user} onUpdateSettings={updateSettings} />}
-          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user', 'crm'].includes(activeTab) && (
+          {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user', 'crm', 'reports'].includes(activeTab) && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
               onOpenLiveChat={onOpenLiveChat} onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}

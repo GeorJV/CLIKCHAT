@@ -5,6 +5,8 @@ export interface SandboxMsg {
   rag?: string;
   score?: number;
   isGolden?: boolean;
+  modelUsed?: string;
+  fallbackUsed?: boolean;
 }
 
 export const PERSONAS = [
