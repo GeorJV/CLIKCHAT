@@ -3441,7 +3441,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
         business_hours, system_prompt, slug, logo_url, tone_of_voice,
-        response_delay_sec !== undefined ? Number(response_delay_sec) : null,
+        response_delay_sec !== undefined && response_delay_sec !== null ? Math.min(Math.max(Number(response_delay_sec), 1), 10) : null,
         operational_rules !== undefined ? operational_rules : null,
         business_type !== undefined ? business_type : null,
         currency !== undefined ? currency : null,
@@ -3491,7 +3491,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
               system_prompt || '',
               logo_url || '',
               tone_of_voice || 'Profesional y Cortés',
-              response_delay_sec !== undefined ? Number(response_delay_sec) : null,
+              response_delay_sec !== undefined && response_delay_sec !== null ? Math.min(Math.max(Number(response_delay_sec), 1), 10) : null,
               operational_rules || '',
               business_type || 'tienda',
               currency || 'CRC',

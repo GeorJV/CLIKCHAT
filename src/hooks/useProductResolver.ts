@@ -59,7 +59,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
   const [agentAvatar, setAgentAvatar] = useState<string>(cached.avatar_url || '');
   const [welcomeMessage, setWelcomeMessage] = useState<string>(cached.welcome_message || '');
   const [isLoading, setIsLoading] = useState<boolean>(!productItem);
-  const [responseDelaySec, setResponseDelaySec] = useState<number>(cached.response_delay_sec || 1);
+  const [responseDelaySec, setResponseDelaySec] = useState<number>(Math.min(Math.max(Number(cached.response_delay_sec || 1), 1), 10));
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(
     (cached as any).message_delivery_mode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate'
   );
@@ -87,7 +87,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
               if (t.name) setStoreName(t.name);
               if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
               if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
-              if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Number(t.response_delay_sec));
+              if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Math.min(Math.max(Number(t.response_delay_sec), 1), 10));
               if (t.message_delivery_mode) setDeliveryMode(t.message_delivery_mode);
               saveCachedTenant(t);
             }
@@ -132,7 +132,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
           if (t.name) setStoreName(t.name);
           if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
           if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
-          if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Number(t.response_delay_sec));
+          if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Math.min(Math.max(Number(t.response_delay_sec), 1), 10));
           if (t.message_delivery_mode) setDeliveryMode(t.message_delivery_mode);
           saveCachedTenant(t);
         }
