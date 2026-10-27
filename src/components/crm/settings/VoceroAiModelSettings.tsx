@@ -22,25 +22,22 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
 
   useEffect(() => {
     if (!tenant) return;
-    let savedKey = (tenant as any)?.custom_ai_config?.apiKey || '';
-    let savedModel = (tenant as any)?.custom_ai_config?.model || '';
-    let savedDelivery = (tenant as any)?.message_delivery_mode || (tenant as any)?.custom_ai_config?.deliveryMode || '';
+    let sKey = (tenant as any)?.custom_ai_config?.apiKey || '';
+    let sModel = (tenant as any)?.custom_ai_config?.model || '';
+    let sDelivery = (tenant as any)?.message_delivery_mode || (tenant as any)?.custom_ai_config?.deliveryMode || '';
 
     if (tenant.custom_llm_key && tenant.custom_llm_key.startsWith('{')) {
       try {
-        const parsed = JSON.parse(tenant.custom_llm_key);
-        savedKey = parsed.key || savedKey;
-        savedModel = parsed.model || savedModel;
-        if (parsed.deliveryMode) savedDelivery = parsed.deliveryMode;
-        if (parsed.botResponseSpeed !== undefined) setResponseSpeed(String(parsed.botResponseSpeed));
+        const p = JSON.parse(tenant.custom_llm_key);
+        sKey = p.key || sKey; sModel = p.model || sModel;
+        if (p.deliveryMode) sDelivery = p.deliveryMode;
+        if (p.botResponseSpeed !== undefined) setResponseSpeed(String(p.botResponseSpeed));
       } catch {}
     }
-    if (!savedDelivery && typeof window !== 'undefined') {
-      savedDelivery = (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) || 'interleaved';
-    }
-    if (savedKey) setApiKey(savedKey);
-    if (savedModel) setModel(savedModel);
-    if (savedDelivery) setDeliveryMode(savedDelivery as DeliveryMode);
+    if (!sDelivery && typeof window !== 'undefined') sDelivery = (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) || 'interleaved';
+    if (sKey) setApiKey(sKey);
+    if (sModel) setModel(sModel);
+    if (sDelivery) setDeliveryMode(sDelivery as DeliveryMode);
     if (tenant.response_delay_sec !== undefined) setCadence(String(tenant.response_delay_sec));
     if (tenant.bot_response_speed_sec !== undefined) {
       setResponseSpeed(String(tenant.bot_response_speed_sec));
@@ -58,11 +55,9 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
       localStorage.setItem('clikchat_delivery_mode', deliveryMode);
       localStorage.setItem('clikchat_bot_response_speed', responseSpeed);
     }
-
     const trimmedKey = apiKey.trim();
     const isGoogle = model.includes('gemini') || trimmedKey.startsWith('AIza') || trimmedKey.startsWith('AQ.');
     const provider = model.startsWith('@cf') ? 'cloudflare' : isGoogle ? 'google' : model.includes('gpt') ? 'openai' : 'openrouter';
-
     const normalizedCadence = Math.min(Math.max(Number(cadence) || 1, 1), 10);
     const normalizedSpeed = Math.min(Math.max(Number(responseSpeed) || 0, 0), 10);
     const custom_llm_key = JSON.stringify({ key: trimmedKey, provider, model, deliveryMode, cadence: normalizedCadence, botResponseSpeed: normalizedSpeed });
@@ -70,13 +65,8 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
 
     try {
       const ok = await onUpdateSettings({ response_delay_sec: normalizedCadence, bot_response_speed_sec: normalizedSpeed, tone_of_voice: tone, message_delivery_mode: deliveryMode, custom_llm_key, custom_ai_config } as any);
-      if (ok) {
-        setSavedSuccess(true);
-        setTimeout(() => setSavedSuccess(false), 3000);
-      }
-    } finally {
-      setIsSaving(false);
-    }
+      if (ok) { setSavedSuccess(true); setTimeout(() => setSavedSuccess(false), 3000); }
+    } finally { setIsSaving(false); }
   };
 
   return (
@@ -92,15 +82,11 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-[#42506b] mb-1">Modelo LLM</label>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
-            >
+            <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none">
               <optgroup label="✨ 3 Modelos Predeterminados (Cascada de Seguridad en Anillo)">
-                <option value="z-ai/glm-5.3-flash:floor">🥇 Modelo 1: GLM 5 (GLM 5.3 Flash · OpenRouter - Rápido y Ventas)</option>
-                <option value="openai/gpt-4o-mini">🥈 Modelo 2: GPT (ChatGPT 5 Mini · OpenAI / OpenRouter - Razonamiento)</option>
-                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">🥉 Modelo 3: Meta (Meta Llama 3.3 · Cloudflare Clofer)</option>
+                <option value="z-ai/glm-5.3-flash:floor">🥇 Modelo 1: GLM 5 (GLM 5.3 Flash · Rápido y Ventas)</option>
+                <option value="openai/gpt-4o-mini">🥈 Modelo 2: GPT (ChatGPT 5 Mini · Razonamiento)</option>
+                <option value="@cf/meta/llama-3.3-70b-instruct-fp8-fast">🥉 Modelo 3: Meta (Meta Llama 3.3 · Clofer)</option>
               </optgroup>
               <optgroup label="Modelos Adicionales de OpenRouter">
                 <option value="deepseek/deepseek-chat">DeepSeek Chat (OpenRouter Comercial)</option>
@@ -117,11 +103,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
             <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
               <Gauge className="h-3.5 w-3.5 text-[#0d5bff]" /> Velocidad de Respuesta Inicial (Primer Mensaje)
             </label>
-            <select
-              value={responseSpeed}
-              onChange={(e) => setResponseSpeed(e.target.value)}
-              className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
-            >
+            <select value={responseSpeed} onChange={(e) => setResponseSpeed(e.target.value)} className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none">
               <option value="0">⚡ 0 seg (Instantáneo / Sin Espera)</option>
               <option value="1">🚀 1 seg (Ultra Rápido)</option>
               <option value="2">🤝 2 seg (Lectura Natural)</option>
@@ -136,11 +118,7 @@ export const VoceroAiModelSettings: React.FC<VoceroAiModelSettingsProps> = ({ te
             <label className="block text-xs font-semibold text-[#42506b] mb-1 flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-[#0d5bff]" /> Intervalo entre Mensajes (Burbujas: 1 a 10 segundos)
             </label>
-            <select
-              value={cadence}
-              onChange={(e) => setCadence(e.target.value)}
-              className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none"
-            >
+            <select value={cadence} onChange={(e) => setCadence(e.target.value)} className="w-full rounded-xl border border-[#d8e2f0] bg-[#f8fafc] px-3 py-2 text-xs text-[#0a1730] focus:border-[#0d5bff] focus:bg-white focus:outline-none">
               <option value="1">1 segundo (Instantáneo)</option>
               <option value="2">2 segundos (Rápido)</option>
               <option value="3">3 segundos (Lectura natural)</option>

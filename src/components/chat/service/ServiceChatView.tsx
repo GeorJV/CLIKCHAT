@@ -13,12 +13,12 @@ import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
-  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
+  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; botResponseSpeedSec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
   storeName = 'Centro Especializado', agentName = 'Asesora Profesional', agentAvatar, tenantSlug = 'comida-callejera-xl',
-  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, deliveryMode, welcomeMessage, onExit,
+  whatsappNumber = '50672935612', services = [], initialService, responseDelaySec, botResponseSpeedSec, deliveryMode, welcomeMessage, onExit,
 }) => {
   const [selectedService, setSelectedService] = useState<ServiceItem>(initialService || services[0] || { ...DEFAULT_SERVICE, title: 'Servicio Especializado', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'service'>('chat');
@@ -81,7 +81,7 @@ export const ServiceChatView: React.FC<Props> = ({
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
-        const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+        const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0);
         const elapsed = Date.now() - startTime;
         if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
         const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
@@ -115,7 +115,7 @@ export const ServiceChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
-          const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+          const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0);
           if (Date.now() - startTime < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - (Date.now() - startTime)));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';

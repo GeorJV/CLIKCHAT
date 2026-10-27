@@ -18,11 +18,11 @@ import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSpl
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; welcomeMessage?: string;
-  businessType?: string; tenantSlug?: string; products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; deliveryMode?: DeliveryMode; onExit?: () => void;
+  businessType?: string; tenantSlug?: string; products?: ProductItem[]; initialProduct?: ProductItem; responseDelaySec?: number; botResponseSpeedSec?: number; deliveryMode?: DeliveryMode; onExit?: () => void;
 }
 
 export const ProductChatView: React.FC<Props> = ({
-  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar, welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl', products = [], initialProduct, responseDelaySec, deliveryMode, onExit,
+  storeName = 'Tienda Oficial', agentName = 'Asesora Virtual', agentAvatar, welcomeMessage, businessType = 'tienda', tenantSlug = 'comida-callejera-xl', products = [], initialProduct, responseDelaySec, botResponseSpeedSec, deliveryMode, onExit,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(initialProduct || products[0] || { ...DEFAULT_PRODUCT, title: 'Catálogo Oficial', image: '', images: [] });
   const [mobileTab, setMobileTab] = useState<'chat' | 'product'>('chat');
@@ -78,7 +78,7 @@ export const ProductChatView: React.FC<Props> = ({
         });
         if (!res.ok) throw new Error('Error en el servidor de chat');
         const data = await res.json();
-        const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+        const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0);
         const elapsed = Date.now() - startTime;
         if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
         if (data?.isRestaurant || isRestaurant) {
@@ -102,7 +102,7 @@ export const ProductChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl', storeName, agentName, businessType, welcomeMessage, userMessage: userText, selectedProduct, products, sessionId: sessId });
-          const targetDelayMs = Math.max((responseDelaySec ?? 1) * 1000, 300);
+          const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0);
           if (Date.now() - startTime < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - (Date.now() - startTime)));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
@@ -169,8 +169,7 @@ export const ProductChatView: React.FC<Props> = ({
       </div>
       <ProductModalsContainer
         product={selectedProduct} storeName={storeName} detailModal={detailModal} fullscreenOpen={fullscreenOpen} checkoutOpen={checkoutOpen}
-        orderItems={orderItems} orderTotal={orderTotal} isRestaurant={isRestaurant}
-        onUpdateQuantity={updateItemQuantity} onRemoveItem={removeOrderItem}
+        orderItems={orderItems} orderTotal={orderTotal} isRestaurant={isRestaurant} onUpdateQuantity={updateItemQuantity} onRemoveItem={removeOrderItem}
         onCloseDetail={() => setDetailModal(null)} onProceedBuyDetail={() => { setDetailModal(null); setCheckoutOpen(true); trackEvent('buy_click'); }}
         onCloseFullscreen={() => setFullscreenOpen(false)} onAskAboutProduct={(p) => { setFullscreenOpen(false); trackEvent('lead', 'warm'); handleSendMessage(`¿Beneficios de ${p.title}?`); }}
         onDirectCheckout={() => { setFullscreenOpen(false); setCheckoutOpen(true); trackEvent('buy_click'); }} onCloseCheckout={() => setCheckoutOpen(false)} onConfirmCheckout={handleConfirmCheckout} onAskQuestion={handleSendMessage}

@@ -60,6 +60,11 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
   const [welcomeMessage, setWelcomeMessage] = useState<string>(cached.welcome_message || '');
   const [isLoading, setIsLoading] = useState<boolean>(!productItem);
   const [responseDelaySec, setResponseDelaySec] = useState<number>(Math.min(Math.max(Number(cached.response_delay_sec || 1), 1), 10));
+  const [botResponseSpeedSec, setBotResponseSpeedSec] = useState<number>(() => {
+    const l = typeof window !== 'undefined' ? localStorage.getItem('clikchat_bot_response_speed') : null;
+    if (l !== null && !isNaN(Number(l))) return Math.min(Math.max(Number(l), 0), 10);
+    return (cached as any).bot_response_speed_sec !== undefined ? Number((cached as any).bot_response_speed_sec) : 0;
+  });
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(
     (cached as any).message_delivery_mode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate'
   );
@@ -88,6 +93,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
               if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
               if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
               if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Math.min(Math.max(Number(t.response_delay_sec), 1), 10));
+              if (t.bot_response_speed_sec !== undefined && t.bot_response_speed_sec !== null) setBotResponseSpeedSec(Math.min(Math.max(Number(t.bot_response_speed_sec), 0), 10));
               if (t.message_delivery_mode) setDeliveryMode(t.message_delivery_mode);
               saveCachedTenant(t);
             }
@@ -133,6 +139,7 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
           if (t.bot_name) setAgentName(tenantSlug === 'comida-callejera-xl' ? 'Valeria (Mesera Virtual)' : t.bot_name);
           if (t.avatar_url) setAgentAvatar(t.avatar_url); if (t.welcome_message) setWelcomeMessage(t.welcome_message); if (t.business_type) setBusinessType(t.business_type);
           if (t.response_delay_sec !== undefined && t.response_delay_sec !== null) setResponseDelaySec(Math.min(Math.max(Number(t.response_delay_sec), 1), 10));
+          if (t.bot_response_speed_sec !== undefined && t.bot_response_speed_sec !== null) setBotResponseSpeedSec(Math.min(Math.max(Number(t.bot_response_speed_sec), 0), 10));
           if (t.message_delivery_mode) setDeliveryMode(t.message_delivery_mode);
           saveCachedTenant(t);
         }
@@ -152,5 +159,5 @@ export function useProductResolver(productId: string | null, tenantSlug: string 
     return () => { isMounted = false; };
   }, [productId, tenantSlug]);
 
-  return { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec, deliveryMode, businessType };
+  return { productItem, productsList, storeName, agentName, agentAvatar, welcomeMessage, isLoading, responseDelaySec, botResponseSpeedSec, deliveryMode, businessType };
 }

@@ -24,6 +24,7 @@ export const REAL_DEFAULT_TENANT: Tenant = {
   order_ticket_format: '',
   tone_of_voice: 'Amigable y Enérgico',
   response_delay_sec: 1,
+  bot_response_speed_sec: 0,
   phone: '+506 8888-8888',
   created_at: '2026-09-26T16:07:45Z'
 };
@@ -51,7 +52,8 @@ export const CLEAN_EMPTY_TENANT: Tenant = {
   sales_flow_rules: '',
   order_ticket_format: '',
   tone_of_voice: 'Profesional y Cortés',
-  response_delay_sec: 1
+  response_delay_sec: 1,
+  bot_response_speed_sec: 0
 };
 
 // Configuración oficial por defecto: Administración Central ClikChat (100% independiente)
@@ -78,6 +80,7 @@ export const ADMIN_PLATFORM_TENANT: Tenant = {
   order_ticket_format: '',
   tone_of_voice: 'Ejecutivo y Conciso',
   response_delay_sec: 1,
+  bot_response_speed_sec: 0,
   phone: '+506 8888-8888',
   created_at: '2026-09-24T00:00:00Z'
 };
