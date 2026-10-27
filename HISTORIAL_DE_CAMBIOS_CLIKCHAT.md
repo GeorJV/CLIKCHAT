@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Rediseño Compacto Sin Scroll del Pop-up de Agendar Cita (v2.6.3)
+- **Diagnóstico y Necesidad:**
+  1. *Scroll Vertical Forzado en Modal de Citas:*
+     - En `ServiceBookingModal.tsx`, la presencia de clases como `max-h-[90dvh]`, `overflow-y-auto`, selector de días vertical y tarjeta con preview pesada obligaba al usuario a hacer scroll vertical para ver los campos de contacto y el botón de confirmación.
+  2. *Desajuste en Pantallas Móviles:*
+     - Al desplegarse como un bottom-sheet (`items-end p-0`), colisionaba con gestos de deslizamiento táctil y generaba barras de desplazamiento incómodas.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Modal Autocontenido Sin Scroll (`ServiceBookingModal.tsx` - 170 líneas):*
+     - Eliminado `overflow-y-auto` y reemplazado por contenedor centrado autocontenido con `overflow-hidden` (`max-w-[420px]`).
+     - Fila informativa del servicio compacta horizontal con badge de duración y modalidad.
+     - Selector horizontal de 4 días en una sola fila rápida con fecha y día visibles.
+     - Cuadrícula compacta de 3 columnas para horarios disponibles (`09:00 AM` a `05:30 PM`).
+     - Cuadrícula de 2 columnas para campos esenciales de contacto (Nombre completo y WhatsApp).
+     - Botón principal de confirmación siempre visible y accesible de inmediato al frente sin necesidad de scroll.
+     - Normalización matemática de fecha mediante `formatDisplayDate(selectedDate)`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.57s con 0 errores TypeScript (`dist/assets/index-BB4hV2v6.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `fb1cf16`) y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-27] Configuración de Intervalo de Envío de Mensajes del Bot (1 a 10 Segundos) y Sincronización en Cascada (v2.6.2)
 - **Diagnóstico y Necesidad:**
   1. *Intervalo Rígido o Fuera de Rango:*
