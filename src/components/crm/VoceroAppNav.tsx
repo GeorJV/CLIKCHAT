@@ -12,6 +12,7 @@ interface VoceroAppNavProps {
   onSelectTab: (tab: VoceroNavTab) => void;
   unreadCount?: number;
   unresolvedCount?: number;
+  unreadBookingsCount?: number;
   userName?: string;
   onSwitchToClassic: () => void;
   onLogout?: () => void;
@@ -22,6 +23,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
   onSelectTab,
   unreadCount = 0,
   unresolvedCount = 0,
+  unreadBookingsCount = 0,
   userName = 'Admin',
   onSwitchToClassic,
   onLogout,
@@ -32,7 +34,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       items: [
         { id: 'inbox' as VoceroNavTab, label: 'Bandeja de Entrada', icon: Inbox, badge: unreadCount },
         { id: 'pipeline' as VoceroNavTab, label: 'Pipeline de Ventas', icon: Kanban },
-        { id: 'bookings' as VoceroNavTab, label: 'Agenda & Citas', icon: CalendarDays },
+        { id: 'bookings' as VoceroNavTab, label: 'Agenda & Citas', icon: CalendarDays, badge: unreadBookingsCount, badgeColor: 'bg-amber-400' },
         { id: 'contacts' as VoceroNavTab, label: 'Directorio de Clientes', icon: Users },
       ]
     },
@@ -89,7 +91,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
                     <span className="flex-1 text-left truncate">{item.label}</span>
                     {item.badge !== undefined && item.badge > 0 && (
                       <span className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-                        isActive ? 'bg-white text-[#0d5bff]' : 'bg-[#0d5bff] text-white'
+                        (item as any).badgeColor ? `${(item as any).badgeColor} text-black font-black animate-pulse` : isActive ? 'bg-white text-[#0d5bff]' : 'bg-[#0d5bff] text-white'
                       }`}>
                         {item.badge}
                       </span>

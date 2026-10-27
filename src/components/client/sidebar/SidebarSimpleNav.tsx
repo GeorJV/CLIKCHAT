@@ -10,6 +10,7 @@ interface SidebarSimpleNavProps {
   setActiveTab: (tab: ClientTab) => void;
   isExpanded: boolean;
   unresolvedCount: number;
+  unreadBookingsCount?: number;
   isService?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
   setActiveTab,
   isExpanded,
   unresolvedCount,
+  unreadBookingsCount = 0,
   isService = false
 }) => {
   const setupItems = [
@@ -32,7 +34,7 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
     { id: 'chatbot' as ClientTab, label: 'Dashboard & Métricas', icon: Bot },
     { id: 'conversations' as ClientTab, label: 'Conversaciones', icon: MessageSquare },
     { id: 'clientes' as ClientTab, label: 'Gestión de Clientes', icon: Users },
-    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar }
+    { id: 'agenda' as ClientTab, label: 'Agenda de Citas', icon: Calendar, badge: unreadBookingsCount, badgeColor: 'bg-amber-500' }
   ];
 
   const systemItems = [
@@ -40,9 +42,10 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
     { id: 'soporte' as ClientTab, label: 'Soporte', icon: LifeBuoy }
   ];
 
-  const renderNavButton = (item: { id: ClientTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: number; step?: string }) => {
+  const renderNavButton = (item: { id: ClientTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: number; badgeColor?: string; step?: string }) => {
     const Icon = item.icon;
     const isActive = activeTab === item.id;
+    const badgeColor = item.badgeColor || 'bg-rose-500';
 
     return (
       <button
@@ -68,11 +71,11 @@ export const SidebarSimpleNav: React.FC<SidebarSimpleNavProps> = ({
 
         {item.badge !== undefined && item.badge > 0 && (
           isExpanded ? (
-            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white min-w-[16px] text-center animate-pulse">
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${badgeColor} text-white min-w-[16px] text-center animate-pulse`}>
               {item.badge}
             </span>
           ) : (
-            <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <span className={`absolute top-0.5 right-0.5 w-2 h-2 rounded-full ${badgeColor} animate-ping`} />
           )
         )}
       </button>

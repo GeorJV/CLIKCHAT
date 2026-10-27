@@ -20,6 +20,8 @@ interface Props {
   onToggleStatus?: (id: string) => void;
   onDelete?: (id: string) => void;
   onSelectAppointment?: (appointment: AppointmentItem) => void;
+  isHighlighted?: boolean;
+  onHover?: () => void;
 }
 
 export const VoceroAppointmentCard: React.FC<Props> = ({
@@ -27,23 +29,38 @@ export const VoceroAppointmentCard: React.FC<Props> = ({
   onToggleStatus,
   onDelete,
   onSelectAppointment,
+  isHighlighted = false,
+  onHover,
 }) => {
   return (
-    <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-xs flex items-center justify-between gap-4 hover:border-[#b8cced] transition font-sans">
+    <div
+      id={`vocero-apt-${apt.id}`}
+      onMouseEnter={() => { if (isHighlighted && onHover) onHover(); }}
+      className={`rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 transition-all duration-500 font-sans ${
+        isHighlighted
+          ? 'bg-gradient-to-r from-amber-50/95 via-orange-50/80 to-white border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)] ring-2 ring-amber-400/30 scale-[1.01]'
+          : 'border border-[#e2e8f0] bg-white hover:border-[#b8cced]'
+      }`}
+    >
       <div
         onClick={() => onSelectAppointment && onSelectAppointment(apt)}
         className="flex items-center gap-3 cursor-pointer group"
         title="Haz clic para ver el detalle de la cita"
       >
-        <div className="h-10 w-10 rounded-xl bg-[#ebf1ff] group-hover:bg-[#d8e6ff] transition flex items-center justify-center text-[#0d5bff] font-bold text-xs shrink-0">
+        <div className={`h-10 w-10 rounded-xl transition flex items-center justify-center font-bold text-xs shrink-0 ${isHighlighted ? 'bg-amber-100 text-amber-700' : 'bg-[#ebf1ff] group-hover:bg-[#d8e6ff] text-[#0d5bff]'}`}>
           <User className="h-5 w-5" />
         </div>
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-xs font-bold text-[#0a1730] group-hover:text-[#0d5bff] transition">
               {apt.clientName}
             </h4>
             <span className="text-[10px] text-[#8391aa] uppercase font-mono">({apt.channel})</span>
+            {isHighlighted && (
+              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-black animate-pulse font-mono shadow-xs">
+                ✨ NUEVA CITA · Pasa el cursor aquí
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-[#62728d]">{apt.serviceName}</p>
         </div>

@@ -97,7 +97,7 @@ export const ServiceChatView: React.FC<Props> = ({
             };
             setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
-            broadcastBookingCreated(tenantSlug);
+            broadcastBookingCreated(tenantSlug, { id: 'apt_' + Date.now(), clientName: cData.customerName, serviceName: cData.service.title, date: cData.date, time: cData.timeSlot, price: cData.service.price });
           } catch (e) {}
           setMessages((prev) => [...prev, {
             id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`,
@@ -144,7 +144,7 @@ export const ServiceChatView: React.FC<Props> = ({
       const k = `clikchat_bookings_${tenantSlug || 'default'}`;
       const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
       localStorage.setItem(k, JSON.stringify([apt, ...JSON.parse(localStorage.getItem(k) || '[]')]));
-      broadcastBookingCreated(tenantSlug);
+      broadcastBookingCreated(tenantSlug, { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
     } catch (e) {}
     setMessages((prev) => [...prev, { id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     setMobileTab('chat');

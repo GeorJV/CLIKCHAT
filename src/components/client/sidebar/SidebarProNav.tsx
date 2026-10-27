@@ -10,6 +10,7 @@ interface SidebarProNavProps {
   setActiveTab: (tab: ClientTab) => void;
   isExpanded: boolean;
   unresolvedCount: number;
+  unreadBookingsCount?: number;
   isService?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
   setActiveTab,
   isExpanded,
   unresolvedCount,
+  unreadBookingsCount = 0,
   isService = false
 }) => {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({
@@ -30,7 +32,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
     setOpenCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const renderItem = (id: ClientTab, label: string, Icon: React.ComponentType<{ className?: string }>, badge?: number) => {
+  const renderItem = (id: ClientTab, label: string, Icon: React.ComponentType<{ className?: string }>, badge?: number, badgeColor: string = 'bg-rose-500') => {
     const isActive = activeTab === id;
     return (
       <button
@@ -51,11 +53,11 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
         </div>
         {badge !== undefined && badge > 0 && (
           isExpanded ? (
-            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${badgeColor} text-white animate-pulse`}>
               {badge}
             </span>
           ) : (
-            <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <span className={`absolute top-0.5 right-0.5 w-2 h-2 rounded-full ${badgeColor} animate-ping`} />
           )
         )}
       </button>
@@ -97,7 +99,7 @@ export const SidebarProNav: React.FC<SidebarProNavProps> = ({
             {renderItem('crm', 'ClikChat CRM', Kanban)}
             {renderItem('business', 'Mi Negocio', Store)}
             {renderItem('conversations', 'Conversaciones', MessageSquare)}
-            {renderItem('agenda', 'Agenda de Citas', Calendar)}
+            {renderItem('agenda', 'Agenda de Citas', Calendar, unreadBookingsCount, 'bg-amber-500')}
             {renderItem('training', 'Entrenamiento AI', Brain, unresolvedCount)}
           </nav>
         )}

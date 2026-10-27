@@ -18,6 +18,8 @@ import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
 import { VoceroProductsView } from './products/VoceroProductsView';
 import { VoceroFaqRagView } from './faqs/VoceroFaqRagView';
 import { FlaskConical } from 'lucide-react';
+import { useNewBookingAlert } from '../../hooks/useNewBookingAlert';
+import { NewBookingBanner } from '../client/NewBookingBanner';
 
 interface VoceroCrmViewProps {
   tenantId?: string;
@@ -44,6 +46,11 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     searchTerm, setSearchTerm, changeLeadStage, toggleTakeover,
     sendAgentMessage, updateLead, createLead,
   } = useVoceroCrm(tenant?.id || tenantId);
+
+  const {
+    newBooking, unreadCount: unreadBookingsCount, highlightedBookingId,
+    acknowledgeBooking, focusBooking, dismissAlert
+  } = useNewBookingAlert(tenantSlug);
 
   useEffect(() => {
     if (currentVoceroTab && currentVoceroTab !== activeTab) setActiveTab(currentVoceroTab);
@@ -74,11 +81,18 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     <div className="flex h-full w-full max-h-[100dvh] overflow-hidden bg-[#f6f8fc] font-sans">
       <VoceroAppNav
         activeTab={activeTab} onSelectTab={handleSelectTab}
-        unreadCount={leads.filter(l => l.stage === 'lead').length} unresolvedCount={pendingUnresolvedCount}
+        unreadCount={leads.filter(l => l.stage === 'lead').length}
+        unresolvedCount={pendingUnresolvedCount}
+        unreadBookingsCount={unreadBookingsCount}
         userName={tenant?.name || tenantName || tenantSlug} onSwitchToClassic={() => setVoceroMode(false)} onLogout={onLogout}
       />
 
       <main className="flex-1 h-full min-w-0 overflow-hidden relative bg-[#f6f8fc]">
+        {newBooking && (
+          <div className="px-4 sm:px-6 pt-3">
+            <NewBookingBanner booking={newBooking} onViewBooking={(b) => { focusBooking(b); handleSelectTab('bookings'); }} onDismiss={dismissAlert} />
+          </div>
+        )}
         {activeTab === 'inbox' && (
           <VoceroInbox
             leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
@@ -95,7 +109,10 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} />
         )}
         {activeTab === 'bookings' && (
-          <VoceroBookingsView tenantId={tenant?.id || tenantId} currency={tenant?.currency} />
+          <VoceroBookingsView
+            tenantId={tenant?.id || tenantId} currency={tenant?.currency}
+            highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking}
+          />
         )}
         {activeTab === 'clikchat' && (
           <VoceroClikChatView
@@ -129,15 +146,9 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onResolveQuery={resolveQuery}
           />
         )}
-        {activeTab === 'lab' && (
-          <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />
-        )}
-        {activeTab === 'analyst' && (
-          <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />
-        )}
-        {activeTab === 'results' && (
-          <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />
-        )}
+        {activeTab === 'lab' && <VoceroAiSandbox tenantSlug={tenantSlug} tenantName={tenant?.name || tenantName} onCreateFaq={createFaq} />}
+        {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
+        {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
         {activeTab === 'settings' && (
           <VoceroSettingsView
             tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings}

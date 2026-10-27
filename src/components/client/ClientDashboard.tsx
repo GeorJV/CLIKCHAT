@@ -14,12 +14,13 @@ import { ClientsTab } from './ClientsTab';
 import { AgendaTab } from './AgendaTab';
 import { AITrainingTab } from './training/AITrainingTab';
 import { SupportTab } from './support/SupportTab';
-import { UserProfileTab } from './UserProfileTab';
 import { MyAccountTab } from './account/MyAccountTab';
 import { WhatsAppManagerTab } from './whatsapp/WhatsAppManagerTab';
 import { SwitchTenantModal } from './modals/SwitchTenantModal';
 import { VoceroCrmView } from '../crm/VoceroCrmView';
 import { useVoceroMode } from '../../hooks/useVoceroMode';
+import { useNewBookingAlert } from '../../hooks/useNewBookingAlert';
+import { NewBookingBanner } from './NewBookingBanner';
 
 interface ClientDashboardProps {
   tenantSlug?: string;
@@ -48,6 +49,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     availableTenants, isLoading, saveSuccess, resolveQuery, createFaq, updateFaq,
     deleteFaq, createBulkFaqs, createProduct, updateProduct, deleteProduct, updateSettings, loadTenantData
   } = useClientPortal(activeSlug);
+
+  const {
+    newBooking, unreadCount: unreadBookingsCount, highlightedBookingId,
+    acknowledgeBooking, focusBooking, dismissAlert
+  } = useNewBookingAlert(currentSlug || activeSlug);
 
   useEffect(() => {
     if (activeSlug && activeSlug !== 'acme-store' && typeof window !== 'undefined') {
@@ -89,12 +95,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         activeTab={activeTab}
         setActiveTab={(tab) => tab === 'crm' ? setVoceroMode(true) : navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
         unresolvedCount={pendingCount}
+        unreadBookingsCount={unreadBookingsCount}
         tenantSlug={currentSlug}
         businessType={tenant?.business_type}
         onLogout={logout}
       />
       <main className="flex-1 h-full overflow-y-auto p-3 sm:px-6 sm:pt-2.5 sm:pb-6 bg-dot-grid transition-all duration-300">
         <div className="w-full transition-all duration-300">
+          {newBooking && (
+            <NewBookingBanner
+              booking={newBooking}
+              onViewBooking={(b) => { focusBooking(b); navigate(getTenantTabPath(currentSlug || activeSlug, 'agenda')); }}
+              onDismiss={dismissAlert}
+            />
+          )}
           {isLoading && !tenant && (
             <div className="flex items-center justify-center py-16">
               <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
@@ -102,13 +116,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           )}
           {activeTab === 'chatbot' && (
             <ChatbotQLinkTab
-              tenant={tenant}
-              tenantSlug={currentSlug}
-              products={products}
-              onRefresh={() => loadTenantData(currentSlug)}
-              onOpenLiveChat={onOpenLiveChat}
-              onSwitchAccount={() => setIsSwitchModalOpen(true)}
-              onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
+              tenant={tenant} tenantSlug={currentSlug} products={products}
+              onRefresh={() => loadTenantData(currentSlug)} onOpenLiveChat={onOpenLiveChat}
+              onSwitchAccount={() => setIsSwitchModalOpen(true)} onNavigateTab={(tab) => navigate(getTenantTabPath(currentSlug || activeSlug, tab))}
             />
           )}
           {(activeTab === 'business' || activeTab === 'faqs' || activeTab === 'settings') && (
@@ -122,38 +132,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {activeTab === 'products' && (
             <ProductsManagerTab
               products={products} tenantSlug={currentSlug} tenant={tenant}
-              onRefresh={() => loadTenantData(currentSlug)} onCreateProduct={createProduct}
-              onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct}
+              onRefresh={() => loadTenantData(currentSlug)} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct}
             />
           )}
           {activeTab === 'training' && (
             <AITrainingTab
-              tenantId={tenant?.id} tenant={tenant} onUpdateSettings={updateSettings}
-              unresolved={unresolved} onResolve={resolveQuery} faqs={faqs}
-              onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} tenantSlug={currentSlug}
+              tenantId={tenant?.id} tenant={tenant} onUpdateSettings={updateSettings} unresolved={unresolved}
+              onResolve={resolveQuery} faqs={faqs} onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} tenantSlug={currentSlug}
             />
           )}
-          {activeTab === 'whatsapp' && (
-            <WhatsAppManagerTab tenant={tenant} tenantSlug={currentSlug} />
-          )}
-          {activeTab === 'soporte' && (
-            <SupportTab ownerEmail={user?.email || tenant?.owner_email} tenantName={tenant?.name} />
-          )}
+          {activeTab === 'whatsapp' && <WhatsAppManagerTab tenant={tenant} tenantSlug={currentSlug} />}
+          {activeTab === 'soporte' && <SupportTab ownerEmail={user?.email || tenant?.owner_email} tenantName={tenant?.name} />}
           {activeTab === 'crm' && (
             <div className="h-[calc(100vh-2rem)] -m-3 sm:-mx-6 sm:-my-2.5 rounded-2xl overflow-hidden border border-zinc-800">
-              <VoceroCrmView
-                tenantId={tenant?.id}
-                tenantSlug={currentSlug || activeSlug}
-                tenantName={tenant?.name}
-              />
+              <VoceroCrmView tenantId={tenant?.id} tenantSlug={currentSlug || activeSlug} tenantName={tenant?.name} />
             </div>
           )}
           {activeTab === 'conversations' && <ConversationsTab tenantId={tenant?.id} />}
           {activeTab === 'clientes' && <ClientsTab tenantId={tenant?.id} />}
-          {activeTab === 'agenda' && <AgendaTab tenantId={tenant?.id} />}
-          {(activeTab === 'account' || activeTab === 'user') && (
-            <MyAccountTab tenant={tenant} user={user} onUpdateSettings={updateSettings} />
+          {activeTab === 'agenda' && (
+            <AgendaTab tenantId={tenant?.id} highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking} />
           )}
+          {(activeTab === 'account' || activeTab === 'user') && <MyAccountTab tenant={tenant} user={user} onUpdateSettings={updateSettings} />}
           {!['chatbot', 'business', 'faqs', 'settings', 'products', 'training', 'whatsapp', 'soporte', 'conversations', 'clientes', 'agenda', 'account', 'user', 'crm'].includes(activeTab) && (
             <BusinessSettingsTab
               tenant={tenant} tenantSlug={currentSlug} onUpdateSettings={updateSettings} saveSuccess={saveSuccess}
