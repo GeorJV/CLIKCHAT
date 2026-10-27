@@ -16,6 +16,27 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Desacoplamiento Exclusivo de Meta Llama 3.3 a Cloudflare Workers AI Gratuito (v2.7.1)
+- **Diagnóstico y Clarificación del Usuario:**
+  1. *Alineación de Proveedor para el Modelo 3 (Meta):*
+     - El usuario señaló con total precisión que el **Modelo 3: Meta** no debe recurrir a OpenRouter ni depender del saldo de OpenRouter, sino que es el modelo provisto de forma gratuita por **Cloudflare (Cloudflare Workers AI)**.
+     - En la implementación anterior, si la cuota diaria gratuita de 10.000 neuronas de Cloudflare Workers AI se agotaba (`AiError: you have used up your daily free allocation of 10,000 neurons`), el código realizaba un intento secundario de llamar a Meta en OpenRouter, lo cual provocaba que el fallo se atribuyera equívocamente a "saldo de OpenRouter".
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Desacoplamiento Estricto de Meta en Edge (`functions/api/[[route]].js`):*
+     - `callModel3_Meta` ahora ejecuta **única y exclusivamente** Cloudflare Workers AI (primero a través de la interfaz nativa `env.AI` en Cloudflare Edge, y secundariamente vía la API REST de Cloudflare Workers AI con las credenciales de la cuenta de Cloudflare).
+     - Se eliminó cualquier invocación a OpenRouter para el modelo de Meta.
+     - Si Cloudflare alcanza su asignación diaria gratuita de 10.000 neuronas (código 4006), el fallo se registra con total veracidad en el Centro de Reportes de IA como un evento de Cloudflare Workers AI, permitiendo al Failover Ring rescatar la respuesta con el Modelo 1 o Modelo 2, o con la Red de Contingencia Factual.
+  2. *Claridad en UI y Tipos (`aiReports.ts`, `VoceroAiModelSettings.tsx`, `VoceroAiSandbox.tsx`):*
+     - Actualizado el subtítulo y descripción del Modelo 3: *"Meta Llama 3.3 (Gratuito de Cloudflare)"*.
+     - Botón del Live Lab etiquetado como `🥉 Mod 3: Meta (CF)` con tooltip explicativo.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación limpia (`npm run build`) en 12.53s con 0 errores (`dist/assets/index-FdYyeUj8.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `b976e8c`) y despliegue dual en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas auditadas operativas en Chrome Headless (`verify-deploy.js`).
+- Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
+---
+
 ### [2026-10-27] Eliminación de Mocks/Demo, Rescate Factual en Red de Contingencia y Selector de 3 Modelos Visible (v2.7.0)
 - **Diagnóstico y Necesidad:**
   1. *Falso Positivo en Live Lab y Repetición de Mensajes:*
