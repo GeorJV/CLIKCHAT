@@ -51,7 +51,12 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       const hist = messages.map((m) => ({ sender: m.sender, message: m.text }));
       const res = await fetch('/api/chat/message', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, tenantId: tenant?.id || tenantId, sessionId: labSessionId, message: txt, model: selectedModel, preferredModel: selectedModel, conversationHistory: hist, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) }),
+        body: JSON.stringify({
+          tenantSlug, tenantId: tenant?.id || tenantId, sessionId: labSessionId,
+          message: txt, model: selectedModel, preferredModel: selectedModel,
+          conversationHistory: hist, clientHour: new Date().getHours(),
+          clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+        }),
       });
       if (res.ok) {
         const d = await res.json();
@@ -98,13 +103,9 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
               { id: 'model-3' as const, label: '🥉 Mod 3: Meta (CF)', title: 'Meta Llama 3.3 (Gratuito de Cloudflare)' },
             ].map((m) => (
               <button
-                key={m.id}
-                title={m.title}
-                onClick={() => setSelectedModel(m.id)}
+                key={m.id} title={m.title} onClick={() => setSelectedModel(m.id)}
                 className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
-                  selectedModel === m.id
-                    ? 'bg-[#0d5bff] text-white shadow-2xs'
-                    : 'text-[#62728d] hover:text-[#0a1730]'
+                  selectedModel === m.id ? 'bg-[#0d5bff] text-white shadow-2xs' : 'text-[#62728d] hover:text-[#0a1730]'
                 }`}
               >
                 {m.label}
@@ -140,9 +141,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Personas Vocero:</span>
         {PERSONAS.map((p) => (
           <button
-            key={p.label}
-            onClick={() => handleSendText(p.text)}
-            disabled={loading}
+            key={p.label} onClick={() => handleSendText(p.text)} disabled={loading}
             className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer"
           >
             {p.label}
@@ -153,15 +152,12 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
       <div className="p-3 bg-white border-t border-[#e8edf6] max-w-3xl w-full mx-auto shrink-0">
         <div className="flex items-center gap-2">
           <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
+            value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
             placeholder="Escribe como un comprador para probar la respuesta del agente…"
             className="flex-1 rounded-full border border-[#dde5f1] bg-[#f6f8fc] px-4 py-2 text-[13px] text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white"
           />
           <button
-            onClick={() => handleSendText()}
-            disabled={loading || !input.trim()}
+            onClick={() => handleSendText()} disabled={loading || !input.trim()}
             className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer"
           >
             <Send className="h-4 w-4" />

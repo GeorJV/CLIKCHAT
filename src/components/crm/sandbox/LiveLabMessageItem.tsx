@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, CheckCircle, Edit3 } from 'lucide-react';
+import { Layers, CheckCircle, Edit3, Calendar, Clock, DollarSign, User, Mail, Phone } from 'lucide-react';
 import { SandboxMsg } from './sandboxConstants';
 
 interface LiveLabMessageItemProps {
@@ -12,6 +12,29 @@ export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
   onOpenCorrection,
 }) => {
   const isUser = m.sender === 'user';
+  const cardMatch = !isUser && m.text ? m.text.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/) : null;
+  const cleanText = cardMatch ? m.text.replace(/\[BOOKING_CARD:\s*\{[\s\S]*?\}\s*\]/g, '').trim() : m.text;
+  let parsedCard: any = null;
+  if (cardMatch) {
+    try { parsedCard = JSON.parse(cardMatch[1]); } catch (e) {}
+  }
+
+  const renderFormattedText = (txt: string) => {
+    return txt.split('\n').map((line, lIdx) => {
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      return (
+        <React.Fragment key={lIdx}>
+          {parts.map((p, pIdx) => {
+            if (p.startsWith('**') && p.endsWith('**')) {
+              return <strong key={pIdx} className="font-bold text-[#0a1730]">{p.slice(2, -2)}</strong>;
+            }
+            return <span key={pIdx}>{p}</span>;
+          })}
+          {lIdx < txt.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
+  };
 
   return (
     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
@@ -49,13 +72,29 @@ export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
         </div>
       )}
       <div
-        className={`max-w-[85%] rounded-2xl p-3 text-[13px] leading-relaxed border shadow-sm break-words ${
+        className={`max-w-[85%] rounded-2xl p-3 text-[13px] leading-relaxed border shadow-xs break-words ${
           isUser
             ? 'bg-[#eaf7ef] border-[#d7eede] text-[#0a1730] rounded-tr-sm'
             : 'bg-[#ebf1ff] border-[#d3e2ff] text-[#0a1730] rounded-tl-sm'
         }`}
       >
-        {m.text}
+        <div>{renderFormattedText(cleanText)}</div>
+        {parsedCard && (
+          <div className="mt-2.5 p-3 rounded-xl bg-white border border-emerald-300 text-xs text-[#0a1730] shadow-xs">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-700 pb-1.5 border-b border-emerald-100 mb-2">
+              <Calendar className="w-3.5 h-3.5 shrink-0" />
+              <span>Cita Confirmada en Agenda D1</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-zinc-700">
+              <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3 text-emerald-600 shrink-0" /><span><strong>Fecha:</strong> {parsedCard.date}</span></div>
+              <div className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-emerald-600 shrink-0" /><span><strong>Hora:</strong> {parsedCard.time}</span></div>
+              {parsedCard.customerName && <div className="flex items-center gap-1.5"><User className="w-3 h-3 text-zinc-500 shrink-0" /><span><strong>Cliente:</strong> {parsedCard.customerName}</span></div>}
+              {parsedCard.customerEmail && <div className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-zinc-500 shrink-0" /><span><strong>Email:</strong> {parsedCard.customerEmail}</span></div>}
+              {parsedCard.customerPhone && <div className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-zinc-500 shrink-0" /><span><strong>Tel:</strong> {parsedCard.customerPhone}</span></div>}
+              {parsedCard.price !== undefined && <div className="flex items-center gap-1.5"><DollarSign className="w-3 h-3 text-emerald-600 shrink-0" /><span><strong>Inversión:</strong> ${parsedCard.price} {parsedCard.currency || 'USD'}</span></div>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

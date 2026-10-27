@@ -1189,7 +1189,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         'X-Title': 'ClikChat Edge AI'
       },
       body: JSON.stringify(openRouterPayload),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(4500)
     });
     if (!resp.ok) {
       if (resp.status === 402 || resp.status === 403) openRouterExhausted = true;
@@ -1219,7 +1219,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userCustomConfig.key}` },
         body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.1, max_tokens: 1000 }),
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(4500)
       });
       if (!resp.ok) throw new Error(`OpenAI HTTP ${resp.status}`);
       const data = await resp.json();
@@ -1253,7 +1253,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         max_tokens: 1000,
         provider: { sort: 'price', allow_fallbacks: false }
       }),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(4500)
     });
     if (!resp.ok) {
       if (resp.status === 402 || resp.status === 403) openRouterExhausted = true;
@@ -1333,7 +1333,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
             ],
             max_tokens: 1024
           }),
-          signal: AbortSignal.timeout(7000)
+          signal: AbortSignal.timeout(4500)
         });
         const cfData = await cfFetchResp.json().catch(() => ({}));
         if (cfData?.result?.response) {
@@ -1371,13 +1371,11 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   let modelSequence = [];
 
   if (pref.includes('gpt') || pref === 'model-2' || pref === '2') {
-    modelSequence = [m2, mBackup, m3, m1];
+    modelSequence = [m2, m3, m1, mBackup];
   } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref === 'model-3' || pref === '3') {
-    modelSequence = [m3, mBackup, m1, m2];
-  } else if (pref.includes('glm') || pref === 'model-1' || pref === '1') {
-    modelSequence = [m1, mBackup, m2, m3];
+    modelSequence = [m3, m1, m2, mBackup];
   } else {
-    modelSequence = [mBackup, m1, m2, m3];
+    modelSequence = [m1, m2, m3, mBackup];
   }
 
   let lastAiError = 'none';
