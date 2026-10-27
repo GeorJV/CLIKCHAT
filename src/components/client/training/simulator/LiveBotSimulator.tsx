@@ -54,13 +54,15 @@ export const LiveBotSimulator: React.FC<LiveBotSimulatorProps> = ({
     setLoading(true);
 
     try {
+      const clientHist = messages.slice(-10).map(m => ({ sender: m.sender, message: m.text }));
       const res = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantSlug: tenantSlug || tenant?.slug || 'comida-callejera-xl',
           sessionId: 'sim_' + (tenant?.id || 'default'),
-          message: text
+          message: text,
+          conversationHistory: clientHist
         })
       });
 

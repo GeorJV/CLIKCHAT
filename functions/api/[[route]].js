@@ -685,6 +685,29 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
   const isOngoing = turns.length > 0;
 
   if (isSrv) {
+    // 0. Detección Inteligente de Correo Electrónico del Cliente
+    const emailMatch = userMessage.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
+    if (emailMatch) {
+      const cleanEmail = emailMatch[0].trim();
+      return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\nPara enviarte la propuesta formal y asegurar tu proyecto de Desarrollo Web & SaaS en GeoSoft, ¿nos podrías compartir tu número de teléfono o WhatsApp para coordinar los detalles?`;
+    }
+
+    // 0.1 Detección de Teléfono / WhatsApp
+    const phoneMatch = userMessage.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
+    if (phoneMatch && !/^\d{4}$/.test(phoneMatch[0]) && !/^\d{1,2}:\d{2}$/.test(phoneMatch[0])) {
+      return `¡Excelente! He guardado tu número de contacto. ¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+    }
+
+    // 0.2 Detección de Aprobación o Conformidad ("me parece bien", "de acuerdo", etc.)
+    if (/^(?:me\s*parece\s*bien|de\s*acuerdo|perfecto|excelente|dale|est[aá]\s*bien|listo|me\s*interesa|adelante|claro|si|s[ií])(?:\s+.*)?$/i.test(normUser)) {
+      return `Es un gusto saludarte. Para poder enviarte todos los detalles y propuesta de tu proyecto tecnológico y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu correo electrónico?`;
+    }
+
+    // 0.3 Detección de Reclamo por Repetición ("ya te lo habia dicho...", etc.)
+    if (/\b(?:ya\s+te\s+(?:lo\s+)?(?:hab[ií]a\s+)?dicho|ya\s+te\s+dije|te\s+lo\s+acabo\s+de\s+decir|ya\s+respond[ií]|eso\s+ya\s+lo\s+dije)\b/i.test(normUser)) {
+      return `Comprendo perfectamente y te pido una disculpa por cualquier confusión previa. Mi prioridad es avanzar con tu proyecto de forma muy ágil y cómoda. ¿Te gustaría que coordinemos una breve videollamada de 15 minutos o prefieres que te contactemos por WhatsApp para revisar tu propuesta?`;
+    }
+
     // 1. Tienda online, e-commerce, ventas en línea
     if (/\b(?:tienda|vender\s*online|ecommerce|carrito|comercio\s*electronico|vender\s*por\s*internet|pasarela|pagos)\b/i.test(normUser)) {
       return 'Excelente elección.\n\nUna tienda online es la herramienta definitiva para escalar tus ventas y proyectar profesionalismo 24/7.\n\nEn GeoSoft desarrollamos plataformas SaaS a medida con diseño premium, carga ultrarrápida, optimización SEO y un panel de administración intuitivo para que gestiones tus productos y pedidos con total autonomía.\n\nEste servicio tiene una inversión de $1200 USD, incluye garantía de 3 meses y un tiempo de entrega estimado de 2 a 4 semanas.\n\nPara entender mejor tu visión y asegurarnos de que la arquitectura sea la ideal para tu negocio, cuéntame, qué tipo de productos planeas vender y si ya cuentas con una estructura de catálogo o logotipo definido?';
@@ -701,7 +724,25 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     if (/\b(?:agendar|citas?|reuni[oó]n|reuniones|llamadas?|demos?|videollamadas?|horarios?|espacios?)\b/i.test(normUser)) {
       return 'Con mucho gusto coordinamos tu sesión. Podemos revisar los requerimientos exactos de tu proyecto tecnológico y mostrarte cómo lo estructuraríamos.\n\nQué día de esta semana te vendría mejor y en qué horario prefieres conectarte?';
     }
-    // 5. Respuestas progresivas en conversación en curso para evitar repetición
+    // 5. Historial con requerimiento digital previo detectado
+    const histText = turns.map(t => t.message || t.content || '').join(' ').toLowerCase();
+    const hasDigitalNeed = /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|bot|tienda)\b/i.test(normUser) || /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|bot|tienda)\b/i.test(histText);
+
+    if (hasDigitalNeed) {
+      if (isOngoing) {
+        const step = turns.length % 3;
+        if (step === 0) {
+          return 'Totalmente de acuerdo. Para orientarte de la manera más precisa con la arquitectura y tecnología ideal para tu proyecto, ¿cuál es el objetivo principal o funcionalidad clave que necesitas implementar?';
+        } else if (step === 1) {
+          return 'Excelente. En GeoSoft creamos soluciones digitales a medida (desde sitios web corporativos hasta plataformas SaaS completas) pensadas para escalar tu negocio. ¿Cuentas con una fecha estimada de lanzamiento o te gustaría ver ejemplos de proyectos similares?';
+        } else {
+          return 'Con mucho gusto te asesoramos paso a paso. ¿Prefieres que coordinemos una breve demostración online de 15 minutos o te gustaría comentarme más sobre las herramientas que utilizas actualmente en tu negocio?';
+        }
+      }
+      return 'Excelente iniciativa.\n\nDiseñamos sitios web y aplicaciones SaaS de alto rendimiento enfocados en presentar cada uno de tus servicios con máxima claridad, diseño visual exclusivo y autoridad para convertir visitas en clientes reales.\n\nNuestra solución parte desde $1200 USD con arquitectura optimizada y 3 meses de garantía integral.\n\n¿Qué tipo de negocio tienes y qué objetivo principal buscas lograr con tu sitio web?';
+    }
+
+    // 6. Respuestas progresivas en conversación en curso para evitar repetición
     if (isOngoing) {
       const step = turns.length % 3;
       if (step === 0) {
@@ -792,6 +833,12 @@ function enforceAntiRepetitionGuardrail({
         reason = 'Matching opening phrase prefix';
       }
     }
+
+    // Detección de reinicio indebido a pregunta de apertura en conversación en curso
+    if (!isRepeated && assistantHistory.length > 0 && /\b(?:en\s+qu[eé]\s+(?:proyecto|requerimiento|servicio)|en\s+qu[eé]\s+te\s+podemos\s+colaborar|qu[eé]\s+se\s+te\s+antoja)\b/i.test(replyText)) {
+      isRepeated = true;
+      reason = 'Prohibited greeting reset in ongoing conversation';
+    }
   }
 
   if (!isRepeated) {
@@ -809,11 +856,11 @@ function enforceAntiRepetitionGuardrail({
   });
 
   let finalText = progressiveReply;
-  if (normalizeTextForComparison(finalText) === normLast) {
+  if (normalizeTextForComparison(finalText) === normLast || /\b(?:en\s+qu[eé]\s+(?:proyecto|requerimiento)|en\s+qu[eé]\s+te\s+podemos\s+colaborar)\b/i.test(finalText)) {
     if (isSrv) {
-      finalText = 'Entendido perfectamente. Para ofrecerte la mejor alternativa técnica y comercial adaptada a tu caso puntual, te gustaría que te contactemos por WhatsApp o prefieres agendar una breve llamada de 15 minutos para estructurar tu proyecto?';
+      finalText = 'Entendido perfectamente. Para orientarte con la mejor propuesta para tu proyecto tecnológico en GeoSoft, ¿te gustaría que te contactemos por WhatsApp o prefieres coordinar una breve videollamada de 15 minutos?';
     } else {
-      finalText = 'Perfecto. Estamos listos para preparar tu pedido con la mejor calidad. Deseas agregar alguna bebida o detalle adicional antes de confirmar tu entrega?';
+      finalText = 'Perfecto. Estamos listos para preparar tu pedido con la mejor calidad. ¿Deseas agregar alguna bebida o detalle adicional antes de confirmar tu entrega?';
     }
   }
 
@@ -1044,7 +1091,8 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
     }
   }
 
-  // CASO B: MOTOR DE 3 MODELOS PREDETERMINADOS CON CASCADA DE SEGURIDAD EN ANILLO (FAILOVER RING)
+  // CASO B: MOTOR DE 4 MODELOS PREDETERMINADOS CON PRIORIDAD GOOGLE GEMINI & FAILOVER RING
+  // Modelo 0: Google Gemini (Gemini 3.5 Flash Lite / 3 Flash Preview / 3.8 Flash Oficial)
   // Modelo 1: GLM 5 (GLM 5.3 Flash · OpenRouter)
   // Modelo 2: GPT (ChatGPT 5 Mini · OpenAI / OpenRouter)
   // Modelo 3: Meta (Meta Llama 3.3 · Cloudflare Clofer / OpenRouter)
@@ -1054,7 +1102,75 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
         try { return atob('c2stb3ItdjEtZjVlNzBmZjUwYzViNzIwZDg1NWFmOWM3ZWQzN2E2YWYwZTcwMjY4NGZjZjY0ZWQxZTQ0OTgwNjRlYzhkZDg1ZQ=='); } catch(e) { return ''; }
       })());
 
+  const googleKey = (env?.GOOGLE_AI_STUDIO_KEY && env.GOOGLE_AI_STUDIO_KEY.length >= 45 && !env.GOOGLE_AI_STUDIO_KEY.includes('...'))
+    ? env.GOOGLE_AI_STUDIO_KEY.trim()
+    : (() => { try { return atob('QVEuQWI4Uk42SVIxRnNkTTRIdFQ4cElwLTVUd084aXFPdHh0ck9XcUlVeVRjUllKdHJXNXc='); } catch(e) { return ''; } })();
+
+  let openRouterExhausted = false;
+  let cfAiExhausted = false;
+
+  const callModel_Gemini = async () => {
+    if (!googleKey) throw new Error('API Key de Google AI Studio no disponible');
+    const geminiModels = ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3.8-flash'];
+    let lastGemErr = null;
+    const contents = [];
+    if (Array.isArray(history)) {
+      for (const h of history.slice(-10)) {
+        const msg = h.message || h.content || '';
+        if (!msg) continue;
+        contents.push({
+          role: (h.sender === 'assistant' || h.role === 'assistant' || h.role === 'model') ? 'model' : 'user',
+          parts: [{ text: msg }]
+        });
+      }
+    }
+    while (contents.length > 0 && contents[0].role !== 'user') {
+      contents.shift();
+    }
+    contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
+    for (const gm of geminiModels) {
+      try {
+        const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${gm}:generateContent?key=${googleKey}`;
+        const resp = await fetch(gUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemContent }] },
+            contents,
+            generationConfig: { temperature: 0.2, maxOutputTokens: 900 }
+          }),
+          signal: AbortSignal.timeout(4500)
+        });
+        if (!resp.ok) {
+          const errTxt = await resp.text().catch(() => '');
+          lastGemErr = new Error(`Google ${gm} HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
+          continue;
+        }
+        const data = await resp.json();
+        const clean = sanitizeAiResponse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+        if (clean) {
+          const pTokens = Math.round((systemContent.length + userMessage.length) / 4);
+          const cTokens = Math.round(clean.length / 4);
+          return {
+            text: clean,
+            provider: 'google_ai_studio',
+            model: gm,
+            modelLabel: `Google Gemini (${gm})`,
+            neurons: 0,
+            costUsd: 0,
+            tokens: pTokens + cTokens
+          };
+        }
+      } catch (err) {
+        lastGemErr = err;
+      }
+    }
+    throw lastGemErr || new Error('Fallo en Google Gemini Studio');
+  };
+
   const callModel1_GLM = async () => {
+    if (openRouterExhausted) throw new Error('OpenRouter crédito agotado (403)');
     if (!openRouterKey) throw new Error('API Key de OpenRouter no configurada');
     const openRouterPayload = {
       model: 'z-ai/glm-5.3-flash:floor',
@@ -1119,6 +1235,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       };
     }
 
+    if (openRouterExhausted) throw new Error('OpenRouter crédito agotado (403)');
     if (!openRouterKey) throw new Error('API Key de OpenRouter no configurada');
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -1138,6 +1255,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       signal: AbortSignal.timeout(6000)
     });
     if (!resp.ok) {
+      if (resp.status === 402 || resp.status === 403) openRouterExhausted = true;
       const errTxt = await resp.text().catch(() => '');
       throw new Error(`OpenRouter GPT HTTP ${resp.status}: ${errTxt.slice(0, 100)}`);
     }
@@ -1243,22 +1361,26 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
   };
 
   const pref = (preferredModel || userCustomConfig?.model || '').toLowerCase();
+  const geminiItem = { id: 'model-gemini', label: 'Google Gemini', run: callModel_Gemini };
   let modelSequence = [];
 
   if (pref.includes('gpt') || pref === 'model-2' || pref === '2') {
     modelSequence = [
+      geminiItem,
       { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
       { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
       { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM }
     ];
   } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref === 'model-3' || pref === '3') {
     modelSequence = [
+      geminiItem,
       { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta },
       { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
       { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT }
     ];
   } else {
     modelSequence = [
+      geminiItem,
       { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM },
       { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT },
       { id: 'model-3', label: 'Modelo 3: Meta', run: callModel3_Meta }
@@ -5270,7 +5392,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       }
       if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanMsg)) {
         const norm = cleanMsg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!/^(hola|buenas|agendar|cita|reunion|gracias|claro|si|no|ok|perfecto|lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|hoy)$/.test(norm)) {
+        const isBannedWord = /^(?:hola|buenas|agendar|cita|reunion|gracias|claro|si|no|ok|perfecto|excelente|de acuerdo|me parece|me parece bien|esta bien|as[ií] est[aá] bien|listo|adelante|dale|correcto|entendido|ninguna|nada|quiero|necesito|ocupo|deseo|desarrollo web|sitio web|pagina web|lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|hoy)$/i.test(norm)
+          || /\b(parece|bien|acuerdo|quiero|necesito|ocupo|deseo|desarrollo|web|software|precio|costo|tarifa|info)\b/i.test(norm);
+        if (!isBannedWord) {
           extractedName = cleanMsg;
           break;
         }
@@ -5720,8 +5844,15 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         sessionHistory = [];
       }
 
-      if (sessionHistory.length === 0 && Array.isArray(body.conversationHistory) && body.conversationHistory.length > 0) {
-        sessionHistory = body.conversationHistory;
+      const clientHistory = Array.isArray(body.conversationHistory)
+        ? body.conversationHistory.map(h => ({
+            sender: h.sender || (h.role === 'assistant' ? 'assistant' : 'user'),
+            message: h.message || h.content || ''
+          })).filter(h => h.message && h.message.trim())
+        : [];
+
+      if ((sessionHistory.length === 0 || sessionHistory.length < clientHistory.length) && clientHistory.length > 0) {
+        sessionHistory = clientHistory;
       }
 
       let activeLeadInfo = { ...(leadInfo || {}) };
@@ -5735,9 +5866,9 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       } catch (sessReadErr) {}
 
-      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (CERO ESPERA / CERO MENSAJES EN CASCADA / ESPERAR FLUJO DEL USUARIO)
+      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (SOLO SI ES EL PRIMER TURNO / CERO RESET EN CONVERSACIONES EN CURSO)
       const cleanMsgGreeting = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-      const isPureGreeting = /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
+      const isPureGreeting = sessionHistory.length === 0 && /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
 
       if (isPureGreeting) {
         const greetingReply = '¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?';
@@ -6208,7 +6339,16 @@ DIRECTIVA DE ATENCIÓN CONTEXTUAL:
           contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
         }
         if (sessionHistory.length > 0) {
-          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${sessionHistory.length + 1}). El Paso 1 de Bienvenida y Saludo inicial YA FUERON COMPLETADOS. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a...") o preguntar "¿Qué se te antoja ordenar hoy?". Responde DIRECTAMENTE a la consulta actual del cliente.\n`;
+          const uHistoryTexts = sessionHistory.filter(h => h.sender === 'user' || h.role === 'user').map(h => h.message || h.content || '').join(' ');
+          const hasWebIntent = /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(uHistoryTexts) || /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(message);
+
+          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${sessionHistory.length + 1}). El Paso 1 de Bienvenida y Saludo inicial YA FUERON COMPLETADOS. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a..."), preguntar "¿Qué se te antoja ordenar hoy?" o preguntar "¿En qué proyecto o requerimiento tecnológico te podemos colaborar?". Responde DIRECTAMENTE al mensaje actual del cliente sin reiniciar la charla.\n`;
+          if (hasWebIntent) {
+            contextBlock += `[PROYECTO YA IDENTIFICADO]: El cliente YA especificó previamente que busca Desarrollo Web / Solución Digital. Queda TERMINANTEMENTE PROHIBIDO volver a preguntarle qué servicio busca o en qué proyecto le colaboramos. Asume con certeza su interés en Desarrollo Web & SaaS y avanza hacia la propuesta formal, captura de datos o agendamiento.\n`;
+          }
+          if (bookingState?.slots?.email) {
+            contextBlock += `[CORREO OBTENIDO]: Ya se cuenta con el correo electrónico del cliente: "${bookingState.slots.email}". Agradécelo amablemente y solicita su número de teléfono / WhatsApp para continuar.\n`;
+          }
         }
         contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
         contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;

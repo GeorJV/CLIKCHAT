@@ -65,12 +65,13 @@ export const ProductChatView: React.FC<Props> = ({
       setIsLoading(true);
       const startTime = Date.now();
       try {
+        const clientHist = messages.slice(-10).map((m) => ({ sender: m.sender, message: m.content }));
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tenantSlug: tenantSlug || (selectedProduct as any).slug || 'comida-callejera-xl',
             tenantId: (selectedProduct as any).tenant_id || (selectedProduct as any).tenantId,
-            sessionId: sessId, message: userText, clientHour: new Date().getHours(),
+            sessionId: sessId, message: userText, conversationHistory: clientHist, clientHour: new Date().getHours(),
             clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
             source: typeof window !== 'undefined' ? (localStorage.getItem('clikchat_traffic_source') || undefined) : undefined,
             campaignContext: getCampaignContextFromUrl()

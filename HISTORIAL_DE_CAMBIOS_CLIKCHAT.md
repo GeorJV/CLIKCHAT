@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Blindaje Inmutable Anti-Amnesia, Memoria Continua Resiliente y Cascada Gemini Oficial (v2.7.2)
+- **Diagnóstico y Causas Raíces:**
+  1. *Amnesia Total por Límite de Cuota en Cloudflare D1:*
+     - Al agotarse la cuota diaria gratuita de lectura de Cloudflare D1 (`Your account has exceeded D1's free tier daily row read limit`), las consultas SQL sobre `chat_messages` arrojaban excepción. El backend capturaba el error y dejaba `sessionHistory = []`.
+     - Dado que las vistas de chat del cliente (`ProductChatView.tsx`, `LiveBotSimulator.tsx`) no enviaban `conversationHistory` en la petición HTTP, el backend perdía por completo el contexto conversacional en cada turno subsiguiente.
+  2. *Omisión de Google AI Studio en Cascada Predeterminada de Edge:*
+     - Con OpenRouter en 403 (créditos agotados) y Cloudflare Workers AI en 4006 (límite diario de 10.000 neuronas superado), el motor `callEdgeLLM` fallaba todos los modelos en cascada porque la API Key oficial de Google AI Studio (`AQ.Ab8RN6...`) no estaba integrada al frente del `modelSequence` predeterminado.
+  3. *Reinicio Indebido de Apertura en Contingencia (`generateSmartFallbackReply`):*
+     - Al fallar los LLMs y no tener mensajes en memoria, el fallback evaluaba `isOngoing = false` y devolvía la frase de bienvenida inicial: *"Hola, con mucho gusto te atiendo y te asesoro en GeoSoft. En qué proyecto o requerimiento tecnológico te podemos colaborar el día de hoy?"*, ignorando que el cliente ya había solicitado desarrollo web y suministrado su correo (`homilia7@gmai.com`).
+  4. *Falso Positivo de Nombre en Extractor de Slots:*
+     - Respuestas de conformidad como *"me parece bien"* eran capturadas erróneamente por la expresión regular de nombres propios, registrando a la persona como *"Me Parece Bien"*.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Memoria Continua Resiliente y Rescate Cliente en Edge (`functions/api/[[route]].js`):*
+     - `ProductChatView.tsx` y `LiveBotSimulator.tsx` ahora envían `conversationHistory: messages.slice(-10).map(...)` en cada mensaje.
+     - En `[[route]].js`, si D1 falla o agota su cuota de lectura, `clientHistory` toma precedencia absoluta e inmediata, garantizando cero amnesia en cualquier circunstancia.
+  2. *Motor Google AI Studio Oficial Priorizado en `callEdgeLLM`:*
+     - Integrado `callModel_Gemini` al frente de `modelSequence` con rotación automática entre modelos oficiales vigentes (`gemini-3.5-flash-lite`, `gemini-3-flash-preview` y `gemini-3.8-flash`), sub-3s y alta resiliencia.
+     - Detección de fallo 402/403 en OpenRouter y 4006 en Cloudflare Workers AI para saltar reintentos en 0ms.
+  3. *Blindaje Determinista Anti-Repetición y Reconocimiento de Datos:*
+     - `enforceAntiRepetitionGuardrail` intercepta y prohíbe de forma absoluta cualquier frase que pregunte *"en qué proyecto o requerimiento te colaboramos"* si ya existen turnos previos en la conversación.
+     - `generateSmartFallbackReply` enriquecido con reconocedor prioritario de correos electrónicos (`homilia7@gmai.com`), teléfonos y acuerdos ("me parece bien"), reconociendo los datos con agradecimiento y avanzando inmediatamente hacia la propuesta y agendamiento.
+     - Inyección contextual explícita en `contextBlock`: `[PROYECTO YA IDENTIFICADO]` prohíbe al LLM reiniciar la charla comercial.
+  4. *Erradicación de Falsos Nombres en `extractBookingSlots`:*
+     - Exclusión de frases coloquiales y comerciales ("me parece bien", "desarrollo web", "de acuerdo") para evitar asignaciones erróneas de nombre de cliente.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 11.93s con 0 errores TypeScript (`dist/assets/index-D6eyZjH9.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`). Verificación en vivo de turnos conversacionales consecutivos sin reseteo ni preguntas redundantes.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-27] Desacoplamiento Exclusivo de Meta Llama 3.3 a Cloudflare Workers AI Gratuito (v2.7.1)
 - **Diagnóstico y Clarificación del Usuario:**
   1. *Alineación de Proveedor para el Modelo 3 (Meta):*

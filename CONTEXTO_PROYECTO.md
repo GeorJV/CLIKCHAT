@@ -1,16 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 10:50 GMT-6
-- **Versión Actual:** 2.7.1 (Desacoplamiento Exclusivo de Meta Llama a Cloudflare Workers AI Gratuito)
+- **Última Actualización:** 2026-10-27 11:00 GMT-6
+- **Versión Actual:** 2.7.2 (Blindaje Anti-Amnesia, Memoria Continua Resiliente y Cascada Gemini Oficial)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
-- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`, commit b976e8c)
+- **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Modelo 3 (Meta Llama 3.3) Nativo en Cloudflare: Desacoplado 100% de OpenRouter; opera exclusivamente en Cloudflare Workers AI con cuota gratuita de Cloudflare.
-  - Failover Ring & Diagnóstico Preciso: Si Cloudflare agota su asignación diaria de 10.000 neuronas, se reporta fielmente como incidente de Cloudflare y salta en anillo a los otros modelos.
-  - Modelos 1 (GLM 5) y 2 (GPT): Operan sobre OpenRouter / OpenAI con API Key configurable por el usuario.
-  - Cero Mocks: Reportes de IA y Live Lab 100% reales sin datos simulados y con memoria persistente.
-  - Verificado con 3 Filtros: Build local limpio, commit b976e8c, deploy dual en Pages y 17/17 rutas auditadas (index-FdYyeUj8.js).
+  - Blindaje Anti-Amnesia Multicapa: Envío de `conversationHistory` desde frontend ante fallo o límite de cuota en D1.
+  - Cascada Google AI Studio Oficial: Prioridad inmediata a `gemini-3.5-flash-lite`, `gemini-3-flash-preview` y `gemini-3.8-flash`.
+  - Prohibición Determinista de Repetición: Erradicado reinicio de apertura; el bot nunca vuelve a preguntar qué proyecto busca si ya se indicó.
+  - Reconocimiento Inteligente de Contacto: Captura inmediata de correos y teléfonos con progresión contextual a agendamiento.
+  - Filtro Antifalsos Nombres: Bloqueo estricto de frases conversacionales ("me parece bien", "desarrollo web") como nombres propios.
+  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
