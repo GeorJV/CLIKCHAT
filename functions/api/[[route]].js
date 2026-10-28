@@ -835,6 +835,11 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     if (/\b(?:precios?|cuanto\s*cuesta|cuanto\s*vale|tarifas?|costos?|inversi[oó]n|presupuestos?|cotizaci[oó]n|planes?)\b/i.test(normUser)) {
       return 'Nuestras soluciones de Desarrollo Web & SaaS parten desde una inversión oficial de $1200 USD para proyectos a la medida, incluyendo diseño exclusivo, arquitectura ultrarrápida, panel de administración autogestionable y garantía de 3 meses.\n\nTe gustaría agendar una breve sesión de 15 minutos para estructurar la propuesta formal de tu proyecto?';
     }
+    // 3.9 Agendar múltiples citas (ej: "dos citas, una para hoy y una para mañana")
+    if (/\b(?:dos\s+citas|varias\s+citas|m[uú]ltiples\s+citas|una\s+(?:para\s+)?hoy\s+y\s+(?:otra\s+)?(?:para\s+)?mañana|una\s+hoy\s+y\s+otra\s+mañana)\b/i.test(normUser)) {
+      return '¡Con mucho gusto te ayudo a coordinar ambas citas! Para organizarlo de forma ordenada y ágil en nuestra agenda, empecemos con la cita de hoy: ¿en qué horario te queda mejor? Y en cuanto la confirmemos, agendamos de inmediato la de mañana.';
+    }
+
     // 4. Agendamiento, cita, reunión, llamada
     if (/\b(?:agendar|citas?|reuni[oó]n|reuniones|llamadas?|demos?|videollamadas?|horarios?|espacios?)\b/i.test(normUser)) {
       return 'Con mucho gusto coordinamos tu sesión. Podemos revisar los requerimientos exactos de tu proyecto tecnológico y mostrarte cómo lo estructuraríamos.\n\nQué día de esta semana te vendría mejor y en qué horario prefieres conectarte?';
@@ -1362,7 +1367,7 @@ ${industryGuidelines}`;
 
   const messages = [
     { role: 'system', content: systemContent },
-    ...history.slice(-16).map(h => ({
+    ...history.slice(-35).map(h => ({
       role: h.sender === 'user' ? 'user' : 'assistant',
       content: h.message
     })),
@@ -1531,11 +1536,11 @@ ${industryGuidelines}`;
 
   const callModel_Gemini = async () => {
     if (!googleKey) throw new Error('API Key de Google AI Studio no disponible');
-    const geminiModels = ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3.8-flash'];
+    const geminiModels = ['gemini-flash-lite-latest', 'gemini-flash-latest'];
     let lastGemErr = null;
     const contents = [];
     if (Array.isArray(history)) {
-      for (const h of history.slice(-10)) {
+      for (const h of history.slice(-35)) {
         const msg = h.message || h.content || '';
         if (!msg) continue;
         contents.push({
@@ -1558,9 +1563,9 @@ ${industryGuidelines}`;
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemContent }] },
             contents,
-            generationConfig: { temperature: 0.2, maxOutputTokens: 450 }
+            generationConfig: { temperature: 0.2, maxOutputTokens: 650 }
           }),
-          signal: AbortSignal.timeout(4500)
+          signal: AbortSignal.timeout(6000)
         });
         if (!resp.ok) {
           const errTxt = await resp.text().catch(() => '');
@@ -1704,7 +1709,7 @@ ${industryGuidelines}`;
         const cfResp = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
           messages: [
             { role: 'system', content: systemContent },
-            ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+            ...history.slice(-35).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
             { role: 'user', content: userMessage }
           ],
           max_tokens: 1024
@@ -1727,7 +1732,7 @@ ${industryGuidelines}`;
           }
         }
       } catch (cfErr) {
-        if (cfErr.message?.includes('4006') || cfErr.message?.includes('daily')) cfAiExhausted = true;
+        if (cfErr.message?.includes('4006') || cfErr.message?.includes('daily') || cfErr.message?.includes('neurons')) cfAiExhausted = true;
         console.warn('Cloudflare Workers AI (env.AI) error:', cfErr.message);
         throw new Error(`Cloudflare Workers AI: ${cfErr.message}`);
       }
@@ -1748,7 +1753,7 @@ ${industryGuidelines}`;
           body: JSON.stringify({
             messages: [
               { role: 'system', content: systemContent },
-              ...history.slice(-16).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
+              ...history.slice(-35).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.message })),
               { role: 'user', content: userMessage }
             ],
             max_tokens: 1024
@@ -1774,6 +1779,7 @@ ${industryGuidelines}`;
           }
         }
         const errDetail = cfData?.errors?.[0]?.message || `HTTP ${cfFetchResp.status}`;
+        if (errDetail.includes('4006') || errDetail.includes('daily') || errDetail.includes('neurons')) cfAiExhausted = true;
         throw new Error(`Cloudflare Workers AI: ${errDetail}`);
       } catch (restErr) {
         throw new Error(`Cloudflare Workers AI: ${restErr.message}`);
@@ -1786,7 +1792,7 @@ ${industryGuidelines}`;
   const pref = (preferredModel || userCustomConfig?.model || '').toLowerCase();
   const m1 = { id: 'model-1', label: 'Modelo 1: GLM 5', run: callModel1_GLM };
   const m2 = { id: 'model-2', label: 'Modelo 2: GPT', run: callModel2_GPT };
-  const m3 = { id: 'model-3', label: 'Modelo 3: Meta (Cloudflare)', run: callModel3_Meta };
+  const m3 = { id: 'model-3', label: 'Modelo 3: Meta Llama 3.3 70B', run: callModel3_Meta };
   const mBackup = { id: 'model-backup', label: 'Google Gemini', run: callModel_Gemini };
   let modelSequence = [];
 
@@ -1795,11 +1801,11 @@ ${industryGuidelines}`;
   } else if (pref.includes('meta') || pref.includes('llama') || pref.includes('clofer') || pref.includes('@cf') || pref === 'model-3' || pref === '3') {
     modelSequence = [m3, mBackup, m1, m2];
   } else if (pref.includes('glm') || pref === 'model-1' || pref === '1') {
-    modelSequence = [m1, mBackup, m2, m3];
+    modelSequence = [mBackup, m1, m2, m3];
   } else if (pref.includes('gemini') || pref === 'model-gemini') {
-    modelSequence = [mBackup, m1, m2, m3];
+    modelSequence = [mBackup, m3, m1, m2];
   } else {
-    modelSequence = [mBackup, m1, m2, m3];
+    modelSequence = [mBackup, m3, m1, m2];
   }
 
   let lastAiError = 'none';
@@ -5971,6 +5977,13 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     /\b(?:me\s+llamo|mi\s+nombre\s+es|soy|nombre:\s*)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i
   ];
 
+  const cleanExtractedCandidate = (raw) => {
+    if (!raw || typeof raw !== 'string') return '';
+    let c = raw.trim().replace(/[.,:;!?¿¡]+$/g, '').trim();
+    c = c.replace(/\s+(?:y|e|que|de|del|para|con|voy|quiero|deseo|necesito|ocupo|agendar|una|dos|citas?|hoy|mañana|manana)\b.*$/i, '').trim();
+    return c;
+  };
+
   const messagesToCheckName = [];
   if (currentMessage) messagesToCheckName.push(currentMessage);
   if (cardIndexInHistory >= 0 && Array.isArray(history)) {
@@ -5984,10 +5997,13 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   for (const msg of messagesToCheckName) {
     for (const pat of nameCorrectionPatterns) {
       const nm = msg.match(pat);
-      if (nm && isValidPersonName(nm[1].trim())) {
-        extractedName = nm[1].trim();
-        isNameCorrectionIntent = true;
-        break;
+      if (nm) {
+        const cleaned = cleanExtractedCandidate(nm[1]);
+        if (isValidPersonName(cleaned)) {
+          extractedName = cleaned;
+          isNameCorrectionIntent = true;
+          break;
+        }
       }
     }
     if (extractedName) break;
@@ -5998,9 +6014,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       const msg = allUserMessages[i];
       for (const pat of nameCorrectionPatterns) {
         const nm = msg.match(pat);
-        if (nm && isValidPersonName(nm[1].trim())) {
-          extractedName = nm[1].trim();
-          break;
+        if (nm) {
+          const cleaned = cleanExtractedCandidate(nm[1]);
+          if (isValidPersonName(cleaned)) {
+            extractedName = cleaned;
+            break;
+          }
         }
       }
       if (extractedName) break;
@@ -6021,9 +6040,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
             if (phone && candidate.includes(phone)) candidate = candidate.replace(phone, '').trim();
             candidate = candidate.replace(/^(?:hola|buenas|mucho gusto|un gusto|saludos)[,.\s]+/i, '').trim();
             const wMatch = candidate.match(/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}/);
-            if (wMatch && isValidPersonName(wMatch[0].trim())) {
-              extractedName = wMatch[0].trim();
-              break;
+            if (wMatch) {
+              const cleaned = cleanExtractedCandidate(wMatch[0]);
+              if (isValidPersonName(cleaned)) {
+                extractedName = cleaned;
+                break;
+              }
             }
           }
         }
@@ -6037,7 +6059,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (email && candidate.includes(email)) candidate = candidate.replace(email, '').trim();
       if (phone && candidate.includes(phone)) candidate = candidate.replace(phone, '').trim();
       candidate = candidate.replace(/^(?:hola|buenas|mucho gusto|un gusto|saludos)[,.\s]+/i, '').trim();
-      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){1,2}$/.test(candidate) && isValidPersonName(candidate)) {
+      candidate = cleanExtractedCandidate(candidate);
+      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(candidate) && isValidPersonName(candidate)) {
         extractedName = candidate;
         break;
       }
@@ -6061,6 +6084,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (email && cleanCandidate.includes(email)) {
         cleanCandidate = cleanCandidate.replace(email, '').replace(/,|y|mi correo es/gi, '').trim();
       }
+      cleanCandidate = cleanExtractedCandidate(cleanCandidate);
       if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanCandidate) && isValidPersonName(cleanCandidate)) {
         extractedName = cleanCandidate;
       }
@@ -6114,11 +6138,15 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   // Detección contextual de fecha para "mañana" (día siguiente)
   const cleanCurrMsg = (currentMessage || '').replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
-  if (isQuestioningDateOrTomorrow || /\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg)) {
+  const isMultipleAppointmentsIntent = /\b(?:dos\s+citas|varias\s+citas|m[uú]ltiples\s+citas|una\s+(?:para\s+)?hoy\s+y\s+(?:otra\s+)?(?:para\s+)?mañana|una\s+hoy\s+y\s+otra\s+mañana)\b/i.test(currentMessage || '');
+  if (!isMultipleAppointmentsIntent && (isQuestioningDateOrTomorrow || /\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg))) {
     date = formatFullDayAndDate('mañana');
     if (isQuestioningDateOrTomorrow && !hasNewTimeInMsg) {
       time = null;
     }
+  } else if (isMultipleAppointmentsIntent) {
+    date = formatFullDayAndDate('hoy');
+    time = null;
   } else if (!date && wantsMorning) {
     date = formatFullDayAndDate('mañana');
   }
@@ -6195,6 +6223,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     hasPriorBookingCard: cardIndexInHistory >= 0,
     isRescheduleIntent,
     isNameCorrectionIntent,
+    isMultipleAppointmentsIntent,
     currentStep,
     stepInstruction
   };
@@ -7906,6 +7935,13 @@ DATOS QUE FALTAN: [${bookingState.missing.join(', ') || 'NINGUNO - TODO COMPLETO
 
 DIRECTIVA OBLIGATORIA PARA TU RESPUESTA:
 --> ${bookingState.stepInstruction}
+${bookingState.isMultipleAppointmentsIntent ? `
+[ATENCIÓN SUPREMA - MÚLTIPLES CITAS DETECTADAS EN EL MENSAJE]:
+- El cliente indicó explícitamente su intención de agendar DOS CITAS (una para hoy y otra para mañana).
+- Valida con entusiasmo y agilidad ejecutiva: "¡Con mucho gusto coordinamos ambas citas!"
+- Pregúntale a qué hora le queda mejor la primera cita (hoy), y déjale saber que inmediatamente después coordinarán la segunda cita (mañana).
+- NO emitas [BOOKING_CARD] hasta acordar el horario de la primera cita.
+` : ''}
 
 ${isSlotUnavailable ? `
 [ALERTA DE DISPONIBILIDAD EN TIEMPO REAL - VERIFICACIÓN EN D1 EN MILISEGUNDOS]:
@@ -7970,8 +8006,14 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
      Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
      [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta.
-8. MÚLTIPLES CITAS O AGENDAR OTRA CITA:
-   - Si el usuario desea agendar una segunda cita, otra cita o una cita adicional (ej: "quiero otra cita", "agendemos para el jueves", "también necesito otra"):
+8. MÚLTIPLES CITAS O AGENDAR DOS O MÁS CITAS (MÁXIMA CLARIDAD Y ORDEN):
+   - Si el usuario indica que va a agendar dos o más citas (ej: "voy a agendar dos citas, una para hoy y una para mañana", "quiero agendar 2 reuniones"):
+     Comprende con total agilidad ejecutiva y profesionalismo que se agendarán ambas.
+     Indícale cordialmente que con gusto coordinarán las dos citas, comenzando por definir la hora para la primera cita (ej. hoy). En cuanto se confirme la primera cita, se procede inmediatamente a coordinar la segunda (ej. mañana).
+     Si el usuario ya indicó horarios para ambas en su mensaje (ej. "una para hoy a las 3pm y otra para mañana a las 10am"):
+     Confirma primero la más próxima con entusiasmo y emite su [BOOKING_CARD], e invita a confirmar de inmediato la segunda para emitir la siguiente tarjeta.
+     JAMÁS mezcles las horas de una cita en la otra ni digas que no entendiste el contexto.
+   - Si el usuario desea agendar una segunda cita tras haber concretado una previa:
      Trátalo con entusiasmo y profesionalismo. Dado que ya se conocen su nombre, correo y teléfono confirmados en la sesión, procede a coordinar la nueva fecha y hora. En cuanto se cuente con la fecha y hora de la nueva cita, confirma con un único párrafo breve y emite de inmediato la nueva tarjeta [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}].`;
         }
 

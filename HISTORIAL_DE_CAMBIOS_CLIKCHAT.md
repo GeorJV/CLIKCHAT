@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Inteligencia Superior, Extracción Precisa de Nombres y Contexto de Múltiples Citas (v2.9.23)
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Comprensión de Contexto y Confusión en Múltiples Citas:*
+     - Al indicar al bot la intención de agendar dos citas (ej: "voy a agendar dos citas, una para hoy y otra para mañana"), el bot no comprendía el contexto, escribía los nombres de forma incorrecta y respondía genéricamente.
+     - *Causa Raíz 1 (Fallo Silencioso de LLMs hacia Fallback Rígido):* `callModel_Gemini` invocaba cadenas de modelo no vigentes provocando 404, OpenRouter retornaba 403 (cuota agotada) y Cloudflare Workers AI retornaba 4006 (límite de 10,000 neuronas alcanzado). La cascada caía directamente al script regex offline `generateSmartFallbackReply`, el cual carecía de inteligencia contextual y de manejo para múltiples fechas.
+     - *Causa Raíz 2 (Captura Defectuosa de Nombres):* En `extractBookingSlots`, patrones como `me llamo Geor y voy a...` capturaban palabras adyacentes (`Geor y`), provocando fallo en `isValidPersonName` o nombres corruptos.
+     - *Causa Raíz 3 (Historial Conversacional Truncado):* La memoria activa estaba limitada a los últimos 10 a 16 mensajes, provocando amnesia sobre datos mencionados al inicio del diálogo.
+- **Solución Quirúrgica Implementada:**
+  1. *Reactivación de IA Oficial de Alta Capacidad & Failover Inmediato (`functions/api/[[route]].js`):*
+     - Actualizado `callModel_Gemini` a la infraestructura oficial vigente (`gemini-flash-lite-latest` y `gemini-flash-latest`), logrando respuestas inteligentes y naturales en menos de 1 segundo.
+     - Enlazado `mBackup` (Google Gemini) como respaldo prioritario inmediato de `callModel3_Meta` (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`), garantizando que si Cloudflare Workers AI agota neuronas diarias (4006), el bot asume la conversación con máxima inteligencia sin caer en plantillas.
+     - Ampliada la profundidad del historial conversacional a 35 mensajes completos (`history.slice(-35)`).
+  2. *Depuración Quirúrgica de Nombres (`functions/api/[[route]].js`):*
+     - Implementado `cleanExtractedCandidate` para depurar conectores y verbos (`y`, `voy`, `quiero`, etc.) en las capturas de nombre, garantizando nombres limpios como "Geor" o "Geor Jiménez".
+  3. *Protocolo para Múltiples Citas Simultáneas (`functions/api/[[route]].js`):*
+     - Incorporada la bandera `isMultipleAppointmentsIntent` para no sobreescribir "hoy" con "mañana", guiando la coordinación de ambas citas de manera secuencial y clara.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 8.93s con 0 errores (`dist/assets/index-DT9LFg2U.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Erradicación Total de Citas Duplicadas en Ingesta y Agenda CRM (v2.9.22)
 - **Diagnóstico y Necesidad:**
   1. *Citas Duplicadas en la Agenda CRM:*
