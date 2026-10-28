@@ -2132,7 +2132,7 @@ export async function onRequest(context) {
         status: 'ok',
         service: 'Clikchat Edge Functions',
         timestamp: new Date().toISOString(),
-        commit: 'test-dates',
+        commit: 'v2.9.24-lab-fix',
         testTuesday: formatFullDayAndDate('martes'),
         testWednesday: formatFullDayAndDate('miercoles'),
         test29: formatFullDayAndDate('29')
