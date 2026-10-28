@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Blindaje de Citas Consecutivas en Live Lab/Web y Erradicación del Bloqueo en Segunda Cita (v2.8.8)
+- **Diagnóstico y Causas Raíces:**
+  1. *Filtro Rígido de Tarjeta Previa (`functions/api/[[route]].js`):* La condición `canIssueBookingCard` exigía `(!hasPriorBookingCardInHist || isRescheduleTurn)`. Cuando un usuario o probador en Live Lab confirmaba una primera cita y luego agendaba una segunda cita, `hasPriorBookingCardInHist` era `true`. Como la segunda cita no era una reprogramación sino una cita nueva, el backend entraba al bloque `else` y purgaba quirúrgicamente con regex el tag `[BOOKING_CARD:]` del mensaje de la IA. El usuario veía el texto diciendo *"aquí te dejo el resumen... espero que sea lo que estabas buscando"*, pero la tarjeta interactiva había sido eliminada del payload y no se enviaba al CRM ("una sí y una no").
+  2. *Sobreescritura de Citas en `POST /api/bookings` y Backend:* Al registrar una cita para un cliente que ya tenía una cita previa, la base de datos ejecutaba un `UPDATE bookings` sobre la cita anterior en lugar de hacer un `INSERT INTO bookings` para la nueva cita, provocando que no se generara un nuevo evento ni una nueva tarjeta independiente en el panel del cliente.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Autorización Universal de Citas Subsecuentes:*
+     - Eliminada la restricción `!hasPriorBookingCardInHist`. Ahora cualquier cita nueva con datos de contacto confirmados (nombre, correo y teléfono) y fecha/hora válidas es autorizada y emitida de forma inmediata sin importar si es la primera, segunda o enésima cita en la sesión.
+     - Únicamente se suprimen tarjetas en mensajes de despedida/gratitud pura (`isClosingMessageTurn`) o si el usuario no ha suministrado sus datos de contacto.
+  2. *Inserción Independiente de Cada Cita Nueva en Cloudflare D1:*
+     - Tanto en el motor de chat como en `POST /api/bookings`, cada nueva cita confirmada genera un registro único con su propio ID (`apt_...`), preservando el historial completo de citas en la Agenda sin sobreescrituras accidentales.
+  3. *Garantía de Renderizado y Broadcast en Live Lab (`VoceroAiSandbox.tsx` - 173 líneas):*
+     - Normalizado el manejo de `[BOOKING_CARD:]` y `d.bookingCard` para asegurar que cada respuesta de confirmación pinte siempre el cuadro interactivo de resumen y dispare `broadcastBookingCreated` hacia el panel de Citas del CRM.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.22s con 0 errores TypeScript (`dist/assets/index-gaQVEoph.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless. Prueba E2E en vivo confirmó la emisión consecutiva de tarjetas de agendamiento para múltiples citas en la misma sesión.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Rediseño Estético Profesional del Banner de Citas Agendadas y Tarjetas Resaltadas (v2.8.7)
 - **Diagnóstico y Causas Raíces:**
   1. *Paleta Visual Descontextualizada en Notificación de Citas (`NewBookingBanner.tsx`):* El banner de notificación de nueva cita empleaba degradados oscuros café/negro (`from-amber-950/90 via-[#221b10] to-[#181717]`), bordes dobles toscos (`border-2 border-amber-500/70`) y anillos ámbar intensos (`ring-2 ring-amber-400/30`), rompiendo totalmente la armonía visual de la interfaz clara del CRM (blanco, azul/celeste `#0d5bff` y gris slate).

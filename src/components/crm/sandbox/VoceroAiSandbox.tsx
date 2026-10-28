@@ -65,22 +65,20 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({ tenantSlug, te
         const score = Math.floor(Math.random() * 8) + 92;
         const defaultLabel = isSynced ? getBotModelLabel(tenant) : (selectedModel === 'model-1' ? 'Modelo 1: GLM 5' : selectedModel === 'model-2' ? 'Modelo 2: GPT' : selectedModel === 'model-gemini' ? 'Google Gemini' : 'Modelo 3: Meta');
         const effectiveModel = d.fallbackUsed ? (d.modelLabel || 'Red de Contingencia') : (d.modelLabel || defaultLabel);
-        if (d.answer?.includes('[BOOKING_CARD:')) {
-          try {
-            const cardM = d.answer.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/);
-            if (cardM) {
-              const p = JSON.parse(cardM[1]);
-              const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
-              const apt = { id: 'apt_' + Date.now(), clientName: p.customerName || 'Cliente', serviceName: p.service || 'Desarrollo Web & SaaS', date: p.date, dateKey: p.date, displayDate: p.date, time: p.time, status: 'confirmed', channel: 'web', phone: p.customerPhone || '', email: p.customerEmail || '', notes: 'Live Lab', price: Number(p.price) || 1200 };
-              fetch('/api/bookings', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenant_id: tId, customer_name: apt.clientName, customer_email: apt.email, customer_phone: apt.phone, service_id: 'srv_gen', service_name: apt.serviceName, booking_date: apt.date, booking_time: apt.time, status: 'confirmed', price: apt.price, currency: 'USD', notes: 'Agendado en Live Lab' })
-              }).catch(() => {});
-              broadcastBookingCreated(tenantSlug || 'geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
-            }
-          } catch {}
+        const cardMatch = d.answer?.includes('[BOOKING_CARD:') ? d.answer.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/) : null;
+        let cardPayload = cardMatch ? (() => { try { return JSON.parse(cardMatch[1]); } catch { return null; } })() : (d.bookingCard || null);
+        let finalAnswer = d.answer || 'Respuesta generada.';
+        if (cardPayload) {
+          if (!finalAnswer.includes('[BOOKING_CARD:')) finalAnswer = `${finalAnswer}\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
+          const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
+          const apt = { id: 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), clientName: cardPayload.customerName || 'Cliente', serviceName: cardPayload.service || 'Desarrollo Web & SaaS', date: cardPayload.date, dateKey: cardPayload.date, displayDate: cardPayload.date, time: cardPayload.time, status: 'confirmed', channel: 'web', phone: cardPayload.customerPhone || '', email: cardPayload.customerEmail || '', notes: 'Live Lab', price: Number(cardPayload.price) || 1200 };
+          fetch('/api/bookings', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenant_id: tId, customer_name: apt.clientName, customer_email: apt.email, customer_phone: apt.phone, service_id: 'srv_gen', service_name: apt.serviceName, booking_date: apt.date, booking_time: apt.time, status: 'confirmed', price: apt.price, currency: 'USD', notes: 'Agendado en Live Lab' })
+          }).catch(() => {});
+          broadcastBookingCreated(tenantSlug || 'geosoft', { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
         }
-        setMessages((prev) => [...prev, { id: String(Date.now() + 1), sender: 'assistant', text: d.answer || 'Respuesta generada.', rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false, modelUsed: effectiveModel, fallbackUsed: d.fallbackUsed }]);
+        setMessages((prev) => [...prev, { id: String(Date.now() + 1), sender: 'assistant', text: finalAnswer, rag: d.rag_level_used || 'RAG Híbrido D1', score, isGolden: false, modelUsed: effectiveModel, fallbackUsed: d.fallbackUsed }]);
       }
     } catch (e) {
       console.warn('Sandbox error:', e);
