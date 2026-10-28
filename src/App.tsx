@@ -12,7 +12,6 @@ import { useAuth } from './hooks/useAuth';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { useVoceroMode } from './hooks/useVoceroMode';
 import { VoceroCrmView } from './components/crm/VoceroCrmView';
-import { VoceroModeTogglePill } from './components/crm/common/VoceroModeTogglePill';
 import { KitchenKdsView } from './components/kds/KitchenKdsView';
 import { RiderDispatchView } from './components/rider/RiderDispatchView';
 import { DEFAULT_PRODUCT } from './components/chat/product/productChatMock';
@@ -113,7 +112,6 @@ export function App() {
           </div>
         )}
         {currentView === 'admin' && <div className="h-full w-full overflow-y-auto bg-[#151414]"><ErrorBoundary fallbackTitle="Super Admin Panel"><SuperAdminDashboard /></ErrorBoundary></div>}
-        <VoceroModeTogglePill />
       </main>
     </div>
   );

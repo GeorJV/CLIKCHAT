@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Eliminación del Botón Flotante 'Modo ClikChat CRM - Ver Clásico' (v2.9.18)
+- **Diagnóstico y Necesidad:**
+  1. *Botón Flotante Innecesario en Pantalla:*
+     - En el layout global de la aplicación (`src/App.tsx`), permanecía montado el componente flotante `VoceroModeTogglePill`, mostrando el botón "Modo ClikChat CRM - Ver Clásico" en la esquina inferior derecha.
+     - Este botón distraía la navegación y generaba confusión visual para los usuarios que operan directamente en la experiencia ClikChat CRM.
+- **Solución Quirúrgica Implementada:**
+  1. *Desmontaje en `src/App.tsx`:*
+     - Eliminado el import y la invocación de `<VoceroModeTogglePill />` en el bloque principal.
+  2. *Aislamiento Seguro en `VoceroModeTogglePill.tsx`:*
+     - Simplificado el componente para retornar `null`, erradicando cualquier renderizado remanente de manera limpia y sin efectos secundarios.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 34.34s con 0 errores (`dist/assets/index-CxL9ElLa.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Variación Dinámica de Saludos y Blindaje Universal Anti-Repetición de Respuestas (v2.9.17)
 - **Diagnóstico y Necesidad:**
   1. *Repetición Idéntica de Respuestas y Saludos:*

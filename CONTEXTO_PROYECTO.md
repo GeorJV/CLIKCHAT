@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 08:50 GMT-6
-- **Versión Actual:** 2.9.17 (Variación Dinámica de Saludos y Blindaje Universal Anti-Repetición)
+- **Última Actualización:** 2026-10-28 09:25 GMT-6
+- **Versión Actual:** 2.9.18 (Eliminación del Botón Flotante 'Modo ClikChat CRM - Ver Clásico')
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Saludos Dinámicos Desacoplados: Detecta saludos puros en cualquier turno ("hola", "buenas", etc.) sin repetir la bienvenida inicial.
-  - Banco Contextual de Saludos: Pool de opciones adaptadas al tipo de negocio (servicios, productos, restaurante, general).
-  - Deduplicación Absoluta: Filtrado de respuestas contra historial D1, cliente y bienvenida; el bot nunca emite dos mensajes idénticos consecutivos.
-  - Guardián `ensureUniqueAnswer`: Refraseo automático y variación conversacional en saludos, FAQs, catálogo y LLM.
-  - Verificado con 3 Filtros: Build limpio en 11.80s, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
+  - Botón Flotante Removido: Desmontado el pill flotante "Modo ClikChat CRM - Ver Clásico" de `src/App.tsx`.
+  - Componente Seguro: `VoceroModeTogglePill` retorna `null` para evitar cualquier renderizado residual.
+  - Experiencia ClikChat CRM Limpia: Interfaz del CRM despejada sin botones flotantes distractores.
+  - Saludos y Anti-repetición Activos: Banco contextual de saludos dinámicos y deduplicación universal en producción.
+  - Verificado con 3 Filtros: Build limpio en 34.34s, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
