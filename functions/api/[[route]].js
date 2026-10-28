@@ -536,6 +536,22 @@ function getFallbackGeoSoftProducts() {
       cta_label: 'Crear App Móvil',
       cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20una%20App%20Móvil',
       is_active: 1
+    },
+    {
+      id: 'prod_1793142967893',
+      tenant_id: 'ten_geosoft_prod',
+      name: 'Desarrollo Web Estático (Página Web Estática)',
+      slug: 'desarrollo-web-estatico',
+      price: 300,
+      currency: 'USD',
+      short_description: 'Página web estática de hasta 5 páginas independientes, ultra rápida, con verificación de mensajes y panel propio de administrador.',
+      full_description: 'Página web estática de 5 páginas independientes. Incluye diseño responsivo premium, carga ultra rápida, verificación de mensajes entrantes, panel propio de administrador, dominio y hosting gratis el primer año y soporte continuo.',
+      images: ['https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&auto=format&fit=crop&q=80'],
+      benefits: ['Página web ultra rápida', 'Dominio y hosting gratis primer año', 'Soporte continuo y panel propio'],
+      details: { category: 'Desarrollo Web', sku: 'SKU-591979', tiempo_entrega: '1 a 2 semanas', soporte: 'Soporte continuo incluido' },
+      cta_label: 'Cotizar Web Estática',
+      cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20Desarrollo%20Web%20Est%C3%A1tico',
+      is_active: 1
     }
   ];
 }
@@ -1251,7 +1267,13 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o autorectificarse en el texto (ejemplo: PROHIBIDO decir "elegiste el horario de X no, sino que elegiste Y", "bueno en realidad...", "espera me equivoqué...").
    - Si el cliente confirma o escoge una hora (ej: "Si 9 y 40 esta bien", "a las 10 me sirve"), asúmela con total certeza, agilidad y naturalidad: confirma para esa hora sin cuestionar ni mencionar opciones que ya quedaron en el pasado.
    - Cero suspenso artificial o dramatismo infantil: PROHIBIDO usar puntos suspensivos innecesarios como "y... todo está en orden!" o "y... lamentablemente...". Exprésate con aplomo y solidez ejecutiva.
-   - Toda respuesta debe ser completa y terminada; nunca dejes oraciones cortadas.`;
+   - Toda respuesta debe ser completa y terminada; nunca dejes oraciones cortadas.
+10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (NIVEL ASESOR SENIOR):
+    - Si el cliente cuestiona el precio (ej: "está caro", "por qué tanto", "vi opciones más baratas por $100"), NUNCA repitas el precio a secas ni te pongas a la defensiva.
+    - Valida su perspectiva con empatía y destaca con seguridad ejecutiva el valor del código propio, arquitectura en la nube de alta velocidad, base de datos privada y automatizaciones que multiplican ventas frente a plantillas genéricas desechables.
+    - Concluye siempre invitando cordialmente a una sesión estratégica breve de 15 minutos para analizar los requerimientos reales de su caso sin costo.
+11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el cliente pregunta por certificaciones externas específicas (ej. ISO, SOC2), convenios bancarios o detalles que NO se encuentren en el catálogo oficial, responde con honestidad destacando los estándares de seguridad de la plataforma, e incluye al final de tu respuesta el marcador <!--UNRESOLVED_QUERY--> para que el equipo humano del negocio reciba la duda y le brinde respuesta formal.`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -1451,7 +1473,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemContent }] },
             contents,
-            generationConfig: { temperature: 0.2, maxOutputTokens: 900 }
+            generationConfig: { temperature: 0.2, maxOutputTokens: 450 }
           }),
           signal: AbortSignal.timeout(4500)
         });
@@ -1489,7 +1511,7 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
       model: 'z-ai/glm-5.3-flash:floor',
       messages,
       temperature: 0.1,
-      max_tokens: 1000,
+      max_tokens: 450,
       reasoning: { effort: 'low' },
       provider: { sort: 'price', allow_fallbacks: false }
     };
@@ -4127,7 +4149,14 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             );
           }
         } catch (e) {
-          products = (slug === 'geosoft' || slug === 'ten_geosoft_prod') ? getFallbackGeoSoftProducts() : (slug === 'comida-callejera-xl' ? getFallbackProducts() : []);
+          try {
+            products = await executeD1(
+              'SELECT * FROM products WHERE (tenant_id = ?1 OR tenant_id IN (SELECT id FROM tenants WHERE slug = ?1 OR id = ?1)) AND is_active = 1 ORDER BY created_at ASC',
+              [tenant.id]
+            );
+          } catch (innerErr) {
+            products = (slug === 'geosoft' || slug === 'ten_geosoft_prod') ? getFallbackGeoSoftProducts() : (slug === 'comida-callejera-xl' ? getFallbackProducts() : []);
+          }
         }
         if (!products.length && (slug === 'geosoft' || slug === 'ten_geosoft_prod' || tenant?.name === 'GeoSoft')) products = getFallbackGeoSoftProducts();
         if (!products.length && slug === 'comida-callejera-xl') products = getFallbackProducts();
@@ -5634,7 +5663,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  // 2. Extracción de Teléfono (mínimo 8 dígitos)
+  // 2. Extracción de Teléfono (mínimo 8 dígitos) o Detección de negativa / preferencia por correo
+  const refusesPhoneRegex = /\b(?:no\s+(?:tengo|doy|quiero\s+dar|deseo\s+dar|voy\s+a\s+dar|darte|uso|poseo)\s+(?:tel[eé]fono|celular|whatsapp|n[uú]mero)|solo\s+(?:por\s+)?(?:correo|email)|sin\s+tel[eé]fono|sin\s+whatsapp|prefiero\s+(?:por\s+)?correo|no\s+tengo\s+n[uú]mero|no\s+te\s+voy\s+a\s+dar\s+mi\s+tel[eé]fono)\b/i;
   for (let i = allUserMessages.length - 1; i >= 0; i--) {
     const msg = allUserMessages[i];
     const pMatches = msg.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/g);
@@ -5647,6 +5677,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       }
     }
     if (phone) break;
+  }
+  if (!phone) {
+    for (let i = allUserMessages.length - 1; i >= 0; i--) {
+      if (refusesPhoneRegex.test(allUserMessages[i])) {
+        phone = 'Contacto por correo';
+        break;
+      }
+    }
   }
 
   // 3. Extracción de Hora (Flexibilidad Máxima & Sin Arrastre Erróneo de Pasado)
@@ -5921,12 +5959,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   } else if (!phone) {
     currentStep = 2;
-    stepInstruction = `PASO 2: Ya tienes el nombre ("${name}") y correo ("${email}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para coordinar la confirmación y recordatorios de la sesión. Queda TERMINANTEMENTE PROHIBIDO pedir fecha u hora aún y TERMINANTEMENTE PROHIBIDO emitir tarjetas de cita.`;
+    stepInstruction = `PASO 2: Ya tienes el nombre ("${name}") y correo ("${email}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para coordinar la confirmación y recordatorios de la sesión (o aclara cordialmente que si prefiere coordinar únicamente por correo electrónico, también es completamente bienvenido). Queda TERMINANTEMENTE PROHIBIDO pedir fecha u hora aún y TERMINANTEMENTE PROHIBIDO emitir tarjetas de cita.`;
   } else if (!date) {
     currentStep = 3;
-    stepInstruction = `PASO 3: Ya tienes nombre ("${name}"), correo ("${email}") y teléfono ("${phone}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión (por ejemplo: mañana o entre semana). No pidas hora aún.`;
+    const phoneDisplay = phone === 'Contacto por correo' ? 'coordinación por correo' : `teléfono ("${phone}")`;
+    stepInstruction = `PASO 3: Ya tienes nombre ("${name}"), correo ("${email}") y ${phoneDisplay}. Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión (por ejemplo: mañana o entre semana). No pidas hora aún.`;
   } else if (!time) {
     currentStep = 4;
+    const phoneDisplay = phone === 'Contacto por correo' ? 'coordinación por correo' : `teléfono ("${phone}")`;
     if (wantsMorning) {
       stepInstruction = `PASO 4: El cliente solicitó explícitamente horario EN LA MAÑANA para el "${date}". Ofrece con calidez y entusiasmo 2 o 3 OPCIONES DE HORARIOS EN LA MAÑANA disponibles (por ejemplo: "09:30 AM", "10:30 AM" o "11:30 AM") para que elija su hora. Queda TERMINANTEMENTE PROHIBIDO ofrecer o sugerir horarios de la tarde (como 2pm, 3pm, 4pm).`;
     } else if (wantsAfternoon) {
@@ -5934,7 +5974,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     } else {
       stepInstruction = isRescheduleIntent
         ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
-        : `PASO 4: Ya tienes nombre ("${name}"), correo ("${email}"), teléfono ("${phone}") y fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+        : `PASO 4: Ya tienes nombre ("${name}"), correo ("${email}"), ${phoneDisplay} y fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
     }
   } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && !isNameCorrectionIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
     currentStep = 6;
@@ -6572,6 +6612,15 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
               short_description: 'Aplicaciones móviles nativas y multiplataforma fluidas, intuitivas y conectadas en tiempo real a tus sistemas empresariales.',
               full_description: 'Desarrollo integral de apps móviles para iOS y Android con Flutter o React Native. Experiencias táctiles de primer nivel, notificaciones push, modo offline, pasarelas de pago y publicación guiada en App Store y Google Play.',
               details: { category: 'Aplicaciones Móviles', plataformas: 'iOS y Android', publicacion: 'Asistencia en tiendas incluida' }
+            },
+            {
+              id: 'prod_1793142967893',
+              name: 'Desarrollo Web Estático (Página Web Estática)',
+              price: 300,
+              currency: 'USD',
+              short_description: 'Página web estática de hasta 5 páginas independientes, ultra rápida, con verificación de mensajes y panel propio de administrador.',
+              full_description: 'Página web estática de 5 páginas independientes. Incluye diseño responsivo premium, carga ultra rápida, verificación de mensajes entrantes, panel propio de administrador, dominio y hosting gratis el primer año y soporte continuo.',
+              details: { category: 'Desarrollo Web', sku: 'SKU-591979', tiempo_entrega: '1 a 2 semanas', soporte: 'Soporte continuo incluido' }
             }
           ];
         } else {
@@ -7790,7 +7839,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           isPriceGuardrailBlocked ||
           (llmResult.text && (
             llmResult.text.includes('<!--UNRESOLVED_QUERY-->') ||
-            /no\s+quiero\s+darte\s+informaci[oó]n\s+inexacta|he\s+registrado\s+tu\s+duda|consulta\s+muy\s+puntual|no\s+tengo\s+ese\s+dato|no\s+dispongo\s+de\s+esa\s+informaci[oó]n|no\s+tengo\s+esa\s+informaci[oó]n/i.test(llmResult.text)
+            /no\s+quiero\s+darte\s+informaci[oó]n\s+inexacta|he\s+registrado\s+tu\s+duda|consulta\s+muy\s+puntual|no\s+tengo\s+ese\s+dato|no\s+dispongo\s+de\s+esa\s+informaci[oó]n|no\s+tengo\s+esa\s+informaci[oó]n|equipo\s+humano\s+se\s+pondr[áa]|consultar\s+con\s+el\s+equipo|no\s+contamos\s+con\s+esa\s+especificaci[oó]n|para\s+darte\s+informaci[oó]n\s+exacta\s+lo\s+verifico|verificar\s+con\s+el\s+equipo/i.test(llmResult.text)
           ))
         );
 

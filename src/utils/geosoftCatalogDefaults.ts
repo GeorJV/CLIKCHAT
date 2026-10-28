@@ -48,6 +48,22 @@ export const DEFAULT_GEOSOFT_PRODUCTS: Product[] = [
     cta_label: 'Crear App Móvil',
     cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20una%20App%20Móvil',
     is_active: true
+  },
+  {
+    id: 'prod_1793142967893',
+    tenant_id: 'ten_geosoft_prod',
+    name: 'Desarrollo Web Estático (Página Web Estática)',
+    slug: 'desarrollo-web-estatico',
+    price: 300,
+    currency: 'USD',
+    short_description: 'Página web estática de hasta 5 páginas independientes, ultra rápida, con verificación de mensajes y panel propio de administrador.',
+    full_description: 'Página web estática de 5 páginas independientes. Incluye diseño responsivo premium, carga ultra rápida, verificación de mensajes entrantes, panel propio de administrador, dominio y hosting gratis el primer año y soporte continuo.',
+    images: ['https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&auto=format&fit=crop&q=80'],
+    benefits: ['Página web ultra rápida', 'Dominio y hosting gratis primer año', 'Soporte continuo y panel propio'],
+    details: { category: 'Desarrollo Web', sku: 'SKU-591979', tiempo_entrega: '1 a 2 semanas', soporte: 'Soporte continuo incluido' },
+    cta_label: 'Cotizar Web Estática',
+    cta_url: 'https://wa.me/50672935612?text=Hola%20GeoSoft,%20me%20interesa%20Desarrollo%20Web%20Est%C3%A1tico',
+    is_active: true
   }
 ];
 
