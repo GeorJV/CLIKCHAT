@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Rediseño Estético Profesional del Banner de Citas Agendadas y Tarjetas Resaltadas (v2.8.7)
+- **Diagnóstico y Causas Raíces:**
+  1. *Paleta Visual Descontextualizada en Notificación de Citas (`NewBookingBanner.tsx`):* El banner de notificación de nueva cita empleaba degradados oscuros café/negro (`from-amber-950/90 via-[#221b10] to-[#181717]`), bordes dobles toscos (`border-2 border-amber-500/70`) y anillos ámbar intensos (`ring-2 ring-amber-400/30`), rompiendo totalmente la armonía visual de la interfaz clara del CRM (blanco, azul/celeste `#0d5bff` y gris slate).
+  2. *Resaltado Ámbar/Naranja en Tarjeta de Cita (`VoceroAppointmentCard.tsx`):* La tarjeta de la cita agendada utilizaba un fondo degradado naranja/ámbar con bordes dorados saturados, requiriendo alinearse a la estética limpia y corporativa de la plataforma.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Rediseño Armónico del Banner de Notificación ([`NewBookingBanner.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/client/NewBookingBanner.tsx) - 62 líneas):*
+     - Erradicados al 100% los tonos negros, cafés y bordes dobles pesados.
+     - Implementado un fondo blanco luminoso con suave degradado translúcido celeste/verde (`from-sky-50/95 via-[#f0f6ff] to-emerald-50/90`) y borde fino sutil (`border border-sky-200/90`).
+     - Contenedor de campana en celeste/azul de la marca (`#0d5bff`) con halo y pulso esmeralda sutil.
+     - Insignia destacada en degradado azul con acento amarillo suave y pastilla verde de *"Confirmada"*.
+     - Fecha y hora resaltadas con pastillas individuales en celeste (`bg-blue-50/90`) y verde esmeralda (`bg-emerald-50/90`).
+     - Botón de acción *"Ver cita ahora"* adaptado al azul insignia (`#0d5bff`) con sombras suaves y botón de cierre discreto.
+  2. *Armonización de Tarjeta Resaltada en Agenda ([`VoceroAppointmentCard.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/bookings/VoceroAppointmentCard.tsx) - 100 líneas):*
+     - Adaptado el estado `isHighlighted` a un degradado celestial tenue (`from-sky-50/95 via-blue-50/70 to-emerald-50/70`) con borde fino azul `#0d5bff`/60 y badge parpadeante ✨ NUEVA CITA.
+  3. *Actualización de Insignia en Navegación ([`VoceroAppNav.tsx`](file:///c:/Users/User/Desktop/GeoSoft/ClikChat/src/components/crm/VoceroAppNav.tsx) - 155 líneas):*
+     - Badge numérico en la pestaña "Agenda & Citas" ajustado a verde esmeralda vibrante (`bg-emerald-400 text-slate-950`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.00s con 0 errores TypeScript (`dist/assets/index-CsDv_23n.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas auditadas y operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-27] Blindaje Estricto de 5 Slots de Agendamiento, Cero Citas Prematuras y Erradicación de Nombres Ficticios (v2.8.6)
 - **Diagnóstico y Causas Raíces:**
   1. *Fallback Indebido de Nombre en Backend (`functions/api/[[route]].js`):* En `extractBookingSlots`, si el usuario suministraba correo, fecha y hora sin dar su nombre, el sistema tomaba `email.split('@')[0]` (ej. "Homilia7") o `"Cliente"` como nombre confirmado, falseando que el dato ya existía en lugar de preguntárselo al usuario.

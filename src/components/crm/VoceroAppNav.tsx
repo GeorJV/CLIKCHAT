@@ -34,7 +34,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
       items: [
         { id: 'inbox' as VoceroNavTab, label: 'Bandeja de Entrada', icon: Inbox, badge: unreadCount },
         { id: 'pipeline' as VoceroNavTab, label: 'Pipeline de Ventas', icon: Kanban },
-        { id: 'bookings' as VoceroNavTab, label: 'Agenda & Citas', icon: CalendarDays, badge: unreadBookingsCount, badgeColor: 'bg-amber-400' },
+        { id: 'bookings' as VoceroNavTab, label: 'Agenda & Citas', icon: CalendarDays, badge: unreadBookingsCount, badgeColor: 'bg-emerald-400' },
         { id: 'contacts' as VoceroNavTab, label: 'Directorio de Clientes', icon: Users },
       ]
     },

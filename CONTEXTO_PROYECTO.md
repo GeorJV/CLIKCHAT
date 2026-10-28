@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 18:05 GMT-6
-- **Versión Actual:** 2.8.6 (Blindaje Estricto de 5 Slots de Agendamiento y Cero Citas Prematuras)
+- **Última Actualización:** 2026-10-27 18:12 GMT-6
+- **Versión Actual:** 2.8.7 (Rediseño Estético Profesional del Banner de Citas y Tarjetas Resaltadas)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Blindaje Estricto de 5 Slots: Exigidos Nombre completo, Correo, Teléfono/WhatsApp, Fecha y Hora antes de emitir cualquier tarjeta o confirmar cita.
-  - Cero Nombres Ficticios: Eliminados fallbacks automáticos de nombre desde el correo o 'Cliente'.
-  - Guardián Post-LLM Infranqueable: Purgado inmediato de tarjetas `[BOOKING_CARD:]` en respuestas de la IA si falta cualquiera de los 3 datos de contacto.
+  - Rediseño Armónico del Banner de Citas (`NewBookingBanner`): Erradicados fondos marrones y bordes toscos, reemplazados por celeste `#0d5bff`, verde esmeralda y acento amarillo pulcro.
+  - Tarjetas Resaltadas de Agenda (`VoceroAppointmentCard`): Efecto de nueva cita armonizado con halo celeste/esmeralda sutil y badge ✨ NUEVA en dorado cálido.
+  - Notificaciones en Sidebar (`VoceroAppNav`): Pastilla de alerta en verde esmeralda dinámico para contrastar profesionalmente.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

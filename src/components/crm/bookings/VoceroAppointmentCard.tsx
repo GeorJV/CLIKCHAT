@@ -38,7 +38,7 @@ export const VoceroAppointmentCard: React.FC<Props> = ({
       onMouseEnter={() => { if (isHighlighted && onHover) onHover(); }}
       className={`rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 transition-colors duration-200 font-sans ${
         isHighlighted
-          ? 'bg-gradient-to-r from-amber-50/95 via-orange-50/80 to-white border-2 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/30'
+          ? 'bg-gradient-to-r from-sky-50/95 via-blue-50/70 to-emerald-50/70 border-2 border-[#0d5bff]/60 shadow-[0_0_15px_rgba(13,91,255,0.15)] ring-1 ring-[#0d5bff]/20'
           : 'border border-[#e2e8f0] bg-white hover:border-[#b8cced]'
       }`}
     >
@@ -47,7 +47,7 @@ export const VoceroAppointmentCard: React.FC<Props> = ({
         className="flex items-center gap-3 cursor-pointer group"
         title="Haz clic para ver el detalle de la cita"
       >
-        <div className={`h-10 w-10 rounded-xl transition flex items-center justify-center font-bold text-xs shrink-0 ${isHighlighted ? 'bg-amber-100 text-amber-700' : 'bg-[#ebf1ff] group-hover:bg-[#d8e6ff] text-[#0d5bff]'}`}>
+        <div className={`h-10 w-10 rounded-xl transition flex items-center justify-center font-bold text-xs shrink-0 ${isHighlighted ? 'bg-sky-100 text-[#0d5bff] border border-sky-200' : 'bg-[#ebf1ff] group-hover:bg-[#d8e6ff] text-[#0d5bff]'}`}>
           <User className="h-5 w-5" />
         </div>
         <div>
@@ -57,7 +57,7 @@ export const VoceroAppointmentCard: React.FC<Props> = ({
             </h4>
             <span className="text-[10px] text-[#8391aa] uppercase font-mono">({apt.channel})</span>
             {isHighlighted && (
-              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-black animate-pulse font-mono shadow-xs">
+              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 animate-pulse font-mono shadow-xs border border-amber-300/80">
                 ✨ NUEVA CITA · Pasa el cursor aquí
               </span>
             )}
