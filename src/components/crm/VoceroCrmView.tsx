@@ -109,6 +109,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
               searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
               onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
               businessType={tenant?.business_type || (tenant as any)?.businessType}
+              tenantSlug={tenantSlug || tenant?.slug || 'geosoft'}
             />
           )}
           {activeTab === 'pipeline' && (
