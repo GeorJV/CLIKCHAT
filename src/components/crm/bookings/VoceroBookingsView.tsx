@@ -26,6 +26,17 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     return true;
   });
 
+  const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
+    try {
+      let allFound: any[] = [];
+      [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
+        const s = localStorage.getItem(k); if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
+      });
+      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
+      return sortApts(unique.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate })));
+    } catch { return []; }
+  });
+
   useEffect(() => {
     const handleTarget = (b?: any, bId?: string) => {
       const targetId = bId || b?.id || highlightedBookingId;
@@ -50,17 +61,6 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
     window.addEventListener('clikchat_focus_booking', onCustomFocus);
     return () => window.removeEventListener('clikchat_focus_booking', onCustomFocus);
   }, [autoOpenBooking, highlightedBookingId, appointments, now, todayKey, onAcknowledgeBooking]);
-
-  const [appointments, setAppointments] = useState<AppointmentItem[]>(() => {
-    try {
-      let allFound: any[] = [];
-      [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
-        const s = localStorage.getItem(k); if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
-      });
-      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
-      return sortApts(unique.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate })));
-    } catch { return []; }
-  });
 
   const fetchBookings = () => {
     const isGeo = tId === 'geosoft' || tId === 'ten_geosoft_prod';

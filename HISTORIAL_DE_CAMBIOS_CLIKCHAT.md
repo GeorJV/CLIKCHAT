@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Erradicación de Error en Pantalla al Ver Cita y Blindaje de Tipos (v2.9.21)
+- **Diagnóstico y Necesidad:**
+  1. *Error en Pantalla al Presionar 'Ver cita ahora':*
+     - Al pulsar el botón "Ver cita ahora", la aplicación lanzaba un error capturado por el ErrorBoundary impidiendo mostrar la agenda y la ficha técnica.
+     - *Causa Raíz 1 (TDZ ReferenceError):* En `VoceroBookingsView.tsx`, el `useEffect` de foco referenciaba `appointments` en su array de dependencias pero `const [appointments, setAppointments]` estaba declarado 25 líneas más abajo, generando `ReferenceError: Cannot access 'appointments' before initialization` durante el montaje de la vista.
+     - *Causa Raíz 2 (Incompatibilidad de Tipo en Teléfono):* En `VoceroAppointmentDetailModal.tsx`, se invocaba `(apt.phone || '').replace()` sin asegurar string, provocando error si el valor proveniente de SQLite/D1 era de tipo numérico.
+- **Solución Quirúrgica Implementada:**
+  1. *Eliminación de TDZ en `VoceroBookingsView.tsx`:*
+     - Reubicada la declaración de `appointments` por encima del `useEffect` de escucha y foco de citas.
+  2. *Blindaje de Tipos en `VoceroAppointmentDetailModal.tsx`:*
+     - Conversión universal segura con `String(apt.phone || '')` y sanitización numérica en precio y canal.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 9.60s con 0 errores (`dist/assets/index-B7JNdtc6.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Reparación y Apertura Reactiva Inmediata del Botón 'Ver cita ahora' (v2.9.20)
 - **Diagnóstico y Necesidad:**
   1. *Botón 'Ver cita ahora' Inoperativo:*

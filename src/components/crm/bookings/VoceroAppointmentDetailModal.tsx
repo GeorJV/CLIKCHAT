@@ -32,7 +32,7 @@ export const VoceroAppointmentDetailModal: React.FC<VoceroAppointmentDetailModal
 }) => {
   if (!isOpen || !apt) return null;
 
-  const cleanPhone = (apt.phone || '').replace(/[^0-9]/g, '');
+  const cleanPhone = String(apt.phone || '').replace(/[^0-9]/g, '');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 font-sans animate-fade-in">
@@ -65,8 +65,8 @@ export const VoceroAppointmentDetailModal: React.FC<VoceroAppointmentDetailModal
             <div>
               <h4 className="text-[13.5px] font-bold text-[#0a1730]">{apt.clientName}</h4>
               <div className="flex items-center gap-2 text-[11px] text-[#62728d] mt-0.5">
-                <span className="font-mono text-[#0038d8] font-bold uppercase">{apt.channel}</span>
-                {apt.phone && <span>· {apt.phone}</span>}
+                <span className="font-mono text-[#0038d8] font-bold uppercase">{apt.channel || 'web'}</span>
+                {apt.phone && <span>· {String(apt.phone)}</span>}
               </div>
             </div>
           </div>
@@ -95,9 +95,9 @@ export const VoceroAppointmentDetailModal: React.FC<VoceroAppointmentDetailModal
               <span className="flex items-center gap-1.5 text-[#0d5bff]">
                 <Briefcase className="h-3.5 w-3.5" /> Servicio o Motivo
               </span>
-              {apt.price && (
+              {Boolean(apt.price) && (
                 <span className="font-mono font-bold text-[#0a1730] text-xs">
-                  ${apt.price.toLocaleString()} MXN
+                  ${Number(apt.price).toLocaleString()} MXN
                 </span>
               )}
             </div>
