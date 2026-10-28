@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 12:06 GMT-6
-- **Versión Actual:** 2.9.25 (Persistencia de Subpestañas de Ajustes en Refresco y Fix Enrutamiento Motor IA)
+- **Última Actualización:** 2026-10-28 12:25 GMT-6
+- **Versión Actual:** 2.9.26 (Citas Adicionales Independientes sin Modificar Citas Previas)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Enrutamiento Ajustes Fijo: `ia`, `motor-ia`, `zernio`, `canales`, `perfil`, `catalogo` mapeados a `settings`. Corregido bug donde `ia` redirigía a "Analista de IA Gerencial".
-  - Persistencia de Subpestaña: `localStorage` preserva la última sección de ajustes visitada por tenant; al refrescar (F5) en `/canales`, `/perfil`, `/ia`, etc., el usuario permanece exactamente en su subpestaña.
-  - Redirección Canónica Protegida: `VoceroCrmView` reconoce todas las subrutas de ajustes sin sobreescribir la URL al recargar.
-  - Cumplimiento ARQMODULAR: `VoceroSettingsView` (179 líneas), `VoceroCrmView` (167 líneas), `routerConstants` (130 líneas).
-  - Verificado con 3 Filtros: Build Vite limpio (9.12s), commit sincronizado en `main`, deploy dual activo en CDN Cloudflare Pages (17/17 rutas probadas).
+  - Citas Adicionales Inteligentes: `isAdditionalBookingIntent` detecta cuando el usuario solicita "otra cita" o cita adicional. Mantiene la cita previa 100% intacta en D1 y solicita los datos de la nueva cita.
+  - Cero Sobrescritura en D1: Desconexión de `isRescheduleIntent` para citas adicionales; toda cita adicional se guarda como un nuevo registro independiente (`INSERT INTO bookings`).
+  - Purga de Slots Heredados: Fecha y hora de la cita anterior no se heredan, obligando a coordinar el día y horario específico para la cita adicional.
+  - Cumplimiento ARQMODULAR: `VoceroAiSandbox` (179 líneas), `VoceroSettingsView` (179 líneas), `VoceroCrmView` (167 líneas).
+  - Verificado con 3 Filtros: Build Vite limpio (13.50s), sincronizado en `main`, deploy dual activo en CDN Cloudflare Pages (17/17 rutas probadas con Chrome Headless).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

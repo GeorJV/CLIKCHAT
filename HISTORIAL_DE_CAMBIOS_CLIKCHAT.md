@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Soporte de Citas Adicionales Independientes sin Modificar Citas Previas (v2.9.26)
+- **Diagnóstico y Necesidad:**
+  1. *Sobrescritura Indebida en Cloudflare D1:*
+     - Al solicitar el usuario "otra cita" o una cita adicional tras haber concretado una previa, `isRescheduleIntent` la agrupaba erróneamente como reprogramación, activando `UPDATE bookings SET ... WHERE id = existingApt[0].id` y sobreescribiendo la cita anterior en vez de crear una nueva.
+  2. *Arrastre Erróneo de Fecha y Hora de la Cita Anterior:*
+     - `extractBookingSlots` arrastraba `cardDate` y `cardTime` de la cita confirmada anterior si el nuevo mensaje no traía fecha/hora de inmediato, provocando re-emisiones prematuras o confirmaciones erróneas.
+  3. *Inyección Prematura de Tarjetas sin Nuevos Datos:*
+     - `canIssueBookingCard` autorizaba la tarjeta sin haber acordado la fecha y hora de la cita adicional.
+  4. *Contingencia sin Memoria de Citas Múltiples:*
+     - `generateSmartFallbackReply` re-utilizaba la fecha/hora anterior ante "otra cita" en lugar de pedir los datos de la sesión adicional.
+- **Solución Quirúrgica Implementada:**
+  1. *Detección de Intención de Cita Adicional (`isAdditionalBookingIntent`):*
+     - Regex estricto (`ADDITIONAL_BOOKING_REGEX`) que detecta solicitudes de otra cita / cita adicional en el turno actual o en los turnos posteriores a la tarjeta previa.
+     - Desconexión obligatoria de `isRescheduleIntent`: si es cita adicional, queda terminantemente prohibido tratarlo como reprogramación.
+  2. *Aislamiento y Purga de Slots Heredados:*
+     - Al activarse `isAdditionalBookingIntent`, `cardDate` y `cardTime` se anulan para la nueva cita. La fecha y hora únicamente se extraen de los mensajes posteriores a la solicitud de la cita adicional.
+  3. *Protocolo Conversacional de Cita Adicional:*
+     - Si faltan día y hora, el bot confirma con calidez que la cita previa queda 100% guardada e intacta en agenda, y solicita los datos (día, hora y nombre/contacto) de la nueva cita.
+     - Prohibición absoluta de emitir `[BOOKING_CARD]` hasta que se hayan acordado día y hora libres en la agenda.
+  4. *Auto-Registro como Inserción Independiente en D1:*
+     - Al confirmarse la cita adicional, `isRescheduleTurn` se desactiva y el backend ejecuta obligatoriamente `INSERT INTO bookings` con un nuevo ID único (`aptIdToUse`), garantizando que ambas citas coexistan intactas en D1 y el CRM.
+  5. *Alineación en Contingencia y Live Lab:*
+     - `generateSmartFallbackReply` responde pidiendo día y hora para la cita adicional sin sobreescribir la previa.
+     - `VoceroAiSandbox.tsx` sincroniza el ID oficial devuelto por el backend.
+  6. *Verificación de los 3 Filtros:*
+     - Build Vite en 13.50s (0 errores), commit en `main`, deploy dual en Cloudflare Pages, smoke test 17/17 rutas en CDN (Hash Match `index-zNIHTM2W.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Persistencia de Subpestañas de Ajustes en Refresco y Corrección de Enrutamiento Motor de IA (v2.9.25)
 - **Diagnóstico y Necesidad:**
   1. *Redirección Errónea a "Analista de IA Gerencial":*
