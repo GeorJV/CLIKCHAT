@@ -1213,10 +1213,12 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - TU PRIMERA MISIÓN ES HACER SENTIR VALIOSO E IMPORTANTE AL CLIENTE: escucha activamente su situación, comprende su necesidad real, empatiza con sus dudas o temores y valida sus metas antes de hablar de servicios.
    - Aporta valor real y genuino en cada respuesta. Orienta con honestidad lo que más le conviene a su proyecto o negocio.
    - Habla como una persona real en WhatsApp, cercana, fluida, entusiasta y con excelente vibra. Cero respuestas frías, robóticas o transaccionales.
-2. REGLA ESTRICTA DE BREVEDAD (CERO BIBLIAS O LISTAS GIGANTES):
-   - En un chat de ventas nadie lee párrafos enormes ni respuestas interminables.
-   - Responde en MÁXIMO 2 o 3 párrafos cortos (o máximo 3 viñetas breves y directas).
-   - NUNCA generes listas largas de 5, 7 o 10 puntos. Si hay muchos beneficios o canales, menciona solo los 2 o 3 más potentes y relevantes, e invita a profundizar.
+2. REGLA ESTRICTA DE MÁXIMA BREVEDAD (RESPUESTAS CORTAS, DIRECTAS Y HUMANAS):
+   - En un chat moderno nadie lee textos extensos ni párrafos gigantescos.
+   - Responde en MÁXIMO 2 o 3 oraciones cortas (1 solo bloque compacto de 35 a 55 palabras en total).
+   - CERO discursos motivacionales vacíos (PROHIBIDO decir frases como "Qué excelente decisión dar el salto digital...", "Comprendo perfectamente tu postura...").
+   - Responde directo, elegante y amable a la pregunta del cliente y cierra con una sola pregunta breve.
+   - NUNCA generes listas largas ni viñetas a menos que el usuario lo solicite explícitamente.
 3. FORMATO VISUAL LIMPIO Y ELEGANTE:
    - PROHIBIDO usar encabezados de código markdown como '###' o '##'.
    - PROHIBIDO pegar URLs crudas o enlaces larguísimos.
@@ -5546,6 +5548,29 @@ function parseFlexibleTime(str) {
   return null;
 }
 
+// VALIDADOR ESTRICTO DE NOMBRES HUMANOS (PREVIENE FALSOS POSITIVOS Y PREGUNTAS COMO NOMBRES)
+function isValidPersonName(candidate) {
+  if (!candidate || typeof candidate !== 'string') return false;
+  const clean = candidate.trim();
+  if (clean.length < 2 || clean.length > 40) return false;
+  if (/[?¿!¡\d@#$%^&*()_+=\[\]{};:"\\|<>~`]/.test(clean)) return false;
+  const norm = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  // Palabras interrogativas o de consulta
+  if (/\b(que|como|cuando|donde|cual|cuales|cuanto|cuantos|cuanta|por que|porque|quien|quienes)\b/i.test(norm)) return false;
+
+  // Palabras comerciales, servicios o técnicas (inmune a typos como serivcios, serbicios)
+  if (/\b(servicio\w*|serivci\w*|serbici\w*|servico\w*|producto\w*|paquete\w*|plan\w*|precio\w*|costo\w*|tarifa\w*|cotiz\w*|catalogo\w*|web|pagina\w*|sitio\w*|software\w*|app\w*|plataforma\w*|sistema\w*|desarrollo\w*|programador\w*|diseno\w*|seo|ia|bot\w*|agente\w*|chat\w*|soporte\w*|demo\w*|tienda\w*|negocio\w*|empresa\w*|venta\w*|ofrec\w*|hacen?|venden?|tienen?|brindan?|crean?)\b/i.test(norm)) return false;
+
+  // Palabras de relleno, saludos o confirmaciones comunes
+  if (/^(?:hola|buenas|buenos dias|buenas tardes|buenas noches|gracias|muchas gracias|ok|si|no|claro|perfecto|excelente|de acuerdo|me parece|me parece bien|esta bien|as[ií] est[aá] bien|listo|adelante|dale|correcto|entendido|ninguna|nada|quiero|necesito|ocupo|deseo|cliente|amigo|amiga|lunes|martes|miercoles|jueves|viernes|sabado|domingo|hoy|manana|ayer|tarde|noche)$/i.test(norm)) return false;
+
+  // Preposiciones o adjetivos aislados
+  if (/^(?:de|en|por|para|con|sin|nuevo|nueva|interesado|interesada|estudiante|profesional|usuario|persona)$/i.test(norm)) return false;
+
+  return true;
+}
+
 // ==============================================================================
 // EXTRACTOR INTELIGENTE DE SLOTS PARA CALENDARIO Y AGENDAMIENTO (5 PASOS)
 // ==============================================================================
@@ -5764,7 +5789,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   for (const msg of messagesToCheckName) {
     for (const pat of nameCorrectionPatterns) {
       const nm = msg.match(pat);
-      if (nm) {
+      if (nm && isValidPersonName(nm[1].trim())) {
         extractedName = nm[1].trim();
         isNameCorrectionIntent = true;
         break;
@@ -5778,7 +5803,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       const msg = allUserMessages[i];
       for (const pat of nameCorrectionPatterns) {
         const nm = msg.match(pat);
-        if (nm) {
+        if (nm && isValidPersonName(nm[1].trim())) {
           extractedName = nm[1].trim();
           break;
         }
@@ -5788,30 +5813,40 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   if (!extractedName) {
-    for (let i = 0; i < allUserMessages.length; i++) {
-      let cleanMsg = allUserMessages[i].trim();
-      if (email && cleanMsg.includes(email)) {
-        cleanMsg = cleanMsg.replace(email, '').replace(/,|y|mi correo es/gi, '').trim();
-      }
-      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanMsg)) {
-        const norm = cleanMsg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        const isBannedWord = /^(?:hola|buenas|agendar|cita|reunion|gracias|claro|si|no|ok|perfecto|excelente|de acuerdo|me parece|me parece bien|esta bien|as[ií] est[aá] bien|listo|adelante|dale|correcto|entendido|ninguna|nada|quiero|necesito|ocupo|deseo|desarrollo web|sitio web|pagina web|lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|hoy)$/i.test(norm)
-          || /\b(parece|bien|acuerdo|quiero|necesito|ocupo|deseo|desarrollo|web|software|precio|costo|tarifa|info)\b/i.test(norm);
-        if (!isBannedWord) {
-          extractedName = cleanMsg;
+    // Solo inferir nombre de 1 a 3 palabras si el turno previo del asistente preguntó explícitamente el nombre
+    let assistantAskedForName = false;
+    if (Array.isArray(history) && history.length > 0) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        if (history[i].sender === 'assistant' || history[i].role === 'assistant') {
+          const hMsg = history[i].message || history[i].content || '';
+          assistantAskedForName = /(?:c[uú]al\s+es\s+tu\s+nombre|c[oó]mo\s+te\s+llamas|me\s+(?:podr[ií]as\s+)?(?:indicar|compartir|decir|dar|regalar)\s+tu\s+nombre|con\s+qui[eé]n\s+tengo\s+el\s+gusto|a\s+nombre\s+de\s+qui[eé]n|tu\s+nombre\s+completo|tu\s+nombre\s+y\s+(?:correo|email|tel[eé]fono)|nombre\s+para\s+(?:la\s+cita|el\s+registro))/i.test(hMsg);
           break;
         }
       }
     }
+
+    if (assistantAskedForName && currentMessage) {
+      let cleanCandidate = currentMessage.trim();
+      if (email && cleanCandidate.includes(email)) {
+        cleanCandidate = cleanCandidate.replace(email, '').replace(/,|y|mi correo es/gi, '').trim();
+      }
+      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(cleanCandidate) && isValidPersonName(cleanCandidate)) {
+        extractedName = cleanCandidate;
+      }
+    }
+  }
+
+  if (extractedName && !isValidPersonName(extractedName)) {
+    extractedName = null;
   }
 
   if (extractedName) {
     name = extractedName;
-  } else if (!name && cardName) {
+  } else if (!name && cardName && isValidPersonName(cardName)) {
     name = cardName;
   }
 
-  if (name && name.toLowerCase() === 'cliente') {
+  if (name && (!isValidPersonName(name) || name.toLowerCase() === 'cliente')) {
     name = null;
   }
 
@@ -6306,10 +6341,13 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }
 
       // 4.1 DETECCIÓN INTELIGENTE DE AGENDAMIENTO & EXTRACCIÓN DE SLOTS
-      const isBookingContext = (
-        /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|consultoria|consultor[ií]a|reservar|reserva|calendario|disponibilidad|horario|espacio|reprogramar|reprogramaci[oó]n|cambiar|cambio|mover|posponer|modificar)\b/i.test(message) ||
-        sessionHistory.some(h => /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|asesoria|asesor[ií]a|reservar|reserva|calendario|reprogramar)\b/i.test(h.message || ''))
-      );
+      const isCatalogOrServiceQuery = /\b(servici[oa]s?|serivci[oa]s?|serbici[oa]s?|servicos?|product[oa]s?|paquetes?|planes?|preci[oa]s?|cost[oa]s?|tarifas?|ofrecen?|hacen?|desarrollan?|venden?|tienen?|brindan?|crean?)\b/i.test(message);
+
+      const isExplicitBookingIntent = /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|reservar|reserva|calendario|disponibilidad|horario|espacio|reprogramar|reprogramaci[oó]n|cambiar\s+(?:la\s+)?cita|mover\s+(?:la\s+)?cita|otra\s+hora|otro\s+horario|otra\s+cita|nueva\s+cita)\b/i.test(message);
+
+      const hasUserBookingHistory = sessionHistory.some(h => (h.sender === 'user' || h.role === 'user') && /\b(agendar|agenda|cita|citas|reunion|reuni[oó]n|reservar|reserva|calendario|reprogramar)\b/i.test(h.message || ''));
+
+      const isBookingContext = isExplicitBookingIntent || (hasUserBookingHistory && !isCatalogOrServiceQuery);
 
       const bookingState = extractBookingSlots(sessionHistory, message, activeLeadInfo);
 
@@ -7395,38 +7433,35 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         const isNeedOrBuyingIntent = /\b(necesito|ocupo|busco|quiero|requiero|quisiera|me\s+interesa|deseo|solicito|cotizar|cotizaci[oó]n|crear|hacer|desarrollar|comprar|adquirir|contratar|informaci[oó]n|asesor[ií]a|consultar?)\b/i.test(message) ||
           /\b(p[aá]gina\s*web|sitio\s*web|landing\s*page|tienda\s*(?:online|virtual)|e-?commerce|aplicaci[oó]n|app|software|plataforma|sistema|bot|agente\s*ia|ia|desarrollo)\b/i.test(message);
 
+        const isCatalogOrServiceQuery = /\b(servici[oa]s?|serivci[oa]s?|serbici[oa]s?|servicos?|product[oa]s?|paquetes?|planes?|preci[oa]s?|cost[oa]s?|tarifas?|ofrecen?|hacen?|desarrollan?|venden?|tienen?|brindan?|crean?)\b/i.test(message);
+
         const isInfoOrServiceQuery = (
           /\?|¿/.test(message) ||
           isNeedOrBuyingIntent ||
-          /\b(qu[eé]\s+(?:servicios?|hacen|ofrecen|desarrollan|incluye)|cu[aá]nto\s+(?:cuesta|vale|cobran|sale)|precios?|tarifas?|costos?|informaci[oó]n|planes?|paquetes?|garant[ií]a|tecnolog[ií]as?|lenguajes?|d[oó]nde\s+est[aá]n|qui[eé]nes?\s+son|c[oó]mo\s+trabajan)\b/i.test(message)
+          isCatalogOrServiceQuery ||
+          /\b(qu[eé]\s+(?:servici\w*|seriv\w*|hacen?|ofrecen?|desarrollan?|incluye)|cu[aá]nto\s+(?:cuesta|vale|cobran|sale)|preci\w*|tarif\w*|cost\w*|informaci[oó]n|planes?|paquetes?|garant[ií]a|tecnolog[ií]as?|lenguajes?|d[oó]nde\s+est[aá]n|qui[eé]nes?\s+son|c[oó]mo\s+trabajan)\b/i.test(message)
         ) && !isExplicitBookingIntent;
 
         const cleanResolvedDate = formatFullDayAndDate(bookingState.slots.date) || bookingState.slots.date;
 
         if (isInfoOrServiceQuery) {
           const topProduct = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
-          const prodTitle = topProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS a Medida' : 'Servicio Profesional');
+          const prodTitle = topProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & Plataformas SaaS a Medida' : 'Servicio Profesional');
           const prodPrice = topProduct?.price ? `$${topProduct.price} ${topProduct.currency || 'USD'}` : (targetTenant.name === 'GeoSoft' ? '$1200 USD' : '');
-          const prodDelivery = topProduct?.details?.tiempo_entrega || '2 a 4 semanas';
-          const prodWarranty = topProduct?.details?.soporte || 'Garantía oficial de 3 meses';
 
-          contextBlock += `\n\n[DIRECTIVA DE ASESORÍA COMERCIAL EXPERTA Y ENTENDIMIENTO DE NECESIDADES (MÁXIMA PRIORIDAD ACTUAL)]:
-El cliente acaba de manifestar una necesidad, interés o consulta sobre tus productos o servicios ("${message}").
-1. RECONOCE Y VALIDA LA NECESIDAD DEL CLIENTE DE INMEDIATO:
-   - Demuestra con entusiasmo, cercanía y seguridad técnica que comprendes su proyecto y que está en el lugar indicado.
-   - Si solicita una página web o desarrollo digital, destaca el impacto positivo en su negocio (credibilidad, captación de clientes y ventas 24/7).
-2. PRESENTA LA SOLUCIÓN OFICIAL DEL CATÁLOGO CON AUTORIDAD Y CLARIDAD:
-   - Solución idónea: "${prodTitle}".
-   - Explica con atractivo lo que incluye: diseño responsive premium (adaptado a celulares y computadoras), carga ultrarrápida, optimización SEO para Google, botón directo de WhatsApp y panel de administración para el dueño.
-   - Menciona de forma transparente la tarifa oficial (${prodPrice || 'según especificaciones'}) y tiempos de entrega estimados (${prodDelivery}, ${prodWarranty}).
-3. PREGUNTA CONSULTIVA INTELIGENTE PARA DIAGNOSTICAR SU PROYECTO:
-   - Hazle una o dos preguntas clave para entender su necesidad: ¿qué tipo de negocio tiene? ¿Desea vender productos en línea (catálogo/pagos), ofrecer servicios profesionales o captar prospectos? ¿Tiene ya logotipo o contenidos listos?
-4. OFRECE AGENDAR UNA REUNIÓN O ASESORÍA VIRTUAL DE FORMA CONSULTIVA (SIN FORZAR SLOTS):
-   - Puedes invitarlo amablemente a coordinar una breve videollamada de 15 minutos para ver una demo y estructurar la propuesta, o continuar resolviendo sus dudas directamente aquí según prefiera.
-5. PROHIBICIONES ESTRICTAS:
-   - Queda TERMINANTEMENTE PROHIBIDO responder preguntas genéricas o tontas como "¿Hay algún producto en específico...?" cuando el cliente ya indicó su necesidad.
-   - Queda TERMINANTEMENTE PROHIBIDO exigirle datos de agendamiento en frío (nombre, correo, teléfono) sin antes haber respondido a su requerimiento con valor y claridad.\n`;
-        } else if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft') {
+          contextBlock += `\n\n[DIRECTIVA DE ASESORÍA COMERCIAL DIRECTA, CONCISA Y DE ALTO VALOR (MÁXIMA PRIORIDAD ACTUAL)]:
+El cliente consulta sobre tus productos o servicios ("${message}").
+1. REGLA DE ORO DE BREVEDAD (RESPUESTAS CORTAS ACTIVAS):
+   - Responde en MÁXIMO 2 o 3 oraciones cortas (menos de 45 a 55 palabras en total).
+   - CERO discursos motivacionales vacíos (PROHIBIDO decir frases como "Qué excelente decisión dar el salto digital con un desarrollo web profesional...").
+   - CERO explicaciones innecesarias de SEO, responsive o garantías a menos que el usuario lo pregunte específicamente.
+2. PRESENTA DIRECTAMENTE LO QUE OFRECE LA EMPRESA CON PRECIO CLARO:
+   - ${targetTenant.name === 'GeoSoft' ? 'En GeoSoft desarrollamos sitios web y plataformas SaaS a medida ($1200 USD), y asistentes de Inteligencia Artificial para ventas y atención 24/7.' : `Ofrecemos "${prodTitle}" ${prodPrice ? `(desde ${prodPrice})` : ''}.`}
+3. PREGUNTA DE CIERRE CONVERSACIONAL NATURAL:
+   - Cierra con una sola pregunta breve para conocer su proyecto (ejemplo: "¿Qué tipo de proyecto o requerimiento tecnológico te gustaría desarrollar?").
+4. PROHIBICIÓN ESTRICTA:
+   - Queda TERMINANTEMENTE PROHIBIDO pedir datos personales (nombre, correo, teléfono) en frío cuando el cliente solo está consultando qué servicios ofrecen.\n`;
+        } else if (isBookingContext) {
           contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
 Ubicación actual de datos en la conversación:
 - 1. Nombre completo: ${bookingState.slots.name ? `OBTENIDO ("${bookingState.slots.name}")` : 'FALTANTE'}
