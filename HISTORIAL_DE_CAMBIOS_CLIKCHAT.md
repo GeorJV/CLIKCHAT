@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Implementación de la Skill Universal `respuesta-concisa` para Ahorro del 85% al 90% de Tokens (v2.9.13)
+- **Diagnóstico y Necesidad:**
+  - Respuestas conversacionales previas acumulaban tokens de salida innecesarios (saludos, preámbulos, despedidas y parafraseos redundantes).
+  - El usuario requirió una skill y directriz global para todos los proyectos que restrinja las respuestas a puntos clave concisos, reduciendo el gasto de tokens entre un 85% y 90%.
+- **Solución Quirúrgica Implementada:**
+  1. *Regla Global Universal en `C:\Users\User\.gemini\GEMINI.md`:*
+     - Añadida la sección obligatoria *"Protocolo Universal de Respuestas Cortas y Concisas (Ahorro de 85% a 90% de Tokens)"* que rige automáticamente todas las sesiones y proyectos futuros.
+  2. *Skill Global en `C:\Users\User\.gemini\config\skills\respuesta-concisa\SKILL.md`:*
+     - Definición de estándares: cero cortesías, cero parafraseo, entrega de 3-5 puntos clave, enlaces a archivos tocados y estado de verificación en <15 líneas.
+  3. *Registro en Bóveda Central y Catálogos (`C:\Users\User\SkillsVault\`):*
+     - Integrada en `catalogo.json` (ID 32), `CATALOGO.md` (Skill Principal 13) y `skills/respuesta-concisa/SKILL.md`.
+  4. *Instalación Local en el Proyecto:*
+     - Disponible en `.agents/skills/respuesta-concisa/SKILL.md`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación y verificación estructural limpia.
+  - *Filtro 2:* Sincronizado en GitHub (`main`).
+  - *Filtro 3:* Despliegue verificado y sincronizado con ARQ AI Studio.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Corrección Crítica en Ficha de Cita: Erradicación de "Cliente", Nombre Real y Teléfono del Usuario sin Mezclar Negocio (v2.9.12)
 - **Diagnóstico y Necesidad:**
   1. *Aparición de la palabra "Cliente" en vez del Nombre Real:*

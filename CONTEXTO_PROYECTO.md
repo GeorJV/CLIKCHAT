@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 08:16 GMT-6
-- **Versión Actual:** 2.9.12 (Ficha de Cita Limpia: Nombre Real, Erradicación de 'Cliente' y Teléfono del Usuario)
+- **Última Actualización:** 2026-10-28 08:20 GMT-6
+- **Versión Actual:** 2.9.13 (Skill Universal 'respuesta-concisa' y Regla Global de Ahorro de Tokens 85-90%)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Ficha de Cita Sin 'Cliente': Ícono de usuario con nombre real de la persona; cero etiquetas genéricas 'Cliente'.
-  - Teléfono 100% del Usuario: Erradicado teléfono de GeoSoft (+506 7293-5612) de fallbacks; solo muestra teléfono del usuario.
-  - Extractor Inteligente en Backend: Búsqueda robusta de teléfono en historial D1 y emisión de tarjeta con teléfono/WhatsApp.
-  - Parser Contextual en Frontend: `parseBookingCard` escanea historial y localStorage para rescate de datos reales.
+  - Skill 'respuesta-concisa': Configurada a nivel global y de proyecto para limitar salidas a puntos clave técnicos.
+  - Regla Global en GEMINI.md: Prohibición de saludos, relleno, parafraseo y explicaciones teóricas en todos los chats.
+  - Ahorro de Tokens: Reducción estimada del 85% al 90% en tokens de salida (Output Tokens) por interacción.
+  - Catálogo Maestro: Registrada en SkillsVault (catalogo.json ID 32, CATALOGO.md y .gemini/config/skills).
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
