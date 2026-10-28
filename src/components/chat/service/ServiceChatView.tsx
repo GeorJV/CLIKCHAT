@@ -90,13 +90,14 @@ export const ServiceChatView: React.FC<Props> = ({
             const parsed = JSON.parse(cardMatch[0].replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, ''));
             const resName = (parsed.customerName && !/^cliente$/i.test(parsed.customerName)) ? parsed.customerName : (uName || '');
             const resPhone = (parsed.customerPhone && !parsed.customerPhone.includes('72935612')) ? parsed.customerPhone : (uPhone || '');
+            const realId = data?.booking?.id || ('apt_' + Date.now());
             const cData: ServiceBookingData = { service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' }, date: parsed.date, timeSlot: parsed.time, customerName: resName, customerEmail: parsed.customerEmail, customerPhone: resPhone };
+            (cData as any).id = realId;
             setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
-            const realId = data?.booking?.id || ('apt_' + Date.now());
             const memApt = { id: realId, clientName: resName || 'Cliente Agendado', email: cData.customerEmail || '', serviceName: cData.service.title, date: cData.date, dateKey: cData.date, displayDate: cData.date, time: cData.timeSlot, status: 'confirmed', channel: 'web', phone: resPhone, notes: '', price: cData.service.price || 0 };
             [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
-              try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); if (!cur.some((x: any) => x.id === realId)) localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([memApt, ...cur])); } catch {}
+              try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([memApt, ...cur.filter((x: any) => x.id !== realId && !(x.clientName === resName && x.time === cData.timeSlot))])); } catch {}
             });
             broadcastBookingCreated(tenantSlug, { id: realId, clientName: cData.customerName, serviceName: cData.service.title, date: cData.date, time: cData.timeSlot, price: cData.service.price });
           } catch (e) {}
@@ -137,12 +138,12 @@ export const ServiceChatView: React.FC<Props> = ({
     setConfirmedBooking(data);
     try { localStorage.setItem(confirmKey, JSON.stringify(data)); } catch (e) {}
     const tId = (selectedService as any).tenant_id || (tenantSlug === 'geosoft' ? 'ten_geosoft_prod' : (tenantSlug || 'geosoft'));
-    const aptId = 'apt_' + Date.now();
-    fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantSlug, tenantId: tId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
+    const aptId = (data as any)?.id || (confirmedBooking as any)?.id || ('apt_' + Date.now());
+    fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: aptId, updateExisting: true, tenantSlug, tenantId: tId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
     try {
       const apt = { id: aptId, clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
       [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
-        try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([apt, ...cur.filter((x: any) => x.id !== aptId)])); } catch {}
+        try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([apt, ...cur.filter((x: any) => x.id !== aptId && !(x.clientName === data.customerName && x.time === data.timeSlot))])); } catch {}
       });
       broadcastBookingCreated(tenantSlug, { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
     } catch (e) {}

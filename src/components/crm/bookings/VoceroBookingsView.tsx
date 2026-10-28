@@ -3,12 +3,25 @@ import { CalendarDays, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard'; import { VoceroNewBookingModal } from './VoceroNewBookingModal'; import { VoceroCompactCalendar } from './VoceroCompactCalendar'; import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal'; import { BookingIntervalConfig } from './BookingIntervalConfig'; import { BOOKING_FILTER_TABS } from './bookingConstants';
 import { normalizeToDateKey, formatDisplayDate, getBookingFilterKeys, isBookingInFilter, BookingFilterType } from '../../../utils/bookingDateNormalizer'; import { subscribeBookingSync, broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
-interface VoceroBookingsViewProps {
-  tenantId?: string; currency?: string; highlightedBookingId?: string | null;
-  autoOpenBooking?: any; onAcknowledgeBooking?: (id: string) => void; onClearAutoOpenBooking?: () => void;
-}
+interface VoceroBookingsViewProps { tenantId?: string; currency?: string; highlightedBookingId?: string | null; autoOpenBooking?: any; onAcknowledgeBooking?: (id: string) => void; onClearAutoOpenBooking?: () => void; }
 
 const sortApts = (list: AppointmentItem[]) => [...list].sort((a, b) => (b.dateKey || '').localeCompare(a.dateKey || '') || (b.time || '').localeCompare(a.time || '') || b.id.localeCompare(a.id));
+const dedupeApts = (list: any[], now: Date): AppointmentItem[] => {
+  const seenIds = new Set<string>(); const seenSlots = new Set<string>(); const res: AppointmentItem[] = [];
+  for (const a of list) {
+    if (!a?.id || seenIds.has(String(a.id))) continue;
+    const dk = normalizeToDateKey(a.dateKey || a.displayDate || a.booking_date, now) || a.dateKey || a.displayDate || '';
+    const key = `${(a.clientName || a.customer_name || '').trim().toLowerCase()}_${dk}_${(a.time || a.booking_time || '').trim().toLowerCase()}`;
+    if (key.length > 5 && seenSlots.has(key)) continue;
+    seenIds.add(String(a.id)); if (key.length > 5) seenSlots.add(key);
+    res.push({
+      ...a, id: String(a.id), clientName: a.clientName || a.customer_name || 'Cliente', serviceName: a.serviceName || a.service_name || 'Servicio Profesional',
+      dateKey: dk, displayDate: formatDisplayDate(a.displayDate || a.dateKey || a.booking_date, now) || a.displayDate || dk, time: a.time || a.booking_time || '10:00 AM',
+      status: a.status || 'confirmed', channel: a.channel || 'web', phone: a.phone || a.customer_phone || '', notes: a.notes || '', price: Number(a.price) || 0
+    });
+  }
+  return sortApts(res);
+};
 
 export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId, highlightedBookingId, autoOpenBooking, onAcknowledgeBooking, onClearAutoOpenBooking }) => {
   const [timeFilter, setTimeFilter] = useState<BookingFilterType>('all');
@@ -32,8 +45,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       [storageKey, 'clikchat_bookings_geosoft', 'clikchat_bookings_ten_geosoft_prod'].forEach(k => {
         const s = localStorage.getItem(k); if (s) { try { const arr = JSON.parse(s); if (Array.isArray(arr)) allFound.push(...arr); } catch {} }
       });
-      const unique = Array.from(new Map(allFound.map((a: any) => [a.id, a])).values()).filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id));
-      return sortApts(unique.map((a: AppointmentItem) => ({ ...a, dateKey: normalizeToDateKey(a.dateKey || a.displayDate, now) || a.dateKey, displayDate: formatDisplayDate(a.displayDate || a.dateKey, now) || a.displayDate })));
+      return dedupeApts(allFound.filter((a: any) => !['apt-1', 'apt-2', 'apt-3', 'apt-4'].includes(a.id)), now);
     } catch { return []; }
   });
 
@@ -73,10 +85,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
         setAppointments(prev => {
-          const map = new Map<string, AppointmentItem>();
-          prev.forEach(p => map.set(p.id, p));
-          apiApts.forEach(a => map.set(a.id, a));
-          const merged = sortApts(Array.from(map.values()));
+          const merged = dedupeApts([...apiApts, ...prev], now);
           if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status && p.clientName === merged[i].clientName && p.time === merged[i].time)) return prev;
           return merged;
         });
@@ -158,21 +167,12 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
         <BookingIntervalConfig tenantId={tId} isDarkTheme={false} />
         {showMonthCalendar && <div className="mb-4"><VoceroCompactCalendar appointmentDates={appointmentDates} selectedDate={calendarSelectedDate} onSelectDate={(d) => setCalendarSelectedDate(d)} /></div>}
         {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs">
-            <CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p>
-          </div>
+          <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs"><CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p></div>
         ) : (
-          filtered.map((apt) => (
-            <VoceroAppointmentCard
-              key={apt.id} appointment={apt} isHighlighted={apt.id === highlightedBookingId}
-              onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)} onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment}
-              onSelectAppointment={(item) => setSelectedAppointment(item)}
-            />
-          ))
+          filtered.map((apt) => (<VoceroAppointmentCard key={apt.id} appointment={apt} isHighlighted={apt.id === highlightedBookingId} onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)} onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment} onSelectAppointment={(item) => setSelectedAppointment(item)} />))
         )}
       </main>
       <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={handleCreateBooking} />
       <VoceroAppointmentDetailModal appointment={selectedAppointment} isOpen={Boolean(selectedAppointment)} onClose={() => { setSelectedAppointment(null); if (onClearAutoOpenBooking) onClearAutoOpenBooking(); }} onToggleStatus={(id) => { handleToggleStatus(id); setSelectedAppointment(prev => prev && prev.id === id ? { ...prev, status: prev.status === 'confirmed' ? 'pending' : 'confirmed' } : prev); }} onDelete={handleDeleteAppointment} />
-    </div>
-  );
+    </div>);
 };

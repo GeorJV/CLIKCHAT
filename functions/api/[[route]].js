@@ -3393,17 +3393,26 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         const currency = body.currency || 'USD';
         const notes = body.notes || '';
 
-        // Si se solicita explícitamente reprogramar una cita previa
+        // Prevención estricta de duplicados: búsqueda por ID o por mismo cliente + fecha + hora
         const isExplicitUpdate = Boolean(body.isReschedule || body.updateExisting || body.is_reschedule);
         let existingApt = [];
-        if (isExplicitUpdate) {
+        if (body.id) {
+          existingApt = await executeD1('SELECT id FROM bookings WHERE id = ?1 LIMIT 1', [body.id]).catch(() => []);
+        }
+        if (existingApt.length === 0) {
           existingApt = await executeD1(
-            'SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != \'\' AND customer_phone = ?2) OR (customer_email != \'\' AND customer_email = ?3)) AND status != \'cancelled\' ORDER BY created_at DESC LIMIT 1',
-            [tenantId, customerPhone, customerEmail]
+            'SELECT id FROM bookings WHERE (tenant_id = ?1 OR tenant_id = ?2) AND booking_date = ?3 AND booking_time = ?4 AND ((customer_phone != \'\' AND customer_phone = ?5) OR (customer_email != \'\' AND customer_email = ?6) OR (LOWER(customer_name) = LOWER(?7) AND customer_name != \'Cliente\')) AND status != \'cancelled\' ORDER BY created_at DESC LIMIT 1',
+            [tenantId, tenantSlug || tenantId, bookingDate, bookingTime, customerPhone, customerEmail, customerName]
+          ).catch(() => []);
+        }
+        if (isExplicitUpdate && existingApt.length === 0) {
+          existingApt = await executeD1(
+            'SELECT id FROM bookings WHERE (tenant_id = ?1 OR tenant_id = ?2) AND ((customer_phone != \'\' AND customer_phone = ?3) OR (customer_email != \'\' AND customer_email = ?4)) AND status != \'cancelled\' ORDER BY created_at DESC LIMIT 1',
+            [tenantId, tenantSlug || tenantId, customerPhone, customerEmail]
           ).catch(() => []);
         }
 
-        if (isExplicitUpdate && existingApt.length > 0) {
+        if (existingApt.length > 0) {
           const prevId = existingApt[0].id;
           const updObj = {
             id: prevId, tenant_id: tenantId, customer_name: customerName, customer_email: customerEmail, customer_phone: customerPhone,
@@ -3490,6 +3499,20 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
               })
             : GLOBAL_BOOKINGS.filter(b => !DELETED_BOOKING_IDS.has(b.id));
         }
+
+        // Deduplicación universal: jamás emitir dos citas idénticas (mismo cliente, fecha y hora)
+        const seenRows = new Set();
+        const deduplicatedRows = [];
+        for (const r of rows) {
+          const normKey = `${(r.customer_name || '').trim().toLowerCase()}_${(r.booking_date || '').trim()}_${(r.booking_time || '').trim().toLowerCase()}`;
+          if (seenRows.has(r.id) || (r.customer_name && r.booking_date && r.booking_time && seenRows.has(normKey))) {
+            continue;
+          }
+          seenRows.add(r.id);
+          if (r.customer_name && r.booking_date && r.booking_time) seenRows.add(normKey);
+          deduplicatedRows.push(r);
+        }
+        rows = deduplicatedRows;
 
         rows.sort((a, b) => ((b.created_at || '').localeCompare(a.created_at || '')) || (b.id || '').localeCompare(a.id || ''));
         return jsonResponse({ success: true, bookings: rows, source: d1Success ? 'd1' : 'fallback' });

@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Erradicación Total de Citas Duplicadas en Ingesta y Agenda CRM (v2.9.22)
+- **Diagnóstico y Necesidad:**
+  1. *Citas Duplicadas en la Agenda CRM:*
+     - Al confirmar una cita desde el chat de servicios (`ServiceChatView.tsx`), aparecían dos tarjetas idénticas en la agenda/CRM con el mismo cliente, fecha, hora y servicio ("Geor (WEB) - Desarrollo Web Estático - 10:40 AM").
+     - *Causa Raíz 1 (Doble Inserción en Frontend):* Cuando `/api/chat/message` emitía `[BOOKING_CARD:]`, el backend guardaba la cita en D1 retornando su `id`. Al hacer clic en "Confirmo cita y guardar", `handleConfirmBooking` generaba un nuevo ID local (`apt_${Date.now()}`) y realizaba un `POST /api/bookings` nuevo sin flag de actualización, duplicando el registro en D1 y `localStorage`.
+     - *Causa Raíz 2 (Backend Permisivo a Duplicados):* En `functions/api/[[route]].js`, `POST /api/bookings` solo actualizaba si `isReschedule` era verdadero; en caso contrario creaba un nuevo registro. Asimismo, `GET /api/bookings` retornaba duplicados si existían filas con IDs distintos en la base de datos.
+     - *Causa Raíz 3 (Deduplicación Débil en UI):* En `VoceroBookingsView.tsx`, la deduplicación solo evaluaba `id`, permitiendo renderizar dos tarjetas si tenían IDs distintos a pesar de tener mismo cliente, fecha y hora.
+- **Solución Quirúrgica Implementada:**
+  1. *Blindaje y Deduplicación en Backend (`functions/api/[[route]].js`):*
+     - En `POST /api/bookings`: Detección previa por `id` o por slot coincidente `(tenant_id, booking_date, booking_time, customer_phone/email/name)`. Si ya existe una cita en dicho horario para ese cliente, se actualiza en lugar de insertar un duplicado.
+     - En `GET /api/bookings`: Deduplicación universal por clave compuesta (`${customer_name}_${booking_date}_${booking_time}`) para limpiar duplicados históricos y garantizar unicidad estricta.
+  2. *Reutilización de ID y Limpieza en Chat (`ServiceChatView.tsx`):*
+     - Preservado el `id` retornado por D1 y enviado `updateExisting: true` al confirmar la cita.
+     - Sanitizado `localStorage` filtrando slots coincidentes antes de guardar.
+  3. *Deduplicación Integral en Agenda CRM (`VoceroBookingsView.tsx`):*
+     - Implementado `dedupeApts` con slot key compuesto tanto en la hidratación inicial como en la sincronización de la API.
+     - Cumplimiento estricto del estándar ARQMODULAR (178 líneas <= 180 líneas).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 10.95s con 0 errores (`dist/assets/index-DT9LFg2U.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Erradicación de Error en Pantalla al Ver Cita y Blindaje de Tipos (v2.9.21)
 - **Diagnóstico y Necesidad:**
   1. *Error en Pantalla al Presionar 'Ver cita ahora':*
