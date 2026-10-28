@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 21:10 GMT-6
-- **Versión Actual:** 2.9.3 (Auditoría de Conversaciones Largas y Resiliencia Conversacional)
+- **Última Actualización:** 2026-10-27 21:30 GMT-6
+- **Versión Actual:** 2.9.4 (Calibración Universal Multi-Industria: Productos Físicos y Servicios)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Auditoría de 24 Turnos en 3 Conversaciones: Validado en producción B2B software, restaurante express y cliente escéptico.
-  - Cero Rupturas ni Desconexiones: 100% de persistencia en D1, reprogramación dinámica y emisión de tarjetas.
-  - Despedida Inteligente Respetuosa: Detección de gratitud/cierre sin exigir datos repetitivamente.
-  - Carrito y Comandas Dinámicas: Cálculo de montos en tiempo real con tiempos estimados de entrega express.
-  - Verificado con 3 Filtros: Build limpio (7.40s), deploy dual en Pages y 17/17 rutas auditadas en Chrome Headless.
+  - Calibración Universal Multi-Industria: Adaptación automática a productos físicos (retail, moda, ferretería) y servicios.
+  - Manejo de Objeciones Dinámico: Resalta autenticidad de materiales y garantía en tiendas; diagnóstico y ROI en servicios.
+  - Agendamiento Presencial/Online Inteligente: Infiere modalidad presencial en salud/clínicas/talleres y online en digital.
+  - Tarjetas y Catálogo 100% Dinámicos: Erradicado cualquier sesgo hardcodeado en nombres de servicios y precios de cita.
+  - Verificado con 3 Filtros: Build limpio (7.45s), deploy dual en Pages y 17/17 rutas auditadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

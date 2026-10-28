@@ -1204,7 +1204,7 @@ async function recordAiIncident({ tenantId, tenantSlug, sessionId, failedModel, 
   }
 }
 
-async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo, preferredModel, tenantId, tenantSlug, sessionId }) {
+async function callEdgeLLM({ systemPrompt, operationalRules, context, history, userMessage, env, customKey, userTimeInfo, preferredModel, tenantId, tenantSlug, sessionId, businessType = 'servicios', tenantName = '' }) {
   let userCustomConfig = null;
   if (customKey && typeof customKey === 'string' && customKey.trim().length > 0) {
     if (customKey.trim().startsWith('{')) {
@@ -1213,6 +1213,48 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
       userCustomConfig = { key: customKey.trim() };
     }
   }
+
+  const bType = (businessType || 'servicios').toLowerCase();
+  const isPhysicalStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria|comercio/i.test(`${tenantName} ${bType}`);
+  const isFood = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger|panaderia/i.test(`${tenantName} ${bType}`);
+
+  const objectionRule = isPhysicalStore
+    ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (PRODUCTOS FÍSICOS & RETAIL):
+    - Si el cliente cuestiona el precio (ej: "está caro", "lo vi más barato en otro lado"): NUNCA te pongas a la defensiva ni repitas el precio a secas.
+    - Valida con empatía y resalta la calidad garantizada de los materiales, autenticidad del producto, durabilidad superior, garantía directa del fabricante y despacho rápido con seguimiento frente a réplicas defectuosas o imitaciones sin respaldo.
+    - Concluye invitando cordialmente a verificar disponibilidad de tallas, colores o consultar los métodos de entrega express.`
+    : isFood
+    ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (GASTRONOMÍA & RESTAURANTES):
+    - Si el cliente cuestiona el precio: valida su perspectiva y destaca los ingredientes frescos de primera calidad, porciones generosas, preparación artesanal al momento y empaque térmico para que llegue caliente frente a opciones industriales genéricas.
+    - Concluye preguntando amablemente qué antojo o platillo le gustaría probar hoy.`
+    : `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (SERVICIOS PROFESIONALES & CONSULTORÍA):
+    - Si el cliente cuestiona el precio (ej: "está caro", "vi opciones por $150"): NUNCA te pongas a la defensiva ni repitas el precio a secas.
+    - Valida su perspectiva con empatía y destaca con seguridad ejecutiva el valor del trabajo personalizado, especialistas dedicados, código propio o metodología probada, seguridad de datos y retorno de inversión frente a soluciones genéricas descartables.
+    - Concluye invitando cordialmente a una sesión estratégica o consulta de diagnóstico de 15 minutos sin costo para analizar los requerimientos reales de su caso.`;
+
+  const hitlRule = isPhysicalStore
+    ? `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el cliente pregunta por repuestos o medidas sumamente específicas, modelos fuera de catálogo, pedidos al por mayor o garantías extendidas no listadas, responde con honestidad destacando los estándares de la tienda, e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el equipo humano revise el inventario y le brinde respuesta formal.`
+    : isFood
+    ? `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el cliente consulta por alérgenos específicos no listados, reservaciones para eventos especiales o pedidos corporativos, responde con amabilidad e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el personal del restaurante le confirme de inmediato.`
+    : `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el cliente pregunta por certificaciones externas específicas (ej. ISO, SOC2, normativas sectoriales), convenios o detalles que NO se encuentren en el catálogo oficial, responde con honestidad destacando los estándares de seguridad y calidad, e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el equipo humano del negocio reciba la duda y le brinde respuesta formal.`;
+
+  const industryGuidelines = isPhysicalStore
+    ? `12. REGLAS ESPECÍFICAS DE COMERCIO Y PRODUCTOS FÍSICOS:
+    - Cuando el cliente consulte por un artículo, describe claramente sus especificaciones (material, colores, tallas, compatibilidad y garantía).
+    - Métodos de entrega: menciona opciones de retiro en sucursal o envío express a domicilio según aplique.
+    - Métodos de pago: confirma disponibilidad de transferencia, tarjeta, Sinpe Móvil o pago contra entrega si está indicado en las políticas.
+    - Si el cliente desea ordenar, solicita con amabilidad su dirección o sucursal de preferencia para coordinar la entrega.`
+    : isFood
+    ? `12. REGLAS ESPECÍFICAS DE RESTAURANTES Y ALIMENTOS:
+    - Describe los platillos con atractivo gastronómico, detallando ingredientes, aderezos y acompañamientos.
+    - Ofrece bebidas frías o acompañamientos para completar el combo o la cena.
+    - Confirma si la orden es para retirar en el local o para envío a domicilio express, indicando tiempos aproximados de entrega.`
+    : `12. REGLAS ESPECÍFICAS DE SERVICIOS PROFESIONALES:
+    - Enfócate en el diagnóstico y comprensión de las necesidades puntuales del cliente.
+    - Explica el alcance y guía cordialmente hacia una sesión estratégica, demostración o cita de evaluación sin presionar.`;
 
   const rulesBlock = operationalRules && operationalRules.trim().length > 0
     ? `\n\n[REGLAS ESTRICTAS DE OPERACIÓN Y RESTRICCIONES DEL NEGOCIO (MÁXIMA PRIORIDAD OBLIGATORIA)]:\n${operationalRules.trim()}`
@@ -1283,12 +1325,9 @@ NORMAS ESTRICTAS DE ATENCIÓN Y COMPORTAMIENTO COMERCIAL:
    - Si el cliente confirma o escoge una hora (ej: "Si 9 y 40 esta bien", "a las 10 me sirve"), asúmela con total certeza, agilidad y naturalidad: confirma para esa hora sin cuestionar ni mencionar opciones que ya quedaron en el pasado.
    - Cero suspenso artificial o dramatismo infantil: PROHIBIDO usar puntos suspensivos innecesarios como "y... todo está en orden!" o "y... lamentablemente...". Exprésate con aplomo y solidez ejecutiva.
    - Toda respuesta debe ser completa y terminada; nunca dejes oraciones cortadas.
-10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (NIVEL ASESOR SENIOR):
-    - Si el cliente cuestiona el precio (ej: "está caro", "por qué tanto", "vi opciones más baratas por $100"), NUNCA repitas el precio a secas ni te pongas a la defensiva.
-    - Valida su perspectiva con empatía y destaca con seguridad ejecutiva el valor del código propio, arquitectura en la nube de alta velocidad, base de datos privada y automatizaciones que multiplican ventas frente a plantillas genéricas desechables.
-    - Concluye siempre invitando cordialmente a una sesión estratégica breve de 15 minutos para analizar los requerimientos reales de su caso sin costo.
-11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
-    - Si el cliente pregunta por certificaciones externas específicas (ej. ISO, SOC2), convenios bancarios o detalles que NO se encuentren en el catálogo oficial, responde con honestidad destacando los estándares de seguridad de la plataforma, e incluye al final de tu respuesta el marcador <!--UNRESOLVED_QUERY--> para que el equipo humano del negocio reciba la duda y le brinde respuesta formal.`;
+${objectionRule}
+${hitlRule}
+${industryGuidelines}`;
 
   const messages = [
     { role: 'system', content: systemContent },
@@ -5639,6 +5678,10 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   let date = null;
   let time = null;
 
+  const effectiveServiceName = leadInfo?.serviceName || leadInfo?.topProductName || (leadInfo?.tenantName === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (leadInfo?.tenantName ? `Servicios de ${leadInfo.tenantName}` : 'Servicio Profesional'));
+  const effectivePrice = leadInfo?.price !== undefined ? leadInfo.price : (leadInfo?.tenantName === 'GeoSoft' ? 1200 : 0);
+  const effectiveModality = leadInfo?.modality || 'online';
+
   // 0. Recuperar datos de cualquier tarjeta de cita previa en el historial
   let cardName = null;
   let cardEmail = null;
@@ -6001,13 +6044,13 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     stepInstruction = `PASO 6 (CIERRE Y DESPEDIDA PROFESIONAL): La cita ya quedó agendada y confirmada en un turno anterior. El cliente está diciendo gracias, que así está bien, que eso es todo o despidiéndose. Responde con calidez y despedida profesional y cordial (ej: "¡Con muchísimo gusto! Estaremos muy atentos a tu sesión. Aquí estaremos a tu entera disposición para cualquier cambio cuando gustes. ¡Que tengas un excelente día!"). QUEDA TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y PROHIBIDO volver a confirmar la cita.`;
   } else if (isNameCorrectionIntent) {
     currentStep = 5;
-    stepInstruction = `PASO 5 (CORRECCIÓN DE NOMBRE): El cliente indicó que se equivocó de nombre o solicitó corregirlo/cambiarlo a "${name || 'su nombre correcto'}". Acepta la corrección con total amabilidad y calidez en un solo párrafo breve confirmando que has actualizado el nombre de la cita a "${name}" para el ${date} a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta actualizada [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"online","price":1200}].`;
+    stepInstruction = `PASO 5 (CORRECCIÓN DE NOMBRE): El cliente indicó que se equivocó de nombre o solicitó corregirlo/cambiarlo a "${name || 'su nombre correcto'}". Acepta la corrección con total amabilidad y calidez en un solo párrafo breve confirmando que has actualizado el nombre de la cita a "${name}" para el ${date} a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta actualizada [BOOKING_CARD: {"service":"${effectiveServiceName}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"${effectiveModality}","price":${effectivePrice}}].`;
   } else if (isRescheduleIntent) {
     currentStep = 5;
-    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"online","price":1200}].`;
+    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${effectiveServiceName}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"${effectiveModality}","price":${effectivePrice}}].`;
   } else {
     currentStep = 5;
-    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS Y CONFIRMADOS (Nombre: ${name}, Correo: ${email}, Teléfono: ${phone}, Fecha: ${date}, Hora: ${time})! Si la fecha y hora están disponibles en agenda, autoriza la reserva con calidez en un solo párrafo breve. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email}","customerPhone":"${phone}","modality":"online","price":1200}].`;
+    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS Y CONFIRMADOS (Nombre: ${name}, Correo: ${email}, Teléfono: ${phone}, Fecha: ${date}, Hora: ${time})! Si la fecha y hora están disponibles en agenda, autoriza la reserva con calidez en un solo párrafo breve. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${effectiveServiceName}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email}","customerPhone":"${phone}","modality":"${effectiveModality}","price":${effectivePrice}}].`;
   }
 
   return {
@@ -6390,6 +6433,15 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }
       } catch (sessReadErr) {}
 
+      const rawLiveProds = Array.isArray(body.liveProducts) ? body.liveProducts : [];
+      activeLeadInfo.tenantName = targetTenant?.name || '';
+      activeLeadInfo.businessType = targetTenant?.business_type || 'servicios';
+      if (rawLiveProds.length > 0) {
+        activeLeadInfo.topProductName = rawLiveProds[0].name;
+        if (rawLiveProds[0].price !== undefined) activeLeadInfo.price = rawLiveProds[0].price;
+      }
+      activeLeadInfo.modality = (targetTenant?.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant?.name || '')) ? 'presencial' : 'online';
+
       // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (SOLO SI ES EL PRIMER TURNO / CERO RESET EN CONVERSACIONES EN CURSO)
       const cleanMsgGreeting = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
       const isPureGreeting = sessionHistory.length === 0 && /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
@@ -6555,6 +6607,10 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         }).filter(p => (p.price > 0 && p.name && p.name.trim().length > 1) || (p.name && !/^(?:comida\s*cajera\s*xl|default|catalogo\s*oficial)$/i.test(p.name.trim())));
         docChunks = cRows;
         rawDocs = rRows;
+        if (products.length > 0 && !activeLeadInfo.topProductName) {
+          activeLeadInfo.topProductName = products[0].name;
+          if (products[0].price !== undefined) activeLeadInfo.price = products[0].price;
+        }
       } catch (dataErr) {
         console.warn('Error cargando conocimiento D1:', dataErr.message);
       }
@@ -7558,22 +7614,37 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
 
         if (isInfoOrServiceQuery) {
           const topProduct = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
-          const prodTitle = topProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & Plataformas SaaS a Medida' : 'Servicio Profesional');
-          const prodPrice = topProduct?.price ? `$${topProduct.price} ${topProduct.currency || 'USD'}` : (targetTenant.name === 'GeoSoft' ? '$1200 USD' : '');
+          const prodTitle = topProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & Plataformas SaaS a Medida' : (targetTenant.name ? `Servicios de ${targetTenant.name}` : 'Servicio Profesional'));
+          const prodPrice = topProduct?.price ? `${targetTenant.currency === 'CRC' ? '₡' : '$'}${topProduct.price} ${topProduct.currency || 'USD'}` : (targetTenant.name === 'GeoSoft' ? '$1200 USD' : '');
+
+          const bType = (targetTenant.business_type || 'servicios').toLowerCase();
+          const isStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria/i.test(`${targetTenant.name} ${bType}`);
+          const isRest = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger/i.test(`${targetTenant.name} ${bType}`);
+
+          const questionClosing = isStore
+            ? 'Cierra con una sola pregunta breve para conocer qué producto, modelo o artículo le interesa (ejemplo: "¿Qué producto o artículo estás buscando hoy?").'
+            : isRest
+            ? 'Cierra con una sola pregunta breve sobre qué platillo o antojo le gustaría ordenar (ejemplo: "¿Qué se te antoja ordenar o qué platillo te gustaría probar hoy?").'
+            : 'Cierra con una sola pregunta breve para conocer su requerimiento o consulta (ejemplo: "¿Qué tipo de servicio o requerimiento te gustaría evaluar?").';
 
           contextBlock += `\n\n[DIRECTIVA DE ASESORÍA COMERCIAL DIRECTA, CONCISA Y DE ALTO VALOR (MÁXIMA PRIORIDAD ACTUAL)]:
 El cliente consulta sobre tus productos o servicios ("${message}").
 1. REGLA DE ORO DE BREVEDAD (RESPUESTAS CORTAS ACTIVAS):
    - Responde en MÁXIMO 2 o 3 oraciones cortas (menos de 45 a 55 palabras en total).
-   - CERO discursos motivacionales vacíos (PROHIBIDO decir frases como "Qué excelente decisión dar el salto digital con un desarrollo web profesional...").
-   - CERO explicaciones innecesarias de SEO, responsive o garantías a menos que el usuario lo pregunte específicamente.
+   - CERO discursos motivacionales vacíos.
+   - CERO explicaciones innecesarias a menos que el usuario lo pregunte específicamente.
 2. PRESENTA DIRECTAMENTE LO QUE OFRECE LA EMPRESA CON PRECIO CLARO:
    - ${targetTenant.name === 'GeoSoft' ? 'En GeoSoft desarrollamos sitios web y plataformas SaaS a medida ($1200 USD), y asistentes de Inteligencia Artificial para ventas y atención 24/7.' : `Ofrecemos "${prodTitle}" ${prodPrice ? `(desde ${prodPrice})` : ''}.`}
 3. PREGUNTA DE CIERRE CONVERSACIONAL NATURAL:
-   - Cierra con una sola pregunta breve para conocer su proyecto (ejemplo: "¿Qué tipo de proyecto o requerimiento tecnológico te gustaría desarrollar?").
+   - ${questionClosing}
 4. PROHIBICIÓN ESTRICTA:
-   - Queda TERMINANTEMENTE PROHIBIDO pedir datos personales (nombre, correo, teléfono) en frío cuando el cliente solo está consultando qué servicios ofrecen.\n`;
+   - Queda TERMINANTEMENTE PROHIBIDO pedir datos personales (nombre, correo, teléfono) en frío cuando el cliente solo está consultando qué productos o servicios ofrecen.\n`;
         } else if (isBookingContext) {
+          const bTopProduct = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
+          const defaultServiceName = bTopProduct?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name ? `Servicios de ${targetTenant.name}` : 'Servicio Profesional'));
+          const defaultServicePrice = bTopProduct?.price !== undefined ? bTopProduct.price : (targetTenant.name === 'GeoSoft' ? 1200 : 0);
+          const defaultServiceModality = (targetTenant.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant.name || '')) ? 'presencial' : 'online';
+
           contextBlock += `\n\n[SISTEMA DE AGENDAMIENTO INTELIGENTE - PROTOCOLO ESTRICTO DE 5 PASOS Y CONTROL DE SLOTS]:
 Ubicación actual de datos en la conversación:
 - 1. Nombre completo: ${bookingState.slots.name ? `OBTENIDO ("${bookingState.slots.name}")` : 'FALTANTE'}
@@ -7608,7 +7679,7 @@ DIRECTIVA OBLIGATORIA (CERO REPETICIÓN RENGLÓN POR RENGLÓN):
 2. PROHIBICIÓN ESTRICTA: Queda TERMINANTEMENTE PROHIBIDO redactar o listar en el texto los campos de la cita renglón por renglón (como "Servicio:", "Fecha:", "Hora:", "Nombre:", "Correo:", "Teléfono:"), ya que todos esos detalles aparecen de forma automática y visual en el cuadro interactivo de la cita.
 3. Tu mensaje de texto debe ser de 1 solo párrafo breve y amigable, cerrando exactamente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?"
 4. Inmediatamente después de esa pregunta, emite la tarjeta con el día de la semana y fecha correspondiente:
-   [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+   [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}]
 Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o decir frases incoherentes como "no elegiste X sino Y". Confirma directamente con seguridad.
 ` : (cleanResolvedDate && bookingState.slots.time && !bookingState.isComplete ? `
 [AVISO CRÍTICO - FALTAN DATOS OBLIGATORIOS PARA AGENDAR]:
@@ -7638,7 +7709,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Si el usuario solicita cambiar, mover o reprogramar su cita (ej: "me puedes cambiar la cita para las 3 y 30 es que no voy a poder a las 3pm", "cambiemos a las 4pm", "la podemos mover"):
      Acepta cordialmente la solicitud en un único párrafo breve confirmando el nuevo horario solicitado (${bookingState.slots.time || 'nuevo horario'}) para el día (${cleanResolvedDate || 'día acordado'}), indicando que acabas de verificar el nuevo espacio en agenda.
      PROHIBIDO terminantemente redactar listas o renglones de campos en texto. Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
-     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+     [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta. El agendamiento y cambio de citas se atiende directamente aquí en el chat.
 6. CIERRE AMABLE Y DESPEDIDA PROFESIONAL (CERO RE-EMISIÓN DE TARJETA TRAS CONFIRMAR):
    - Cuando la cita YA ha sido confirmada en un turno anterior y el usuario responde diciendo gracias, que así está bien, que no tiene más dudas, que eso es todo o despidiéndose (ej: "gracias", "muchas gracias", "así está bien", "eso es todo", "ninguna duda", "todo claro", "hasta luego"):
@@ -7648,11 +7719,11 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
    - Si el usuario indica que se equivocó de nombre, que el nombre está mal, que en realidad se llama de otra forma, o solicita cambiar/corregir su nombre (ej: "me equivoqué de nombre, en realidad me llamo Andrea", "el nombre dice Geogeo y te dije que soy Andrea", "mi nombre está mal, ponle Carlos"):
      Acepta la corrección con total amabilidad y cortesía en un solo párrafo breve confirmando que has actualizado el nombre a "${bookingState.slots.name || 'su nombre correcto'}" en el sistema oficial para su cita del ${cleanResolvedDate} a las ${bookingState.slots.time}.
      Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
-     [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
+     [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta.
 8. MÚLTIPLES CITAS O AGENDAR OTRA CITA:
    - Si el usuario desea agendar una segunda cita, otra cita o una cita adicional (ej: "quiero otra cita", "agendemos para el jueves", "también necesito otra"):
-     Trátalo con entusiasmo y profesionalismo. Dado que ya se conocen su nombre, correo y teléfono confirmados en la sesión, procede a coordinar la nueva fecha y hora. En cuanto se cuente con la fecha y hora de la nueva cita, confirma con un único párrafo breve y emite de inmediato la nueva tarjeta [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}].`;
+     Trátalo con entusiasmo y profesionalismo. Dado que ya se conocen su nombre, correo y teléfono confirmados en la sesión, procede a coordinar la nueva fecha y hora. En cuanto se cuente con la fecha y hora de la nueva cita, confirma con un único párrafo breve y emite de inmediato la nueva tarjeta [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}].`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -7669,7 +7740,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           preferredModel: model || preferredModel || null,
           tenantId: actualTenantId,
           tenantSlug: targetTenant.slug,
-          sessionId: currentSessionId
+          sessionId: currentSessionId,
+          businessType: targetTenant.business_type || 'servicios',
+          tenantName: targetTenant.name || ''
         });
         let cleanReply = sanitizeAiResponse(llmResult?.text);
         if (cleanReply) {
@@ -7735,16 +7808,21 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const canIssueBookingCard = !isClosingMessageTurn && !isInfoOrServiceQuery && (hasAllRequiredSlots || (hasCardInReply && hasFullContact));
 
         if (canIssueBookingCard) {
+          const bTopProd = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
+          const bAutoService = bTopProd?.name || (targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : `${targetTenant.name || 'Servicio Profesional'}`);
+          const bAutoPrice = bTopProd?.price !== undefined ? bTopProd.price : (targetTenant.name === 'GeoSoft' ? 1200 : 0);
+          const bAutoModality = (targetTenant.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant.name || '')) ? 'presencial' : 'online';
+
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
-              service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
+              service: bAutoService,
               date: formatFullDayAndDate(bDateVal) || bDateVal || 'Próxima fecha',
               time: bTimeVal || '10:00 AM',
               customerName: bContactName,
               customerEmail: bContactEmail,
               customerPhone: bContactPhone,
-              modality: 'online',
-              price: targetTenant.name === 'GeoSoft' ? 1200 : 0
+              modality: bAutoModality,
+              price: bAutoPrice
             };
             const formattedIntroDate = formatFullDayAndDate(bDateVal) || bDateVal;
             const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bTimeVal}** ha quedado reservado.`;
@@ -7783,8 +7861,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           // AUTO-REGISTRO DETERMINISTA EN CLOUDFLARE D1 (AGENDA / VOCERO CRM / PANEL DEL DUEÑO)
           if (bDateVal && bTimeVal) {
             try {
-              const bService = targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional');
-              const bPrice = targetTenant.name === 'GeoSoft' ? 1200 : 0;
+              const bService = bAutoService;
+              const bPrice = bAutoPrice;
               let finalCardName = null;
               let finalCardEmail = null;
               let finalCardPhone = null;

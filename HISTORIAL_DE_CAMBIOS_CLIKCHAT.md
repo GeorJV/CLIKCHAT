@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Calibración Universal Multi-Industria: Productos Físicos y Servicios Presenciales/Digitales (v2.9.4)
+- **Diagnóstico y Causas Raíces:**
+  1. *Sesgo Tecnológico en Respuestas Comerciales:* Las directrices de objeciones y prompts comerciales estaban preconfiguradas con vocabulario de software ("código propio, arquitectura en la nube"), resultando inadecuadas al aplicarse a tiendas de productos físicos (ropa, calzado, ferreterías, retail) o servicios presenciales (clínicas médicas/dentales, talleres mecánicos, salones de belleza).
+  2. *Hardcoded Service Defaults en Agendamiento:* El extractor de citas y las tarjetas `[BOOKING_CARD]` emitían por defecto nombres de servicio de software (`Desarrollo Web & SaaS`) y precios fijos ($1200) si el negocio no era explícitamente GeoSoft, en lugar de consultar reactivamente el catálogo del comercio.
+  3. *Incompatibilidad de Modalidad (Online vs Presencial):* Toda cita se clasificaba rígidamente como `online`, omitiendo que clínicas, talleres y centros de estética operan bajo modalidad `presencial`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Calibración Dinámica de Objeciones y Directrices según Industria (`functions/api/[[route]].js`):*
+     - *Productos Físicos / Retail:* Resalta calidad de materiales, autenticidad garantizada, durabilidad, garantía directa de fábrica y despacho express con seguimiento frente a imitaciones defectuosas o copias baratas.
+     - *Gastronomía / Restaurantes:* Destaca ingredientes frescos de primera calidad, porciones generosas, preparación artesanal y empaque térmico para entrega caliente.
+     - *Servicios Profesionales / Salud:* Destaca diagnóstico especializado, profesionales certificados, atención personalizada y retorno de inversión/resultados garantizados.
+  2. *Inferencia Inteligente de Modalidad y Catálogo:*
+     - Detección automática de modalidad: `presencial` para clínicas, salud, belleza y talleres; `online` para consultoría y tecnología.
+     - Inyección reactiva del producto y precio real del catálogo del tenant (`bAutoService`, `bAutoPrice`, `bAutoModality`) tanto en la directiva del LLM como en el payload final de la tarjeta de cita.
+- **Verificación en Producción (3 Filtros & Pruebas en Vivo):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.45s con 0 errores TypeScript (`dist/assets/index-Pq-wPHOp.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless.
+  - *Pruebas en Vivo por Industria:*
+    * Tienda de Calzado Físico (*Sneakers & Streetwear CR*): Ante objeción ($75 vs $25 de la esquina), defendió con excelencia autenticidad 100%, materiales de alta durabilidad y soporte directo sin mencionar jamás tecnología o código.
+    * Clínica Dental (*Clínica Dental Sonrisas*): Agendó cita presencial con el servicio *"Valoración Dental & Limpieza Profunda"*, precio oficial $60 y modalidad `"presencial"`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Auditoría de Conversaciones Largas y Resiliencia Conversacional en Producción (v2.9.3)
 - **Diagnóstico y Causas Raíces:**
   1. *Comprobación de Estabilidad ante Diálogos Extensos:* Se requería poner a prueba la resiliencia del sistema ante conversaciones prolongadas (6 a 9 turnos consecutivos) para detectar posibles roturas de memoria contextual, errores JSON en payloads de tarjetas, alucinaciones de catálogo o desbordes en el estado de las sesiones.
