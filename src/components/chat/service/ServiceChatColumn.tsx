@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Send, LogOut, Calendar, CalendarCheck } from 'lucide-react';
+import { Send, LogOut, Calendar, CalendarCheck, RotateCcw } from 'lucide-react';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceBookingData } from '../../../types/serviceChat';
 import { ProductRAGBadge } from '../product/ProductRAGBadge';
@@ -17,13 +17,13 @@ interface Props {
   storeName: string; agentName: string; agentAvatar?: string; serviceTitle: string; messages: ProductChatMessage[];
   inputValue: string; isLoading: boolean; confirmedBooking?: ServiceBookingData | null; businessPhone?: string;
   deliveryMode?: DeliveryMode; onInputChange: (val: string) => void; onSendMessage: (text?: string, fromVoice?: boolean) => void;
-  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void;
+  onAudioRecorded?: (audioData: { audioUrl: string; duration: number }) => void; onExit?: () => void; onReset?: () => void;
   onOpenBooking?: () => void; onOpenConfirmedModal?: () => void; onConfirmBookingFromCard?: (data: ServiceBookingData) => void;
 }
 
 export const ServiceChatColumn: React.FC<Props> = ({
   storeName, agentName, agentAvatar, serviceTitle, messages, inputValue, isLoading, confirmedBooking, businessPhone = '50672935612', deliveryMode,
-  onInputChange, onSendMessage, onAudioRecorded, onExit, onOpenBooking, onOpenConfirmedModal, onConfirmBookingFromCard
+  onInputChange, onSendMessage, onAudioRecorded, onExit, onReset, onOpenBooking, onOpenConfirmedModal, onConfirmBookingFromCard
 }) => {
   const [flightKey, setFlightKey] = useState(0);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -79,6 +79,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          {onReset && <button type="button" onClick={onReset} className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition" title="Nueva conversación"><RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" /></button>}
           {onExit && <button type="button" onClick={onExit} className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition" title="Salir"><LogOut className="w-4 h-4 sm:w-3.5 sm:h-3.5" /></button>}
         </div>
       </header>

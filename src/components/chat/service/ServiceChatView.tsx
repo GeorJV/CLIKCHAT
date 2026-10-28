@@ -32,7 +32,7 @@ export const ServiceChatView: React.FC<Props> = ({
   const [inputValue, setInputValue] = useState(''); const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false); const [bookingOpen, setBookingOpen] = useState(false);
-  const [sessId] = useState<string>(() => {
+  const [sessId, setSessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const s = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
       if (s) return s; const c = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
@@ -40,6 +40,14 @@ export const ServiceChatView: React.FC<Props> = ({
     }
     return 'sess_' + Date.now().toString(36);
   });
+  const handleResetChat = () => {
+    const newId = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+    setSessId(newId); setMessages([]); setConfirmedBooking(null);
+    if (typeof window !== 'undefined') {
+      [storageKey, msgStorageKey, confirmKey, 'clikchat_cust_phone', 'clikchat_cust_name'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      try { localStorage.setItem(storageKey, newId); } catch (e) {}
+    }
+  };
 
   useEffect(() => {
     if (initialService) setSelectedService(initialService);
@@ -64,17 +72,11 @@ export const ServiceChatView: React.FC<Props> = ({
       setIsLoading(true);
       const startTime = Date.now();
       try {
-        const pM = userText.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
-        if (pM && !pM[0].includes('72935612')) { try { localStorage.setItem('clikchat_cust_phone', pM[0].trim()); } catch (e) {} }
-        const nM = userText.match(/(?:me\s+llamo|mi\s+nombre\s+es|soy|nombre:\s*)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i);
-        if (nM && !/^cliente$/i.test(nM[1].trim())) { try { localStorage.setItem('clikchat_cust_name', nM[1].trim()); } catch (e) {} }
-        const uName = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_name') || undefined) : undefined;
-        const uPhone = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_phone') || undefined) : undefined;
         const clientHist = messages.slice(-10).map((m) => ({ sender: m.sender, message: m.content }));
         const tTarget = (selectedService as any).tenant_id || (tenantSlug === 'geosoft' ? 'ten_geosoft_prod' : tenantSlug);
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantSlug: tenantSlug || 'geosoft', tenantId: tTarget, sessionId: sessId, message: userText, conversationHistory: clientHist, userName: uName, userPhone: uPhone, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
+          body: JSON.stringify({ tenantSlug: tenantSlug || 'geosoft', tenantId: tTarget, sessionId: sessId, message: userText, conversationHistory: clientHist, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
@@ -142,9 +144,7 @@ export const ServiceChatView: React.FC<Props> = ({
     fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: aptId, updateExisting: true, tenantSlug, tenantId: tId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
     try {
       const apt = { id: aptId, clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
-      [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
-        try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([apt, ...cur.filter((x: any) => x.id !== aptId && !(x.clientName === data.customerName && x.time === data.timeSlot))])); } catch {}
-      });
+      [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => { try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([apt, ...cur.filter((x: any) => x.id !== aptId && !(x.clientName === data.customerName && x.time === data.timeSlot))])); } catch {} });
       broadcastBookingCreated(tenantSlug, { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
     } catch (e) {}
     setMessages((prev) => [...prev, { id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
@@ -164,7 +164,7 @@ export const ServiceChatView: React.FC<Props> = ({
           <ServiceChatColumn
             storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title} messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking} businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode} onInputChange={setInputValue} onSendMessage={handleSendMessage}
             onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
-            onExit={onExit} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking}
+            onExit={onExit} onReset={handleResetChat} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking}
           />
         </div>
         <div className={`h-full w-full ${mobileTab === 'service' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>

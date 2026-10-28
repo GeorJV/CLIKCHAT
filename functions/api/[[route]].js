@@ -5921,7 +5921,10 @@ function isValidPersonName(candidate) {
   const norm = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
   // Nombres genéricos o palabras de reserva que NO son nombres humanos
-  if (/\b(cliente|mer[aá]s|agendado|usuario|persona|cita|reunion|contacto|correo|email|whatsapp|telefono|horario|agenda)\b/i.test(norm)) return false;
+  if (/\b(cliente|mer[aá]s|agendado|usuario|persona|cita|citas|reunion|reuniones|contacto|correo|email|whatsapp|telefono|horario|horarios|agenda|agendar|espacio|espacios)\b/i.test(norm)) return false;
+
+  // Verbos de solicitud, pronombres conversacionales y frases de agendamiento (evita "me das", "me regalas", "puedo", etc.)
+  if (/\b(me|te|se|nos|das|dame|dar|da|regalas|regalame|puedo|puedes|puede|podrias|quisiera|gustaria|ocupo|necesito|quiero|tengo|tienes|hacer|tener|apartar|reservar|programar|coordinar|cuadrar|manana|hoy|ayer|tarde|noche|hora|saludos|buenas|buenos|porfa|favor|hola|hey)\b/i.test(norm)) return false;
 
   // Palabras interrogativas o de consulta
   if (/\b(que|como|cuando|donde|cual|cuales|cuanto|cuantos|cuanta|por que|porque|quien|quienes)\b/i.test(norm)) return false;
@@ -5956,12 +5959,6 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     allUserMessages.push(currentMessage);
   }
 
-  let email = (leadInfo?.email && typeof leadInfo.email === 'string' && leadInfo.email.includes('@')) ? leadInfo.email.trim() : null;
-  let phone = (leadInfo?.phone && typeof leadInfo.phone === 'string' && leadInfo.phone.replace(/\D/g, '').length >= 8) ? leadInfo.phone.trim() : null;
-  let name = (leadInfo?.name && typeof leadInfo.name === 'string' && leadInfo.name.trim().length >= 2 && leadInfo.name.trim().toLowerCase() !== 'cliente') ? leadInfo.name.trim() : null;
-  let date = null;
-  let time = null;
-
   const effectiveServiceName = leadInfo?.serviceName || leadInfo?.topProductName || (leadInfo?.tenantName === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (leadInfo?.tenantName ? `Servicios de ${leadInfo.tenantName}` : 'Servicio Profesional'));
   const effectivePrice = leadInfo?.price !== undefined ? leadInfo.price : (leadInfo?.tenantName === 'GeoSoft' ? 1200 : 0);
   const effectiveModality = leadInfo?.modality || 'online';
@@ -5991,6 +5988,14 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       }
     }
   }
+
+  // SI NO HAY TARJETA PREVIA EN ESTA SESIÓN: No heredar datos de sesiones anteriores de D1
+  // El cliente DEBE proporcionar su nombre, correo y teléfono en este flujo de conversación
+  let email = (cardIndexInHistory >= 0 && cardEmail) ? cardEmail : null;
+  let phone = (cardIndexInHistory >= 0 && cardPhone) ? cardPhone : (leadInfo?.isWhatsApp && leadInfo?.phone ? leadInfo.phone : null);
+  let name = (cardIndexInHistory >= 0 && cardName && isValidPersonName(cardName)) ? cardName : null;
+  let date = null;
+  let time = null;
 
   // Detección de intención de cita adicional tras cita previa
   const ADDITIONAL_BOOKING_REGEX = /\b(?:otra\s+cita|segunda\s+cita|cita\s+adicional|nueva\s+cita\s+adicional|agendar\s+otra|reservar\s+otra|otra\s+reuni[oó]n|una\s+cita\s+m[aá]s|otro\s+espacio|agendar\s+de\s+nuevo|agendar\s+otra\s+vez|quiero\s+otra\s+cita|sacar\s+otra\s+cita|programar\s+otra\s+cita|tambi[eé]n\s+(?:quiero|deseo|necesito)\s+agendar)\b/i;
@@ -6262,20 +6267,6 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
             }
           }
         }
-      }
-    }
-  }
-
-  if (!extractedName) {
-    for (let i = allUserMessages.length - 1; i >= 0; i--) {
-      let candidate = allUserMessages[i].trim();
-      if (email && candidate.includes(email)) candidate = candidate.replace(email, '').trim();
-      if (phone && candidate.includes(phone)) candidate = candidate.replace(phone, '').trim();
-      candidate = candidate.replace(/^(?:hola|buenas|mucho gusto|un gusto|saludos)[,.\s]+/i, '').trim();
-      candidate = cleanExtractedCandidate(candidate);
-      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(candidate) && isValidPersonName(candidate)) {
-        extractedName = candidate;
-        break;
       }
     }
   }
@@ -8369,27 +8360,24 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const bTimeVal = bookingState.slots.time;
 
         const hasValidName = Boolean(bContactName && isValidPersonName(bContactName) && !/^cliente$/i.test(bContactName));
-        const hasFullContact = Boolean(hasValidName && (bContactPhone || bContactEmail));
+        const hasValidEmail = Boolean(bContactEmail && bContactEmail.includes('@'));
+        const hasValidPhone = Boolean(bContactPhone && (bContactPhone.replace(/\D/g, '').length >= 8 || bContactPhone === 'Contacto por correo'));
+        const hasFullContact = Boolean(hasValidName && hasValidEmail && hasValidPhone);
         const hasFullDateTime = Boolean(bDateVal && bTimeVal);
-        const hasAllRequiredSlots = Boolean(hasFullContact && hasFullDateTime);
+        const hasAllRequiredSlots = Boolean(hasFullContact && hasFullDateTime && bookingState.isComplete);
 
         // SE PERMITE Y AUTORIZA LA TARJETA DE CITA:
-        // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
-        // 2. Requiere nombre humano real OBLIGATORIO (hasValidName)
-        // 3. Soporte total para slots completos o confirmación de fecha/hora (para cita adicional requiere fecha y hora reales)
+        // En agendamiento nuevo: REQUIERE obligatoriamente los 5 slots completos (hasAllRequiredSlots: Nombre, Correo, Teléfono, Fecha y Hora)
+        // En reprogramación o cita adicional: requiere tarjeta previa en historial
         const isVerbalBookingConfirmation = /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(llmResult.text || '') ||
           /\b(?:he|hemos|acabo\s+de)\s+(?:agendar|confirmar|reservar|programar|apartar|guardar)\s+(?:tu\s+|su\s+)?(?:cita|reuni[oó]n|espacio)\b/i.test(llmResult.text || '');
 
-        const isBookingTurn = isBookingContext || hasCardInReply || hasFullDateTime || isVerbalBookingConfirmation;
-        const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isBookingTurn) && hasValidName && (
+        const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isRescheduleTurn || bookingState.isAdditionalBookingIntent) && (
           bookingState.isAdditionalBookingIntent
-            ? Boolean(bDateVal && bTimeVal)
-            : (
-              hasAllRequiredSlots ||
-              isVerbalBookingConfirmation ||
-              (hasCardInReply && (hasFullContact || bDateVal || bTimeVal || isBookingTurn)) ||
-              (hasFullDateTime && (bContactPhone || bContactEmail || isBookingTurn))
-            )
+            ? Boolean(bookingState.hasPriorBookingCard && bDateVal && bTimeVal)
+            : isRescheduleTurn
+              ? Boolean(bookingState.hasPriorBookingCard && (bTimeVal || bDateVal))
+              : hasAllRequiredSlots
         );
 
         if (canIssueBookingCard) {

@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 13:10 GMT-6
-- **Versión Actual:** 2.9.28 (Notificaciones de Nuevas Citas Resilientes con Polling Anti-Drain y Chime Sonoro)
+- **Última Actualización:** 2026-10-28 13:45 GMT-6
+- **Versión Actual:** 2.9.29 (Erradicación de Falsa Extracción de Nombres y Blindaje Estricto de 5 Pasos en Citas)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Polling Inteligente Anti-Drain: `useNewBookingAlert` sondea `/api/bookings` cada 10s (pausa en segundo plano con `document.hidden`), detectando al instante citas creadas desde cualquier dispositivo o dominio.
-  - Cero Auto-Descarte Involuntario: `VoceroBookingsView` no descarta alertas al montar o resaltar; el descarte solo ocurre al presionar "Ver cita ahora", "X" o al seleccionar la cita. Erradicado auto-ack en hover.
-  - Chime Acústico Web Audio API: Notificación sonora suave de dos tonos (587Hz -> 880Hz) sin dependencias ni latencia.
-  - Soporte Multiformato en Bus: Detección y emisión inmediata tanto con `data.booking` como con `data.bookingCard`.
-  - Cumplimiento ARQMODULAR: `useNewBookingAlert.ts` (112 líneas), `VoceroBookingsView.tsx` (176 líneas), `bookingSyncBus.ts` (111 líneas).
-  - Verificado con 3 Filtros: Build Vite limpio (11.85s), deploy dual activo en CDN Cloudflare Pages (Hash `index-D6ghTXOY.js`, 17/17 rutas probadas en Chrome Headless).
+  - Erradicación de Nombres Falsos: Blacklist estricta en `isValidPersonName` para verbos y pronombres ("me das", "puedo", etc.) y eliminación del bucle ciego de suposiciones de nombres.
+  - Aislamiento de Contactos entre Sesiones: Si no hay tarjeta previa en el chat, nombre, correo y teléfono inician en `null`; el bot exige Paso 1 (Nombre y Correo) y Paso 2 (Teléfono) sin heredar datos de sesiones pasadas.
+  - Bloqueo de Tarjetas Prematuras: `canIssueBookingCard` exige que los 5 slots estén 100% completos (`hasAllRequiredSlots`); cero autorizaciones o confirmaciones force-injected sin contacto verificado.
+  - Saneamiento y Botón de Reinicio: Erradicada fuga de teléfonos en `localStorage` y añadido botón de nueva conversación en `ServiceChatView.tsx`.
+  - Cumplimiento ARQMODULAR: `ServiceChatView.tsx` (180 líneas), `ServiceChatColumn.tsx` (172 líneas).
+  - Verificado con 3 Filtros: Build Vite limpio (10.14s), deploy dual activo en CDN Cloudflare Pages (Hash `index-8WunjpaL.js`, 17/17 rutas probadas en Chrome Headless).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

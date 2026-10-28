@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Erradicación de Falsa Extracción de Nombres y Blindaje Estricto de 5 Pasos en Citas (v2.9.29)
+- **Diagnóstico y Necesidad:**
+  1. *Falsa Extracción de Nombres desde Mensajes de Solicitud ("Me Das"):*
+     - En `functions/api/[[route]].js`, una rutina de fallback recortaba oraciones del usuario como `"me das una cita para manana a alas 4 pm"` a `"me das"`. `isValidPersonName` no filtraba verbos ni pronombres en español (`me`, `das`, `regalas`, `puedo`, etc.), asignando erróneamente `"Me Das"` como nombre del cliente.
+  2. *Contaminación de Contactos entre Sesiones Anteriores:*
+     - Al iniciar una nueva cita, `extractBookingSlots` inicializaba `email`, `phone` y `name` desde `leadInfo` (arrastrados de `chat_sessions` en D1 o de `localStorage.getItem('clikchat_cust_phone')` en `ServiceChatView.tsx`). Por ello, cualquier usuario nuevo heredaba el teléfono y correo de la prueba anterior (ej: `55556666`, `ESITO@GMAIL.COM`).
+  3. *Inyección Prematura de Tarjetas sin Datos Obligatorios:*
+     - `canIssueBookingCard` permitía emitir tarjetas si existía fecha y hora con cualquier contacto previo o confirmación verbal, saltándose los Pasos 1 (Nombre y Correo) y 2 (Teléfono/WhatsApp).
+- **Solución Quirúrgica Implementada:**
+  1. *Filtro Infranqueable en `isValidPersonName`:*
+     - Blacklist terminante de pronombres, verbos conversacionales y términos de solicitud (`me`, `te`, `das`, `dame`, `regalas`, `puedo`, `puedes`, `podrias`, `quisiera`, `quiero`, `tengo`, `agendar`, `apartar`, etc.). Eliminado el bucle ciego de suposiciones de nombres.
+  2. *Aislamiento Estricto de Sesiones en Agendamiento Nuevo:*
+     - Si no existe una tarjeta previa en la conversación (`cardIndexInHistory === -1`), `name`, `email` y `phone` inician estrictamente en `null`. Deben ser proporcionados explícitamente por el usuario en el chat actual para avanzar de paso.
+  3. *Garantía Inmutable de los 5 Pasos (`hasAllRequiredSlots`):*
+     - `canIssueBookingCard` exige obligatoriamente los 5 datos válidos (`hasValidName`, `hasValidEmail`, `hasValidPhone`, `hasFullDateTime` y `bookingState.isComplete = true`). En caso contrario, se bloquea la emisión de tarjetas y el bot ejecuta el Paso 1 solicitando Nombre y Correo.
+  4. *Saneamiento en `ServiceChatView.tsx` y Botón de Nueva Conversación:*
+     - Eliminada la persistencia global de teléfonos y nombres en `localStorage`. Añadido botón de reinicio (`onReset` / `RotateCcw`) para refrescar la sesión en 1 clic.
+  5. *Verificación de los 3 Filtros:*
+     - Build Vite en 10.14s (0 errores), commit en `origin/main`, deploy dual exitoso en Cloudflare Pages (`clikchat` y `clikchatcrm`), y smoke test en Chrome Headless con 17/17 rutas operativas (Hash Match `index-8WunjpaL.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Notificaciones de Nuevas Citas Resilientes con Polling Anti-Drain y Chime Sonoro (v2.9.28)
 - **Diagnóstico y Necesidad:**
   1. *Ausencia de Notificación al Agendar Citas desde Clientes Externos / Multi-Pestaña:*
