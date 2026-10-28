@@ -34,14 +34,12 @@ export async function generateClientChatFallback(params: FallbackChatParams): Pr
   const lowerMsg = cleanMsg.toLowerCase();
   const cleanGreeting = lowerMsg.replace(/^[¡!¿?\s\.,;:()\-]+|[¡!¿?\s\.,;:()\-]+$/g, '').trim();
 
-  // 1. Saludos iniciales universales
+  // 1. Saludos iniciales universales (variados sin duplicar la bienvenida)
   const isGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting) && cleanMsg.split(/\s+/).length <= 4;
   if (isGreeting) {
-    const greetingText = welcomeMessage && welcomeMessage.trim()
-      ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName)
-      : (businessType === 'restaurante'
-          ? `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu mesera virtual. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
-          : `¡Hola! 👋 Bienvenido a **${storeName}**. Soy ${agentName}, tu asesora virtual. ¿En qué te puedo colaborar el día de hoy?`);
+    const greetingText = (businessType === 'restaurante')
+      ? `¡Hola! 👋 Con mucho gusto te atiendo en **${storeName}**. ¿Qué se te antoja ordenar hoy o qué platillo te gustaría consultar?`
+      : `¡Hola! 👋 Con mucho gusto te atiendo en **${storeName}**. ¿En qué te podemos colaborar hoy o de qué se trata el proyecto que deseas desarrollar?`;
 
     return {
       answer: greetingText,

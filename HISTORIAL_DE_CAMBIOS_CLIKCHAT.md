@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Variación Dinámica de Saludos y Blindaje Universal Anti-Repetición de Respuestas (v2.9.17)
+- **Diagnóstico y Necesidad:**
+  1. *Repetición Idéntica de Respuestas y Saludos:*
+     - Al entrar al chat de ClikChat CRM y enviar "hola", el bot repetía textualmente la misma bienvenida que ya estaba visible en pantalla ("¡Hola! Bienvenido, ¿en qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?").
+     - Si el usuario volvía a escribir "hola" o "hola de nuevo", el bot quedaba descontextualizado o reiteraba la misma respuesta de manera robótica.
+     - *Causa Raíz:* En `/api/chat/message` de `functions/api/[[route]].js`, el detector de saludo `isPureGreeting` evaluaba estrictamente `isFirstUserTurn` y asignaba directamente `greetingReply = targetTenant.welcome_message`. Como el frontend ya inicializa la vista con `welcome_message`, el bot duplicaba el mensaje inicial. Además, no existía una guardia universal de deduplicación que impidiera al bot emitir respuestas idénticas a las ya vistas por el usuario.
+- **Solución Quirúrgica Implementada:**
+  1. *Generador Inteligente de Saludos Únicos (`getUniqueGreeting` en `functions/api/[[route]].js`):*
+     - Desacoplado `isPureGreeting` de la restricción `isFirstUserTurn`, detectando saludos puros en cualquier turno de la conversación ("hola", "buenas", "buenos días", "hola de nuevo", etc.).
+     - Banco dinámico y contextual de saludos según el tipo de negocio (servicios, productos, restaurante, general) incorporando `botName`, `storeName` y `timeGreeting`.
+     - Deduplicación absoluta contra `allPriorAssistantTexts` (D1, historial del cliente y bienvenida inicial): se filtran y descartan todas las variantes que el usuario ya haya visto en la sesión actual.
+  2. *Guardián Universal Anti-Repetición (`ensureUniqueAnswer`):*
+     - Inspecciona cualquier respuesta saliente (saludo, FAQ de nivel 2, catálogo nivel 3, LLM o fallback nivel 4).
+     - Si la respuesta normalizada coincide con el último mensaje del bot, se transforma automáticamente seleccionando una variante alterna o prefijando marcadores conversacionales naturales ("Con todo gusto te reitero la información: ...").
+  3. *Ajuste en Instrucciones Contextuales de LLM y Fallback Local (`clientChatFallback.ts`):*
+     - Informa al LLM que el mensaje de bienvenida ya está en pantalla y prohíbe repetirlo textualmente.
+     - En `clientChatFallback.ts`, sustituida la repetición de `welcomeMessage` por un saludo fresco y activo.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 11.80s con 0 errores (`dist/assets/index-CyG2qoI9.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Sincronización Canónica y Persistencia en D1 de Citas en Panel CRM y Chat de Servicios (v2.9.16)
 - **Diagnóstico y Necesidad:**
   1. *Citas Recién Confirmadas Invisibles en el Panel de Agenda:*

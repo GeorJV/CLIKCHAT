@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 08:45 GMT-6
-- **Versión Actual:** 2.9.16 (Sincronización Canónica y Persistencia en D1 de Citas en Panel CRM y Chat)
+- **Última Actualización:** 2026-10-28 08:50 GMT-6
+- **Versión Actual:** 2.9.17 (Variación Dinámica de Saludos y Blindaje Universal Anti-Repetición)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Persistencia Canónica D1: Citas agendadas por el bot o confirmadas manualmente se insertan inmediatamente en D1 con ID determinista.
-  - Sincronización en Tiempo Real: Retorno del objeto `booking` en `/api/chat/message`, broadcast con ID canónico y guardado reactivo en `localStorage`.
-  - Panel CRM (`VoceroBookingsView`): Consulta dual por id/slug (`ten_geosoft_prod`/`geosoft`) y fusión `idMap` sin perder citas locales ni remotas.
-  - Sanitización de Contacto: Erradicado "Cliente" y teléfonos de negocio en tarjetas; datos reales inyectados al confirmar.
-  - Verificado con 3 Filtros: Build limpio, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
+  - Saludos Dinámicos Desacoplados: Detecta saludos puros en cualquier turno ("hola", "buenas", etc.) sin repetir la bienvenida inicial.
+  - Banco Contextual de Saludos: Pool de opciones adaptadas al tipo de negocio (servicios, productos, restaurante, general).
+  - Deduplicación Absoluta: Filtrado de respuestas contra historial D1, cliente y bienvenida; el bot nunca emite dos mensajes idénticos consecutivos.
+  - Guardián `ensureUniqueAnswer`: Refraseo automático y variación conversacional en saludos, FAQs, catálogo y LLM.
+  - Verificado con 3 Filtros: Build limpio en 11.80s, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

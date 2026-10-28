@@ -6557,24 +6557,112 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }
       activeLeadInfo.modality = (targetTenant?.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant?.name || '')) ? 'presencial' : 'online';
 
-      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (SOLO SI ES EL PRIMER TURNO DEL CLIENTE)
+      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (VARIACIÓN OBLIGATORIA & ANTI-REPETICIÓN)
       const userMsgsInHist = sessionHistory.filter(h => h.sender === 'user' || h.role === 'user');
       const isFirstUserTurn = userMsgsInHist.length === 0;
       const cleanMsgGreeting = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-      const isPureGreeting = isFirstUserTurn && /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
+      const isPureGreeting = /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo|de\s*nuevo|otra\s*vez))*\s*$/i.test(cleanMsgGreeting);
 
-      if (isPureGreeting) {
+      // Historial unificado de mensajes previos del asistente (D1, estado del cliente y bienvenida inicial)
+      const allPriorAssistantTexts = [
+        ...sessionHistory.filter(h => h.sender === 'assistant' || h.role === 'assistant').map(h => (h.message || '').trim()),
+        ...clientHistory.filter(h => h.sender === 'assistant' || h.role === 'assistant').map(h => (h.message || '').trim()),
+        (targetTenant?.welcome_message || '').trim()
+      ].filter(Boolean);
+
+      const normTextCompare = (t) => (t || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const priorAssistantNormSet = new Set(allPriorAssistantTexts.map(normTextCompare));
+
+      const getUniqueGreeting = () => {
         const botName = targetTenant?.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
         const storeName = targetTenant?.name || 'nuestro negocio';
-        let greetingReply = targetTenant?.welcome_message && targetTenant.welcome_message.trim()
-          ? targetTenant.welcome_message
-              .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
-              .replace(/\{asesor\}|\{bot\}/gi, botName)
-              .trim()
-          : (isRestaurant
-              ? `${userTimeInfo?.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
-              : `${userTimeInfo?.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. ¿En qué te podemos colaborar el día de hoy?`);
+        const timeGreeting = userTimeInfo?.greetingPhrase || '¡Hola!';
+        const bizType = (targetTenant?.business_type || '').toLowerCase();
 
+        let pool = [];
+        if (isRestaurant) {
+          pool = [
+            `${timeGreeting} Con mucho gusto te atiendo en **${storeName}**. ¿Qué se te antoja ordenar hoy o qué platillo te gustaría consultar?`,
+            `${timeGreeting} Te saluda **${botName}**. Dime si deseas revisar nuestro menú o si ya sabes qué delicia pedir hoy.`,
+            `${timeGreeting} de nuevo. ¡A tu orden! Cuéntame qué se te apetece disfrutar hoy y con gusto te tomo el pedido.`,
+            `¡Qué tal! Claro que sí, con todo gusto te colaboro con tu orden. ¿Tienes alguna duda sobre los platillos o ya tienes tu elección?`,
+            `¡A la orden! Un gusto saludarte. Cuéntame qué deseas ordenar o en qué te puedo colaborar de nuestro menú.`
+          ];
+        } else if (bizType === 'productos') {
+          pool = [
+            `${timeGreeting} Con mucho gusto te atiendo en **${storeName}**. ¿Qué producto estás buscando o en qué te puedo asesorar hoy?`,
+            `${timeGreeting} Te saluda **${botName}**. Cuéntame qué artículo o catálogo te gustaría consultar.`,
+            `${timeGreeting} de nuevo. Estoy a tu servicio. ¿Qué producto o promoción te gustaría cotizar?`,
+            `¡Qué tal! Con todo gusto. Dime qué estás buscando o si te gustaría conocer nuestras opciones disponibles.`,
+            `¡A la orden! Un gusto saludarte. Cuéntame en qué compra o consulta te podemos colaborar hoy.`
+          ];
+        } else if (bizType === 'servicios' || !bizType) {
+          pool = [
+            `${timeGreeting} Con mucho gusto te atiendo en **${storeName}**. Cuéntame, ¿qué tienes en mente o de qué se trata el proyecto que deseas desarrollar?`,
+            `${timeGreeting} Qué gusto saludarte. Soy **${botName}** de **${storeName}**. ¿En qué requerimiento o servicio te gustaría que te asesore hoy?`,
+            `${timeGreeting} de nuevo. Aquí sigo a tu completa disposición. Cuéntame los detalles de tu consulta o lo que te gustaría cotizar.`,
+            `¡Qué tal! Claro que sí, con todo gusto. Dime en qué te podemos apoyar o cuál es la idea que tienes para tu proyecto.`,
+            `¡A la orden! Un placer saludarte. Cuéntame cómo te podemos asesorar el día de hoy con nuestros servicios.`,
+            `${timeGreeting} Por aquí listo para ayudarte. ¿Qué consulta o desarrollo te gustaría revisar con nosotros?`
+          ];
+        } else {
+          pool = [
+            `${timeGreeting} Con mucho gusto te atiendo en **${storeName}**. ¿En qué te podemos colaborar hoy?`,
+            `${timeGreeting} Qué gusto saludarte. Soy **${botName}**. Cuéntame en qué te puedo colaborar o qué consulta tienes.`,
+            `${timeGreeting} de nuevo. Aquí sigo a tu orden, ¿en qué más te podemos apoyar?`,
+            `¡Qué tal! Claro que sí, a tu completa disposición. Cuéntame qué necesitas saber.`,
+            `¡A la orden! Dime con qué consulta o requerimiento te puedo colaborar de inmediato.`
+          ];
+        }
+
+        // Filtrar opciones que ya se hayan enviado previamente (incluyendo el mensaje de bienvenida)
+        const unsaid = pool.filter(opt => !priorAssistantNormSet.has(normTextCompare(opt)));
+        if (unsaid.length > 0) {
+          const chosen = unsaid[userMsgsInHist.length % unsaid.length] || unsaid[0];
+          return chosen;
+        }
+
+        // Si se agotaron las opciones del pool, evitar repetir el último mensaje del bot
+        const lastBotNorm = allPriorAssistantTexts.length > 0 ? normTextCompare(allPriorAssistantTexts[allPriorAssistantTexts.length - 1]) : '';
+        const nonConsecutive = pool.filter(opt => normTextCompare(opt) !== lastBotNorm);
+        const fallbackChoice = nonConsecutive[0] || pool[0];
+        return `¡Hola de nuevo! ${fallbackChoice.replace(/^[¡!¿?\s\.,]+/, '')}`;
+      };
+
+      const ensureUniqueAnswer = (rawAnswer) => {
+        if (!rawAnswer || typeof rawAnswer !== 'string') return rawAnswer;
+        const lastBotMsg = allPriorAssistantTexts.length > 0 ? allPriorAssistantTexts[allPriorAssistantTexts.length - 1] : '';
+        if (!lastBotMsg) return rawAnswer;
+
+        const rawNorm = normTextCompare(rawAnswer);
+        const lastNorm = normTextCompare(lastBotMsg);
+
+        if (rawNorm && lastNorm && rawNorm === lastNorm) {
+          if (/^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|saludos)/i.test(rawAnswer)) {
+            return getUniqueGreeting();
+          }
+          const rephrasings = [
+            'Con todo gusto te reitero la información: ',
+            'Para recordártelo con mucho gusto: ',
+            'Te confirmo nuevamente con agrado: ',
+            'Claro que sí, te reitero los detalles: '
+          ];
+          const prefix = rephrasings[userMsgsInHist.length % rephrasings.length];
+          const lowerFirst = rawAnswer.charAt(0).toLowerCase() + rawAnswer.slice(1);
+          return `${prefix}${lowerFirst}`;
+        }
+        return rawAnswer;
+      };
+
+      if (isPureGreeting) {
+        const greetingReply = ensureUniqueAnswer(getUniqueGreeting());
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
@@ -6636,11 +6724,12 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         const farewell = userTimeInfo?.farewellPhrase || '¡Que tengas un excelente día!';
         const closingReply = `¡Con muchísimo gusto${clientName ? ', ' + clientName : ''}! Estaremos muy atentos a tu sesión. Aquí estaremos a tu completa disposición para cualquier cambio o consulta cuando gustes. ${farewell} ¡Nos vemos pronto! 😊`;
 
+        const finalClosingReply = ensureUniqueAnswer(closingReply);
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
             'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', closingReply, 'level_1']
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', finalClosingReply, 'level_1']
           );
         } catch (e) {}
 
@@ -6649,7 +6738,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           level: 'level_1',
           levelLabel: 'Nivel 1: Despedida Profesional & Cierre de Cita',
           confidence: 0.99,
-          answer: closingReply,
+          answer: finalClosingReply,
           orderTotal: null,
           isRestaurant
         });
@@ -6683,11 +6772,12 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           }
 
           if (directReply) {
+            const finalDirectReply = ensureUniqueAnswer(directReply);
             const botMsgId = 'msg_' + Date.now() + '_b';
             try {
               await executeD1(
                 'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-                [botMsgId, currentSessionId, actualTenantId, 'assistant', directReply, 'level_1']
+                [botMsgId, currentSessionId, actualTenantId, 'assistant', finalDirectReply, 'level_1']
               );
             } catch (e) {}
 
@@ -6696,7 +6786,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
               level: 'level_1',
               levelLabel,
               confidence: 0.99,
-              answer: directReply,
+              answer: finalDirectReply,
               orderTotal: null,
               isRestaurant
             });
@@ -6888,8 +6978,8 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       // Si es consulta de cuenta/total o confirmación de orden, tampoco interceptar con FAQ estática
       const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
 
-      // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (CORTESÍA INMEDIATA CON ROL DE MESERA)
-      const isSimpleGreeting = isFirstUserTurn && /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
+      // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (GARANTÍA DE NO REPETICIÓN)
+      const isSimpleGreeting = /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
         && queryWords.length <= 4
         && !hasDirectProductMatch
         && !isCheckoutOrOrderQuery
@@ -6897,20 +6987,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         && !isBookingContext;
 
       if (isSimpleGreeting) {
-        const botName = targetTenant.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
-        const storeName = targetTenant.name || 'nuestro negocio';
-
-        let greetingReply = targetTenant.welcome_message && targetTenant.welcome_message.trim()
-          ? targetTenant.welcome_message
-              .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
-              .replace(/\{asesor\}|\{bot\}/gi, botName)
-              .trim()
-          : (isRestaurant
-              ? `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. En qué te puedo colaborar hoy o qué se te antoja ordenar?`
-              : `${userTimeInfo.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. En qué te puedo colaborar hoy?`);
-
-
-
+        const greetingReply = ensureUniqueAnswer(getUniqueGreeting());
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
@@ -6946,10 +7023,11 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       // Responder con FAQ oficial si la coincidencia es alta (>= 0.70) y no es una consulta de agendamiento/comanda
       if (topFaq && topFaqScore >= 0.70 && !isCheckoutOrOrderQuery && !isBookingContext) {
         const botMsgId = 'msg_' + Date.now() + '_b';
+        const finalFaqAnswer = ensureUniqueAnswer(topFaq.answer);
         try {
           await executeD1(
             'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-            [botMsgId, currentSessionId, actualTenantId, 'assistant', topFaq.answer, 'level_2_faq']
+            [botMsgId, currentSessionId, actualTenantId, 'assistant', finalFaqAnswer, 'level_2_faq']
           );
         } catch (e) {}
 
@@ -6958,7 +7036,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           level: 'level_2_faq',
           levelLabel: 'Nivel 2: FAQs Verificadas ($0 Costo)',
           confidence: topFaqScore,
-          answer: topFaq.answer,
+          answer: finalFaqAnswer,
           matchedItem: topFaq,
           stoppedEarly: true,
           zeroCost: true,
@@ -7082,14 +7160,19 @@ DIRECTIVA DE ATENCIÓN CONTEXTUAL:
 2) Si el cliente pregunta por la oferta o hace referencia al anuncio (ej: "vengo por el anuncio", "quiero la promo", "cuánto vale lo del video"), reconoce la oferta de inmediato con amabilidad y responde orientándolo a aprovecharla con entusiasmo.
 3) No le pidas al cliente que te explique qué anuncio vio; atiéndelo demostrando que ya estás al tanto de su procedencia.\n`;
         }
-        if (isFirstUserTurn && targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
-          contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
+        const userSentGreetingNow = /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanMsgGreeting);
+        if (targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
+          contextBlock += `MENSAJE DE APERTURA YA VISIBLE EN PANTALLA: "${targetTenant.welcome_message.trim()}". Queda TERMINANTEMENTE PROHIBIDO responder con este mismo texto o repetirlo.\n`;
         }
         if (!isFirstUserTurn) {
           const uHistoryTexts = userMsgsInHist.map(h => h.message || h.content || '').join(' ');
           const hasWebIntent = /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(uHistoryTexts) || /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(message);
 
-          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${userMsgsInHist.length + 1}). El cliente ya está en la conversación activa. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a..."), preguntar "¿Qué se te antoja ordenar hoy?" o preguntar "¿En qué proyecto o requerimiento tecnológico te podemos colaborar?". Responde DIRECTAMENTE al mensaje actual del cliente sin reiniciar la charla ni repetir bienvenidas.\n`;
+          if (userSentGreetingNow) {
+            contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${userMsgsInHist.length + 1}). El cliente saludó amablemente en este mensaje. Salúdalo de vuelta de forma breve y cordial (ej: "¡Hola! Con gusto...") antes de responder a su inquietud, pero NO repitas discursos de bienvenida ni el saludo inicial ya visto.\n`;
+          } else {
+            contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${userMsgsInHist.length + 1}). Responde DIRECTAMENTE al mensaje actual del cliente sin reiniciar la charla ni repetir saludos innecesarios.\n`;
+          }
           if (hasWebIntent) {
             contextBlock += `[PROYECTO YA IDENTIFICADO]: El cliente YA especificó previamente que busca Desarrollo Web / Solución Digital. Queda TERMINANTEMENTE PROHIBIDO volver a preguntarle qué servicio busca o en qué proyecto le colaboramos. Asume con certeza su interés en Desarrollo Web & SaaS y avanza hacia la propuesta formal, captura de datos o agendamiento.\n`;
           }
@@ -7097,7 +7180,7 @@ DIRECTIVA DE ATENCIÓN CONTEXTUAL:
             contextBlock += `[CORREO OBTENIDO]: Ya se cuenta con el correo electrónico del cliente: "${bookingState.slots.email}". Agradécelo amablemente y solicita su número de teléfono / WhatsApp para continuar.\n`;
           }
         } else {
-          contextBlock += `[ESTADO CONVERSACIONAL]: PRIMER MENSAJE DEL CLIENTE. Si el cliente saluda en su mensaje (ej: "hola", "buenas"), salúdalo amablemente de vuelta al inicio de tu respuesta antes de responder sus dudas. Queda terminantemente PROHIBIDO entrar a secas sin saludar si el cliente saludó.\n`;
+          contextBlock += `[ESTADO CONVERSACIONAL]: PRIMER MENSAJE DEL CLIENTE. Si el cliente saluda en su mensaje (ej: "hola", "buenas"), salúdalo amablemente de vuelta de forma fresca al inicio de tu respuesta antes de responder sus dudas. NUNCA repitas textualmente el mensaje de bienvenida inicial.\n`;
         }
         contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
         contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;
@@ -8326,6 +8409,15 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           }
         }
 
+        // Blindaje universal anti-repetición en respuesta del LLM
+        llmResult.text = ensureUniqueAnswer(llmResult.text);
+        try {
+          await executeD1(
+            'UPDATE chat_messages SET message = ?1 WHERE id = ?2',
+            [llmResult.text, botMsgId]
+          );
+        } catch (e) {}
+
         return jsonResponse({
           sessionId: currentSessionId,
           level: isUnresolvedQuery ? 'fallback_hitl' : 'level_3_catalog',
@@ -8376,11 +8468,12 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
       } catch (uErr) {}
 
       const fallbackAnswer = `No tengo ese dato exacto en el catálogo en este momento. Con mucho gusto lo consulto directamente con nuestro equipo de atención para darte información precisa.\n\n¿Me podrías indicar tu número de WhatsApp o correo electrónico para contactarte de inmediato?`;
+      const finalFallbackAnswer = ensureUniqueAnswer(fallbackAnswer);
       const botMsgId = 'msg_' + Date.now() + '_b';
       try {
         await executeD1(
           'INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
-          [botMsgId, currentSessionId, actualTenantId, 'assistant', fallbackAnswer, 'fallback_hitl']
+          [botMsgId, currentSessionId, actualTenantId, 'assistant', finalFallbackAnswer, 'fallback_hitl']
         );
       } catch (e) {}
 
@@ -8389,7 +8482,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         level: 'fallback_hitl',
         levelLabel: 'Nivel 4: Derivación a Asesor Humano',
         confidence: 0.15,
-        answer: fallbackAnswer,
+        answer: finalFallbackAnswer,
         isFallback: true,
         requiresLeadInfo: true,
         orderTotal: null,
