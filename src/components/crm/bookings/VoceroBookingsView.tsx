@@ -63,7 +63,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
       }
       const scroll = () => { if (targetId) document.getElementById(`vocero-apt-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
       setTimeout(scroll, 80); setTimeout(scroll, 220); setTimeout(scroll, 450);
-      if (targetId && onAcknowledgeBooking) onAcknowledgeBooking(targetId);
+      if (autoOpenBooking && targetId && onAcknowledgeBooking) onAcknowledgeBooking(targetId);
     };
     if (autoOpenBooking) handleTarget(autoOpenBooking);
     else if (highlightedBookingId) handleTarget(undefined, highlightedBookingId);
@@ -167,7 +167,7 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-[#d8e2f0] bg-white p-10 text-center shadow-xs"><CalendarDays className="h-8 w-8 text-[#8391aa] mx-auto mb-2 opacity-50" /><h4 className="text-xs font-bold text-[#0a1730]">No hay citas para este período</h4><p className="text-[11px] text-[#8391aa] max-w-sm mx-auto mt-1">Las citas agendadas por tus clientes a través del bot o creadas manualmente se sincronizan aquí en tiempo real.</p></div>
         ) : (
-          filtered.map((apt) => (<VoceroAppointmentCard key={apt.id} appointment={apt} isHighlighted={apt.id === highlightedBookingId} onHover={() => onAcknowledgeBooking && onAcknowledgeBooking(apt.id)} onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment} onSelectAppointment={(item) => setSelectedAppointment(item)} />))
+          filtered.map((apt) => (<VoceroAppointmentCard key={apt.id} appointment={apt} isHighlighted={apt.id === highlightedBookingId} onToggleStatus={handleToggleStatus} onDelete={handleDeleteAppointment} onSelectAppointment={(item) => { setSelectedAppointment(item); if (onAcknowledgeBooking) onAcknowledgeBooking(item.id); }} />))
         )}
       </main>
       <VoceroNewBookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddBooking={handleCreateBooking} />

@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Notificaciones de Nuevas Citas Resilientes con Polling Anti-Drain y Chime Sonoro (v2.9.28)
+- **Diagnóstico y Necesidad:**
+  1. *Ausencia de Notificación al Agendar Citas desde Clientes Externos / Multi-Pestaña:*
+     - Al agendar citas desde el chat web, WhatsApp o pestañas externas, `useNewBookingAlert.ts` no se enteraba debido a que dependía únicamente de `BroadcastChannel` y storage events locales, los cuales están aislados entre dominios (`clikchat.pages.dev` vs `clikchatcrm.pages.dev`) y dispositivos.
+     - En el CRM no existía sondeo activo (polling) a `/api/bookings` cuando el usuario se encontraba en pestañas distintas a Agenda (ej. Inbox, Ajustes, Analista), dejando la notificación apagada.
+  2. *Auto-Descarte Inmediato del Banner en `VoceroBookingsView.tsx`:*
+     - En `VoceroBookingsView.tsx` (línea 66), al detectar `highlightedBookingId`, ejecutaba `onAcknowledgeBooking(targetId)` de forma automática en 0 milisegundos, matando la alerta antes de que el usuario pudiera ver el banner en pantalla.
+     - Asimismo, el evento `onHover` en las tarjetas marcaba las citas como reconocidas al pasar el cursor por encima.
+  3. *Falta de Alerta Sonora Audible:*
+     - Las notificaciones carecían de feedback acústico, pasando inadvertidas si el administrador no estaba mirando fijamente la pantalla.
+- **Solución Quirúrgica Implementada:**
+  1. *Polling Inteligente Anti-Drain en `useNewBookingAlert.ts`:*
+     - Sondeo periódico cada 10 segundos contra `/api/bookings` respetando el estándar `polling-inteligente` (pausa automática en pestañas en segundo plano con `document.hidden`).
+     - Detección precisa de citas nuevas contra el set de IDs vistos (`seenKey`), disparando el banner de alerta `NewBookingBanner` y el contador de citas no leídas en `VoceroAppNav`.
+  2. *Eliminación del Auto-Descarte Prematuro y Limpieza de Interacciones:*
+     - En `VoceroBookingsView.tsx`, se aisló `onAcknowledgeBooking` para ejecutarse únicamente cuando el usuario presiona "Ver cita ahora" (`autoOpenBooking`) o cuando abre deliberadamente el detalle de la cita (`onSelectAppointment`). Erradicado el descarte involuntario por `onHover`.
+  3. *Chime Acústico con Web Audio API:*
+     - Síntesis de sonido suave de dos tonos (D5 587Hz -> A5 880Hz) sin dependencias ni archivos externos, compatible con navegadores móviles y de escritorio.
+  4. *Soporte Multiformato en `bookingSyncBus.ts`:*
+     - Detección tanto de `data.booking` como de `data.bookingCard` para difusión inmediata por bus y reactivación inmediata del polling.
+  5. *Verificación de los 3 Filtros:*
+     - Build Vite en 11.85s (0 errores), commit en `origin/main`, deploy dual exitoso en Cloudflare Pages (`clikchat` y `clikchatcrm`), y smoke test en Chrome Headless con 17/17 rutas operativas (Hash Match `index-D6ghTXOY.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Disponibilidad Real en D1, Nombre Humano Estricto en Ficha y Múltiples Citas en Live Lab (v2.9.27)
 - **Diagnóstico y Necesidad:**
   1. *Horarios Inventados vs Disponibilidad Real:*

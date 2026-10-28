@@ -88,6 +88,18 @@ if (typeof window !== 'undefined' && !(window as any).__clikchat_booking_sync_ho
                 });
                 return;
               }
+              if (data?.bookingCard) {
+                const bc = data.bookingCard;
+                broadcastBookingCreated(undefined, {
+                  id: bc.id || ('apt_' + Date.now()),
+                  clientName: bc.customerName || 'Cliente',
+                  serviceName: bc.service || 'Servicio Profesional',
+                  date: bc.date,
+                  time: bc.time,
+                  price: Number(bc.price) || 0
+                });
+                return;
+              }
             } catch (e) {}
             broadcastBookingCreated();
           }
