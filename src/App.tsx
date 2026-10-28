@@ -76,7 +76,7 @@ export function App() {
       )}
 
       {/* Main Container */}
-      <main className={`flex-1 overflow-hidden relative ${isVoceroMode ? 'bg-[#f6f8fc]' : 'bg-[#151414]'}`}>
+      <main className={`flex-1 min-h-0 overflow-hidden relative ${isVoceroMode ? 'bg-[#f6f8fc]' : 'bg-[#151414]'}`}>
         {currentView === 'landing' && (
           <div className="h-full w-full overflow-y-auto bg-[#0a0a0c]">
             <LandingPage onGoToDashboard={(slug) => { const active = slug || selectedTenantSlug || 'comida-callejera-xl'; setSelectedTenantSlug(active); navigate(isVoceroMode ? getVoceroTabPath(active, 'settings') : getTenantTabPath(active, 'business')); }} onGoToAdmin={() => navigate('/super-admin')} />
