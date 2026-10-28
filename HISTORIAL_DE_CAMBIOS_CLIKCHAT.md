@@ -16,6 +16,35 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Pipeline de Ventas Dinámico: Adaptación de Etapa 'Cita' vs 'Comanda' según Modalidad Comercial y Rediseño Flush Contiguo (v2.9.9)
+- **Diagnóstico y Necesidad:**
+  1. *Etiqueta Inadecuada de Etapa en Negocios de Servicios:*
+     - Cuando un negocio se configuraba en la modalidad *"Vendo Servicios / Agendo Citas"* (`business_type === 'servicios'`), la tercera columna del Pipeline Kanban mostraba *"Comanda / Cita"* o *"Comanda"*, un término exclusivo de restaurantes y gastronomía que no encaja en servicios profesionales, consultorios médicos, estéticas ni asesorías.
+  2. *Requerimiento del Usuario:*
+     - Si el comercio está configurado en "Vendo servicios y agendo citas", la columna y las opciones deben decir estrictamente **"Cita"** (y "Cita Agendada"). Solo debe decir **"Comanda"** cuando la configuración sea venta de productos de comida / restaurantes (`tienda`, `restaurante`, `comida`).
+  3. *Rediseño Flush del Pipeline:*
+     - Se unificó la arquitectura visual con la Bandeja de Entrada: bordes contiguos (`divide-x`), ancho completo sin márgenes flotantes redundantes y previsualización directa del texto de cada mensaje en `VoceroLeadCard`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Helper Centralizado `getCrmStages` en `src/types/crm.ts` (113 líneas):*
+     - Generación dinámica de etapas según `businessType`:
+       - `servicios` / `citas`: Etapa proposal -> `title: 'Cita'`, `label: 'Cita Agendada'`, `description: 'Cita agendada o por confirmar'`. Notificación de cierre -> *"🎉 ¡Trato cerrado con éxito! Cita registrada."*
+       - `tienda` / `restaurante` / `comida`: Etapa proposal -> `title: 'Comanda'`, `label: 'Comanda Solicitada'`, `description: 'Comanda armada o en preparación'`. Notificación de cierre -> *"🎉 ¡Trato cerrado con éxito! Comanda registrada."*
+       - Fallback backwards-compatible: `CRM_STAGES` mantiene compatibilidad universal para componentes estáticos.
+  2. *Inyección de `businessType` en Pipeline y CRM:*
+     - `VoceroPipelineBoard.tsx` (178 líneas): Consume `getCrmStages(businessType)` y adapta toasts de kanban y modal de nuevo trato.
+     - `VoceroPipelineColumn.tsx` (105 líneas): Renderiza la cabecera dinámica al ras.
+     - `VoceroNewLeadModal.tsx` (166 líneas): Selector de etapa inicial con etiquetas contextuales dinámicas.
+     - `VoceroLeadDetailPanel.tsx` (168 líneas) & `VoceroInbox.tsx` (94 líneas): Sincronización de pills de cambio de etapa en la bandeja.
+     - `VoceroCrmView.tsx` (177 líneas): Pasa `tenant?.business_type` de forma reactiva a todos los subcomponentes del CRM.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación TypeScript/Vite limpia (`npm run build`) en 38.53s con 0 errores (`dist/assets/index-C44Wr5ZT.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Auditoría Integral de Código y Certificación de Respuestas Reales vs Semillas Demo (v2.9.8)
 - **Diagnóstico y Origen de Datos del Canal Web:**
   1. *Certificación de Respuestas Reales del Agente:*

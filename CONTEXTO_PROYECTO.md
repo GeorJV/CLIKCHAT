@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 07:05 GMT-6
-- **Versión Actual:** 2.9.8 (Certificación de Respuestas Reales vs Semillas Demo y Auditoría Integral)
-- **Deploy en Vivo:** https://clikchatcrm.pages.dev
+- **Última Actualización:** 2026-10-28 07:58 GMT-6
+- **Versión Actual:** 2.9.9 (Pipeline Dinámico Cita vs Comanda según Modalidad & Layout Flush Contiguo)
+- **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Respuestas Reales en Vivo: Respuestas del Live Lab y web generadas 100% en Edge con D1; cero invención manual.
-  - Semillas Demo Delimitadas: conversationsDemo.ts aislado solo como placeholder de primer uso en cuentas nuevas.
-  - Código y Dependencias: 306 archivos en src/ auditados con 0 imports rotos y compilación limpia (7.46s).
-  - Verificación Dual: 17/17 rutas operativas en Chrome Headless y sincronizado con ARQ AI Studio.
+  - Etapas Dinámicas Cita vs Comanda: En 'Vendo Servicios / Citas', la etapa dice estrictamente 'Cita' y toast 'Cita registrada'. En 'Comida/Tienda', dice 'Comanda'.
+  - Pipeline Flush Contiguo: Eliminados márgenes exteriores y cajas anidadas; columnas unidas borde a borde (`divide-x`).
+  - Vista Previa de Mensajes: Cada tarjeta de lead exhibe el texto real (`last_message`), canal (WA/WEB) y teléfono.
+  - Arquitectura ARQMODULAR: VoceroPipelineBoard (178 lín), Column (105 lín), LeadCard (165 lín), CrmView (177 lín), crm.ts (113 lín).
+  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

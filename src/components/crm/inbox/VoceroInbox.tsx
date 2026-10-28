@@ -21,6 +21,7 @@ interface VoceroInboxProps {
   onSendMessage: (leadId: string, text: string) => void;
   onUpdateLead: (leadId: string, fields: Partial<CrmLead>) => void;
   onOpenNewLeadModal: () => void;
+  businessType?: string;
 }
 
 export const VoceroInbox: React.FC<VoceroInboxProps> = ({
@@ -40,6 +41,7 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
   onSendMessage,
   onUpdateLead,
   onOpenNewLeadModal,
+  businessType,
 }) => {
   const [panelOpen, setPanelOpen] = useState(true);
 
@@ -82,6 +84,7 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
             onUpdateLead={onUpdateLead}
             onSendMessage={onSendMessage}
             onClose={() => setPanelOpen(false)}
+            businessType={businessType}
           />
         </div>
       )}

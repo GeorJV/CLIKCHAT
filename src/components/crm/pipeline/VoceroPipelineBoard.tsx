@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Zap } from 'lucide-react';
-import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
+import { CrmLead, CRM_STAGES, CrmStageId, getCrmStages } from '../../../types/crm';
 import { VoceroPipelineColumn } from './VoceroPipelineColumn';
 import { VoceroNewLeadModal } from './VoceroNewLeadModal';
 import { useVoceroMode } from '../../../hooks/useVoceroMode';
@@ -10,12 +10,15 @@ interface VoceroPipelineBoardProps {
   onSelectLead: (id: string) => void;
   onChangeStage: (id: string, stage: CrmStageId) => void;
   onCreateLead: (data: Partial<CrmLead>) => void;
+  businessType?: string;
 }
 
 export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
-  leads, onSelectLead, onChangeStage, onCreateLead
+  leads, onSelectLead, onChangeStage, onCreateLead, businessType
 }) => {
   const { isVoceroMode } = useVoceroMode();
+  const isServices = businessType === 'servicios' || businessType === 'citas' || businessType === 'servicios_citas';
+  const stages = getCrmStages(businessType);
   const [modalOpen, setModalOpen] = useState(false), [triggerToast, setTriggerToast] = useState<string | null>(null);
   const [activeEtapa, setActiveEtapa] = useState<1 | 2>(1), [isAnimating, setIsAnimating] = useState(false);
   const [animPhase, setAnimPhase] = useState<'idle' | 'slide-out-right' | 'prep-from-right' | 'slide-in-left'>('idle');
@@ -24,8 +27,8 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
 
   const handleStageChange = (id: string, stage: CrmStageId) => {
     onChangeStage(id, stage);
-    if (stage === 'won') setTriggerToast('🎉 ¡Trato cerrado con éxito! Comanda registrada.');
-    else if (stage === 'proposal') setTriggerToast('⚡ Automatización Kanban: Seguimiento activado.');
+    if (stage === 'won') setTriggerToast(isServices ? '🎉 ¡Trato cerrado con éxito! Cita registrada.' : '🎉 ¡Trato cerrado con éxito! Comanda registrada.');
+    else if (stage === 'proposal') setTriggerToast(isServices ? '⚡ Seguimiento activado: Cita agendada.' : '⚡ Automatización Kanban: Seguimiento activado.');
     else if (stage === 'lost') setTriggerToast('📦 Lead en pausa: Disponible para Reactivación.');
     setTimeout(() => setTriggerToast(null), 4000);
   };
@@ -45,7 +48,7 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
     }, 280);
   };
 
-  const displayedStages = activeEtapa === 1 ? CRM_STAGES.slice(0, 3) : CRM_STAGES.slice(3, 6);
+  const displayedStages = activeEtapa === 1 ? stages.slice(0, 3) : stages.slice(3, 6);
 
   const getAnimClass = () => {
     if (animPhase === 'slide-out-right') return 'translate-x-[110%] opacity-0 scale-[0.98] duration-300 ease-in pointer-events-none';
@@ -142,10 +145,10 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
         </div>
       )}
 
-      {/* Columnas Horizontales con Animación Suave Carrusel */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 relative">
+      {/* Columnas Contiguas Tipo Bandeja con Animación Suave Carrusel */}
+      <div className={`flex-1 overflow-x-auto overflow-y-hidden relative ${isVoceroMode ? 'bg-white' : 'bg-[#151414]'}`}>
         <div
-          className={`flex gap-3 h-full w-full transition-all ${getAnimClass()}`}
+          className={`flex h-full w-full divide-x ${isVoceroMode ? 'divide-[#e8edf6]' : 'divide-[#262424]'} transition-all ${getAnimClass()}`}
           style={{
             transitionTimingFunction: animPhase === 'slide-in-left' ? 'cubic-bezier(0.16, 1, 0.3, 1)' : 'cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -157,7 +160,7 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
               leads={leads}
               onSelectLead={onSelectLead}
               onChangeStage={handleStageChange}
-              className="flex-1 min-w-[260px] h-full"
+              className="flex-1 min-w-[280px] h-full"
             />
           ))}
         </div>
@@ -167,6 +170,7 @@ export const VoceroPipelineBoard: React.FC<VoceroPipelineBoardProps> = ({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreateLead={onCreateLead}
+        businessType={businessType}
       />
     </div>
   );

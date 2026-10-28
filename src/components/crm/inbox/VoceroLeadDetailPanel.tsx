@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ExternalLink, Zap, Check } from 'lucide-react';
-import { CrmLead, CRM_STAGES, CrmStageId } from '../../../types/crm';
+import { CrmLead, CRM_STAGES, CrmStageId, getCrmStages } from '../../../types/crm';
 import { LeadReactivationModal } from '../pipeline/LeadReactivationModal';
 import { VoceroLeadScoreMeter } from './VoceroLeadScoreMeter';
 
@@ -10,6 +10,7 @@ interface VoceroLeadDetailPanelProps {
   onUpdateLead: (leadId: string, fields: Partial<CrmLead>) => void;
   onSendMessage?: (leadId: string, text: string) => void;
   onClose: () => void;
+  businessType?: string;
 }
 
 export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
@@ -18,7 +19,9 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
   onUpdateLead,
   onSendMessage,
   onClose,
+  businessType,
 }) => {
+  const stages = getCrmStages(businessType);
   const [dealValue, setDealValue] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [savedNotes, setSavedNotes] = useState(false);
@@ -94,7 +97,7 @@ export const VoceroLeadDetailPanel: React.FC<VoceroLeadDetailPanelProps> = ({
         <div className="space-y-1.5">
           <span className="vocero-kicker block">Etapa del Embudo</span>
           <div className="grid grid-cols-2 gap-1.5">
-            {CRM_STAGES.map((s) => {
+            {stages.map((s) => {
               const active = lead.stage === s.id;
               return (
                 <button

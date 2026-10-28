@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { X, UserPlus, DollarSign, Phone, Mail, User } from 'lucide-react';
-import { CrmLead, CRM_STAGES, CrmStageId, CrmChannel } from '../../../types/crm';
+import { CrmLead, CRM_STAGES, CrmStageId, CrmChannel, getCrmStages } from '../../../types/crm';
 
 interface VoceroNewLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateLead: (data: Partial<CrmLead>) => void;
+  businessType?: string;
 }
 
 export const VoceroNewLeadModal: React.FC<VoceroNewLeadModalProps> = ({
   isOpen,
   onClose,
   onCreateLead,
+  businessType,
 }) => {
+  const stages = getCrmStages(businessType);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -108,7 +111,7 @@ export const VoceroNewLeadModal: React.FC<VoceroNewLeadModalProps> = ({
                 onChange={(e) => setStage(e.target.value as CrmStageId)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-emerald-500"
               >
-                {CRM_STAGES.map(s => (
+                {stages.map(s => (
                   <option key={s.id} value={s.id}>{s.title}</option>
                 ))}
               </select>

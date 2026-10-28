@@ -101,10 +101,11 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             isLoadingMessages={isLoadingMessages} filterInbox={filterInbox} onSetFilterInbox={setFilterInbox}
             searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
             onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
+            businessType={tenant?.business_type || (tenant as any)?.businessType}
           />
         )}
         {activeTab === 'pipeline' && (
-          <VoceroPipelineBoard leads={leads} onSelectLead={handleSelectLeadFromPipeline} onChangeStage={changeLeadStage} onCreateLead={createLead} />
+          <VoceroPipelineBoard leads={leads} onSelectLead={handleSelectLeadFromPipeline} onChangeStage={changeLeadStage} onCreateLead={createLead} businessType={tenant?.business_type || (tenant as any)?.businessType} />
         )}
         {activeTab === 'contacts' && (
           <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} />
@@ -148,24 +149,13 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           />
         )}
         {activeTab === 'lab' && (
-          <VoceroAiSandbox
-            tenantSlug={tenantSlug}
-            tenantId={tenant?.id || tenantId}
-            tenant={tenant}
-            tenantName={tenant?.name || tenantName}
-            products={products}
-            faqs={faqs}
-            onCreateFaq={createFaq}
-          />
+          <VoceroAiSandbox tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} tenant={tenant} tenantName={tenant?.name || tenantName} products={products} faqs={faqs} onCreateFaq={createFaq} />
         )}
         {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
         {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} onOpenInboxLead={() => handleSelectTab('inbox')} />}
         {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
         {activeTab === 'settings' && (
-          <VoceroSettingsView
-            tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings}
-            onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct}
-          />
+          <VoceroSettingsView tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
         )}
 
         {/* Botón flotante para probar el bot al instante desde cualquier pantalla */}
