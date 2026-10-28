@@ -16,6 +16,49 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Erradicación de Bucle Infinito en Contingencia de Agendamiento, Botón Copiar Chat e Historial de Pruebas Lab (v2.9.24)
+- **Diagnóstico y Necesidad:**
+  1. *Bucle Infinito en Red de Contingencia al Agendar Cita:*
+     - Cuando todos los modelos de IA fallaban (Gemini 429, OpenRouter crédito agotado, Cloudflare Workers AI cuota alcanzada) y la conversación caía a la Red de Contingencia (Offline), el bot no podía cerrar la cita.
+     - *Causa Raíz:* `generateSmartFallbackReply()` procesaba cada mensaje de forma atómica sin memoria de los datos ya proporcionados en turnos anteriores (correo, teléfono, fecha, hora), repitiendo preguntas de agendamiento en bucle indefinido.
+  2. *Sin Botón para Copiar la Conversación del Lab:*
+     - No existía forma de copiar o exportar la conversación completa del probador del asistente (Live Lab) para revisión o intervención rápida.
+  3. *Sin Trazabilidad ni Historial de Pruebas de Lab:*
+     - Las pruebas del Lab se perdían al reiniciar sesión; no había numeración de secuencia ni historial persistente para referencia cruzada.
+  4. *Timeout Prematuro en Gemini (6s) y Modelos Gemini No Priorizados:*
+     - `callModel_Gemini` usaba `AbortSignal.timeout(6000)` y los modelos Gemini 3.5 Flash Lite tardaban ~10-13s, provocando timeouts frecuentes y caídas prematuras a contingencia.
+  5. *Formato de Fecha con Typos de "mañana":*
+     - `formatFullDayAndDate()` no reconocía variantes con typos (`mananaa`, `mananaaa`), causando fechas literales no resueltas en la tarjeta de cita.
+- **Solución Quirúrgica Implementada:**
+  1. *Memoria Acumulativa en Contingencia (`generateSmartFallbackReply`):*
+     - Reimplementado con recopilación integral de slots (correo, teléfono, fecha, hora) de TODA la conversación histórica, no solo del mensaje actual.
+     - Auto-cierre determinista de cita: si hay contacto + fecha/hora detectados (o el usuario exige confirmación), emite `[BOOKING_CARD:]` inmediatamente con los datos acumulados.
+     - Detección de reclamos por repetición ("ya te dije", "dame la cita") que ahora gatilla la emisión inmediata de la tarjeta si los datos están completos.
+  2. *Tolerancia de Fecha Ampliada (`formatFullDayAndDate`):*
+     - Regex expandido para variantes con typos: `mananaa`, `mananaaa`, `mañanaa` → resueltos como "mañana" (día siguiente).
+  3. *Timeout Aumentado y Modelo Priorizado en Gemini (`callModel_Gemini`):*
+     - Timeout elevado de 6s a 15s. Modelo `gemini-3.5-flash-lite` añadido al frente de la cadena de rotación.
+     - Consolidación de turnos consecutivos del mismo rol para evitar error 400 de Gemini API.
+  4. *Botón "Copiar Chat" en Live Lab (`VoceroAiSandbox.tsx`):*
+     - Botón en el header del Lab que copia toda la conversación al portapapeles con formato profesional: número de secuencia, nombre del bot, modelo usado, calidad RAG y etiqueta de contingencia.
+  5. *Historial Persistente de Pruebas Lab (`labHistoryStore.ts` + `LiveLabHistoryModal.tsx`):*
+     - Número de secuencia auto-incremental (`LAB-1001`, `LAB-1002`, etc.) para cada sesión de prueba.
+     - Modal de historial con lista de sesiones guardadas en `localStorage`, botón de copiar individual, carga rápida de sesión anterior y eliminación.
+     - Cada sesión del Lab se guarda automáticamente con sus mensajes, modelo, snippet del último mensaje del usuario.
+  6. *Endpoints Backend para Lab (`/api/lab/sessions/:tenantId` y `/api/lab/session/:codeOrId`):*
+     - Consulta de sesiones `lab_*` persistidas en D1 con filtro por tenant.
+     - Etiqueta `[LAB xxx]` en `chat_sessions.user_name` para identificación rápida en conversaciones.
+  7. *Relajación de Requisito de Nombre para Emitir Tarjeta:*
+     - `hasFullContact` ya no exige nombre obligatoriamente; si hay correo o teléfono, se usa el prefijo del correo como nombre provisional.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 9.86s con 0 errores (`dist/assets/index-Cgd28scg.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commits `bf5322d` y `5894383`).
+  - *Filtro 3:* Despliegue dual pendiente de propagación en Cloudflare Pages (`clikchat` y `clikchatcrm`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Inteligencia Superior, Extracción Precisa de Nombres y Contexto de Múltiples Citas (v2.9.23)
 - **Diagnóstico y Necesidad:**
   1. *Falta de Comprensión de Contexto y Confusión en Múltiples Citas:*

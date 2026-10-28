@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 11:18 GMT-6
-- **Versión Actual:** 2.9.23 (Inteligencia Superior, Extracción Precisa de Nombres y Múltiples Citas)
+- **Última Actualización:** 2026-10-28 11:44 GMT-6
+- **Versión Actual:** 2.9.24 (Erradicación de Bucle Infinito en Contingencia + Lab con Copiar Chat y Trazabilidad)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - IA de Alta Capacidad Activa: Sincronización oficial de Gemini Flash y Llama 3.3 70B con failover sin caída a plantillas.
-  - Extracción de Nombres Depurada: Purga quirúrgica de conectores y verbos para nombres limpios y exactos.
-  - Coordinación de Múltiples Citas: Soporte nativo para intenciones simultáneas ("hoy y mañana") con guía secuencial.
-  - Memoria Expandida: Historial conversacional ampliado a 35 mensajes completos con lectura rápida y precisa.
-  - Verificado con 3 Filtros: Build Vite limpio en 8.93s, sincronizado en `main`, deploy dual en Cloudflare Pages y 17/17 rutas operativas.
+  - Contingencia Inteligente: `generateSmartFallbackReply` ahora acumula slots (correo, tel, fecha, hora) de TODA la conversación y auto-cierra la cita si los datos están completos, erradicando el bucle infinito de preguntas repetidas.
+  - Live Lab Mejorado: Botón "Copiar Chat" con formato profesional, número de secuencia LAB-xxxx auto-incremental, historial persistente en localStorage y modal de sesiones guardadas.
+  - Endpoints Lab Backend: `/api/lab/sessions/:tenantId` y `/api/lab/session/:codeOrId` para trazabilidad en D1.
+  - Gemini Robusto: Timeout a 15s, `gemini-3.5-flash-lite` priorizado, consolidación de turnos consecutivos del mismo rol.
+  - Verificado con 3 Filtros: Build Vite limpio en 9.86s, sincronizado en `main`, deploy dual en Cloudflare Pages.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
