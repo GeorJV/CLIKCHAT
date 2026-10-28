@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 09:40 GMT-6
-- **Versión Actual:** 2.9.19 (Sincronización y Persistencia de Citas desde el Probador del Asistente)
+- **Última Actualización:** 2026-10-28 09:45 GMT-6
+- **Versión Actual:** 2.9.20 (Reparación y Apertura Reactiva del Botón 'Ver cita ahora')
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Citas del Probador Sincronizadas: Normalización dual snake_case y camelCase en `POST /api/bookings`.
-  - Persistencia Inmediata: Guardado automático en `localStorage` y D1 para visualización instantánea en la plataforma.
-  - Blindaje Anti-Falsos Positivos: Evitado bloqueo de agendamiento por signos de interrogación o consultas comerciales.
-  - Captura Universal: Registro de cita ante tarjeta `[BOOKING_CARD:]`, payload `booking` o confirmación verbal del bot.
-  - Verificado con 3 Filtros: Build Vite limpio en 8.86s, sincronizado en GitHub `main` y deploy Cloudflare Pages verificado.
+  - Botón 'Ver cita ahora' Operativo: Alerta en banner navega, centra la tarjeta y abre instantáneamente la ficha detallada.
+  - Apertura Reactiva de Ficha: Integrado `autoOpenBooking` y evento `clikchat_focus_booking` con modal de detalle interactivo.
+  - Auto-dismiss y Filtro Automático: El banner se oculta al interactuar y los filtros se ajustan a "Todas" sin perder el foco.
+  - Citas del Probador y Chat Sincronizadas: Persistencia local y en D1 bajo API unificada.
+  - Verificado con 3 Filtros: Build Vite limpio en 11.64s, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en verde.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

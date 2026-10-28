@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Reparación y Apertura Reactiva Inmediata del Botón 'Ver cita ahora' (v2.9.20)
+- **Diagnóstico y Necesidad:**
+  1. *Botón 'Ver cita ahora' Inoperativo:*
+     - Al aparecer la alerta de nueva cita (`NewBookingBanner`), el botón "Ver cita ahora" no abría la ficha de la cita, no desplazaba al elemento si ya estaba en memoria y mantenía el banner montado sin respuesta visual.
+     - *Causa Raíz:* En `VoceroCrmView` y `ClientDashboard`, `onViewBooking` no invocaba `dismissAlert()`, `useNewBookingAlert` no pasaba el objeto completo de la cita en el evento y `VoceroBookingsView` no abría automáticamente el modal de detalle (`VoceroAppointmentDetailModal`).
+- **Solución Quirúrgica Implementada:**
+  1. *Apertura Reactiva de Ficha de Cita (`VoceroCrmView.tsx` y `VoceroBookingsView.tsx`):*
+     - Vinculado estado `autoOpenBooking` para desplegar inmediatamente `VoceroAppointmentDetailModal` con los datos de la cita al hacer clic en "Ver cita ahora".
+     - Escucha del evento `clikchat_focus_booking` en `VoceroBookingsView` y `AgendaTab` con centrado suave escalonado y reseteo de filtros a "Todas".
+     - Auto-dismiss limpio de `NewBookingBanner` al hacer clic en "Ver cita ahora", con `stopPropagation()` en el botón.
+     - Registro canónico de la ruta `/citas` mapeada a `'agenda'` en `routerConstants.ts`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 11.64s con 0 errores (`dist/assets/index-DGbIKWRc.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Sincronización y Persistencia Garantizada de Citas Agendadas desde el Probador del Asistente (v2.9.19)
 - **Diagnóstico y Necesidad:**
   1. *Falta de Agendamiento en Plataforma tras Probar el Asistente:*
