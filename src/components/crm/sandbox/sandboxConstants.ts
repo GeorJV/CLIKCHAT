@@ -97,9 +97,10 @@ export const saveSandboxBooking = (cardPayload: any, tenant: any, tenantId?: str
   const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
   const tSlug = tenant?.slug || tenantSlug || 'geosoft';
   const targetId = tId === 'geosoft' ? 'ten_geosoft_prod' : tId;
+  const newId = cardPayload.id || ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
   const apt = {
-    id: cardPayload.id || ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
-    clientName: cardPayload.customerName || cardPayload.clientName || 'Cliente Agendado',
+    id: newId,
+    clientName: cardPayload.customerName || cardPayload.clientName || 'Cliente',
     serviceName: cardPayload.service || cardPayload.serviceName || (tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional'),
     date: cardPayload.date || new Date().toISOString().slice(0, 10),
     dateKey: cardPayload.date || new Date().toISOString().slice(0, 10),
@@ -119,9 +120,8 @@ export const saveSandboxBooking = (cardPayload: any, tenant: any, tenantId?: str
       try {
         const sk = `clikchat_bookings_${k}`;
         const cur = JSON.parse(localStorage.getItem(sk) || '[]');
-        if (!cur.some((x: any) => x.id === apt.id)) {
-          localStorage.setItem(sk, JSON.stringify([apt, ...cur]));
-        }
+        const filtered = cur.filter((x: any) => x.id !== apt.id);
+        localStorage.setItem(sk, JSON.stringify([apt, ...filtered]));
       } catch (e) {}
     });
   }

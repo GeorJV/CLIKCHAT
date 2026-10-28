@@ -91,7 +91,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
           cardPayload = { id: d.booking?.id, customerName: tenantName || tenant?.name || 'Cliente Agendado', service: tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional', date: new Date().toISOString().slice(0, 10), time: timeMatch ? timeMatch[1].toUpperCase() : '10:00 AM', price: tenant?.name === 'GeoSoft' ? 1200 : 0 };
         }
         if (cardPayload) {
-          if (d.booking?.id) cardPayload.id = d.booking.id;
+          cardPayload.id = d.booking?.id || cardPayload.id || ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
           if (!finalAnswer.includes('[BOOKING_CARD:')) finalAnswer = `${finalAnswer}\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
           saveSandboxBooking(cardPayload, tenant, tenantId, tenantSlug);
         }

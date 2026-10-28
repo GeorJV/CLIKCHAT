@@ -808,6 +808,21 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     const histEmailMatch = combinedUserText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
     const detectedEmail = currEmailMatch ? currEmailMatch[0].trim() : (histEmailMatch ? histEmailMatch[0].trim() : null);
 
+    let detectedName = null;
+    for (let i = allUserTexts.length - 1; i >= 0; i--) {
+      const uMsg = allUserTexts[i];
+      const nPat = uMsg.match(/\b(?:me\s+llamo|mi\s+nombre\s+es|soy|a\s+nombre\s+de)\s+([A-Za-zÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-Za-zÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2})/i);
+      if (nPat && isValidPersonName(nPat[1])) {
+        detectedName = nPat[1].trim();
+        break;
+      }
+      const singleCandidate = uMsg.trim().replace(/[.,:;!?¿¡]+$/g, '');
+      if (/^[A-Za-zÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-Za-zÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}$/.test(singleCandidate) && isValidPersonName(singleCandidate)) {
+        detectedName = singleCandidate;
+        break;
+      }
+    }
+
     let detectedPhone = null;
     const phoneRegex = /(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/g;
     for (let i = allUserTexts.length - 1; i >= 0; i--) {
@@ -853,11 +868,14 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
       }
     }
 
-    // AUTO-CIERRE DETERMINISTA DE CITA: Si hay contacto y se proporcionó día/hora o el usuario exige confirmación
+    // AUTO-CIERRE DETERMINISTA DE CITA: Si hay contacto, nombre humano y se proporcionó día/hora o el usuario exige confirmación
     if ((hasContact && (detectedTime || currHasTime || isDemandingBooking)) || (detectedDate && detectedTime && hasContact)) {
+      if (!detectedName) {
+        return `¡Con mucho gusto coordinamos tu cita! Ya tenemos tu contacto y horario anotados. ¿A **nombre de quién** registramos formalmente la cita para emitir tu confirmación?`;
+      }
       const finalDate = detectedDate || formatFullDayAndDate('mañana') || 'Mañana';
       const finalTime = detectedTime || (currHasTime ? parseFlexibleTime(userMessage) : '08:00 AM');
-      const clientName = detectedEmail ? detectedEmail.split('@')[0] : 'Cliente Agendado';
+      const clientName = detectedName;
       const cardPayload = {
         service: 'Desarrollo Web & SaaS',
         date: finalDate,
@@ -869,26 +887,30 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
         price: 1200
       };
       const prefixText = isAnotherBooking
-        ? `¡Excelente! Tu cita anterior se mantiene totalmente confirmada y guardada. He verificado la disponibilidad y tu **cita adicional** para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.`
-        : `¡Excelente! He verificado la disponibilidad y tu sesión para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.`;
+        ? `¡Excelente! Tu cita anterior se mantiene totalmente confirmada y guardada. He verificado la disponibilidad y tu **cita adicional** para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito a nombre de ${clientName}.`
+        : `¡Excelente! He verificado la disponibilidad y tu sesión para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito a nombre de ${clientName}.`;
       return `${prefixText}\n\nHemos apartado tu espacio en la agenda de GeoSoft y te contactaremos a tu ${detectedPhone ? 'teléfono (' + detectedPhone + ')' : 'correo (' + (detectedEmail || '') + ')'} para coordinar la videollamada de 15 minutos.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
     }
 
     // 0.0 Si acaba de dar correo
     if (currEmailMatch) {
       const cleanEmail = currEmailMatch[0].trim();
-      if (!detectedPhone) {
-        return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\nPara enviarte la propuesta formal y asegurar tu proyecto de Desarrollo Web & SaaS en GeoSoft, ¿nos podrías compartir tu número de teléfono o WhatsApp para coordinar los detalles?`;
+      if (!detectedName) {
+        return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\n¿A **nombre de quién** registramos la cita para dirigirnos a ti con el debido respeto?`;
+      } else if (!detectedPhone) {
+        return `¡Muchas gracias, ${detectedName}! He registrado tu correo **${cleanEmail}** con éxito.\n\nPara enviarte la propuesta formal y asegurar tu proyecto de Desarrollo Web & SaaS en GeoSoft, ¿nos podrías compartir tu número de teléfono o WhatsApp para coordinar los detalles?`;
       } else if (!detectedDate || !detectedTime) {
-        return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\n¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+        return `¡Muchas gracias, ${detectedName}! He registrado tu correo **${cleanEmail}** con éxito.\n\n¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
       }
     }
 
     // 0.1 Si acaba de dar teléfono
     const currPhoneMatch = userMessage.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
     if (currPhoneMatch && !/^\d{4}$/.test(currPhoneMatch[0]) && !/^\d{1,2}:\d{2}$/.test(currPhoneMatch[0]) && !currPhoneMatch[0].includes('72935612')) {
-      if (!detectedDate || !detectedTime) {
-        return `¡Excelente! He guardado tu número de contacto. ¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+      if (!detectedName) {
+        return `¡Excelente! He guardado tu número de contacto. ¿A **nombre de quién** registramos la cita para dirigirnos a ti cordialmente?`;
+      } else if (!detectedDate || !detectedTime) {
+        return `¡Excelente, ${detectedName}! He guardado tu número de contacto. ¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
       }
     }
 
@@ -896,40 +918,49 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     if (currHasDate || currHasTime) {
       const tempDate = detectedDate || formatFullDayAndDate('mañana') || 'mañana';
       const tempTime = detectedTime || (currHasTime ? parseFlexibleTime(userMessage) : '10:00 AM');
-      if (!detectedEmail && !detectedPhone) {
-        return `¡Excelente! He tomado nota para coordinar el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en nuestra agenda y enviarte el enlace de conexión, ¿me podrías compartir tu correo electrónico y número de teléfono o WhatsApp?`;
+      if (!detectedName && !detectedEmail && !detectedPhone) {
+        return `¡Excelente! He tomado nota para coordinar el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en nuestra agenda y enviarte el enlace de conexión, ¿me podrías compartir tu **nombre completo**, **correo electrónico** y número de teléfono o WhatsApp?`;
+      } else if (!detectedName) {
+        return `Perfecto, he tomado nota para el **${tempDate}** a las **${tempTime}**. ¿A **nombre de quién** registramos formalmente la cita?`;
       } else if (!detectedPhone) {
-        return `Perfecto, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu recordatorio y espacio en agenda, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
+        return `Perfecto, ${detectedName}, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu recordatorio y espacio en agenda, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
       } else if (!detectedEmail) {
-        return `Perfecto, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en agenda y enviarte la propuesta formal, ¿me podrías compartir tu correo electrónico?`;
+        return `Perfecto, ${detectedName}, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en agenda y enviarte la propuesta formal, ¿me podrías compartir tu correo electrónico?`;
       }
     }
 
     // 0.2 Detección de Aprobación o Conformidad ("me parece bien", "si quiero la reunion que datos necesitas", etc.)
     if (/^(?:me\s*parece\s*bien|de\s*acuerdo|perfecto|excelente|dale|est[aá]\s*bien|listo|me\s*interesa|adelante|claro|si|s[ií])(?:\s+.*)?$/i.test(normUser) || /\b(?:que\s+datos\s+necesitas|qu[eé]\s+datos\s+ocupas|c[oó]mo\s+agendamos)\b/i.test(normUser)) {
-      if (!detectedEmail) {
-        return `Es un gusto saludarte. Para poder enviarte todos los detalles y propuesta de tu proyecto tecnológico y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu correo electrónico?`;
+      if (!detectedName && !detectedEmail) {
+        return `Es un gusto saludarte. Para poder enviarte todos los detalles y propuesta de tu proyecto tecnológico y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu **nombre completo** y tu **correo electrónico**?`;
+      } else if (!detectedName) {
+        return `Con todo gusto coordinamos tu sesión. ¿A **nombre de quién** registramos la cita para dirigirnos a ti con el debido respeto?`;
+      } else if (!detectedEmail) {
+        return `Mucho gusto, ${detectedName}. Para enviarte los detalles y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu correo electrónico?`;
       } else if (!detectedPhone) {
-        return `Con mucho gusto coordinamos tu sesión. Para enviarte la invitación y recordatorio de la reunión, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
+        return `Con mucho gusto coordinamos tu sesión, ${detectedName}. Para enviarte la invitación y recordatorio de la reunión, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
       }
     }
 
     // 0.3 Detección de Reclamo por Repetición ("ya te lo habia dicho...", etc.)
     if (/\b(?:ya\s+te\s+(?:lo\s+)?(?:hab[ií]a\s+)?dicho|ya\s+te\s+dije|te\s+lo\s+acabo\s+de\s+decir|ya\s+respond[ií]|eso\s+ya\s+lo\s+dije)\b/i.test(normUser)) {
       if (detectedEmail || detectedPhone) {
+        if (!detectedName) {
+          return `Comprendo perfectamente y te pido una sincera disculpa por cualquier confusión previa. Ya tengo registrados tus datos de contacto. ¿A **nombre de quién** registramos formalmente la cita para confirmar tu reserva de inmediato?`;
+        }
         const finalDate = detectedDate || formatFullDayAndDate('mañana') || 'Mañana';
         const finalTime = detectedTime || '08:00 AM';
         const cardPayload = {
           service: 'Desarrollo Web & SaaS',
           date: finalDate,
           time: finalTime,
-          customerName: detectedEmail ? detectedEmail.split('@')[0] : 'Cliente Agendado',
+          customerName: detectedName,
           customerEmail: detectedEmail || '',
           customerPhone: detectedPhone || '',
           modality: 'online',
           price: 1200
         };
-        return `Comprendo perfectamente y te pido una sincera disculpa por cualquier confusión previa. He verificado de inmediato la disponibilidad y tu espacio para el **${finalDate}** a las **${finalTime}** ha quedado confirmado y asegurado en nuestra agenda.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
+        return `Comprendo perfectamente y te pido una sincera disculpa por cualquier confusión previa. He verificado de inmediato la disponibilidad y tu espacio para el **${finalDate}** a las **${finalTime}** ha quedado confirmado y asegurado en nuestra agenda a nombre de ${detectedName}.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
       }
       return `Comprendo perfectamente y te pido una disculpa por cualquier confusión previa. Mi prioridad es avanzar con tu proyecto de forma muy ágil y cómoda. ¿Te gustaría que coordinemos una breve videollamada de 15 minutos o prefieres que te contactemos por WhatsApp para revisar tu propuesta?`;
     }
@@ -3623,16 +3654,12 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             : GLOBAL_BOOKINGS.filter(b => !DELETED_BOOKING_IDS.has(b.id));
         }
 
-        // Deduplicación universal: jamás emitir dos citas idénticas (mismo cliente, fecha y hora)
+        // Deduplicación universal por ID único (permite múltiples citas independientes)
         const seenRows = new Set();
         const deduplicatedRows = [];
         for (const r of rows) {
-          const normKey = `${(r.customer_name || '').trim().toLowerCase()}_${(r.booking_date || '').trim()}_${(r.booking_time || '').trim().toLowerCase()}`;
-          if (seenRows.has(r.id) || (r.customer_name && r.booking_date && r.booking_time && seenRows.has(normKey))) {
-            continue;
-          }
+          if (!r?.id || seenRows.has(r.id)) continue;
           seenRows.add(r.id);
-          if (r.customer_name && r.booking_date && r.booking_time) seenRows.add(normKey);
           deduplicatedRows.push(r);
         }
         rows = deduplicatedRows;
@@ -5893,6 +5920,9 @@ function isValidPersonName(candidate) {
   if (/[?¿!¡\d@#$%^&*()_+=\[\]{};:"\\|<>~`]/.test(clean)) return false;
   const norm = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
+  // Nombres genéricos o palabras de reserva que NO son nombres humanos
+  if (/\b(cliente|mer[aá]s|agendado|usuario|persona|cita|reunion|contacto|correo|email|whatsapp|telefono|horario|agenda)\b/i.test(norm)) return false;
+
   // Palabras interrogativas o de consulta
   if (/\b(que|como|cuando|donde|cual|cuales|cuanto|cuantos|cuanta|por que|porque|quien|quienes)\b/i.test(norm)) return false;
 
@@ -6342,7 +6372,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   const missing = [];
-  if (!name || name.toLowerCase() === 'cliente') missing.push('Nombre completo');
+  if (!name || !isValidPersonName(name) || name.toLowerCase() === 'cliente') missing.push('Nombre completo');
   if (!email) missing.push('Correo electrónico');
   if (!phone) missing.push('Teléfono / WhatsApp');
   if (!date) missing.push('Día / Fecha de la cita');
@@ -8022,12 +8052,12 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
         let isSlotUnavailable = false;
         let nextAvailableTime = '11:30 AM';
         let secondAvailableTime = '02:00 PM';
+        let realFreeSlots = [];
 
-        if (bookingState.slots.date && bookingState.slots.time) {
+        if (bookingState.slots.date) {
           try {
-            const isReschedule = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?)\b/i.test(message || '');
             const rawBookings = await executeD1(
-              "SELECT id, booking_date, booking_time, status, customer_phone, customer_email FROM bookings WHERE tenant_id = ?1 AND status != 'cancelled'",
+              "SELECT id, booking_date, booking_time, status, customer_phone, customer_email FROM bookings WHERE (tenant_id = ?1 OR tenant_id = 'geosoft' OR tenant_id = 'ten_geosoft_prod') AND status != 'cancelled'",
               [actualTenantId]
             ).catch(() => []);
 
@@ -8045,20 +8075,67 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
 
             const apptDuration = Number(targetTenant.appointment_duration) || 30;
             const breakBuffer = targetTenant.break_buffer_time !== undefined && targetTenant.break_buffer_time !== null ? Number(targetTenant.break_buffer_time) : 10;
-            const availability = checkSlotAvailability(bookingState.slots.date, bookingState.slots.time, existingBookings, apptDuration, breakBuffer);
-            if (!availability.isAvailable) {
-              isSlotUnavailable = true;
-              nextAvailableTime = availability.nextAvailable;
-              secondAvailableTime = availability.secondAvailable;
 
-              const conflictTime = bookingState.slots.time;
-              bookingState.slots.time = null;
-              bookingState.isComplete = false;
-              if (!bookingState.missing.includes('Hora de la cita')) {
-                bookingState.missing.push('Hora de la cita');
+            const busyIntervals = [];
+            const normReqDate = (bookingState.slots.date || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            for (const b of existingBookings) {
+              if (b.status === 'cancelled') continue;
+              const bDate = (b.booking_date || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              if (areDatesMatching(normReqDate, bDate)) {
+                const bMin = parseTimeToMinutes(b.booking_time);
+                if (bMin !== null) {
+                  busyIntervals.push({
+                    start: bMin,
+                    end: bMin + apptDuration + breakBuffer,
+                    timeStr: normalizeTimeSlot(b.booking_time)
+                  });
+                }
               }
-              bookingState.currentStep = 4;
-              bookingState.stepInstruction = `PASO 4 (Horario Ocupado): El espacio de las "${conflictTime}" ya está reservado en nuestra agenda. Infórmale amablemente al cliente que ese espacio puntual ya lo tenemos reservado, y recomiéndale activamente el siguiente horario libre: "${nextAvailableTime}" o si le queda mejor "${secondAvailableTime}".`;
+            }
+
+            const daySlots = generateDynamicDaySlots(8, 18, apptDuration, breakBuffer, busyIntervals);
+            realFreeSlots = daySlots.filter(s => s.isAvailable).map(s => s.time);
+
+            if (bookingState.slots.time) {
+              const reqMinutes = parseTimeToMinutes(bookingState.slots.time);
+              const isColliding = busyIntervals.some(b => reqMinutes !== null && reqMinutes < b.end && (reqMinutes + apptDuration) > b.start);
+              const isOutsideHours = reqMinutes !== null && (reqMinutes < 8 * 60 || (reqMinutes + apptDuration) > 18 * 60);
+
+              if (isColliding || isOutsideHours) {
+                isSlotUnavailable = true;
+                const nextOptions = realFreeSlots.filter(t => {
+                  const m = parseTimeToMinutes(t);
+                  return reqMinutes === null || m > reqMinutes;
+                });
+                nextAvailableTime = nextOptions[0] || realFreeSlots[0] || '11:30 AM';
+                secondAvailableTime = nextOptions[1] || realFreeSlots[1] || '02:00 PM';
+
+                const conflictTime = bookingState.slots.time;
+                bookingState.slots.time = null;
+                bookingState.isComplete = false;
+                if (!bookingState.missing.includes('Hora de la cita')) {
+                  bookingState.missing.push('Hora de la cita');
+                }
+                bookingState.currentStep = 4;
+                bookingState.stepInstruction = `PASO 4 (Horario Ocupado o Fuera de Horario): El espacio de las "${conflictTime}" no está disponible en la agenda oficial. Infórmale amablemente al cliente que ese horario puntual no está disponible, y ofrécele ÚNICAMENTE las siguientes opciones reales libres: "${nextAvailableTime}" o si le queda mejor "${secondAvailableTime}".`;
+              }
+            } else {
+              let candidateSlots = realFreeSlots;
+              if (wantsMorning) {
+                candidateSlots = realFreeSlots.filter(t => {
+                  const m = parseTimeToMinutes(t);
+                  return m !== null && m < 12 * 60;
+                });
+              } else if (wantsAfternoon) {
+                candidateSlots = realFreeSlots.filter(t => {
+                  const m = parseTimeToMinutes(t);
+                  return m !== null && m >= 12 * 60;
+                });
+              }
+              const displaySlots = (candidateSlots.length > 0 ? candidateSlots : realFreeSlots).slice(0, 4);
+              if (displaySlots.length > 0) {
+                bookingState.stepInstruction = `PASO 4: Para el día "${cleanResolvedDate || bookingState.slots.date}", los HORARIOS REALES LIBRES en la base de datos D1 son: [${displaySlots.join(', ')}]. Ofrécele cordialmente 2 o 3 de estos horarios exactos al cliente para que elija su hora. QUEDA TERMINANTEMENTE PROHIBIDO inventar horarios al azar que no estén en esta lista.`;
+              }
             }
           } catch (availErr) {
             console.warn('Error verificando disponibilidad en D1:', availErr.message);
@@ -8284,36 +8361,34 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
         // Consolidación de datos de contacto verificados (desde slots o memoria activa de la sesión)
         let bContactName = (bookingState.slots.name || activeLeadInfo?.name || body.userName || '').trim();
-        if (/^cliente$/i.test(bContactName)) bContactName = '';
+        if (/^cliente$/i.test(bContactName) || /cliente\s+mer[aá]s/i.test(bContactName) || !isValidPersonName(bContactName)) bContactName = '';
         const bContactEmail = (bookingState.slots.email || activeLeadInfo?.email || body.userEmail || '').trim();
         let bContactPhone = (bookingState.slots.phone || activeLeadInfo?.phone || body.userPhone || '').trim();
         if (bContactPhone.includes('72935612')) bContactPhone = '';
         const bDateVal = bookingState.slots.date;
         const bTimeVal = bookingState.slots.time;
 
-        const hasFullContact = Boolean(bContactPhone || bContactEmail);
-        if (!bContactName) {
-          bContactName = bContactEmail ? bContactEmail.split('@')[0] : 'Cliente Agendado';
-        }
+        const hasValidName = Boolean(bContactName && isValidPersonName(bContactName) && !/^cliente$/i.test(bContactName));
+        const hasFullContact = Boolean(hasValidName && (bContactPhone || bContactEmail));
         const hasFullDateTime = Boolean(bDateVal && bTimeVal);
         const hasAllRequiredSlots = Boolean(hasFullContact && hasFullDateTime);
 
         // SE PERMITE Y AUTORIZA LA TARJETA DE CITA:
         // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
-        // 2. Si es turno de agendamiento o confirmación verbal, priorizar registro
+        // 2. Requiere nombre humano real OBLIGATORIO (hasValidName)
         // 3. Soporte total para slots completos o confirmación de fecha/hora (para cita adicional requiere fecha y hora reales)
         const isVerbalBookingConfirmation = /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(llmResult.text || '') ||
           /\b(?:he|hemos|acabo\s+de)\s+(?:agendar|confirmar|reservar|programar|apartar|guardar)\s+(?:tu\s+|su\s+)?(?:cita|reuni[oó]n|espacio)\b/i.test(llmResult.text || '');
 
         const isBookingTurn = isBookingContext || hasCardInReply || hasFullDateTime || isVerbalBookingConfirmation;
-        const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isBookingTurn) && (
+        const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isBookingTurn) && hasValidName && (
           bookingState.isAdditionalBookingIntent
             ? Boolean(bDateVal && bTimeVal)
             : (
               hasAllRequiredSlots ||
               isVerbalBookingConfirmation ||
               (hasCardInReply && (hasFullContact || bDateVal || bTimeVal || isBookingTurn)) ||
-              (hasFullDateTime && (bContactName || bContactPhone || bContactEmail || isBookingTurn))
+              (hasFullDateTime && (bContactPhone || bContactEmail || isBookingTurn))
             )
         );
 
@@ -8330,7 +8405,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               service: bAutoService,
               date: formatFullDayAndDate(bDateResolved) || bDateResolved,
               time: bTimeResolved,
-              customerName: bContactName || 'Cliente Agendado',
+              customerName: bContactName,
               customerEmail: bContactEmail,
               customerPhone: bContactPhone,
               modality: bAutoModality,
@@ -8402,14 +8477,14 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
               const bEmail = (finalCardEmail || bContactEmail || '').trim();
               const bPhone = (finalCardPhone || bContactPhone || '').trim();
-              const bName = (finalCardName || bContactName || 'Cliente Agendado').trim();
+              const bName = (finalCardName || bContactName || 'Cliente').trim();
               const bDate = formatFullDayAndDate(effectiveDateVal) || effectiveDateVal;
               const bTime = effectiveTimeVal;
 
               const aptIdToUse = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
               const bookingTenantId = (targetTenant.slug === 'geosoft' || actualTenantId === 'geosoft' || targetTenant.id === 'ten_geosoft_prod') ? 'ten_geosoft_prod' : actualTenantId;
               const aptMemObj = {
-                id: aptIdToUse, tenant_id: bookingTenantId, customer_name: bName || 'Cliente Agendado', customer_email: bEmail, customer_phone: bPhone, customerPhone: bPhone,
+                id: aptIdToUse, tenant_id: bookingTenantId, customer_name: bName || 'Cliente', customer_email: bEmail, customer_phone: bPhone, customerPhone: bPhone,
                 service_id: 'srv_gen', service_name: bService, booking_date: bDate, booking_time: bTime, modality: 'online', status: 'confirmed',
                 price: bPrice, currency: 'USD', notes: 'Agendado automáticamente desde el chat.', created_at: new Date().toISOString()
               };
@@ -8425,19 +8500,19 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                 if (existingApt.length > 0) {
                   await executeD1(
                     "UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, price = ?5, status = 'confirmed' WHERE id = ?6",
-                    [bName || 'Cliente Agendado', bDate, bTime, bService, bPrice, existingApt[0].id]
+                    [bName || 'Cliente', bDate, bTime, bService, bPrice, existingApt[0].id]
                   ).catch(() => {});
                   savedBookingObj.id = existingApt[0].id;
                 } else {
                   await executeD1(
                     "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD', ?12)",
-                    [aptIdToUse, bookingTenantId, bName || 'Cliente Agendado', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
+                    [aptIdToUse, bookingTenantId, bName || 'Cliente', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
                   ).catch(() => {});
                 }
               } else {
                 await executeD1(
                   "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD', ?12)",
-                  [aptIdToUse, bookingTenantId, bName || 'Cliente Agendado', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
+                  [aptIdToUse, bookingTenantId, bName || 'Cliente', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
                 ).catch(() => {});
               }
             } catch (autoSaveErr) {

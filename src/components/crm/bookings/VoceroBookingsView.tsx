@@ -7,13 +7,11 @@ interface VoceroBookingsViewProps { tenantId?: string; currency?: string; highli
 
 const sortApts = (list: AppointmentItem[]) => [...list].sort((a, b) => (b.dateKey || '').localeCompare(a.dateKey || '') || (b.time || '').localeCompare(a.time || '') || b.id.localeCompare(a.id));
 const dedupeApts = (list: any[], now: Date): AppointmentItem[] => {
-  const seenIds = new Set<string>(); const seenSlots = new Set<string>(); const res: AppointmentItem[] = [];
+  const seenIds = new Set<string>(); const res: AppointmentItem[] = [];
   for (const a of list) {
     if (!a?.id || seenIds.has(String(a.id))) continue;
+    seenIds.add(String(a.id));
     const dk = normalizeToDateKey(a.dateKey || a.displayDate || a.booking_date, now) || a.dateKey || a.displayDate || '';
-    const key = `${(a.clientName || a.customer_name || '').trim().toLowerCase()}_${dk}_${(a.time || a.booking_time || '').trim().toLowerCase()}`;
-    if (key.length > 5 && seenSlots.has(key)) continue;
-    seenIds.add(String(a.id)); if (key.length > 5) seenSlots.add(key);
     res.push({
       ...a, id: String(a.id), clientName: a.clientName || a.customer_name || 'Cliente', serviceName: a.serviceName || a.service_name || 'Servicio Profesional',
       dateKey: dk, displayDate: formatDisplayDate(a.displayDate || a.dateKey || a.booking_date, now) || a.displayDate || dk, time: a.time || a.booking_time || '10:00 AM',
