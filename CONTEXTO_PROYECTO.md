@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 11:44 GMT-6
-- **Versión Actual:** 2.9.24 (Erradicación de Bucle Infinito en Contingencia + Lab con Copiar Chat y Trazabilidad)
+- **Última Actualización:** 2026-10-28 12:06 GMT-6
+- **Versión Actual:** 2.9.25 (Persistencia de Subpestañas de Ajustes en Refresco y Fix Enrutamiento Motor IA)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Contingencia Inteligente: `generateSmartFallbackReply` ahora acumula slots (correo, tel, fecha, hora) de TODA la conversación y auto-cierra la cita si los datos están completos, erradicando el bucle infinito de preguntas repetidas.
-  - Live Lab Mejorado: Botón "Copiar Chat" con formato profesional, número de secuencia LAB-xxxx auto-incremental, historial persistente en localStorage y modal de sesiones guardadas.
-  - Endpoints Lab Backend: `/api/lab/sessions/:tenantId` y `/api/lab/session/:codeOrId` para trazabilidad en D1.
-  - Gemini Robusto: Timeout a 15s, `gemini-3.5-flash-lite` priorizado, consolidación de turnos consecutivos del mismo rol.
-  - Verificado con 3 Filtros: Build Vite limpio en 9.86s, sincronizado en `main`, deploy dual en Cloudflare Pages.
+  - Enrutamiento Ajustes Fijo: `ia`, `motor-ia`, `zernio`, `canales`, `perfil`, `catalogo` mapeados a `settings`. Corregido bug donde `ia` redirigía a "Analista de IA Gerencial".
+  - Persistencia de Subpestaña: `localStorage` preserva la última sección de ajustes visitada por tenant; al refrescar (F5) en `/canales`, `/perfil`, `/ia`, etc., el usuario permanece exactamente en su subpestaña.
+  - Redirección Canónica Protegida: `VoceroCrmView` reconoce todas las subrutas de ajustes sin sobreescribir la URL al recargar.
+  - Cumplimiento ARQMODULAR: `VoceroSettingsView` (179 líneas), `VoceroCrmView` (167 líneas), `routerConstants` (130 líneas).
+  - Verificado con 3 Filtros: Build Vite limpio (9.12s), commit sincronizado en `main`, deploy dual activo en CDN Cloudflare Pages (17/17 rutas probadas).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

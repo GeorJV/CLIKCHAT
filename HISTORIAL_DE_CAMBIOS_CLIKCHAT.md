@@ -16,6 +16,37 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Persistencia de Subpestañas de Ajustes en Refresco y Corrección de Enrutamiento Motor de IA (v2.9.25)
+- **Diagnóstico y Necesidad:**
+  1. *Redirección Errónea a "Analista de IA Gerencial":*
+     - En `src/hooks/routerConstants.ts`, `ROUTE_VOCERO_TAB_MAP['ia']` estaba asignado a `'analyst'`. Al seleccionar "Motor de IA" y actualizar o interactuar, el enrutador cambiaba la pestaña activa a `VoceroAiAnalystView`.
+  2. *Pérdida de Subpestaña al Refrescar (F5):*
+     - Al estar en `Canales`, `Perfil`, `Motor de IA`, `Catálogo` o `Zernio` y recargar la página, `VoceroCrmView` aplicaba una redirección canónica forzada hacia `/ajustes` porque `isSubSetting` solo verificaba `/perfil`, `/canales` y `/whatsapp`.
+     - Además, `VoceroSettingsView` no guardaba la subpestaña activa en `localStorage`, devolviendo siempre el estado por defecto (`perfil`).
+  3. *Mapeo Incompleto de Rutas en `routerConstants.ts`:*
+     - Rutas como `/ia`, `/motor-ia`, `/zernio`, `/canales`, `/perfil` no estaban registradas en `ROUTE_TAB_MAP`, haciendo que el router general cayera a valores por defecto.
+- **Solución Quirúrgica Implementada:**
+  1. *Corrección en `routerConstants.ts`:*
+     - `ROUTE_VOCERO_TAB_MAP`: `ia`, `motor-ia`, `motor-ai`, `zernio`, `catalogo`, `canales`, `perfil`, `ajustes` mapeados limpiamente a `'settings'`.
+     - `analyst` restrigido exclusivamente a `analista`, `analyst` y `'analista-ia'`.
+     - `ROUTE_TAB_MAP`: Añadidas entradas `/ajustes`, `/perfil`, `/canales`, `/whatsapp`, `/ia`, `/motor-ia`, `/zernio` apuntando a `'settings'`.
+  2. *Persistencia Reactiva en `VoceroSettingsView.tsx`:*
+     - `getInitialSubTab`: Lee la subpestaña actual de la URL y, ante rutas base, restaura la preferencia persistida en `localStorage.getItem('clikchat_settings_subtab_' + tenantSlug)`.
+     - `handleSelectSubTab`: Guarda la selección en `localStorage`, actualiza el historial con `pushState` y dispara `app-navigate`.
+     - `useEffect`: Escucha tanto `popstate` como `app-navigate` para mantener la UI sincronizada sin recarga.
+  3. *Preservación de Subpestañas en `VoceroCrmView.tsx`:*
+     - `isSubSetting`: Ampliado para incluir todas las subrutas de ajustes (`/perfil`, `/canales`, `/whatsapp`, `/catalogo`, `/ia`, `/motor-ia`, `/zernio`, `/ajustes`), evitando cualquier sobreescritura de URL.
+     - `handleSelectTab('settings')`: Navega directamente a la última subpestaña guardada en `localStorage`.
+  4. *Estándar ARQMODULAR y Verificación:*
+     - `VoceroSettingsView.tsx`: 179 líneas (límite estricto <180).
+     - `VoceroCrmView.tsx`: 167 líneas (límite estricto <180).
+     - Build Vite limpio en 9.12s. Despliegue dual exitoso en Cloudflare Pages (`clikchat` y `clikchatcrm`).
+     - Smoke test con Chrome Headless: 17/17 rutas operativas (Hash Match en CDN).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Erradicación de Bucle Infinito en Contingencia de Agendamiento, Botón Copiar Chat e Historial de Pruebas Lab (v2.9.24)
 - **Diagnóstico y Necesidad:**
   1. *Bucle Infinito en Red de Contingencia al Agendar Cita:*
