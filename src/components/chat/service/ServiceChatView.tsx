@@ -2,16 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
-import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase'; import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal';
-import { BookedAppointmentModal } from './BookedAppointmentModal'; import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
-import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher'; import { generateClientChatFallback } from '../../../services/clientChatFallback';
-import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter';
-import { getCampaignContextFromUrl } from '../../../utils/campaignTracking';
-import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
+import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase'; import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal'; import { BookedAppointmentModal } from './BookedAppointmentModal'; import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
+import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher'; import { generateClientChatFallback } from '../../../services/clientChatFallback'; import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter'; import { getCampaignContextFromUrl } from '../../../utils/campaignTracking'; import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface Props {
-  storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string;
-  services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; botResponseSpeedSec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
+  storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string; services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; botResponseSpeedSec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
 }
 
 export const ServiceChatView: React.FC<Props> = ({
@@ -29,19 +24,18 @@ export const ServiceChatView: React.FC<Props> = ({
     if (typeof window !== 'undefined') { try { const c = localStorage.getItem(confirmKey); if (c) return JSON.parse(c); } catch (e) {} }
     return null;
   });
-  const [viewConfirmedModal, setViewConfirmedModal] = useState(false); const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
+  const [viewConfirmedModal, setViewConfirmedModal] = useState(false);
+  const [messages, setMessages] = useState<ProductChatMessage[]>(() => {
     if (typeof window !== 'undefined') { try { const c = localStorage.getItem(msgStorageKey); if (c) { const p = JSON.parse(c); if (Array.isArray(p) && p.length > 0) return p[0]?.content?.includes('¿Deseas conocer qué incluye') ? [] : p; } } catch (e) {} }
     return [];
   });
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [inputValue, setInputValue] = useState(''); const [isLoading, setIsLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<'includes' | 'requirements' | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false); const [bookingOpen, setBookingOpen] = useState(false);
   const [sessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const s = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
-      if (s) return s;
-      const c = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+      if (s) return s; const c = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
       localStorage.setItem(storageKey, c); return c;
     }
     return 'sess_' + Date.now().toString(36);
@@ -58,10 +52,7 @@ export const ServiceChatView: React.FC<Props> = ({
 
   useEffect(() => {
     const welcome = welcomeMessage?.trim() ? welcomeMessage.replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName).replace(/\{asesor\}|\{bot\}/gi, agentName) : `¡Hola! 👋 Bienvenido a **${storeName}**.\n\n¿En qué te podemos ayudar? ¿Cuál es el proyecto en el que te podemos colaborar?`;
-    setMessages((prev) => prev.length > 0 ? prev : [{
-      id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant', content: welcome,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' },
-    }]);
+    setMessages((prev) => prev.length > 0 ? prev : [{ id: `msg-${Date.now()}`, sessionId: sessId, tenantId: 'tenant-services', sender: 'assistant', content: welcome, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: 3, confidence: 0.99, executionTimeMs: 12, modelUsed: 'Agenda D1 Edge', reasoning: 'Bienvenida al servicio.' } }]);
   }, [selectedService.id, sessId, agentName, storeName, welcomeMessage]);
 
   const { sendMessage: sendBatchedMessage, sendVoiceQuery } = useMessageBatcher({
@@ -79,11 +70,11 @@ export const ServiceChatView: React.FC<Props> = ({
         if (nM && !/^cliente$/i.test(nM[1].trim())) { try { localStorage.setItem('clikchat_cust_name', nM[1].trim()); } catch (e) {} }
         const uName = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_name') || undefined) : undefined;
         const uPhone = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_phone') || undefined) : undefined;
-
         const clientHist = messages.slice(-10).map((m) => ({ sender: m.sender, message: m.content }));
+        const tTarget = (selectedService as any).tenant_id || (tenantSlug === 'geosoft' ? 'ten_geosoft_prod' : tenantSlug);
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, conversationHistory: clientHist, userName: uName, userPhone: uPhone, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
+          body: JSON.stringify({ tenantSlug: tenantSlug || 'geosoft', tenantId: tTarget, sessionId: sessId, message: userText, conversationHistory: clientHist, userName: uName, userPhone: uPhone, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
@@ -97,10 +88,17 @@ export const ServiceChatView: React.FC<Props> = ({
         if (cardMatch) {
           try {
             const parsed = JSON.parse(cardMatch[0].replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, ''));
-            const cData: ServiceBookingData = { service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' }, date: parsed.date, timeSlot: parsed.time, customerName: parsed.customerName, customerEmail: parsed.customerEmail, customerPhone: parsed.customerPhone };
+            const resName = (parsed.customerName && !/^cliente$/i.test(parsed.customerName)) ? parsed.customerName : (uName || '');
+            const resPhone = (parsed.customerPhone && !parsed.customerPhone.includes('72935612')) ? parsed.customerPhone : (uPhone || '');
+            const cData: ServiceBookingData = { service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' }, date: parsed.date, timeSlot: parsed.time, customerName: resName, customerEmail: parsed.customerEmail, customerPhone: resPhone };
             setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
-            broadcastBookingCreated(tenantSlug, { id: 'apt_' + Date.now(), clientName: cData.customerName, serviceName: cData.service.title, date: cData.date, time: cData.timeSlot, price: cData.service.price });
+            const realId = data?.booking?.id || ('apt_' + Date.now());
+            const memApt = { id: realId, clientName: resName || 'Cliente Agendado', email: cData.customerEmail || '', serviceName: cData.service.title, date: cData.date, dateKey: cData.date, displayDate: cData.date, time: cData.timeSlot, status: 'confirmed', channel: 'web', phone: resPhone, notes: '', price: cData.service.price || 0 };
+            [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
+              try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); if (!cur.some((x: any) => x.id === realId)) localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([memApt, ...cur])); } catch {}
+            });
+            broadcastBookingCreated(tenantSlug, { id: realId, clientName: cData.customerName, serviceName: cData.service.title, date: cData.date, time: cData.timeSlot, price: cData.service.price });
           } catch (e) {}
           setMessages((prev) => [...prev, { id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' } }]);
         } else {
@@ -114,8 +112,8 @@ export const ServiceChatView: React.FC<Props> = ({
       } catch {
         try {
           const fb = await generateClientChatFallback({ tenantSlug: tenantSlug || 'comida-callejera-xl', storeName, agentName, businessType: 'servicio', userMessage: userText, sessionId: sessId });
-          const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0);
-          if (Date.now() - startTime < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - (Date.now() - startTime)));
+          const targetDelayMs = Math.max((botResponseSpeedSec ?? 0) * 1000, 0); const elapsed = Date.now() - startTime;
+          if (elapsed < targetDelayMs) await new Promise((r) => setTimeout(r, targetDelayMs - elapsed));
           const lvlMap: Record<string, number> = { level_1: 1, level_2_faq: 2, level_3_catalog: 3, fallback_hitl: 4 };
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
           await deliverStaggeredBubbles({
@@ -138,11 +136,14 @@ export const ServiceChatView: React.FC<Props> = ({
   const handleConfirmBooking = (data: ServiceBookingData) => {
     setConfirmedBooking(data);
     try { localStorage.setItem(confirmKey, JSON.stringify(data)); } catch (e) {}
-    fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantSlug, tenantId: (selectedService as any).tenant_id || (selectedService as any).tenantId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
+    const tId = (selectedService as any).tenant_id || (tenantSlug === 'geosoft' ? 'ten_geosoft_prod' : (tenantSlug || 'geosoft'));
+    const aptId = 'apt_' + Date.now();
+    fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantSlug, tenantId: tId, customerName: data.customerName, customerEmail: data.customerEmail || '', customerPhone: data.customerPhone, serviceId: data.service.id, serviceName: data.service.title, date: data.date, timeSlot: data.timeSlot, modality: data.service.serviceModality || 'online', price: data.service.price || 0, currency: data.service.currency || 'USD', notes: data.notes || '' }) }).catch(() => {});
     try {
-      const k = `clikchat_bookings_${tenantSlug || 'default'}`;
-      const apt = { id: 'apt_' + Date.now(), clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
-      localStorage.setItem(k, JSON.stringify([apt, ...JSON.parse(localStorage.getItem(k) || '[]')]));
+      const apt = { id: aptId, clientName: data.customerName, email: data.customerEmail || '', serviceName: data.service.title, date: data.date, dateKey: data.date, displayDate: data.date, time: data.timeSlot, status: 'confirmed', channel: 'web', phone: data.customerPhone, notes: data.notes || '', price: data.service.price || 0 };
+      [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
+        try { const cur = JSON.parse(localStorage.getItem(`clikchat_bookings_${k}`) || '[]'); localStorage.setItem(`clikchat_bookings_${k}`, JSON.stringify([apt, ...cur.filter((x: any) => x.id !== aptId)])); } catch {}
+      });
       broadcastBookingCreated(tenantSlug, { id: apt.id, clientName: apt.clientName, serviceName: apt.serviceName, date: apt.displayDate, time: apt.time, price: apt.price });
     } catch (e) {}
     setMessages((prev) => [...prev, { id: `book-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `📅 **¡Cita Confirmada con Éxito!**\n\nHemos registrado tu sesión de **${data.service.title}** para el **${data.date} a las ${data.timeSlot}**. Te enviamos los detalles a tu WhatsApp. ¡Nos vemos en la sesión!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);

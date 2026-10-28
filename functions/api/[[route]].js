@@ -3451,16 +3451,24 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         let d1Success = false;
         try {
           let tenantId = tenantParam;
+          let altTenantId = '';
           if (tenantParam) {
-            const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
-            if (tRows.length > 0) tenantId = tRows[0].id;
+            const tRows = await executeD1('SELECT id, slug FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+            if (tRows.length > 0) {
+              tenantId = tRows[0].id;
+              altTenantId = tRows[0].slug;
+            }
           }
+          const isGeo = tenantParam === 'geosoft' || tenantParam === 'ten_geosoft_prod' || tenantId === 'ten_geosoft_prod' || altTenantId === 'geosoft';
 
           let query = 'SELECT * FROM bookings';
           const params = [];
-          if (tenantId) {
-            query += ' WHERE tenant_id = ?1';
-            params.push(tenantId);
+          if (isGeo) {
+            query += ' WHERE tenant_id = ?1 OR tenant_id = ?2';
+            params.push('ten_geosoft_prod', 'geosoft');
+          } else if (tenantId || altTenantId) {
+            query += ' WHERE tenant_id = ?1 OR tenant_id = ?2';
+            params.push(tenantId, altTenantId || tenantId);
           }
           query += ' ORDER BY created_at DESC LIMIT 100';
           rows = await executeD1(query, params);
@@ -7916,20 +7924,23 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         llmResult.text = antiRepetitionResult.text;
 
         // BLINDAJE ESTRICTO DE TARJETA VISUAL DE CITA & AUTO-REGISTRO EN D1 (PARA CADA CITA NUEVA O REPROGRAMACIÓN)
+        let savedBookingObj = null;
         const hasCardInReply = Boolean(llmResult.text && llmResult.text.includes('[BOOKING_CARD:'));
         const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
         const isNameCorrectionTurn = Boolean(bookingState.isNameCorrectionIntent || /\b(?:equivoqu[eé]|error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:dice|est[aá]|no\s+es)|cambia(?:r|me)?\s+(?:el\s+)?nombre|no\s+me\s+llamo|no\s+soy\s+[a-záéíóúñ]+|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+(?:me\s+llamo|soy)|mi\s+nombre\s+real\s+es)\b/i.test(message || ''));
         const isRescheduleTurn = bookingState.isRescheduleIntent || isNameCorrectionTurn || Boolean(parseFlexibleTime(message) || (message || '').match(GLOBAL_TIME_REGEX));
 
         // Consolidación de datos de contacto verificados (desde slots o memoria activa de la sesión)
-        const bContactName = (bookingState.slots.name || activeLeadInfo?.name || '').trim();
-        const bContactEmail = (bookingState.slots.email || activeLeadInfo?.email || '').trim();
-        const bContactPhone = (bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
+        let bContactName = (bookingState.slots.name || activeLeadInfo?.name || body.userName || '').trim();
+        if (/^cliente$/i.test(bContactName)) bContactName = '';
+        const bContactEmail = (bookingState.slots.email || activeLeadInfo?.email || body.userEmail || '').trim();
+        let bContactPhone = (bookingState.slots.phone || activeLeadInfo?.phone || body.userPhone || '').trim();
+        if (bContactPhone.includes('72935612')) bContactPhone = '';
         const bDateVal = bookingState.slots.date;
         const bTimeVal = bookingState.slots.time;
 
         const hasFullContact = Boolean(
-          bContactName && bContactName.toLowerCase() !== 'cliente' &&
+          bContactName &&
           (bContactPhone || bContactEmail)
         );
         const hasFullDateTime = Boolean(bDateVal && bTimeVal);
@@ -7939,7 +7950,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
         // 2. NO es una consulta meramente informativa de catálogo/precios (!isInfoOrServiceQuery)
         // 3. Y (se tienen los slots completos confirmados OR el LLM emitió [BOOKING_CARD:] y tenemos contacto verificado)
-        const canIssueBookingCard = !isClosingMessageTurn && !isInfoOrServiceQuery && (hasAllRequiredSlots || (hasCardInReply && hasFullContact));
+        const canIssueBookingCard = !isClosingMessageTurn && !isInfoOrServiceQuery && (hasAllRequiredSlots || (hasCardInReply && (hasFullContact || bDateVal || bTimeVal)));
 
         if (canIssueBookingCard) {
           const bTopProd = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
@@ -7952,7 +7963,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               service: bAutoService,
               date: formatFullDayAndDate(bDateVal) || bDateVal || 'Próxima fecha',
               time: bTimeVal || '10:00 AM',
-              customerName: bContactName,
+              customerName: bContactName || '',
               customerEmail: bContactEmail,
               customerPhone: bContactPhone,
               modality: bAutoModality,
@@ -7967,8 +7978,11 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               if (cardMatch) {
                 const parsedCard = JSON.parse(cardMatch[1]);
                 let updatedCard = false;
-                if ((!parsedCard.customerName || parsedCard.customerName.toLowerCase() === 'cliente') && bContactName) {
+                if ((!parsedCard.customerName || /^cliente$/i.test(parsedCard.customerName.trim())) && bContactName) {
                   parsedCard.customerName = bContactName;
+                  updatedCard = true;
+                } else if (/^cliente$/i.test((parsedCard.customerName || '').trim())) {
+                  parsedCard.customerName = '';
                   updatedCard = true;
                 }
                 if (!parsedCard.customerEmail && bContactEmail) {
@@ -7978,6 +7992,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                 const isBizPhone = parsedCard.customerPhone && (parsedCard.customerPhone.includes('72935612') || parsedCard.customerPhone.includes('7293-5612'));
                 if ((!parsedCard.customerPhone || isBizPhone) && bContactPhone) {
                   parsedCard.customerPhone = bContactPhone;
+                  updatedCard = true;
+                } else if (isBizPhone) {
+                  parsedCard.customerPhone = '';
                   updatedCard = true;
                 }
                 const formattedDate = formatFullDayAndDate(parsedCard.date || bDateVal);
@@ -7994,63 +8011,60 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           llmResult.text = cleanBookingCardText(llmResult.text);
 
           // AUTO-REGISTRO DETERMINISTA EN CLOUDFLARE D1 (AGENDA / VOCERO CRM / PANEL DEL DUEÑO)
-          if (bDateVal && bTimeVal) {
+          let parsedFinal = null;
+          const cardMatchForName = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
+          if (cardMatchForName) {
+            try { parsedFinal = JSON.parse(cardMatchForName[1]); } catch (e) {}
+          }
+          const effectiveDateVal = bDateVal || parsedFinal?.date;
+          const effectiveTimeVal = bTimeVal || parsedFinal?.time;
+
+          if (effectiveDateVal && effectiveTimeVal) {
             try {
-              const bService = bAutoService;
-              const bPrice = bAutoPrice;
-              let finalCardName = null;
-              let finalCardEmail = null;
-              let finalCardPhone = null;
-              let finalCardDate = null;
-              let finalCardTime = null;
-              const cardMatchForName = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
-              if (cardMatchForName) {
-                try {
-                  const parsedFinal = JSON.parse(cardMatchForName[1]);
-                  if (parsedFinal.customerName && parsedFinal.customerName.toLowerCase() !== 'cliente') {
-                    finalCardName = parsedFinal.customerName.trim();
-                  }
-                  if (parsedFinal.customerEmail) finalCardEmail = parsedFinal.customerEmail.trim();
-                  if (parsedFinal.customerPhone && !parsedFinal.customerPhone.includes('72935612')) finalCardPhone = parsedFinal.customerPhone.trim();
-                  if (parsedFinal.date) finalCardDate = parsedFinal.date.trim();
-                  if (parsedFinal.time) finalCardTime = parsedFinal.time.trim();
-                } catch (e) {}
-              }
+              const bService = parsedFinal?.service || bAutoService;
+              const bPrice = parsedFinal?.price !== undefined ? Number(parsedFinal.price) : bAutoPrice;
+              let finalCardName = (parsedFinal?.customerName && !/^cliente$/i.test(parsedFinal.customerName.trim())) ? parsedFinal.customerName.trim() : null;
+              let finalCardEmail = parsedFinal?.customerEmail ? parsedFinal.customerEmail.trim() : null;
+              let finalCardPhone = (parsedFinal?.customerPhone && !parsedFinal.customerPhone.includes('72935612')) ? parsedFinal.customerPhone.trim() : null;
+
               const bEmail = (finalCardEmail || bContactEmail || '').trim();
               const bPhone = (finalCardPhone || bContactPhone || '').trim();
               const bName = (finalCardName || bContactName || '').trim();
-              const bDate = formatFullDayAndDate(finalCardDate || bDateVal) || bDateVal;
-              const bTime = finalCardTime || bTimeVal;
+              const bDate = formatFullDayAndDate(effectiveDateVal) || effectiveDateVal;
+              const bTime = effectiveTimeVal;
 
               const aptIdToUse = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+              const bookingTenantId = (targetTenant.slug === 'geosoft' || actualTenantId === 'geosoft' || targetTenant.id === 'ten_geosoft_prod') ? 'ten_geosoft_prod' : actualTenantId;
               const aptMemObj = {
-                id: aptIdToUse, tenant_id: actualTenantId, customer_name: bName, customer_email: bEmail, customer_phone: bPhone,
+                id: aptIdToUse, tenant_id: bookingTenantId, customer_name: bName || 'Cliente Agendado', customer_email: bEmail, customer_phone: bPhone, customerPhone: bPhone,
                 service_id: 'srv_gen', service_name: bService, booking_date: bDate, booking_time: bTime, modality: 'online', status: 'confirmed',
                 price: bPrice, currency: 'USD', notes: 'Agendado automáticamente desde el chat.', created_at: new Date().toISOString()
               };
+              savedBookingObj = aptMemObj;
               GLOBAL_BOOKINGS.unshift(aptMemObj);
               if (GLOBAL_BOOKINGS.length > 100) GLOBAL_BOOKINGS.pop();
 
               if (isRescheduleTurn) {
                 const existingApt = await executeD1(
-                  "SELECT id FROM bookings WHERE tenant_id = ?1 AND ((customer_phone != '' AND customer_phone = ?2) OR (customer_email != '' AND LOWER(customer_email) = LOWER(?3))) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
-                  [actualTenantId, bPhone, bEmail]
+                  "SELECT id FROM bookings WHERE (tenant_id = ?1 OR tenant_id = 'geosoft' OR tenant_id = 'ten_geosoft_prod') AND ((customer_phone != '' AND customer_phone = ?2) OR (customer_email != '' AND LOWER(customer_email) = LOWER(?3))) AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1",
+                  [bookingTenantId, bPhone, bEmail]
                 ).catch(() => []);
                 if (existingApt.length > 0) {
                   await executeD1(
                     "UPDATE bookings SET customer_name = ?1, booking_date = ?2, booking_time = ?3, service_name = ?4, price = ?5, status = 'confirmed' WHERE id = ?6",
-                    [bName, bDate, bTime, bService, bPrice, existingApt[0].id]
+                    [bName || 'Cliente Agendado', bDate, bTime, bService, bPrice, existingApt[0].id]
                   ).catch(() => {});
+                  savedBookingObj.id = existingApt[0].id;
                 } else {
                   await executeD1(
                     "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD', ?12)",
-                    [aptIdToUse, actualTenantId, bName, bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
+                    [aptIdToUse, bookingTenantId, bName || 'Cliente Agendado', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
                   ).catch(() => {});
                 }
               } else {
                 await executeD1(
                   "INSERT INTO bookings (id, tenant_id, customer_name, customer_email, customer_phone, service_id, service_name, booking_date, booking_time, modality, status, price, currency, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed', ?11, 'USD', ?12)",
-                  [aptIdToUse, actualTenantId, bName, bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
+                  [aptIdToUse, bookingTenantId, bName || 'Cliente Agendado', bEmail, bPhone, 'srv_gen', bService, bDate, bTime, 'online', bPrice, 'Agendado automáticamente desde el chat.']
                 ).catch(() => {});
               }
             } catch (autoSaveErr) {
@@ -8341,6 +8355,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           orderItems: draftItems,
           currency: activeCurrency,
           isRestaurant,
+          booking: savedBookingObj,
           bookingCard: (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) ? (() => {
             try {
               const m = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);

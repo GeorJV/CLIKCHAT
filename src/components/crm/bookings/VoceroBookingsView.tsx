@@ -1,13 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CalendarDays, Plus, Calendar as CalendarIcon } from 'lucide-react';
-import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard';
-import { VoceroNewBookingModal } from './VoceroNewBookingModal';
-import { VoceroCompactCalendar } from './VoceroCompactCalendar';
-import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal';
-import { BookingIntervalConfig } from './BookingIntervalConfig';
-import { BOOKING_FILTER_TABS } from './bookingConstants';
-import { normalizeToDateKey, formatDisplayDate, getBookingFilterKeys, isBookingInFilter, BookingFilterType } from '../../../utils/bookingDateNormalizer';
-import { subscribeBookingSync, broadcastBookingCreated } from '../../../utils/bookingSyncBus';
+import { VoceroAppointmentCard, AppointmentItem } from './VoceroAppointmentCard'; import { VoceroNewBookingModal } from './VoceroNewBookingModal'; import { VoceroCompactCalendar } from './VoceroCompactCalendar'; import { VoceroAppointmentDetailModal } from './VoceroAppointmentDetailModal'; import { BookingIntervalConfig } from './BookingIntervalConfig'; import { BOOKING_FILTER_TABS } from './bookingConstants';
+import { normalizeToDateKey, formatDisplayDate, getBookingFilterKeys, isBookingInFilter, BookingFilterType } from '../../../utils/bookingDateNormalizer'; import { subscribeBookingSync, broadcastBookingCreated } from '../../../utils/bookingSyncBus';
 
 interface VoceroBookingsViewProps {
   tenantId?: string; currency?: string; highlightedBookingId?: string | null; onAcknowledgeBooking?: (id: string) => void;
@@ -18,8 +12,7 @@ const sortApts = (list: AppointmentItem[]) => [...list].sort((a, b) => (b.dateKe
 export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId, highlightedBookingId, onAcknowledgeBooking }) => {
   const [timeFilter, setTimeFilter] = useState<BookingFilterType>('all');
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
-  const [showMonthCalendar, setShowMonthCalendar] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showMonthCalendar, setShowMonthCalendar] = useState(false); const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
   const lastScrolledRef = useRef<string | null>(null);
   const now = useMemo(() => new Date(), []);
@@ -53,8 +46,9 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
   });
 
   const fetchBookings = () => {
-    const bParam = tId === 'ten_geosoft_prod' ? 'geosoft' : tId;
-    fetch(`/api/bookings?tenant=${encodeURIComponent(bParam)}&tenantId=ten_geosoft_prod&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
+    const isGeo = tId === 'geosoft' || tId === 'ten_geosoft_prod';
+    const q = isGeo ? `tenant=geosoft&tenantId=ten_geosoft_prod` : `tenant=${encodeURIComponent(tId)}&tenantId=${encodeURIComponent(tId)}`;
+    fetch(`/api/bookings?${q}&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.bookings && Array.isArray(d.bookings)) {
         const apiApts = d.bookings.map((b: any) => ({
           id: b.id, clientName: b.customer_name || 'Cliente', serviceName: b.service_name || 'Servicio Profesional',
@@ -62,7 +56,10 @@ export const VoceroBookingsView: React.FC<VoceroBookingsViewProps> = ({ tenantId
           time: b.booking_time || '10:00 AM', status: b.status || 'confirmed', channel: 'web' as const, phone: b.customer_phone || '', notes: b.notes || '', price: Number(b.price) || 0
         }));
         setAppointments(prev => {
-          const merged = sortApts(apiApts);
+          const map = new Map<string, AppointmentItem>();
+          prev.forEach(p => map.set(p.id, p));
+          apiApts.forEach(a => map.set(a.id, a));
+          const merged = sortApts(Array.from(map.values()));
           if (prev.length === merged.length && prev.every((p, i) => p.id === merged[i].id && p.status === merged[i].status && p.clientName === merged[i].clientName && p.time === merged[i].time)) return prev;
           return merged;
         });

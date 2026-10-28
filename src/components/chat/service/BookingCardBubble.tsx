@@ -59,7 +59,8 @@ export const BookingCardBubble: React.FC<Props> = ({
 
   const handleConfirmClick = () => {
     setConfirmed(true);
-    onConfirm(bookingData);
+    const sanitized = { ...bookingData, customerName: effectiveName, customerPhone: effectivePhone };
+    onConfirm(sanitized);
     openWhatsAppConfirmation();
   };
 
