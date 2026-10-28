@@ -16,6 +16,38 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Corrección Crítica en Ficha de Cita: Erradicación de "Cliente", Nombre Real y Teléfono del Usuario sin Mezclar Negocio (v2.9.12)
+- **Diagnóstico y Necesidad:**
+  1. *Aparición de la palabra "Cliente" en vez del Nombre Real:*
+     - Al generar el resumen/ficha de la cita confirmada, el sistema mostraba la etiqueta genérica `Cliente` en lugar del nombre real de la persona.
+  2. *Asignación Inadecuada del Teléfono del Negocio como Teléfono del Cliente:*
+     - En `bookingCardParser.ts` existía un fallback estático con el número de teléfono del negocio (`+506 7293-5612`), provocando que cuando el texto del asistente no repetía el teléfono, la ficha mostraba el teléfono de GeoSoft en vez del ingresado por el usuario en el chat.
+     - En el backend (`functions/api/[[route]].js`), la condición para emitir `[BOOKING_CARD:]` exigía correo electrónico obligatorio; si el usuario únicamente proporcionaba nombre y teléfono/WhatsApp, el backend no emitía la tarjeta estructurada y la heurística caía en dicho fallback.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Erradicación Total de Fallbacks Hardcodeados en `src/utils/bookingCardParser.ts` (99 líneas):*
+     - Eliminadas las cadenas estáticas `+506 7293-5612` y `Cliente`.
+     - Implementado escaneo contextual del historial de mensajes del usuario y de `localStorage` (`clikchat_cust_phone`, `clikchat_cust_name`) para resolver siempre la identidad real del usuario.
+  2. *Limpieza Visual en `BookingCardBubble.tsx` (168 líneas):*
+     - Eliminada la palabra o etiqueta "Cliente". Se muestra directamente el icono de usuario con el nombre real de la persona (`effectiveName`).
+     - Filtro estricto que rechaza el teléfono del negocio (`cleanPhone`), mostrando exclusivamente el teléfono proporcionado por el usuario (`effectivePhone`).
+     - Enlace de WhatsApp actualizado con formato limpio `• *Nombre:*`.
+  3. *Blindaje en Edge Gateway (`functions/api/[[route]].js`):*
+     - `extractBookingSlots`: El extractor de teléfono busca en todos los turnos del usuario e ignora explícitamente el teléfono del negocio (`50672935612`).
+     - Extracción inteligente de nombre: Reconoce nombres propios respondidos a preguntas del asesor o en mensajes combinados (ej: "Carlos Vargas carlos@gmail.com").
+     - `hasFullContact`: Autoriza la emisión de la tarjeta con nombre y teléfono/WhatsApp sin exigir obligatoriamente correo.
+     - Sanitización post-LLM: Si la tarjeta generada contiene `customerName: "Cliente"` o el teléfono del negocio, se reemplazan automáticamente por los datos verificados del usuario.
+  4. *Sincronización en `ServiceChatView.tsx` (178 líneas) y `ServiceChatColumn.tsx` (171 líneas):*
+     - Persistencia y envío de `userName` y `userPhone` al endpoint `/api/chat/message`.
+     - Pase del historial completo de mensajes a `parseBookingCard`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación TypeScript/Vite limpia (`npm run build`) en 22.67s con 0 errores (`dist/assets/index-DrL9i-Jk.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Eliminación Individual y Masiva en Directorio de Contactos CRM con Checkboxes (v2.9.11)
 - **Diagnóstico y Necesidad:**
   1. *Ausencia de Mecanismo de Eliminación en Directorio:*

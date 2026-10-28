@@ -7907,8 +7907,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
         const hasFullContact = Boolean(
           bContactName && bContactName.toLowerCase() !== 'cliente' &&
-          bContactEmail &&
-          bContactPhone
+          (bContactPhone || bContactEmail)
         );
         const hasFullDateTime = Boolean(bDateVal && bTimeVal);
         const hasAllRequiredSlots = Boolean(hasFullContact && hasFullDateTime);
@@ -7916,7 +7915,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         // SE PERMITE Y AUTORIZA LA TARJETA DE CITA:
         // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
         // 2. NO es una consulta meramente informativa de catálogo/precios (!isInfoOrServiceQuery)
-        // 3. Y (se tienen los 5 slots completos confirmados OR el LLM emitió [BOOKING_CARD:] y tenemos contacto verificado)
+        // 3. Y (se tienen los slots completos confirmados OR el LLM emitió [BOOKING_CARD:] y tenemos contacto verificado)
         const canIssueBookingCard = !isClosingMessageTurn && !isInfoOrServiceQuery && (hasAllRequiredSlots || (hasCardInReply && hasFullContact));
 
         if (canIssueBookingCard) {
@@ -7945,7 +7944,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               if (cardMatch) {
                 const parsedCard = JSON.parse(cardMatch[1]);
                 let updatedCard = false;
-                if (!parsedCard.customerName && bContactName) {
+                if ((!parsedCard.customerName || parsedCard.customerName.toLowerCase() === 'cliente') && bContactName) {
                   parsedCard.customerName = bContactName;
                   updatedCard = true;
                 }
@@ -7953,7 +7952,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                   parsedCard.customerEmail = bContactEmail;
                   updatedCard = true;
                 }
-                if (!parsedCard.customerPhone && bContactPhone) {
+                const isBizPhone = parsedCard.customerPhone && (parsedCard.customerPhone.includes('72935612') || parsedCard.customerPhone.includes('7293-5612'));
+                if ((!parsedCard.customerPhone || isBizPhone) && bContactPhone) {
                   parsedCard.customerPhone = bContactPhone;
                   updatedCard = true;
                 }
@@ -7988,7 +7988,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
                     finalCardName = parsedFinal.customerName.trim();
                   }
                   if (parsedFinal.customerEmail) finalCardEmail = parsedFinal.customerEmail.trim();
-                  if (parsedFinal.customerPhone) finalCardPhone = parsedFinal.customerPhone.trim();
+                  if (parsedFinal.customerPhone && !parsedFinal.customerPhone.includes('72935612')) finalCardPhone = parsedFinal.customerPhone.trim();
                   if (parsedFinal.date) finalCardDate = parsedFinal.date.trim();
                   if (parsedFinal.time) finalCardTime = parsedFinal.time.trim();
                 } catch (e) {}
