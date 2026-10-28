@@ -7703,10 +7703,6 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
           }
         }
-          if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {
-            llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
-          }
-        }
         if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {
           llmResult.text = cleanBookingCardText(llmResult.text);
         }
