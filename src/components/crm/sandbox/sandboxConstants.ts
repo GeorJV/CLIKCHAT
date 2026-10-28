@@ -95,40 +95,68 @@ export const PERSONAS = getAdaptivePersonas(null);
 
 export const saveSandboxBooking = (cardPayload: any, tenant: any, tenantId?: string, tenantSlug?: string) => {
   const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
+  const tSlug = tenant?.slug || tenantSlug || 'geosoft';
+  const targetId = tId === 'geosoft' ? 'ten_geosoft_prod' : tId;
   const apt = {
-    id: 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    clientName: cardPayload.customerName || 'Cliente',
-    serviceName: cardPayload.service || 'Desarrollo Web & SaaS',
-    date: cardPayload.date,
-    dateKey: cardPayload.date,
-    displayDate: cardPayload.date,
-    time: cardPayload.time,
-    status: 'confirmed',
-    channel: 'web',
-    phone: cardPayload.customerPhone || '',
-    email: cardPayload.customerEmail || '',
-    notes: 'Live Lab',
-    price: Number(cardPayload.price) || 1200
+    id: cardPayload.id || ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+    clientName: cardPayload.customerName || cardPayload.clientName || 'Cliente Agendado',
+    serviceName: cardPayload.service || cardPayload.serviceName || (tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional'),
+    date: cardPayload.date || new Date().toISOString().slice(0, 10),
+    dateKey: cardPayload.date || new Date().toISOString().slice(0, 10),
+    displayDate: cardPayload.date || new Date().toISOString().slice(0, 10),
+    time: cardPayload.time || cardPayload.timeSlot || '10:00 AM',
+    status: 'confirmed' as const,
+    channel: 'web' as const,
+    phone: cardPayload.customerPhone || cardPayload.phone || '',
+    email: cardPayload.customerEmail || cardPayload.email || '',
+    notes: 'Agendado en Probador / Live Lab',
+    price: Number(cardPayload.price) || (tenant?.name === 'GeoSoft' ? 1200 : 0)
   };
+
+  if (typeof window !== 'undefined') {
+    const syncKeys = Array.from(new Set([targetId, tId, tSlug, tenantSlug, tenantId, 'geosoft', 'ten_geosoft_prod'].filter(Boolean)));
+    syncKeys.forEach(k => {
+      try {
+        const sk = `clikchat_bookings_${k}`;
+        const cur = JSON.parse(localStorage.getItem(sk) || '[]');
+        if (!cur.some((x: any) => x.id === apt.id)) {
+          localStorage.setItem(sk, JSON.stringify([apt, ...cur]));
+        }
+      } catch (e) {}
+    });
+  }
+
   fetch('/api/bookings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      tenant_id: tId,
+      id: apt.id,
+      tenantId: targetId,
+      tenant_id: targetId,
+      tenantSlug: tSlug,
+      tenant_slug: tSlug,
+      customerName: apt.clientName,
       customer_name: apt.clientName,
+      customerEmail: apt.email,
       customer_email: apt.email,
+      customerPhone: apt.phone,
       customer_phone: apt.phone,
+      serviceId: 'srv_gen',
       service_id: 'srv_gen',
+      serviceName: apt.serviceName,
       service_name: apt.serviceName,
+      bookingDate: apt.date,
       booking_date: apt.date,
+      bookingTime: apt.time,
       booking_time: apt.time,
       status: 'confirmed',
       price: apt.price,
-      currency: 'USD',
-      notes: 'Agendado en Live Lab'
+      currency: tenant?.currency || 'USD',
+      notes: apt.notes
     })
   }).catch(() => {});
-  broadcastBookingCreated(tenantSlug || 'geosoft', {
+
+  broadcastBookingCreated(tSlug, {
     id: apt.id,
     clientName: apt.clientName,
     serviceName: apt.serviceName,

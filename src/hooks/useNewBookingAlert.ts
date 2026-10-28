@@ -52,7 +52,7 @@ export const useNewBookingAlert = (tenantSlug: string = 'geosoft') => {
     if (!booking?.id || typeof window === 'undefined') return;
     setHighlightedBookingId(booking.id);
     localStorage.setItem(highlightKey, booking.id);
-    window.dispatchEvent(new CustomEvent('clikchat_focus_booking', { detail: { bookingId: booking.id } }));
+    window.dispatchEvent(new CustomEvent('clikchat_focus_booking', { detail: { bookingId: booking.id, booking } }));
   }, [highlightKey]);
 
   const dismissAlert = useCallback(() => {

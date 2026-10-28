@@ -3372,22 +3372,22 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
       if (request.method === 'POST') {
         const body = await request.json().catch(() => ({}));
-        let tenantId = body.tenantId || '';
-        const tenantSlug = body.tenantSlug || '';
+        let tenantId = body.tenantId || body.tenant_id || body.tenant || '';
+        const tenantSlug = body.tenantSlug || body.tenant_slug || '';
         if (!tenantId && tenantSlug) {
           const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantSlug]).catch(() => []);
           if (tRows.length > 0) tenantId = tRows[0].id;
         }
-        if (!tenantId) tenantId = 'ten_geosoft_prod';
+        if (!tenantId || tenantId === 'geosoft') tenantId = 'ten_geosoft_prod';
 
-        const id = 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-        const customerName = (body.customerName || body.clientName || 'Cliente').trim();
+        const id = body.id || ('apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+        const customerName = (body.customerName || body.clientName || body.customer_name || body.name || 'Cliente').trim();
         const customerEmail = (body.customerEmail || body.customer_email || body.email || '').trim();
-        const customerPhone = (body.customerPhone || body.phone || '').trim();
-        const serviceName = body.serviceName || body.serviceTitle || 'Servicio Profesional';
-        const serviceId = body.serviceId || 'srv_gen';
-        const bookingDate = body.bookingDate || body.date || new Date().toISOString().slice(0, 10);
-        const bookingTime = body.bookingTime || body.timeSlot || body.time || '10:00 AM';
+        const customerPhone = (body.customerPhone || body.phone || body.customer_phone || '').trim();
+        const serviceName = body.serviceName || body.serviceTitle || body.service_name || body.service || 'Servicio Profesional';
+        const serviceId = body.serviceId || body.service_id || 'srv_gen';
+        const bookingDate = body.bookingDate || body.date || body.booking_date || new Date().toISOString().slice(0, 10);
+        const bookingTime = body.bookingTime || body.timeSlot || body.time || body.booking_time || '10:00 AM';
         const modality = body.modality || 'online';
         const price = Number(body.price) || 0;
         const currency = body.currency || 'USD';
@@ -8031,9 +8031,18 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
         // SE PERMITE Y AUTORIZA LA TARJETA DE CITA:
         // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
-        // 2. NO es una consulta meramente informativa de catálogo/precios (!isInfoOrServiceQuery)
-        // 3. Y (se tienen los slots completos confirmados OR el LLM emitió [BOOKING_CARD:] y tenemos contacto verificado)
-        const canIssueBookingCard = !isClosingMessageTurn && !isInfoOrServiceQuery && (hasAllRequiredSlots || (hasCardInReply && (hasFullContact || bDateVal || bTimeVal)));
+        // 2. Si es turno de agendamiento o confirmación verbal, priorizar registro
+        // 3. Soporte total para slots completos o confirmación de fecha/hora
+        const isVerbalBookingConfirmation = /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(llmResult.text || '') ||
+          /\b(?:he|hemos|acabo\s+de)\s+(?:agendar|confirmar|reservar|programar|apartar|guardar)\s+(?:tu\s+|su\s+)?(?:cita|reuni[oó]n|espacio)\b/i.test(llmResult.text || '');
+
+        const isBookingTurn = isBookingContext || hasCardInReply || hasFullDateTime || isVerbalBookingConfirmation;
+        const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isBookingTurn) && (
+          hasAllRequiredSlots ||
+          isVerbalBookingConfirmation ||
+          (hasCardInReply && (hasFullContact || bDateVal || bTimeVal || isBookingTurn)) ||
+          (hasFullDateTime && (bContactName || bContactPhone || bContactEmail || isBookingTurn))
+        );
 
         if (canIssueBookingCard) {
           const bTopProd = matchedProducts.length > 0 ? matchedProducts[0] : products[0];
@@ -8042,19 +8051,25 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           const bAutoModality = (targetTenant.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant.name || '')) ? 'presencial' : 'online';
 
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
+            const bDateResolved = bDateVal || formatFullDayAndDate('mañana');
+            const bTimeResolved = bTimeVal || '10:00 AM';
             const cardData = {
               service: bAutoService,
-              date: formatFullDayAndDate(bDateVal) || bDateVal || 'Próxima fecha',
-              time: bTimeVal || '10:00 AM',
-              customerName: bContactName || '',
+              date: formatFullDayAndDate(bDateResolved) || bDateResolved,
+              time: bTimeResolved,
+              customerName: bContactName || 'Cliente Agendado',
               customerEmail: bContactEmail,
               customerPhone: bContactPhone,
               modality: bAutoModality,
               price: bAutoPrice
             };
-            const formattedIntroDate = formatFullDayAndDate(bDateVal) || bDateVal;
-            const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bTimeVal}** ha quedado reservado.`;
-            llmResult.text = `${intro}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
+            const formattedIntroDate = formatFullDayAndDate(bDateResolved) || bDateResolved;
+            if (!isVerbalBookingConfirmation) {
+              const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bTimeResolved}** ha quedado reservado.`;
+              llmResult.text = `${intro}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
+            } else {
+              llmResult.text = `${llmResult.text}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
+            }
           } else {
             try {
               const cardMatch = llmResult.text.match(/\[BOOKING_CARD:\s*(\{.*?\})\s*\]/s);
@@ -8099,8 +8114,8 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           if (cardMatchForName) {
             try { parsedFinal = JSON.parse(cardMatchForName[1]); } catch (e) {}
           }
-          const effectiveDateVal = bDateVal || parsedFinal?.date;
-          const effectiveTimeVal = bTimeVal || parsedFinal?.time;
+          const effectiveDateVal = bDateVal || parsedFinal?.date || formatFullDayAndDate('mañana');
+          const effectiveTimeVal = bTimeVal || parsedFinal?.time || '10:00 AM';
 
           if (effectiveDateVal && effectiveTimeVal) {
             try {
@@ -8112,7 +8127,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 
               const bEmail = (finalCardEmail || bContactEmail || '').trim();
               const bPhone = (finalCardPhone || bContactPhone || '').trim();
-              const bName = (finalCardName || bContactName || '').trim();
+              const bName = (finalCardName || bContactName || 'Cliente Agendado').trim();
               const bDate = formatFullDayAndDate(effectiveDateVal) || effectiveDateVal;
               const bTime = effectiveTimeVal;
 

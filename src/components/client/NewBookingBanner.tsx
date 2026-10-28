@@ -48,8 +48,8 @@ export const NewBookingBanner: React.FC<Props> = ({ booking, onViewBooking, onDi
       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
         <button
           type="button"
-          onClick={() => onViewBooking(booking)}
-          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#0d5bff] to-[#0047e1] hover:from-[#0047e1] hover:to-[#0038b3] text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewBooking(booking); }}
+          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#0d5bff] to-[#0047e1] hover:from-[#0047e1] hover:to-[#0038b3] text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 transition active:scale-95 cursor-pointer relative z-10"
         >
           <Calendar className="w-3.5 h-3.5 text-white" />
           <span>Ver cita ahora</span>

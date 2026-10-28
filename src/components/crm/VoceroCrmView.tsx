@@ -52,6 +52,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     newBooking, unreadCount: unreadBookingsCount, highlightedBookingId,
     acknowledgeBooking, focusBooking, dismissAlert
   } = useNewBookingAlert(tenantSlug);
+  const [autoOpenBooking, setAutoOpenBooking] = useState<any>(null);
 
   useEffect(() => {
     if (currentVoceroTab && currentVoceroTab !== activeTab) setActiveTab(currentVoceroTab);
@@ -91,7 +92,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
       <main className="flex-1 h-full min-w-0 flex flex-col overflow-hidden relative bg-[#f6f8fc]">
         {newBooking && (
           <div className="shrink-0 px-4 sm:px-6 pt-3">
-            <NewBookingBanner booking={newBooking} onViewBooking={(b) => { focusBooking(b); handleSelectTab('bookings'); }} onDismiss={dismissAlert} />
+            <NewBookingBanner booking={newBooking} onViewBooking={(b) => { focusBooking(b); setAutoOpenBooking(b); handleSelectTab('bookings'); dismissAlert(); }} onDismiss={dismissAlert} />
           </div>
         )}
         <div className="flex-1 min-h-0 h-full w-full overflow-hidden">
@@ -112,7 +113,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
             <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} onDeleteLead={deleteLead} onDeleteLeads={deleteLeads} />
           )}
           {activeTab === 'bookings' && (
-            <VoceroBookingsView tenantId={tenant?.id || tenantId} currency={tenant?.currency} highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking} />
+            <VoceroBookingsView tenantId={tenant?.id || tenantId} currency={tenant?.currency} highlightedBookingId={highlightedBookingId} autoOpenBooking={autoOpenBooking} onAcknowledgeBooking={acknowledgeBooking} onClearAutoOpenBooking={() => setAutoOpenBooking(null)} />
           )}
           {activeTab === 'clikchat' && (
             <VoceroClikChatView

@@ -11,6 +11,7 @@ export const ROUTE_TAB_MAP: Record<string, ClientTab> = {
   '/agente': 'settings',
   '/clientes': 'clientes',
   '/agenda': 'agenda',
+  '/citas': 'agenda',
   '/entrenamiento-ai': 'training',
   '/soporte': 'soporte',
   '/mi-cuenta': 'account',

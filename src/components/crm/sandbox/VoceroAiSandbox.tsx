@@ -82,7 +82,30 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         const effectiveModel = d.fallbackUsed ? (d.modelLabel || 'Red de Contingencia') : (d.modelLabel || defaultLabel);
         const cardMatch = d.answer?.includes('[BOOKING_CARD:') ? d.answer.match(/\[BOOKING_CARD:\s*(\{[\s\S]*?\})\s*\]/) : null;
         let cardPayload = cardMatch ? (() => { try { return JSON.parse(cardMatch[1]); } catch { return null; } })() : (d.bookingCard || null);
+        if (!cardPayload && d.booking) {
+          cardPayload = {
+            id: d.booking.id,
+            customerName: d.booking.customer_name,
+            customerEmail: d.booking.customer_email,
+            customerPhone: d.booking.customer_phone,
+            service: d.booking.service_name,
+            date: d.booking.booking_date,
+            time: d.booking.booking_time,
+            price: d.booking.price
+          };
+        }
         let finalAnswer = d.answer || 'Respuesta generada.';
+        if (!cardPayload && /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(finalAnswer)) {
+          const timeMatch = finalAnswer.match(/(?:a\s+las?\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|\d{1,2}:\d{2})/i);
+          const tVal = timeMatch ? timeMatch[1].toUpperCase() : '10:00 AM';
+          cardPayload = {
+            customerName: tenantName || tenant?.name || 'Cliente Agendado',
+            service: tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional',
+            date: new Date().toISOString().slice(0, 10),
+            time: tVal,
+            price: tenant?.name === 'GeoSoft' ? 1200 : 0
+          };
+        }
         if (cardPayload) {
           if (!finalAnswer.includes('[BOOKING_CARD:')) finalAnswer = `${finalAnswer}\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
           saveSandboxBooking(cardPayload, tenant, tenantId, tenantSlug);
