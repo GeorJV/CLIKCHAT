@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Sincronización y Persistencia Garantizada de Citas Agendadas desde el Probador del Asistente (v2.9.19)
+- **Diagnóstico y Necesidad:**
+  1. *Falta de Agendamiento en Plataforma tras Probar el Asistente:*
+     - Al interactuar en el probador del asistente (`VoceroAiSandbox`) y concretar una cita, el asistente confirmaba el agendamiento pero la cita no aparecía en la pestaña de Citas/Agenda de la plataforma ni en el CRM.
+     - *Causa Raíz 1 (Incompatibilidad de Parámetros en API):* La función `saveSandboxBooking` enviaba campos en snake_case (`tenant_id`, `customer_name`, `customer_phone`, `booking_date`, `booking_time`), mientras que el endpoint `/api/bookings` leía estrictamente camelCase (`tenantId`, `customerName`, `customerPhone`, `bookingDate`, `bookingTime`). Esto provocaba que `tenantId` fuera vacío (forzando `'ten_geosoft_prod'`), la fecha se reiniciara a hoy, la hora a las 10:00 AM y el teléfono quedara vacío.
+     - *Causa Raíz 2 (Ausencia de Persistencia Local en Sandbox):* Como la vista de Citas (`VoceroBookingsView`) se desmonta mientras el usuario está en la pestaña `lab`, los eventos en memoria no alcanzaban el componente y `localStorage` (`clikchat_bookings_${tenantId}`) no era actualizado por el sandbox.
+     - *Causa Raíz 3 (Falso Positivo en Guardrail de Catálogo):* En `/api/chat/message`, cualquier signo de interrogación `?` activaba `isInfoOrServiceQuery`, bloqueando `canIssueBookingCard` y purgando la tarjeta de cita en el backend.
+- **Solución Quirúrgica Implementada:**
+  1. *Compatibilidad Universal en Backend (`functions/api/[[route]].js`):*
+     - Soporte dual (camelCase y snake_case) para todos los campos en `POST /api/bookings`.
+     - Inmunidad de agendamiento en `/api/chat/message`: si el turno es de agendamiento (`isBookingTurn`) o hay confirmación verbal, no es bloqueado por consultas informativas y emite/guarda la tarjeta en D1 y memoria global.
+  2. *Persistencia Reactiva Inmediata en Sandbox (`sandboxConstants.ts` y `VoceroAiSandbox.tsx`):*
+     - `saveSandboxBooking` ahora persiste instantáneamente la cita en `localStorage` bajo los identificadores del tenant (`tId`, `tSlug`, `geosoft`, etc.).
+     - Captura universal de la cita en `VoceroAiSandbox` a partir de `[BOOKING_CARD:]`, payload de `d.booking` o confirmación verbal.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 8.86s con 0 errores.
+  - *Filtro 2:* Sincronización en GitHub rama `main` (commit `8e301bd`).
+  - *Filtro 3:* Despliegue dual verificado con código HTTP 200 en Cloudflare Pages (`clikchat` y `clikchatcrm`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Eliminación del Botón Flotante 'Modo ClikChat CRM - Ver Clásico' (v2.9.18)
 - **Diagnóstico y Necesidad:**
   1. *Botón Flotante Innecesario en Pantalla:*

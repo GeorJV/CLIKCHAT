@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 09:25 GMT-6
-- **Versión Actual:** 2.9.18 (Eliminación del Botón Flotante 'Modo ClikChat CRM - Ver Clásico')
+- **Última Actualización:** 2026-10-28 09:40 GMT-6
+- **Versión Actual:** 2.9.19 (Sincronización y Persistencia de Citas desde el Probador del Asistente)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Botón Flotante Removido: Desmontado el pill flotante "Modo ClikChat CRM - Ver Clásico" de `src/App.tsx`.
-  - Componente Seguro: `VoceroModeTogglePill` retorna `null` para evitar cualquier renderizado residual.
-  - Experiencia ClikChat CRM Limpia: Interfaz del CRM despejada sin botones flotantes distractores.
-  - Saludos y Anti-repetición Activos: Banco contextual de saludos dinámicos y deduplicación universal en producción.
-  - Verificado con 3 Filtros: Build limpio en 34.34s, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
+  - Citas del Probador Sincronizadas: Normalización dual snake_case y camelCase en `POST /api/bookings`.
+  - Persistencia Inmediata: Guardado automático en `localStorage` y D1 para visualización instantánea en la plataforma.
+  - Blindaje Anti-Falsos Positivos: Evitado bloqueo de agendamiento por signos de interrogación o consultas comerciales.
+  - Captura Universal: Registro de cita ante tarjeta `[BOOKING_CARD:]`, payload `booking` o confirmación verbal del bot.
+  - Verificado con 3 Filtros: Build Vite limpio en 8.86s, sincronizado en GitHub `main` y deploy Cloudflare Pages verificado.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
