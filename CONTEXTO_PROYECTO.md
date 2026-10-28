@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 14:12 GMT-6
-- **Versión Actual:** 2.9.30 (Detección Instantánea de Enlaces Abiertos en Bandeja CRM y Radar en Vivo)
+- **Última Actualización:** 2026-10-28 14:14 GMT-6
+- **Versión Actual:** 2.9.31 (Acceso Directo y Vista de Mi Cuenta & Suscripción en Vocero CRM y Ajustes)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Detección de Enlaces Abiertos: `ServiceChatView.tsx` emite latidos con `useLivePresencePing`; la visita se registra de inmediato en `memoryPresence` y `memoryLeads` con etiqueta `en_vivo`.
-  - Bandeja CRM en Tiempo Real: `useVoceroCrm.ts` incorpora `useSmartPolling` anti-drain cada 8s para nuevos leads y cada 6s para mensajes del chat activo (pausa en segundo plano).
-  - Resiliencia Edge contra Límites D1: `GET /api/crm/leads` y `/api/chat/messages` encapsulados en try/catch con fallback en memoria (`memoryLeads` y `memoryMessages`), eliminando errores HTTP 500 por cuota.
-  - Radar Vinculado: `tenantSlug` propagado a `VoceroConversationList` y `LiveVisitorsBar` para segmentación por negocio.
-  - Cumplimiento ARQMODULAR: `ServiceChatView.tsx` (175 líneas), `useVoceroCrm.ts` (147 líneas), `VoceroInbox.tsx` (96 líneas), `VoceroConversationList.tsx` (142 líneas), `VoceroCrmView.tsx` (174 líneas).
-  - Verificado con 3 Filtros: Build Vite limpio (12.86s), deploy dual Cloudflare Pages (Hash `index-BBvp7VWI.js`, 17/17 rutas probadas en Chrome Headless).
+  - Acceso Directo a Cuenta: Perfil "GeoSoft" en barra lateral de Vocero CRM (`VoceroAppNav.tsx`) ahora es botón interactivo que abre "Mi Cuenta & Suscripción".
+  - Datos de Cuenta Visibles: Plan de suscripción, próximo pago / vencimiento, fecha de creación, correo del titular, teléfono, nombre y tipo de negocio accesibles con 1 clic (`MyAccountTab`).
+  - Navegación y Rutas: Mapeo canónico `/user/mi-negocio/:slug/mi-cuenta` y sub-pestaña "Mi Cuenta" añadida a Ajustes (`VoceroSettingsView.tsx`).
+  - Radar y Presencia Activa: Sincronización en tiempo real de leads y mensajes con smart polling anti-drain y buffer resiliente en memoria.
+  - Cumplimiento ARQMODULAR: `VoceroAppNav.tsx` (169 lín), `VoceroCrmView.tsx` (173 lín), `VoceroSettingsView.tsx` (175 lín), todos <180 líneas.
+  - Verificado con 3 Filtros: Build Vite limpio (12.28s), deploy dual Cloudflare Pages (Hash `index-BBvp7VWI.js`, 17/17 rutas probadas en Chrome Headless).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

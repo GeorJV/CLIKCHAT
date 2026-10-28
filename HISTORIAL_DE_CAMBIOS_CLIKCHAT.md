@@ -16,6 +16,35 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Habilitación de Acceso Directo y Vista de "Mi Cuenta & Suscripción" en Vocero CRM y Ajustes (v2.9.31)
+- **Diagnóstico y Necesidad:**
+  1. *Inaccesibilidad de los Datos de la Cuenta y Suscripción:*
+     - En Vocero CRM, el pie de la barra lateral mostraba la tarjeta del operador ("GeoSoft"), pero era un elemento estático `<div>` sin interacción ni acción de clic.
+     - No existía pestaña ni enlace visible para consultar la fecha de creación, plan de suscripción contratado, fecha de vencimiento/próximo pago, correo electrónico, teléfono ni datos de la empresa.
+  2. *Desconexión de Rutas y Navegación:*
+     - La ruta `/user/mi-negocio/:slug/mi-cuenta` no estaba mapeada hacia la vista de cuenta en `routerConstants.ts` ni en `VoceroCrmView.tsx`, provocando redirecciones o pantallas vacías.
+     - En el menú de `VoceroSettingsView.tsx` (Ajustes) no figuraba la sub-pestaña de "Mi Cuenta".
+- **Solución Quirúrgica Implementada:**
+  1. *Tarjeta Interactiva en Barra Lateral (`VoceroAppNav.tsx`):*
+     - Incorporado `'account'` a `VoceroNavTab`.
+     - Convertido el contenedor inferior de "Perfil del Operador" en una tarjeta clicable interactiva con micro-interacción hover, indicador visual de selección activa, subtítulo "Mi Cuenta & Suscripción" y llamada a `onSelectTab('account')`.
+  2. *Rutas Limpias y Canónicas (`routerConstants.ts`):*
+     - Añadido `account: 'mi-cuenta'` en `VOCERO_TAB_ROUTE_MAP`.
+     - Añadidos alias `'mi-cuenta'`, `'cuenta'`, `'account'` y `'user'` mapeando a la pestaña `'account'` en `ROUTE_VOCERO_TAB_MAP`.
+  3. *Renderizado de Información Integral (`VoceroCrmView.tsx`):*
+     - Integrado `MyAccountTab` dentro de `VoceroCrmView.tsx` para `activeTab === 'account'`, exponiendo de inmediato: Plan de suscripción (ej. Enterprise/Pro), precio mensual, fecha de próximo pago / vencimiento, fecha de registro/creación, correo del titular, teléfono, nombre y tipo de empresa.
+     - Añadido `'/cuenta'` y `'/mi-cuenta'` a las rutas seguras de navegación para evitar redirecciones forzadas.
+  4. *Sub-Pestaña Dedicada en Ajustes (`VoceroSettingsView.tsx`):*
+     - Agregada la pestaña `'cuenta'` ("Mi Cuenta & Suscripción") con icono `UserCheck` en la navegación de Ajustes, permitiendo acceder a los datos de la cuenta también desde la configuración general.
+  5. *Cumplimiento Estricto ARQMODULAR (<180 líneas):*
+     - `VoceroAppNav.tsx` (169 líneas), `VoceroCrmView.tsx` (173 líneas), `VoceroSettingsView.tsx` (175 líneas).
+  6. *Verificación de los 3 Filtros:*
+     - Build Vite en 12.28s (0 errores), commit dual en `origin/main`, deploy dual exitoso en Cloudflare Pages (`clikchat` y `clikchatcrm`), y smoke test en Chrome Headless con 17/17 rutas operativas (Hash Match `index-BBvp7VWI.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Detección Instantánea de Enlaces Abiertos en Bandeja de Entrada CRM y Radar en Vivo (v2.9.30)
 - **Diagnóstico y Necesidad:**
   1. *Ausencia de Registro al Abrir Enlaces de Chat:*
