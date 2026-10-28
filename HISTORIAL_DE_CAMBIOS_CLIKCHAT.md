@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Disponibilidad Real en D1, Nombre Humano Estricto en Ficha y Múltiples Citas en Live Lab (v2.9.27)
+- **Diagnóstico y Necesidad:**
+  1. *Horarios Inventados vs Disponibilidad Real:*
+     - Al tener la fecha definida pero no la hora (`bookingState.slots.time == null`), `checkSlotAvailability` no se ejecutaba. El LLM no recibía la lista de espacios libres de Cloudflare D1 e inventaba horas aleatorias.
+  2. *Nombre Faltante o Genérico en Ficha Interactiva ("Cliente", "a", etc.):*
+     - El bot omitía pedir el nombre completo en Paso 1 si obtenía correo o teléfono primero. Al emitir `[BOOKING_CARD]`, asignaba fallbacks como `email.split('@')[0]` o `Cliente Agendado`, generando tarjetas sin nombre real del cliente.
+  3. *Colapso a una Sola Cita en la Agenda de Citas del CRM:*
+     - En `VoceroBookingsView.tsx` y `functions/api/[[route]].js`, la deduplicación agrupaba citas por `clientName_date_time`. Si el nombre era `'Cliente'`, colapsaba citas con diferente ID a una sola, impidiendo visualizar la 2ª, 3ª o 4ª cita creada en el Bot Lab.
+- **Solución Quirúrgica Implementada:**
+  1. *Cálculo Dinámico de Disponibilidad Real en D1 cuando se conoce la Fecha:*
+     - Al detectar la fecha solicitada, se consultan en milisegundos las reservas activas en D1, se calculan los intervalos ocupados (+ buffer de descanso) y se generan los `realFreeSlots` oficiales (8am-6pm).
+     - La instrucción del Paso 4 inyecta obligatoriamente los horarios reales disponibles y prohíbe terminantemente inventar horarios. Si el usuario solicita una hora ocupada o fuera de horario, se rechaza educadamente ofreciendo los siguientes cupos libres.
+  2. *Exigencia Inquebrantable de Nombre Humano Válido (`hasValidName`):*
+     - `isValidPersonName` rechaza palabras genéricas (`cliente`, `merás`, `agendado`, `usuario`, `persona`, `cita`).
+     - Si falta el nombre, `bookingState.isComplete = false` y el bot pregunta cordialmente: *"¿A nombre de quién registramos la cita?"*.
+     - Se prohíbe emitir `[BOOKING_CARD]` si no hay un nombre humano real confirmado.
+  3. *Persistencia y Sincronización de Múltiples Citas en Live Lab y Agenda CRM:*
+     - `VoceroBookingsView.tsx` deduplica estrictamente por `id` único, permitiendo múltiples citas por cliente o fecha.
+     - `saveSandboxBooking` asigna IDs únicos garantizados (`newId`), sincroniza `localStorage`, envía `POST /api/bookings` a D1 y emite `broadcastBookingCreated` para refrescar la agenda en tiempo real.
+  4. *Verificación de los 3 Filtros:*
+     - Build Vite en 24.68s (0 errores), commit `748554d` en `main`, deploy dual exitoso en Cloudflare Pages (`clikchat` y `clikchatcrm`), smoke test en Chrome Headless 17/17 rutas operativas (Hash Match `index-C6CQGWK2.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Soporte de Citas Adicionales Independientes sin Modificar Citas Previas (v2.9.26)
 - **Diagnóstico y Necesidad:**
   1. *Sobrescritura Indebida en Cloudflare D1:*
