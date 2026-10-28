@@ -16,6 +16,30 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Blindaje de Saludo Cordial en 1er Mensaje ("hola") y Continuidad Directa en Subsiguientes (v2.9.14)
+- **Diagnóstico y Necesidad:**
+  - Al escribir "hola" en el primer mensaje, el bot no saludaba y entraba "a secas" o con respuestas impersonales ("Totalmente de acuerdo...").
+  - *Causa Raíz:* En la UI, `conversationHistory` pre-renderiza 1 mensaje de bienvenida del asistente, por lo que `sessionHistory.length === 1`. El backend asumía erróneamente que la conversación ya estaba en curso (`isOngoingConversation = true`), activaba la directiva que prohibía saludar y ejecutaba un regex que eliminaba activamente los saludos.
+- **Solución Quirúrgica Implementada:**
+  1. *Detección Fiel del Turno del Cliente (`functions/api/[[route]].js`):*
+     - Sustituido `sessionHistory.length === 0` por `const userMsgsInHist = sessionHistory.filter(h => h.sender === 'user' || h.role === 'user'); const isFirstUserTurn = userMsgsInHist.length === 0;`.
+  2. *Saludo Cordial Inquebrantable en 1er Mensaje:*
+     - Si el usuario saluda en su primer turno (`isFirstUserTurn && isGreeting`), el bot responde cordialmente con el saludo configurado, nombre de negocio (`storeName`) y asistente (`botName`). Prohibido entrar a secas.
+     - En consultas con saludo combinado (ej: "hola qué servicios tienen"), el prompt y el post-procesamiento garantizan que el bot salude primero antes de responder la consulta.
+  3. *Continuidad Directa en Mensajes Posteriores:*
+     - A partir del 2do turno (`userMsgsInHist.length > 0`), el bot continúa directo con lo que va respondiendo puntualmente sin repetir saludos ni bienvenidas.
+     - Limpieza de saludos repetidos por regex activa estrictamente a partir del turno 2 en adelante.
+  4. *Alineación en Red de Contingencia:*
+     - En `generateSmartFallbackReply`, `isOngoing` evalúa `userTurns.length > 0`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Build local limpio (`vite build` completado en 15.89s, 0 errores).
+  - *Filtro 2:* Sincronización en GitHub commit `70f5709` en `main` y despliegue dual en Cloudflare Pages (`clikchat` y `clikchatcrm`).
+  - *Filtro 3:* Hash match confirmado (`index-DrL9i-Jk.js`) y auditoría de 17/17 rutas operativas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Implementación de la Skill Universal `respuesta-concisa` para Ahorro del 85% al 90% de Tokens (v2.9.13)
 - **Diagnóstico y Necesidad:**
   - Respuestas conversacionales previas acumulaban tokens de salida innecesarios (saludos, preámbulos, despedidas y parafraseos redundantes).
