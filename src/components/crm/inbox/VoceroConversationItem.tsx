@@ -6,6 +6,7 @@ interface VoceroConversationItemProps {
   lead: CrmLead;
   isSelected: boolean;
   onSelect: (leadId: string) => void;
+  isUnread?: boolean;
 }
 
 const STAGE_DOT_COLOR: Record<string, string> = {
@@ -21,6 +22,7 @@ export const VoceroConversationItem: React.FC<VoceroConversationItemProps> = ({
   lead,
   isSelected,
   onSelect,
+  isUnread = false,
 }) => {
   const isWhatsApp = lead.channel === 'whatsapp';
   const dotColor = STAGE_DOT_COLOR[lead.stage] || '#8391aa';
@@ -35,7 +37,9 @@ export const VoceroConversationItem: React.FC<VoceroConversationItemProps> = ({
       className={`px-3 py-2.5 rounded-xl border transition-all cursor-pointer relative ${
         isSelected
           ? 'bg-[#ebf1ff] border-[#d3e2ff] text-[#0a1730] shadow-sm'
-          : 'bg-white hover:bg-[#f6f8fc] border-[#e8edf6] text-[#0a1730]'
+          : isUnread
+            ? 'bg-blue-50/40 hover:bg-[#ebf1ff] border-blue-200 text-[#0a1730]'
+            : 'bg-white hover:bg-[#f6f8fc] border-[#e8edf6] text-[#0a1730]'
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -62,23 +66,37 @@ export const VoceroConversationItem: React.FC<VoceroConversationItemProps> = ({
               >
                 {isWhatsApp ? 'WA' : 'WEB'}
               </span>
-              <h4 className="text-[13.5px] font-bold text-[#0a1730] truncate">
+              <h4 className={`text-[13.5px] text-[#0a1730] truncate ${isUnread && !isSelected ? 'font-black text-[#0038d8]' : 'font-bold'}`}>
                 {lead.name || 'Sin Nombre'}
               </h4>
             </div>
-            <span className="font-mono text-[10.5px] text-[#8391aa] shrink-0">
-              {timeStr}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isUnread && !isSelected && (
+                <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0d5bff] text-white text-[10.5px] font-black shadow-xs animate-pulse" title="Chat nuevo sin leer">
+                  1
+                </span>
+              )}
+              <span className="font-mono text-[10.5px] text-[#8391aa]">
+                {timeStr}
+              </span>
+            </div>
           </div>
 
-          <p className="text-[12px] text-[#42506b] truncate mb-1">
+          <p className={`text-[12px] truncate mb-1 ${isUnread && !isSelected ? 'font-semibold text-[#0a1730]' : 'text-[#42506b]'}`}>
             {lead.last_message || 'Sin mensajes recientes'}
           </p>
 
           <div className="flex items-center justify-between text-[10.5px]">
-            <span className="font-mono text-[#157a41] font-medium tracking-tight">
-              {isWhatsApp ? 'ventana abierta (24h)' : lead.phone || 'chat web'}
-            </span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-mono text-[#157a41] font-medium tracking-tight truncate">
+                {isWhatsApp ? 'ventana abierta (24h)' : lead.phone || 'chat web'}
+              </span>
+              {!lead.ai_paused && (
+                <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1 rounded shrink-0">
+                  🤖 Bot
+                </span>
+              )}
+            </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <VoceroLeadScorePill lead={lead} />

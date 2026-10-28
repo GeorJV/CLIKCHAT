@@ -59,37 +59,25 @@ export function useVoceroCrm(tenantId?: string) {
 
   const changeLeadStage = useCallback(async (leadId: string, stage: CrmStageId) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage } : l));
-    try {
-      await fetch(`/api/crm/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage }) });
-    } catch (err) { console.warn('Error actualizando stage de lead:', err); loadLeads(); }
+    try { await fetch(`/api/crm/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage }) }); } catch { loadLeads(); }
   }, [loadLeads]);
 
   const toggleTakeover = useCallback(async (leadId: string) => {
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead) return;
-    const nextPaused = !lead.ai_paused;
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ai_paused: nextPaused } : l));
-    try {
-      await fetch(`/api/crm/leads/${leadId}/takeover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ai_paused: nextPaused }) });
-    } catch (err) { console.warn('Error alternando Human Takeover:', err); loadLeads(); }
+    const lead = leads.find(l => l.id === leadId); if (!lead) return;
+    const nextPaused = !lead.ai_paused; setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ai_paused: nextPaused } : l));
+    try { await fetch(`/api/crm/leads/${leadId}/takeover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ai_paused: nextPaused }) }); } catch { loadLeads(); }
   }, [leads, loadLeads]);
 
   const sendAgentMessage = useCallback(async (leadId: string, text: string) => {
     if (!text.trim() || !tenantId) return;
-    const optimisticMsg: CrmMessage = { id: 'opt_' + Date.now(), session_id: selectedLead?.session_id || leadId, sender: 'agent', message: text.trim(), created_at: new Date().toISOString() };
-    setMessages(prev => [...prev, optimisticMsg]);
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, last_message: text.trim() } : l));
-    try {
-      const res = await fetch(`/api/crm/leads/${leadId}/message`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text.trim(), tenantId }) });
-      if (!res.ok) throw new Error('Error al enviar mensaje');
-    } catch (err) { console.warn('Error al enviar mensaje del asesor:', err); }
+    const optMsg: CrmMessage = { id: 'opt_' + Date.now(), session_id: selectedLead?.session_id || leadId, sender: 'agent', message: text.trim(), created_at: new Date().toISOString() };
+    setMessages(prev => [...prev, optMsg]); setLeads(prev => prev.map(l => l.id === leadId ? { ...l, last_message: text.trim() } : l));
+    try { const res = await fetch(`/api/crm/leads/${leadId}/message`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text.trim(), tenantId }) }); if (!res.ok) throw new Error('Error al enviar'); } catch (err) { console.warn(err); }
   }, [selectedLead, tenantId]);
 
   const updateLead = useCallback(async (leadId: string, fields: Partial<CrmLead>) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...fields } : l));
-    try {
-      await fetch(`/api/crm/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) });
-    } catch (err) { console.warn('Error actualizando lead:', err); loadLeads(); }
+    try { await fetch(`/api/crm/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) }); } catch { loadLeads(); }
   }, [loadLeads]);
 
   const createLead = useCallback(async (data: Partial<CrmLead>) => {
@@ -103,38 +91,47 @@ export function useVoceroCrm(tenantId?: string) {
     } catch (err) { console.warn('Error creando lead manual:', err); }
   }, [tenantId]);
 
+  const [readLeadIds, setReadLeadIds] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined' && tenantId) {
+      try { const s = localStorage.getItem(`clikcrm_read_${tenantId}`); if (s) return new Set(JSON.parse(s)); } catch {}
+    }
+    return new Set<string>();
+  });
+
+  const markLeadAsRead = useCallback((leadId: string) => {
+    if (!leadId) return;
+    setReadLeadIds(prev => {
+      const next = new Set(prev).add(leadId);
+      const leadObj = leads.find(l => l.id === leadId || l.session_id === leadId);
+      if (leadObj?.session_id) next.add(leadObj.session_id);
+      if (leadObj?.id) next.add(leadObj.id);
+      if (typeof window !== 'undefined' && tenantId) {
+        try { localStorage.setItem(`clikcrm_read_${tenantId}`, JSON.stringify([...next])); } catch {}
+      }
+      return next;
+    });
+  }, [tenantId, leads]);
+
+  useEffect(() => { if (selectedLeadId) markLeadAsRead(selectedLeadId); }, [selectedLeadId, markLeadAsRead]);
+
+  const unreadCount = leads.filter(l => !readLeadIds.has(l.id) && !readLeadIds.has(l.session_id || '') && l.id !== selectedLeadId).length;
+  const botAttendingCount = leads.filter(l => !l.ai_paused && (l.stage === 'lead' || l.stage === 'qualifying')).length;
+
   const deleteLead = useCallback(async (leadId: string): Promise<boolean> => {
     if (!leadId) return false;
-    setLeads(prev => prev.filter(l => l.id !== leadId));
-    setSelectedLeadId(prev => (prev === leadId ? null : prev));
-    try {
-      const res = await fetch(`/api/crm/leads/${leadId}`, { method: 'DELETE' });
-      return res.ok;
-    } catch (err) {
-      console.warn('Error eliminando lead:', err);
-      loadLeads();
-      return false;
-    }
+    setLeads(prev => prev.filter(l => l.id !== leadId)); setSelectedLeadId(prev => (prev === leadId ? null : prev));
+    try { const res = await fetch(`/api/crm/leads/${leadId}`, { method: 'DELETE' }); return res.ok; }
+    catch (err) { console.warn('Error eliminando lead:', err); loadLeads(); return false; }
   }, [loadLeads]);
 
   const deleteLeads = useCallback(async (leadIds: string[]): Promise<boolean> => {
     if (!leadIds || leadIds.length === 0) return false;
-    const idSet = new Set(leadIds);
-    setLeads(prev => prev.filter(l => !idSet.has(l.id)));
-    setSelectedLeadId(prev => (prev && idSet.has(prev) ? null : prev));
+    const idSet = new Set(leadIds); setLeads(prev => prev.filter(l => !idSet.has(l.id))); setSelectedLeadId(prev => (prev && idSet.has(prev) ? null : prev));
     try {
-      const res = await fetch('/api/crm/leads/bulk-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: leadIds })
-      });
+      const res = await fetch('/api/crm/leads/bulk-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: leadIds }) });
       if (!res.ok) await Promise.all(leadIds.map(id => fetch(`/api/crm/leads/${id}`, { method: 'DELETE' }).catch(() => null)));
       return true;
-    } catch (err) {
-      console.warn('Error eliminando leads múltiples:', err);
-      loadLeads();
-      return false;
-    }
+    } catch (err) { console.warn('Error eliminando leads múltiples:', err); loadLeads(); return false; }
   }, [loadLeads]);
 
   return {
@@ -142,6 +139,6 @@ export function useVoceroCrm(tenantId?: string) {
     isLoadingLeads, isLoadingMessages, filterInbox, setFilterInbox,
     searchTerm, setSearchTerm, loadLeads, changeLeadStage,
     toggleTakeover, sendAgentMessage, updateLead, createLead,
-    deleteLead, deleteLeads,
+    deleteLead, deleteLeads, readLeadIds, markLeadAsRead, unreadCount, botAttendingCount,
   };
 }

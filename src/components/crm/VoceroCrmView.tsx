@@ -46,7 +46,8 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     leads, selectedLeadId, setSelectedLeadId, selectedLead, messages,
     isLoadingLeads, isLoadingMessages, filterInbox, setFilterInbox,
     searchTerm, setSearchTerm, changeLeadStage, toggleTakeover,
-    sendAgentMessage, updateLead, createLead, deleteLead, deleteLeads
+    sendAgentMessage, updateLead, createLead, deleteLead, deleteLeads,
+    readLeadIds, unreadCount, botAttendingCount
   } = useVoceroCrm(tenant?.id || tenantId);
 
   const {
@@ -88,7 +89,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     <div className="flex h-full w-full max-h-[100dvh] overflow-hidden bg-[#f6f8fc] font-sans">
       <VoceroAppNav
         activeTab={activeTab} onSelectTab={handleSelectTab}
-        unreadCount={leads.filter(l => l.stage === 'lead').length}
+        unreadCount={unreadCount}
         unresolvedCount={pendingUnresolvedCount}
         unreadBookingsCount={unreadBookingsCount}
         userName={tenant?.name || tenantName || tenantSlug} onSwitchToClassic={() => setVoceroMode(false)} onLogout={onLogout}
@@ -110,6 +111,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
               onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
               businessType={tenant?.business_type || (tenant as any)?.businessType}
               tenantSlug={tenantSlug || tenant?.slug || 'geosoft'}
+              unreadLeadIds={readLeadIds} unreadCount={unreadCount} botAttendingCount={botAttendingCount}
             />
           )}
           {activeTab === 'pipeline' && (

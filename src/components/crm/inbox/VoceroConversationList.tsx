@@ -15,6 +15,9 @@ interface VoceroConversationListProps {
   onOpenNewLeadModal: () => void;
   isLoading: boolean;
   tenantSlug?: string;
+  unreadLeadIds?: Set<string>;
+  unreadCount?: number;
+  botAttendingCount?: number;
 }
 
 export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
@@ -28,6 +31,9 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
   onOpenNewLeadModal,
   isLoading,
   tenantSlug,
+  unreadLeadIds,
+  unreadCount = 0,
+  botAttendingCount = 0,
 }) => {
   const filteredLeads = leads.filter(l => {
     const term = (searchTerm || '').toLowerCase();
@@ -62,6 +68,11 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="text-[17px] font-bold tracking-tight text-[#0a1730]">Bandeja</h2>
             <span className="font-mono text-[12px] text-[#8391aa]">{leads.length}</span>
+            {unreadCount > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-[#0d5bff] text-white text-[10.5px] font-black shadow-xs animate-pulse" title="Chats nuevos sin leer">
+                {unreadCount} {unreadCount === 1 ? 'nuevo' : 'nuevos'}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -75,6 +86,22 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Indicador de Chats Atendidos por el Bot */}
+        {botAttendingCount > 0 && (
+          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs font-semibold">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>🤖 Bot en vivo</span>
+            </div>
+            <span className="font-mono font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full text-[11px]">
+              {botAttendingCount} {botAttendingCount === 1 ? 'chat activo' : 'chats activos'}
+            </span>
+          </div>
+        )}
 
         {/* Buscador Redondeado Vocero */}
         <div className="flex items-center gap-2 rounded-full border border-[#dde5f1] bg-white px-3.5 py-[6px] shadow-sm focus-within:border-[#0d5bff] focus-within:ring-2 focus-within:ring-[#d3e2ff]">
@@ -133,6 +160,7 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
               lead={lead}
               isSelected={lead.id === selectedLeadId}
               onSelect={onSelectLead}
+              isUnread={Boolean(unreadLeadIds && !unreadLeadIds.has(lead.id) && !unreadLeadIds.has(lead.session_id || ''))}
             />
           ))
         )}

@@ -23,6 +23,9 @@ interface VoceroInboxProps {
   onOpenNewLeadModal: () => void;
   businessType?: string;
   tenantSlug?: string;
+  unreadLeadIds?: Set<string>;
+  unreadCount?: number;
+  botAttendingCount?: number;
 }
 
 export const VoceroInbox: React.FC<VoceroInboxProps> = ({
@@ -44,6 +47,9 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
   onOpenNewLeadModal,
   businessType,
   tenantSlug,
+  unreadLeadIds,
+  unreadCount,
+  botAttendingCount,
 }) => {
   const [panelOpen, setPanelOpen] = useState(true);
 
@@ -62,6 +68,9 @@ export const VoceroInbox: React.FC<VoceroInboxProps> = ({
           onOpenNewLeadModal={onOpenNewLeadModal}
           isLoading={isLoadingLeads}
           tenantSlug={tenantSlug}
+          unreadLeadIds={unreadLeadIds}
+          unreadCount={unreadCount}
+          botAttendingCount={botAttendingCount}
         />
       </div>
 
