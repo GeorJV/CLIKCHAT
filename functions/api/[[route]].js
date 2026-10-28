@@ -1215,8 +1215,11 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
   }
 
   const bType = (businessType || 'servicios').toLowerCase();
-  const isPhysicalStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria|comercio/i.test(`${tenantName} ${bType}`);
-  const isFood = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger|panaderia/i.test(`${tenantName} ${bType}`);
+  const combinedDesc = `${tenantName} ${businessType}`.toLowerCase();
+  const isPhysicalStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria|comercio/i.test(combinedDesc);
+  const isFood = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger|panaderia/i.test(combinedDesc);
+  const isMedicalHealth = /dentista|dental|odontolog|doctor|medico|medica|clinica|consultorio|salud|pediatr|ginecolog|oftalmolog|dermatolog|ciruj|fisioterapi|nutrici/i.test(combinedDesc);
+  const isBeautyWellness = /estetica|belleza|barber|peluquer|salon|spa|masaje|facial|manicur|pedicur|depilaci|cosmetolog|unas/i.test(combinedDesc);
 
   const objectionRule = isPhysicalStore
     ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (PRODUCTOS FÍSICOS & RETAIL):
@@ -1227,6 +1230,16 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
     ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (GASTRONOMÍA & RESTAURANTES):
     - Si el cliente cuestiona el precio: valida su perspectiva y destaca los ingredientes frescos de primera calidad, porciones generosas, preparación artesanal al momento y empaque térmico para que llegue caliente frente a opciones industriales genéricas.
     - Concluye preguntando amablemente qué antojo o platillo le gustaría probar hoy.`
+    : isMedicalHealth
+    ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (SALUD, ODONTOLOGÍA & CLÍNICAS MÉDICAS):
+    - Si el paciente cuestiona el precio (ej: "está caro", "en otro lugar cobran menos"): NUNCA te pongas a la defensiva ni repitas el precio a secas.
+    - Valida con calidez profesional y empatía: en salud, procedimientos médicos y odontología, destaca la formación especializada de profesionales colegiados, instrumental 100% esterilizado grado médico, diagnósticos clínicos certeros, tecnología avanzada, materiales biocompatibles certificados y el cuidado seguro de su salud frente a opciones de bajo costo que comprometen la higiene o conllevan riesgos clínicos.
+    - Concluye invitando cordialmente a reservar una cita presencial de valoración o diagnóstico para evaluar su caso específico de forma personalizada.`
+    : isBeautyWellness
+    ? `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (ESTÉTICAS, SALONES DE BELLEZA, BARBERÍAS & SPAS):
+    - Si el cliente cuestiona el precio (ej: "está caro", "vi otro más barato"): NUNCA te pongas a la defensiva ni repitas el precio a secas.
+    - Valida con empatía y destaca con seguridad el uso de productos profesionales premium y certificados (que cuidan y protegen la piel, barba o cabello sin maltratarlos), protocolos impecables de higiene y bioseguridad, atención personalizada dedicada sin prisas y resultados estéticos garantizados en manos de expertos frente a servicios apresurados o productos agresivos.
+    - Concluye invitando cordialmente a reservar su espacio exclusivo presencial para consentirse y recibir atención de primera.`
     : `10. MANEJO MAESTRO DE OBJECIONES DE PRECIO Y VALOR (SERVICIOS PROFESIONALES & CONSULTORÍA):
     - Si el cliente cuestiona el precio (ej: "está caro", "vi opciones por $150"): NUNCA te pongas a la defensiva ni repitas el precio a secas.
     - Valida su perspectiva con empatía y destaca con seguridad ejecutiva el valor del trabajo personalizado, especialistas dedicados, código propio o metodología probada, seguridad de datos y retorno de inversión frente a soluciones genéricas descartables.
@@ -1238,6 +1251,12 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
     : isFood
     ? `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
     - Si el cliente consulta por alérgenos específicos no listados, reservaciones para eventos especiales o pedidos corporativos, responde con amabilidad e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el personal del restaurante le confirme de inmediato.`
+    : isMedicalHealth
+    ? `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el paciente consulta por dosis de medicamentos recetados, interpretación de análisis clínicos de laboratorio, cirugías complejas o diagnósticos médicos avanzados que requieran evaluación facultativa en persona, responde con calidez ética explicando que para su seguridad médica se requiere una valoración presencial con el especialista, e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el equipo médico/recepción dé seguimiento prioritario.`
+    : isBeautyWellness
+    ? `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
+    - Si el cliente consulta por contraindicaciones específicas ante alguna condición dermatológica/cutánea, alergias severas a químicos/tintes no listados o servicios especiales para novias/eventos masivos, responde con amabilidad profesional e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el especialista del salón o estética confirme las condiciones idóneas.`
     : `11. DETECCIÓN TRANSPARENTE DE DUDAS TÉCNICAS NO RESUELTAS (HUMAN-IN-THE-LOOP):
     - Si el cliente pregunta por certificaciones externas específicas (ej. ISO, SOC2, normativas sectoriales), convenios o detalles que NO se encuentren en el catálogo oficial, responde con honestidad destacando los estándares de seguridad y calidad, e incluye al final el marcador <!--UNRESOLVED_QUERY--> para que el equipo humano del negocio reciba la duda y le brinde respuesta formal.`;
 
@@ -1252,6 +1271,16 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
     - Describe los platillos con atractivo gastronómico, detallando ingredientes, aderezos y acompañamientos.
     - Ofrece bebidas frías o acompañamientos para completar el combo o la cena.
     - Confirma si la orden es para retirar en el local o para envío a domicilio express, indicando tiempos aproximados de entrega.`
+    : isMedicalHealth
+    ? `12. REGLAS ESPECÍFICAS DE CLÍNICAS, DENTISTAS Y CONSULTORIOS MÉDICOS:
+    - Trata al usuario como paciente con empatía, máxima discreción, calidez y rigor profesional.
+    - Modalidad 100% presencial: toda cita, chequeo, valoración o procedimiento se realiza presencialmente en las instalaciones del consultorio o clínica.
+    - Orienta con amabilidad hacia la reserva de su cita de valoración o consulta médica inicial para diagnosticar su caso de forma certera.`
+    : isBeautyWellness
+    ? `12. REGLAS ESPECÍFICAS DE ESTÉTICAS, SALONES DE BELLEZA, BARBERÍAS Y SPAS:
+    - Enfócate en la imagen personal, relajación, bienestar y cuidado corporal, facial o capilar.
+    - Modalidad 100% presencial: aclara que la atención es presencial con horario reservado y sillón o cabina exclusiva para la persona.
+    - Si el cliente consulta por servicios combinados o complementarios (ej: corte + barba en barbería, tinte + hidratación en salón, masaje + exfoliación en spa, limpieza facial en estética), recomiéndalos con entusiasmo y coordina su cita.`
     : `12. REGLAS ESPECÍFICAS DE SERVICIOS PROFESIONALES:
     - Enfócate en el diagnóstico y comprensión de las necesidades puntuales del cliente.
     - Explica el alcance y guía cordialmente hacia una sesión estratégica, demostración o cita de evaluación sin presionar.`;
@@ -7500,7 +7529,14 @@ Menciona el precio oficial con amabilidad y pregunta amablemente si desea agrega
           if (isRestaurant) {
             contextBlock += `\n\n[CONTINUACIÓN DE ORDEN]: El cliente desea seguir sumando ítems a su pedido. Pregúntale con amabilidad qué más le gustaría agregar (por ejemplo bebidas, adicionales, postres o combos) para sumarlo a su comanda.`;
           } else if (isServices) {
-            contextBlock += `\n\n[CONTINUACIÓN DE CONSULTA]: El cliente desea consultar más opciones. Pregúntale con amabilidad qué otro requerimiento tecnológico o servicio le gustaría evaluar.`;
+            const isMed = /dentista|dental|odontolog|doctor|medico|medica|clinica|consultorio|salud|pediatr|ginecolog|oftalmolog|dermatolog|ciruj|fisioterapi|nutrici/i.test(`${targetTenant.name || ''} ${targetTenant.business_type || ''}`);
+            const isBeauty = /estetica|belleza|barber|peluquer|salon|spa|masaje|facial|manicur|pedicur|depilaci|cosmetolog|unas/i.test(`${targetTenant.name || ''} ${targetTenant.business_type || ''}`);
+            const contPrompt = isMed
+              ? 'El paciente desea consultar más opciones. Pregúntale con calidez qué otro tratamiento de salud o valoración le gustaría conocer.'
+              : isBeauty
+              ? 'El cliente desea consultar más opciones. Pregúntale con entusiasmo qué otro servicio de belleza, cuidado personal o tratamiento le gustaría realizarse.'
+              : 'El cliente desea consultar más opciones. Pregúntale con amabilidad qué otro requerimiento o servicio le gustaría evaluar.';
+            contextBlock += `\n\n[CONTINUACIÓN DE CONSULTA]: ${contPrompt}`;
           } else {
             contextBlock += `\n\n[CONTINUACIÓN DE COMPRA]: El cliente desea seguir viendo opciones. Pregúntale con amabilidad qué otro producto le gustaría agregar a su compra.`;
           }
@@ -7618,13 +7654,20 @@ La sugerencia o pregunta: "¿Te gustaría agregarle algo más a tu orden, como u
           const prodPrice = topProduct?.price ? `${targetTenant.currency === 'CRC' ? '₡' : '$'}${topProduct.price} ${topProduct.currency || 'USD'}` : (targetTenant.name === 'GeoSoft' ? '$1200 USD' : '');
 
           const bType = (targetTenant.business_type || 'servicios').toLowerCase();
-          const isStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria/i.test(`${targetTenant.name} ${bType}`);
-          const isRest = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger/i.test(`${targetTenant.name} ${bType}`);
+          const combinedType = `${targetTenant.name || ''} ${bType}`.toLowerCase();
+          const isStore = bType === 'tienda' || bType === 'ecommerce' || bType === 'productos' || bType === 'productos_fisicos' || /tienda|retail|ferreteria|ropa|calzado|farmacia|repuestos|joyeria|libreria/i.test(combinedType);
+          const isRest = bType === 'restaurante' || /restaurante|comida|cafeteria|pizzeria|sushi|burger/i.test(combinedType);
+          const isMed = /dentista|dental|odontolog|doctor|medico|medica|clinica|consultorio|salud|pediatr|ginecolog|oftalmolog|dermatolog|ciruj|fisioterapi|nutrici/i.test(combinedType);
+          const isBeauty = /estetica|belleza|barber|peluquer|salon|spa|masaje|facial|manicur|pedicur|depilaci|cosmetolog|unas/i.test(combinedType);
 
           const questionClosing = isStore
             ? 'Cierra con una sola pregunta breve para conocer qué producto, modelo o artículo le interesa (ejemplo: "¿Qué producto o artículo estás buscando hoy?").'
             : isRest
             ? 'Cierra con una sola pregunta breve sobre qué platillo o antojo le gustaría ordenar (ejemplo: "¿Qué se te antoja ordenar o qué platillo te gustaría probar hoy?").'
+            : isMed
+            ? 'Cierra con una sola pregunta breve con empatía sobre qué tratamiento, valoración o consulta médica le gustaría atender (ejemplo: "¿Qué tipo de valoración o tratamiento te gustaría consultar hoy?").'
+            : isBeauty
+            ? 'Cierra con una sola pregunta breve con entusiasmo sobre qué servicio o cambio de imagen le gustaría realizarse (ejemplo: "¿Qué servicio o tratamiento te gustaría agendar hoy?").'
             : 'Cierra con una sola pregunta breve para conocer su requerimiento o consulta (ejemplo: "¿Qué tipo de servicio o requerimiento te gustaría evaluar?").';
 
           contextBlock += `\n\n[DIRECTIVA DE ASESORÍA COMERCIAL DIRECTA, CONCISA Y DE ALTO VALOR (MÁXIMA PRIORIDAD ACTUAL)]:

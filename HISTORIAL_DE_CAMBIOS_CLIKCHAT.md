@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Calibración Especializada para Salud, Estéticas, Salones, Barberías, Masajes y Consultorios Médicos (v2.9.7)
+- **Diagnóstico y Causas Raíces:**
+  1. *Sesgo Tecnológico Residual:* En sectores de servicios de belleza y salud presencial, el manejo de objeciones recurría en ciertos casos a términos de software corporativo ("código propio, retorno de inversión"), desentonando en peluquerías, barberías, spas o clínicas médicas.
+  2. *Requerimiento de Ética Médica y Cuidado Estético:* Se requería calibrar directrices específicas para:
+     - *Médicos, Dentistas y Consultorios:* Enfoque en bioseguridad, instrumental estéril, tecnología diagnóstica avanzada, personal colegiado y rechazo ético de recetas o prescripciones farmacológicas a distancia sin valoración presencial.
+     - *Estéticas, Salones de Belleza, Barberías y Masajes:* Enfoque en productos cosméticos premium certificados (cuidado sin maltratar piel, barba o cabello), toalla caliente, relajación muscular y atención presencial en cabina o sillón exclusivo.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Subclasificación Dinámica de Servicios (`functions/api/[[route]].js`):*
+     - `isMedicalHealth`: Detección de dentistas, odontología, doctores, médicos, clínicas y consultorios.
+     - `isBeautyWellness`: Detección de estéticas, salones de belleza, barberías, peluquerías, spas y masajes terapéuticos.
+  2. *Adaptación de Reglas 10 (Objeciones), 11 (HITL) y 12 (Directrices de Sector):*
+     - Erradicación total de términos de software en estos giros.
+     - Enfoque médico en valoración diagnóstica presencial y protección de la salud del paciente.
+     - Enfoque de imagen y bienestar en tratamientos capilares, cuidado de barba, estética facial y masajes descontracturantes.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.46s con 0 errores TypeScript.
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Auditoría en vivo de 6/6 sectores en producción:
+    * Salón de Belleza (Balayage): Defendió $95 destacando productos premium que no maltratan el cabello.
+    * Barbería (Degradado + Barba): Resaltó toalla caliente, higiene y experiencia de barbero profesional.
+    * Clínica Dental (Limpieza Ultrasonido): Enfatizó instrumental estéril, personal colegiado y cuidado del esmalte.
+    * Consultorio Médico: Rechazó éticamente recetar a distancia ante síntomas graves y priorizó valoración presencial.
+    * Clínica Estética (Hidrodermoabrasión): Explicó tecnología profunda vs limpieza casera.
+    * Masajes & Spa (Descontracturante): Abordó tensión en espalda alta, piedras volcánicas y agendamiento.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Certificación de Velocidad de Respuesta y Formatos de Bloques de Mensajes (v2.9.6)
 - **Diagnóstico y Cobertura de Pruebas:**
   1. *Velocidad de Respuesta Inicial (`bot_response_speed_sec`):* Comprobar que el bot respeta los tiempos de espera configurables (0s instantáneo, 1s ultrarrápido, 2-3s lectura natural, 4-10s humano pausado) mediante cálculo reactivo de latencia (`targetDelayMs - elapsed`).

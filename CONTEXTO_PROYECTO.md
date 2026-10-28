@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 21:55 GMT-6
-- **Versión Actual:** 2.9.6 (Certificación de Velocidad de Respuesta y Formatos de Bloques)
+- **Última Actualización:** 2026-10-27 22:02 GMT-6
+- **Versión Actual:** 2.9.7 (Calibración Especializada: Salud, Estéticas, Salones, Barberías, Masajes y Consultorios)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Velocidad de Respuesta Inicial: Verificados niveles 0s, 1s, 2s y 3s con ajuste reactivo milimétrico.
-  - Cadencia entre Burbujas: Verificado deliverStaggeredBubbles con typing indicator a 1s y 2s (margen <3ms).
-  - Modos de Bloques: Certificados los 4 modos (micro, moderate, intermediate, single) y protección ASCII.
-  - Respeto a Configuración: D1 y API entregan y respetan message_delivery_mode y tiempos configurados.
+  - Especialización en Servicios: Directrices dedicadas para salud (médicos, dentistas) y bienestar/belleza (barberías, salones, spas).
+  - Cero Jerga Tecnológica: Erradicado cualquier término de software en atención clínica o estética.
+  - Ética Médica y Seguridad: Priorización de evaluación presencial y rechazo de recetas o diagnósticos farmacológicos a distancia.
+  - Modalidad Presencial Garantizada: Inferencia automática de citas presenciales en cabina o consultorio.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
