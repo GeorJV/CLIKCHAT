@@ -1,14 +1,14 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 17:48 GMT-6
-- **Versión Actual:** 2.8.5 (Persistencia Universal de Citas de Live Lab y Chat en Cloudflare D1)
+- **Última Actualización:** 2026-10-27 18:05 GMT-6
+- **Versión Actual:** 2.8.6 (Blindaje Estricto de 5 Slots de Agendamiento y Cero Citas Prematuras)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Persistencia Real de Live Lab en D1: Las citas agendadas desde Live Lab o chats se guardan directamente en Cloudflare D1 y se reflejan al instante en Agenda/Citas.
-  - Corrección de Schema en `chat_sessions`: Migrada columna `status` en Cloudflare D1, garantizando inserción sin errores en sesiones y mensajes.
-  - Fallback Inteligente de Nombre: Citas con fecha, hora y datos de contacto confirmados se registran de forma determinista sin omitir el guardado físico en D1.
+  - Blindaje Estricto de 5 Slots: Exigidos Nombre completo, Correo, Teléfono/WhatsApp, Fecha y Hora antes de emitir cualquier tarjeta o confirmar cita.
+  - Cero Nombres Ficticios: Eliminados fallbacks automáticos de nombre desde el correo o 'Cliente'.
+  - Guardián Post-LLM Infranqueable: Purgado inmediato de tarjetas `[BOOKING_CARD:]` en respuestas de la IA si falta cualquiera de los 3 datos de contacto.
   - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

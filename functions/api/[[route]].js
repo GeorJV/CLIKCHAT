@@ -5562,7 +5562,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   let email = (leadInfo?.email && typeof leadInfo.email === 'string' && leadInfo.email.includes('@')) ? leadInfo.email.trim() : null;
   let phone = (leadInfo?.phone && typeof leadInfo.phone === 'string' && leadInfo.phone.replace(/\D/g, '').length >= 8) ? leadInfo.phone.trim() : null;
-  let name = (leadInfo?.name && typeof leadInfo.name === 'string' && leadInfo.name.trim().length >= 2) ? leadInfo.name.trim() : null;
+  let name = (leadInfo?.name && typeof leadInfo.name === 'string' && leadInfo.name.trim().length >= 2 && leadInfo.name.trim().toLowerCase() !== 'cliente') ? leadInfo.name.trim() : null;
   let date = null;
   let time = null;
 
@@ -5580,7 +5580,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
       if (cardMatch) {
         try {
           const card = JSON.parse(cardMatch[1]);
-          if (card.customerName) cardName = card.customerName.trim();
+          if (card.customerName && card.customerName.toLowerCase() !== 'cliente') cardName = card.customerName.trim();
           if (card.customerEmail) cardEmail = card.customerEmail.trim();
           if (card.customerPhone) cardPhone = card.customerPhone.trim();
           if (card.date) cardDate = card.date.trim();
@@ -5807,9 +5807,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = cardName;
   }
 
-  if (!name && (email || phone) && date && time) {
-    const rawFallback = (leadInfo?.name && leadInfo.name !== 'Cliente') ? leadInfo.name : (email ? email.split('@')[0] : 'Cliente');
-    name = rawFallback.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  if (name && name.toLowerCase() === 'cliente') {
+    name = null;
   }
 
   if (name) {
@@ -5859,29 +5858,30 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   const missing = [];
-  if (!name) missing.push('Nombre completo');
-  if (!email && !phone) missing.push('Correo electrónico o Teléfono');
+  if (!name || name.toLowerCase() === 'cliente') missing.push('Nombre completo');
+  if (!email) missing.push('Correo electrónico');
+  if (!phone) missing.push('Teléfono / WhatsApp');
   if (!date) missing.push('Día / Fecha de la cita');
   if (!time) missing.push('Hora de la cita');
 
   let currentStep = 1;
   let stepInstruction = '';
 
-  if (!name || (!email && !phone)) {
+  if (!name || !email) {
     currentStep = 1;
-    if (!name && !email && !phone) {
-      stepInstruction = 'PASO 1: Agradece con calidez el interés del cliente, hazlo sentir valorado y solicita amablemente su NOMBRE COMPLETO y CORREO ELECTRÓNICO para iniciar el registro. Queda PROHIBIDO solicitar teléfono, WhatsApp, fecha u hora en este turno; enfócate exclusivamente en Nombre y Correo.';
-    } else if (!email && !phone) {
-      stepInstruction = `PASO 1 (Incompleto): Ya tienes el nombre ("${name}"), pero FALTA el correo electrónico o teléfono. Salúdalo con calidez por su nombre y pídele puntualmente su correo electrónico o teléfono para enviarle los detalles.`;
+    if (!name && !email) {
+      stepInstruction = 'PASO 1: Agradece con calidez el interés del cliente, hazlo sentir valorado y solicita amablemente su NOMBRE COMPLETO y CORREO ELECTRÓNICO para iniciar el registro. Queda TERMINANTEMENTE PROHIBIDO solicitar teléfono, WhatsApp, fecha u hora en este turno; enfócate exclusivamente en Nombre y Correo.';
+    } else if (!name && email) {
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el correo ("${email}"), pero FALTA el nombre completo del cliente. Agradece con amabilidad y pídele cómo se llama para dirigirnos a él con el debido respeto. Queda TERMINANTEMENTE PROHIBIDO pedir teléfono, fecha ni hora aún.`;
     } else {
-      stepInstruction = `PASO 1 (Incompleto): Ya tienes el contacto ("${email || phone}"), pero FALTA el nombre completo. Agradece con amabilidad y pídele cómo se llama. No pidas fecha aún.`;
+      stepInstruction = `PASO 1 (Incompleto): Ya tienes el nombre ("${name}"), pero FALTA el correo electrónico. Salúdalo con calidez por su nombre y pídele puntualmente su correo electrónico para enviarle los detalles del proyecto. Queda TERMINANTEMENTE PROHIBIDO pedir teléfono, fecha ni hora aún.`;
     }
-  } else if (!email && !phone) {
+  } else if (!phone) {
     currentStep = 2;
-    stepInstruction = `PASO 2: Ya tienes nombre ("${name}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para recordatorios y confirmación. No pidas fecha u hora aún.`;
+    stepInstruction = `PASO 2: Ya tienes el nombre ("${name}") y correo ("${email}"). Ahora solicita con amabilidad su NÚMERO DE TELÉFONO O WHATSAPP para coordinar la confirmación y recordatorios de la sesión. Queda TERMINANTEMENTE PROHIBIDO pedir fecha u hora aún y TERMINANTEMENTE PROHIBIDO emitir tarjetas de cita.`;
   } else if (!date) {
     currentStep = 3;
-    stepInstruction = `PASO 3: Ya tienes nombre ("${name}") y contacto ("${phone || email}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión. No pidas hora aún.`;
+    stepInstruction = `PASO 3: Ya tienes nombre ("${name}"), correo ("${email}") y teléfono ("${phone}"). Ahora consulta con entusiasmo qué DÍA O FECHA le queda más cómodo para la sesión (por ejemplo: mañana o entre semana). No pidas hora aún.`;
   } else if (!time) {
     currentStep = 4;
     if (wantsMorning) {
@@ -5891,7 +5891,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     } else {
       stepInstruction = isRescheduleIntent
         ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
-        : `PASO 4: Ya tienes fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
+        : `PASO 4: Ya tienes nombre ("${name}"), correo ("${email}"), teléfono ("${phone}") y fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
     }
   } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && !isNameCorrectionIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
     currentStep = 6;
@@ -5901,10 +5901,10 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     stepInstruction = `PASO 5 (CORRECCIÓN DE NOMBRE): El cliente indicó que se equivocó de nombre o solicitó corregirlo/cambiarlo a "${name || 'su nombre correcto'}". Acepta la corrección con total amabilidad y calidez en un solo párrafo breve confirmando que has actualizado el nombre de la cita a "${name}" para el ${date} a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta actualizada [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"online","price":1200}].`;
   } else if (isRescheduleIntent) {
     currentStep = 5;
-    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
+    stepInstruction = `PASO 5 (REPROGRAMACIÓN / CAMBIO DE CITA): El cliente solicitó cambiar su cita para el "${date}" a las "${time}". Confirma con amabilidad y en un solo párrafo breve el cambio a las ${time}. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"online","price":1200}].`;
   } else {
     currentStep = 5;
-    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS! Si la fecha y hora están disponibles en agenda, autoriza la reserva con calidez en un solo párrafo breve. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {...}].`;
+    stepInstruction = `PASO 5: ¡TODOS LOS DATOS ESTÁN COMPLETOS Y CONFIRMADOS (Nombre: ${name}, Correo: ${email}, Teléfono: ${phone}, Fecha: ${date}, Hora: ${time})! Si la fecha y hora están disponibles en agenda, autoriza la reserva con calidez en un solo párrafo breve. PROHIBIDO listar renglón por renglón los datos de la cita en texto. Termina amablemente con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${leadInfo?.serviceName || 'Desarrollo Web & SaaS'}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email}","customerPhone":"${phone}","modality":"online","price":1200}].`;
   }
 
   return {
@@ -6259,11 +6259,14 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }
 
       let activeLeadInfo = { ...(leadInfo || {}) };
+      if (activeLeadInfo.name && activeLeadInfo.name.toLowerCase() === 'cliente') {
+        delete activeLeadInfo.name;
+      }
       try {
         const sessRows = await executeD1('SELECT user_name, user_phone, user_email FROM chat_sessions WHERE id = ?1 LIMIT 1', [currentSessionId]);
         if (sessRows.length > 0) {
           const s = sessRows[0];
-          if (!activeLeadInfo.name && s.user_name) activeLeadInfo.name = s.user_name;
+          if (!activeLeadInfo.name && s.user_name && s.user_name.toLowerCase() !== 'cliente') activeLeadInfo.name = s.user_name;
           if (!activeLeadInfo.email && s.user_email) activeLeadInfo.email = s.user_email;
           if (!activeLeadInfo.phone && s.user_phone) activeLeadInfo.phone = s.user_phone;
         }
@@ -6328,7 +6331,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       const isConfirmationCheck = /(?:ya\s*est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])|est[aá]\s*(?:confirmad[oa]|formimad[oa]|formad[oa]|agendad[oa]|list[oa]|reservad[oa]|guardad[oa])\s*(?:la\s*cita|el\s*espacio)|la\s*cita\s*ya\s*qued[oó]|ya\s*qued[oó]\s*(?:la\s*cita|agendad[oa]|confirmad[oa]))/i.test(cleanMsgNorm);
       const isDateClarification = /(?:de\s+(?:qu[eé]\s+)?(?:f[eé]ch?a|fehca|d[ií]a)|qu[eé]\s+(?:f[eé]ch?a|fehca|d[ií]a)|para\s+cu[aá]ndo)/i.test(cleanMsgNorm);
 
-      if ((hasPriorBookingCard || Boolean(bookingState.slots.date && bookingState.slots.time)) && isClosingOrGratitude && !bookingState.isRescheduleIntent) {
+      if (hasPriorBookingCard && isClosingOrGratitude && !bookingState.isRescheduleIntent) {
         const clientName = bookingState.slots.name || activeLeadInfo?.name || '';
         const farewell = userTimeInfo?.farewellPhrase || '¡Que tengas un excelente día!';
         const closingReply = `¡Con muchísimo gusto${clientName ? ', ' + clientName : ''}! Estaremos muy atentos a tu sesión. Aquí estaremos a tu completa disposición para cualquier cambio o consulta cuando gustes. ${farewell} ¡Nos vemos pronto! 😊`;
@@ -7441,7 +7444,7 @@ DIRECTIVA OBLIGATORIA (MÁXIMA PRIORIDAD):
 Informa de forma clara, inteligente, cálida y profesional que ese espacio puntual ya se encuentra reservado.
 Pregúntale amablemente si le serviría la siguiente hora programada disponible: "${nextAvailableTime}", o si prefiere a las "${secondAvailableTime}".
 Queda TERMINANTEMENTE PROHIBIDO confirmar la cita o emitir [BOOKING_CARD] para el horario ocupado. Cero dramatismo o puntos suspensivos ("y...").
-` : (cleanResolvedDate && bookingState.slots.time ? `
+` : (cleanResolvedDate && bookingState.slots.time && (bookingState.isComplete || bookingState.isRescheduleIntent) ? `
 [VERIFICACIÓN DE DISPONIBILIDAD EXITOSA EN D1 EN MILISEGUNDOS]:
 - Se consultó la agenda en la base de datos D1 en milisegundos: ¡HAY DISPONIBILIDAD COMPLETA para el ${cleanResolvedDate} a las ${bookingState.slots.time}!
 
@@ -7452,7 +7455,11 @@ DIRECTIVA OBLIGATORIA (CERO REPETICIÓN RENGLÓN POR RENGLÓN):
 4. Inmediatamente después de esa pregunta, emite la tarjeta con el día de la semana y fecha correspondiente:
    [BOOKING_CARD: {"service":"${targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional')}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"online","price":${targetTenant.name === 'GeoSoft' ? 1200 : 0}}]
 Queda TERMINANTEMENTE PROHIBIDO titubear, contradecirse o decir frases incoherentes como "no elegiste X sino Y". Confirma directamente con seguridad.
-` : '')}
+` : (cleanResolvedDate && bookingState.slots.time && !bookingState.isComplete ? `
+[AVISO CRÍTICO - FALTAN DATOS OBLIGATORIOS PARA AGENDAR]:
+- El usuario mencionó fecha (${cleanResolvedDate}) y hora (${bookingState.slots.time}), pero faltan datos de contacto obligatorios: [${bookingState.missing.join(', ')}].
+- DIRECTIVA INQUEBRANTABLE: Queda TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD] y PROHIBIDO confirmar la reserva. Agradece con calidez el horario deseado, pero explica amablemente que para asegurar y reservar formalmente el espacio en agenda necesitamos confirmar sus datos: ${bookingState.missing.join(' y ')}.
+` : ''))}
 
 REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
 0. DÍA DE LA SEMANA Y FECHA OBLIGATORIA (MARTES 27, MIÉRCOLES 28, ETC.):
@@ -7547,18 +7554,25 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
         const isNameCorrectionTurn = Boolean(bookingState.isNameCorrectionIntent || /\b(?:equivoqu[eé]|error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:dice|est[aá]|no\s+es)|cambia(?:r|me)?\s+(?:el\s+)?nombre|no\s+me\s+llamo|no\s+soy\s+[a-záéíóúñ]+|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+(?:me\s+llamo|soy)|mi\s+nombre\s+real\s+es)\b/i.test(message || ''));
         const isRescheduleTurn = bookingState.isRescheduleIntent || isNameCorrectionTurn || Boolean(parseFlexibleTime(message) || (message || '').match(GLOBAL_TIME_REGEX));
-        const hasCardInReply = Boolean(llmResult.text && llmResult.text.includes('[BOOKING_CARD:'));
-        const hasSufficientBookingSlots = Boolean(bookingState.slots.date && bookingState.slots.time && (bookingState.slots.phone || bookingState.slots.email || bookingState.slots.name));
+        const hasAllRequiredSlots = Boolean(
+          bookingState.slots.name &&
+          bookingState.slots.name.toLowerCase() !== 'cliente' &&
+          bookingState.slots.email &&
+          bookingState.slots.phone &&
+          bookingState.slots.date &&
+          bookingState.slots.time
+        );
+        const canIssueBookingCard = (hasAllRequiredSlots || (isRescheduleTurn && hasPriorBookingCardInHist)) && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn;
 
-        if ((bookingState.isComplete || hasCardInReply || hasSufficientBookingSlots) && !isInfoOrServiceQuery && (!hasPriorBookingCardInHist || isRescheduleTurn) && !isClosingMessageTurn) {
+        if (canIssueBookingCard) {
           if (!llmResult.text.includes('[BOOKING_CARD:')) {
             const cardData = {
               service: targetTenant.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : (targetTenant.name || 'Servicio Profesional'),
               date: formatFullDayAndDate(bookingState.slots.date) || 'Próxima fecha',
               time: bookingState.slots.time || '10:00 AM',
-              customerName: bookingState.slots.name || 'Cliente',
+              customerName: bookingState.slots.name || '',
               customerEmail: bookingState.slots.email || '',
-              customerPhone: bookingState.slots.phone || (targetTenant.phone || '+506 7293-5612'),
+              customerPhone: bookingState.slots.phone || '',
               modality: 'online',
               price: targetTenant.name === 'GeoSoft' ? 1200 : 0
             };
@@ -7571,8 +7585,16 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               if (cardMatch) {
                 const parsedCard = JSON.parse(cardMatch[1]);
                 let updatedCard = false;
+                if (!parsedCard.customerName && bookingState.slots.name) {
+                  parsedCard.customerName = bookingState.slots.name;
+                  updatedCard = true;
+                }
                 if (!parsedCard.customerEmail && bookingState.slots.email) {
                   parsedCard.customerEmail = bookingState.slots.email;
+                  updatedCard = true;
+                }
+                if (!parsedCard.customerPhone && bookingState.slots.phone) {
+                  parsedCard.customerPhone = bookingState.slots.phone;
                   updatedCard = true;
                 }
                 const formattedDate = formatFullDayAndDate(parsedCard.date || bookingState.slots.date);
@@ -7613,7 +7635,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
               }
               const bEmail = (finalCardEmail || bookingState.slots.email || activeLeadInfo?.email || '').trim();
               const bPhone = (finalCardPhone || bookingState.slots.phone || activeLeadInfo?.phone || '').trim();
-              const bName = (finalCardName || bookingState.slots.name || activeLeadInfo?.name || (bEmail ? bEmail.split('@')[0] : 'Cliente')).trim();
+              const bName = (finalCardName || bookingState.slots.name || activeLeadInfo?.name || '').trim();
               const bDate = formatFullDayAndDate(finalCardDate || bookingState.slots.date) || bookingState.slots.date;
               const bTime = finalCardTime || bookingState.slots.time;
 
@@ -7650,11 +7672,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             }
           }
         } else {
-          // Si faltan datos críticos de fecha u hora, remover [BOOKING_CARD]
-          if (!bookingState.slots.date || !bookingState.slots.time) {
-            if (llmResult.text.includes('[BOOKING_CARD:')) {
-              llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
-            }
+          // GUARDIÁN ESTRICTO: Si no se cumplen los 5 requisitos para agendar, purgar cualquier [BOOKING_CARD]
+          if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {
+            llmResult.text = llmResult.text.replace(/\[BOOKING_CARD:\s*\{.*?\}\s*\]/gs, '').trim();
           }
         }
         if (llmResult.text && llmResult.text.includes('[BOOKING_CARD:')) {

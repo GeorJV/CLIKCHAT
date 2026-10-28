@@ -16,6 +16,32 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Blindaje Estricto de 5 Slots de Agendamiento, Cero Citas Prematuras y Erradicación de Nombres Ficticios (v2.8.6)
+- **Diagnóstico y Causas Raíces:**
+  1. *Fallback Indebido de Nombre en Backend (`functions/api/[[route]].js`):* En `extractBookingSlots`, si el usuario suministraba correo, fecha y hora sin dar su nombre, el sistema tomaba `email.split('@')[0]` (ej. "Homilia7") o `"Cliente"` como nombre confirmado, falseando que el dato ya existía en lugar de preguntárselo al usuario.
+  2. *Definición Laxa de `missing`:* Se agrupaba `if (!email && !phone) missing.push('Correo electrónico o Teléfono')`. Si el usuario daba un correo pero no teléfono, el sistema consideraba los slots de contacto completos, saltándose el paso de solicitud de teléfono y permitiendo agendar sin contar con la confirmación de ambos datos.
+  3. *Inyección Prematura de `[BOOKING_CARD:]` en Contexto y Backend:* En la inyección del prompt de sistema se instruía a la IA a emitir la tarjeta únicamente con tener fecha y hora libres en D1, independientemente de si los datos de contacto estaban completos. Adicionalmente, el guardián backend `hasSufficientBookingSlots` inyectaba la tarjeta con solo fecha, hora y uno de los datos de contacto, usando el teléfono de la empresa como fallback del cliente.
+  4. *Guardián Incompleto:* En el bloque de saneamiento, solo se purgaba la tarjeta si faltaba fecha u hora, permitiendo que tarjetas emitidas sin nombre, correo o teléfono se colaran y se guardaran en Cloudflare D1.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Exigencia Estricta de los 5 Slots Obligatorios (`functions/api/[[route]].js`):*
+     - Definidos como estrictamente indispensables: 1) Nombre completo, 2) Correo electrónico, 3) Teléfono / WhatsApp, 4) Día / Fecha de la cita, 5) Hora de la cita.
+     - Prohibición total de nombres ficticios: Si el usuario no ha dado su nombre, `name = null`. Queda descartado el placeholder `'Cliente'` y cualquier prefijo extraído del correo.
+  2. *Embudo Secuencial Infalible en 5 Pasos:*
+     - Paso 1: Nombre completo y Correo electrónico. Si el cliente solo da su correo, se le solicita puntualmente su nombre para dirigirnos a él con respeto.
+     - Paso 2: Teléfono o WhatsApp para recordatorios y confirmación.
+     - Paso 3: Día o Fecha de la sesión.
+     - Paso 4: Opciones de Horarios disponibles (respetando mañana o tarde según lo solicitado).
+     - Paso 5: ÚNICAMENTE con los 5 datos confirmados y disponibilidad comprobada en D1, se autoriza la reserva y se emite `[BOOKING_CARD:]`.
+  3. *Guardián Post-LLM Infranqueable:*
+     - Se valida `hasAllRequiredSlots`: si falta cualquiera de los 3 datos de contacto o la fecha/hora, el sistema purga implacablemente cualquier `[BOOKING_CARD:]` que el modelo intente emitir y anula el auto-guardado en Cloudflare D1.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 18.68s con 0 errores TypeScript (`dist/assets/index-ox24bt9I.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless. Prueba de agendamiento valida que el bot exige nombre y teléfono antes de emitir cualquier tarjeta o registrar en agenda.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Persistencia Inmediata en D1 de Citas Agendadas en Live Lab y Erradicación de Fallos de Inserción (v2.8.5)
 - **Diagnóstico y Causas Raíces:**
   1. *Desconexión de D1 en Live Lab (`VoceroAiSandbox.tsx`):* Al detectarse una tarjeta `[BOOKING_CARD:]` en las respuestas de prueba de Live Lab, el componente únicamente persistía la cita en `localStorage` (`clikchat_bookings_geosoft`) sin invocar `POST /api/bookings`. Al haber migrado en v2.8.1 la vista de Agenda a consultar exclusivamente Cloudflare D1 como única fuente de verdad, cualquier cita probada en Live Lab no se reflejaba en el panel.
