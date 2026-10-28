@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Auditoría de Conversaciones Largas y Resiliencia Conversacional en Producción (v2.9.3)
+- **Diagnóstico y Causas Raíces:**
+  1. *Comprobación de Estabilidad ante Diálogos Extensos:* Se requería poner a prueba la resiliencia del sistema ante conversaciones prolongadas (6 a 9 turnos consecutivos) para detectar posibles roturas de memoria contextual, errores JSON en payloads de tarjetas, alucinaciones de catálogo o desbordes en el estado de las sesiones.
+  2. *Bucle de Teléfono en Mensajes de Despedida:* Si un cliente decidía agradecer o despedirse amablemente antes de completar un agendamiento, el extractor de slots forzaba el Paso 2 insistiendo reiteradamente en solicitar el teléfono, generando una experiencia rígida.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Despedida Inteligente y Respetuosa (`isGratitudeOrFarewell` en `extractBookingSlots`):* Detección anticipada de mensajes de cierre, agradecimiento o despedida, activando el Paso 6 para responder con calidez ejecutiva y gratitud, sin forzar la solicitud de datos de contacto.
+  2. *Batería de Pruebas Largas en 3 Escenarios Completos (24 Turnos en Vivo):*
+     - *Conversación 1 (B2B Pipeline de 9 turnos):* Desde saludo informal, objeción de precio ($1200 vs $300), captura de nombre y correo, agendamiento de cita en viernes, emisión de tarjeta, reprogramación dinámica inmediata a las 4:00 PM y cierre cordial sin duplicidad de tarjeta.
+     - *Conversación 2 (Restaurante Express de 8 turnos):* Consulta de ingredientes (Mini Cheese Burger ₡3500), orden inicial de 2 hamburguesas + papas, modificación dinámica a 1 hamburguesa + refresco natural, cálculo preciso del total, consulta de tiempo de entrega a San Pedro (30-45 min), captura de dirección y despacho.
+     - *Conversación 3 (Cliente Escéptico y HITL de 7 turnos):* Explicación sobre propiedad 100% de código fuente en Git sin ataduras, arquitectura Cloudflare Edge, derivación honesta ante consulta de HIPAA sin certificaciones inventadas, y captura de lead (`dr.arias@clinicavida.cr`).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.40s con 0 errores TypeScript (`dist/assets/index-Pq-wPHOp.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match 100% verificado y auditoría de 17/17 rutas en Chrome Headless sin errores ni advertencias de consola.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Agente Comercial 10/10: Manejo Maestro de Objeciones, Agendamiento Cero Fricción y Human-in-the-Loop Nativo (v2.9.2)
 - **Diagnóstico y Causas Raíces:**
   1. *Objeciones de Precios Externos Censuradas por Guardrail:* Cuando un cliente comparaba con competidores baratos (ej. $150 frente a $1200), el guardrail determinista de precios trataba el monto mencionado como precio alucinado del catálogo y censuraba la réplica de la IA.

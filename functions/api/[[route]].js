@@ -5963,7 +5963,12 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   let currentStep = 1;
   let stepInstruction = '';
 
-  if (!name || !email) {
+  const isGratitudeOrFarewell = /\b(?:gracias|muchas\s*gracias|mil\s*gracias|agradezco|excelente[,\s]+muchas\s*gracias|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|hasta\s*luego|nos\s*vemos|chao|adi[oó]s|buenas\s*noches)\b/i.test(currentMessage || '');
+
+  if (isGratitudeOrFarewell && !hasNewTimeInMsg && !hasNewDateInMsg && !isRescheduleIntent) {
+    currentStep = 6;
+    stepInstruction = `PASO 6 (DESPEDIDA Y AGRADECIMIENTO CORDIAL): El cliente se está despidiendo o agradeciendo la atención (ej: "${currentMessage}"). Responde con calidez ejecutiva, educación y cercanía agradeciendo su tiempo y contacto${name ? ' (' + name + ')' : ''}, y dejándole saber que estamos a su entera disposición cuando guste retomar o avanzar con su proyecto. QUEDA TERMINANTEMENTE PROHIBIDO insistir en pedir teléfono o forzar agendamiento en este turno y PROHIBIDO emitir [BOOKING_CARD].`;
+  } else if (!name || !email) {
     currentStep = 1;
     if (!name && !email) {
       stepInstruction = 'PASO 1: Agradece con calidez el interés del cliente, hazlo sentir valorado y solicita amablemente su NOMBRE COMPLETO y CORREO ELECTRÓNICO para iniciar el registro. Queda TERMINANTEMENTE PROHIBIDO solicitar teléfono, WhatsApp, fecha u hora en este turno; enfócate exclusivamente en Nombre y Correo.';
