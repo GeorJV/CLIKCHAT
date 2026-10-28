@@ -1,3 +1,5 @@
+import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
+
 export interface SandboxMsg {
   id: string;
   sender: 'assistant' | 'user';
@@ -8,15 +10,6 @@ export interface SandboxMsg {
   modelUsed?: string;
   fallbackUsed?: boolean;
 }
-
-export const PERSONAS = [
-  { label: '🛍️ Decidido', text: 'Hola, quiero comprar ya mismo. Cómo puedo pagar y cuándo me lo envían?' },
-  { label: '🏷️ Precios', text: 'Hola, cuánto cuesta lo más vendido y qué ofertas tienen hoy?' },
-  { label: '😡 Molesto', text: 'Llevo esperando mi pedido y nadie me contesta, exijo una solución.' },
-  { label: '🙋 Pide Humano', text: 'Hola, no quiero hablar con un bot, pásame con un asesor real por favor.' },
-  { label: '❓ Fuera de Menú', text: 'Ustedes también venden repuestos de autos y hacen envíos a México?' },
-  { label: '📱 Informal', text: 'ke onda bro si benden comida todavia o ya cerraron?' },
-];
 
 export const getBotConfig = (tenant: any) => {
   let key = ''; let model = ''; let provider = '';
@@ -36,13 +29,111 @@ export const getBotConfig = (tenant: any) => {
 
 export const getBotModelLabel = (tenant: any) => {
   const { key, model, provider } = getBotConfig(tenant);
-  if (key) return `🔑 ${(provider || 'IA').toUpperCase()}: ${model ? model.split('/').pop() : 'Propia'}`;
+  if (key) return `🔑 ${(provider || 'IA').toUpperCase()}: ${model ? model.split('/').pop() : 'Cuenta Propia'}`;
   if (model) {
-    if (model.includes('gemini')) return '⚡ Gemini (Bot)';
-    if (model.includes('gpt')) return '🥈 GPT (Bot)';
-    if (model.includes('meta') || model.includes('llama') || model.includes('@cf')) return '🥉 Meta (Bot)';
-    if (model.includes('glm')) return '🥇 GLM 5 (Bot)';
-    return `🤖 ${model.split('/').pop() || model} (Bot)`;
+    if (model.includes('gemini')) return '⚡ Gemini (Bot Sincronizado)';
+    if (model.includes('gpt')) return '🥈 GPT (Bot Sincronizado)';
+    if (model.includes('meta') || model.includes('llama') || model.includes('@cf')) return '🥉 Meta (Bot Sincronizado)';
+    if (model.includes('glm')) return '🥇 GLM 5 (Bot Sincronizado)';
+    return `🤖 ${model.split('/').pop() || model} (Sincronizado)`;
   }
-  return '🤖 Motor del Bot (Sincronizado)';
+  return '🤖 Motor Oficial Sincronizado';
+};
+
+export const getLiveTenantConfig = (tenant: any) => {
+  if (!tenant) return {};
+  return {
+    id: tenant.id,
+    slug: tenant.slug,
+    name: tenant.name || '',
+    bot_name: tenant.bot_name || 'Asesor Virtual',
+    system_prompt: tenant.system_prompt || '',
+    operational_rules: tenant.operational_rules || '',
+    sales_flow_rules: tenant.sales_flow_rules || '',
+    tone_of_voice: tenant.tone_of_voice || '',
+    business_type: tenant.business_type || 'tienda',
+    custom_llm_key: tenant.custom_llm_key || null,
+    currency: tenant.currency || 'USD',
+    message_delivery_mode: tenant.message_delivery_mode || 'moderate',
+    response_delay_sec: tenant.response_delay_sec !== undefined ? Number(tenant.response_delay_sec) : 3,
+    bot_response_speed_sec: tenant.bot_response_speed_sec !== undefined ? Number(tenant.bot_response_speed_sec) : 0,
+    welcome_message: tenant.welcome_message || ''
+  };
+};
+
+export const getAdaptivePersonas = (tenant: any) => {
+  const bType = tenant?.business_type || 'tienda';
+  const bName = tenant?.name || 'la empresa';
+
+  if (bType === 'restaurante') {
+    return [
+      { label: '🍽️ Menú & Precios', text: 'Hola, qué platillos o combos tienen disponibles hoy y qué precios manejan?' },
+      { label: '🛵 Entrega Express', text: 'Hola, deseo hacer un pedido para entrega a domicilio express' },
+      { label: '⭐ Recomendación', text: 'Cuál es la especialidad de la casa o lo más recomendado?' },
+      { label: '⏰ Horarios', text: 'A qué hora abren y cuál es su horario de atención hoy?' },
+    ];
+  }
+
+  if (bType === 'servicios' || tenant?.name === 'GeoSoft') {
+    return [
+      { label: '💻 Servicios & Precios', text: 'Hola, qué servicios ofrecen y qué precios oficiales manejan?' },
+      { label: '🚀 Plataforma SaaS / Web', text: 'Quiero desarrollar una plataforma web o sistema SaaS a medida' },
+      { label: '📅 Agendar Reunión', text: 'Hola, me gustaría agendar una reunión o asesoría técnica por videollamada' },
+      { label: '🛡️ Garantía & Tiempos', text: 'Qué tiempos de entrega manejan y qué garantía ofrecen para el desarrollo?' },
+    ];
+  }
+
+  return [
+    { label: '🛍️ Catálogo', text: `Hola, qué productos tienen disponibles en ${bName} y cuáles son sus precios?` },
+    { label: '💳 Medios de Pago', text: 'Qué formas de pago aceptan y cómo puedo concretar la compra?' },
+    { label: '📦 Envíos', text: 'Hacen envíos a todo el país y cuánto tarda en llegar?' },
+    { label: '🙋 Asesor Humano', text: 'Hola, me gustaría conversar con un asesor comercial para una consulta personalizada' },
+  ];
+};
+
+export const PERSONAS = getAdaptivePersonas(null);
+
+export const saveSandboxBooking = (cardPayload: any, tenant: any, tenantId?: string, tenantSlug?: string) => {
+  const tId = tenant?.id || tenantId || 'ten_geosoft_prod';
+  const apt = {
+    id: 'apt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    clientName: cardPayload.customerName || 'Cliente',
+    serviceName: cardPayload.service || 'Desarrollo Web & SaaS',
+    date: cardPayload.date,
+    dateKey: cardPayload.date,
+    displayDate: cardPayload.date,
+    time: cardPayload.time,
+    status: 'confirmed',
+    channel: 'web',
+    phone: cardPayload.customerPhone || '',
+    email: cardPayload.customerEmail || '',
+    notes: 'Live Lab',
+    price: Number(cardPayload.price) || 1200
+  };
+  fetch('/api/bookings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tenant_id: tId,
+      customer_name: apt.clientName,
+      customer_email: apt.email,
+      customer_phone: apt.phone,
+      service_id: 'srv_gen',
+      service_name: apt.serviceName,
+      booking_date: apt.date,
+      booking_time: apt.time,
+      status: 'confirmed',
+      price: apt.price,
+      currency: 'USD',
+      notes: 'Agendado en Live Lab'
+    })
+  }).catch(() => {});
+  broadcastBookingCreated(tenantSlug || 'geosoft', {
+    id: apt.id,
+    clientName: apt.clientName,
+    serviceName: apt.serviceName,
+    date: apt.displayDate,
+    time: apt.time,
+    price: apt.price
+  });
 };

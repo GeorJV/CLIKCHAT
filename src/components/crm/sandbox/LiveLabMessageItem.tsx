@@ -1,14 +1,18 @@
 import React from 'react';
-import { Layers, CheckCircle, Edit3, Calendar, Clock, DollarSign, User, Mail, Phone } from 'lucide-react';
+import { Layers, CheckCircle, Edit3, Calendar, Clock, DollarSign, User, Mail, Phone, Bot } from 'lucide-react';
 import { SandboxMsg } from './sandboxConstants';
 
 interface LiveLabMessageItemProps {
   message: SandboxMsg;
+  agentName?: string;
+  agentAvatar?: string;
   onOpenCorrection: (msg: SandboxMsg) => void;
 }
 
 export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
   message: m,
+  agentName = 'Asesor Virtual',
+  agentAvatar,
   onOpenCorrection,
 }) => {
   const isUser = m.sender === 'user';
@@ -40,6 +44,14 @@ export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
       {!isUser && (
         <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono flex-wrap">
+          <div className="flex items-center gap-1 font-sans font-bold text-[#0a1730] mr-1">
+            {agentAvatar ? (
+              <img src={agentAvatar} alt={agentName} className="w-4 h-4 rounded-full object-cover border border-slate-300" />
+            ) : (
+              <Bot className="w-3.5 h-3.5 text-[#0d5bff]" />
+            )}
+            <span className="text-[11px] font-bold text-slate-800">{agentName}</span>
+          </div>
           {m.rag && (
             <span className="text-[#0038d8] bg-[#ebf1ff] px-2 py-0.5 rounded-full flex items-center gap-1 font-sans font-bold">
               <Layers className="h-2.5 w-2.5" /> {m.rag}
@@ -67,7 +79,7 @@ export const LiveLabMessageItem: React.FC<LiveLabMessageItemProps> = ({
             title="Modificar respuesta del agente"
           >
             <Edit3 className="h-2.5 w-2.5" />
-            <span>Modificar respuesta</span>
+            <span>Modificar</span>
           </button>
         </div>
       )}

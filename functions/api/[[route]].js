@@ -6197,6 +6197,21 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         targetTenant = getFallbackTenant(tenantSlug || '');
       }
 
+      // SINCRONIZACIÓN EN TIEMPO REAL: Fusión viva de liveConfig (Live Lab / CRM sin latencia ni alucinaciones)
+      const incomingLiveConfig = (body.liveConfig && typeof body.liveConfig === 'object')
+        ? body.liveConfig
+        : (body.tenantConfig && typeof body.tenantConfig === 'object')
+          ? body.tenantConfig
+          : null;
+      if (incomingLiveConfig) {
+        targetTenant = {
+          ...targetTenant,
+          ...incomingLiveConfig,
+          id: targetTenant.id || incomingLiveConfig.id || tenantId,
+          slug: targetTenant.slug || incomingLiveConfig.slug || tenantSlug
+        };
+      }
+
       const currentSessionId = sessionId || ('sess_' + Date.now().toString(36));
       const actualTenantId = targetTenant.id;
       const isRestaurant = targetTenant.business_type === 'restaurante' || /restaurante|comida|pizz|burger|taco|deli|sushi|caf[eé]|bar|bistr|parrilla|asador/i.test(`${targetTenant.name || ''} ${targetTenant.slug || ''}`);
@@ -6497,6 +6512,34 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         if (!products.some(p => p.name.toLowerCase() === dp.name.toLowerCase())) {
           products.push(dp);
         }
+      }
+
+      // Fusión viva de productos y FAQs enviados desde el Live Lab / CRM (Cero Alucinaciones / Cero Lag)
+      if (Array.isArray(body.liveProducts) && body.liveProducts.length > 0) {
+        const prodMap = new Map();
+        for (const p of products) prodMap.set(p.id, p);
+        for (const lp of body.liveProducts) {
+          if (lp && lp.name) {
+            const pCurr = (lp.currency || targetTenant.currency || 'USD').toUpperCase();
+            const pIsCRC = pCurr === 'CRC';
+            prodMap.set(lp.id || ('prod_' + Math.random().toString(36).slice(2, 7)), {
+              ...lp,
+              price: parsePriceNumber(lp.price, pIsCRC)
+            });
+          }
+        }
+        products = Array.from(prodMap.values()).filter(p => (p.price > 0 && p.name && p.name.trim().length > 1) || (p.name && !/^(?:comida\s*cajera\s*xl|default|catalogo\s*oficial)$/i.test(p.name.trim())));
+      }
+
+      if (Array.isArray(body.liveFaqs) && body.liveFaqs.length > 0) {
+        const faqMap = new Map();
+        for (const f of faqs) faqMap.set(f.id, f);
+        for (const lf of body.liveFaqs) {
+          if (lf && lf.question) {
+            faqMap.set(lf.id || ('faq_' + Math.random().toString(36).slice(2, 7)), lf);
+          }
+        }
+        faqs = Array.from(faqMap.values());
       }
 
       // Si D1 está en límite de cuota o no hay productos cargados, garantizar catálogo de contingencia según la industria
