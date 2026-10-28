@@ -16,6 +16,25 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Certificación de Velocidad de Respuesta y Formatos de Bloques de Mensajes (v2.9.6)
+- **Diagnóstico y Cobertura de Pruebas:**
+  1. *Velocidad de Respuesta Inicial (`bot_response_speed_sec`):* Comprobar que el bot respeta los tiempos de espera configurables (0s instantáneo, 1s ultrarrápido, 2-3s lectura natural, 4-10s humano pausado) mediante cálculo reactivo de latencia (`targetDelayMs - elapsed`).
+  2. *Intervalo de Cadencia entre Burbujas (`response_delay_sec`):* Validar la entrega progresiva escalonada (`deliverStaggeredBubbles`) con indicador de escritura activo (`onSetLoading(true)`) a intervalos exactos de 1 a 10 segundos.
+  3. *Formatos de Bloques de Mensajes (`message_delivery_mode`):* Validar los 4 modos oficiales:
+     - `micro`: Microburbujas oración por oración (máximo 10-12 palabras por burbuja).
+     - `moderate`: Bloques ágiles de ~2 renglones (14-22 palabras por burbuja).
+     - `intermediate`: Párrafos equilibrados consolidados (30-45 palabras por burbuja).
+     - `single`: Bloque completo unificado en 1 sola burbuja.
+  4. *Protección de Integridad ASCII:* Asegurar que tickets y comandas con cajas tipográficas (`╔══╗`) nunca se fragmenten en ningún modo.
+- **Resultados de las Pruebas en Vivo:**
+  - *Formatos de Bloques:* Cobertura 100% exitosa en los 4 modos; protección absoluta de cajas ASCII (3 a 4 burbujas externas manteniendo la comanda intacta).
+  - *Velocidad Inicial:* Medición de retardos milimétricos (0s -> 351ms totales, 1s -> 1000ms, 2s -> 2000ms, 3s -> 3001ms).
+  - *Cadencia Escalonada:* Intervalos de 1001ms y 2001ms verificados entre burbujas consecutivas.
+  - *Persistencia D1:* Endpoint `/api/tenants/:slug` serializa y entrega correctamente `message_delivery_mode`, `response_delay_sec` y `bot_response_speed_sec`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Benchmark de Resistencia y Auditoría de Diálogo Extenso de 30 Turnos (v2.9.5)
 - **Diagnóstico y Causas Raíces:**
   1. *Prueba de Carga Contextual de Diálogo Extenso:* Evaluar la estabilidad del agente conversacional ante una sesión maratónica ininterrumpida de 30 turnos en una sola conversación viva contra producción.
