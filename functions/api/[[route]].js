@@ -841,9 +841,17 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
     }
 
     const isDemandingBooking = /\b(?:dame\s+la\s+cita|confirma\w*\s+(?:la\s+)?cita|ya\s+te\s+di\s+todos|que\s+esta\s+sucediendo|me\s+vas\s+a\s+dar\s+la\s+cita|ya\s+te\s+dije\s+el\s+d[ií]a|solo\s+quiero\s+que\s+me\s+confirmes|ya\s+te\s+dije\s+que\s+si|en\s+la\s+cita\s+vemos\s+eso|mi\s+cita|que\s+esperas)\b/i.test(normUser);
+    const isAnotherBooking = /\b(?:otra\s+cita|segunda\s+cita|cita\s+adicional|nueva\s+cita|agendar\s+otra|reservar\s+otra|otra\s+reuni[oó]n|una\s+cita\s+m[aá]s|otro\s+espacio|agendar\s+de\s+nuevo|agendar\s+otra\s+vez|quiero\s+otra\s+cita|sacar\s+otra\s+cita|programar\s+otra\s+cita)\b/i.test(normUser);
     const currHasTime = Boolean(parseFlexibleTime(userMessage));
     const currHasDate = Boolean(userMessage.match(dateMatchRegex));
     const hasContact = Boolean(detectedEmail || detectedPhone);
+
+    // CITA ADICIONAL EN CONTINGENCIA: Mantener la anterior y pedir día/hora para la nueva
+    if (isAnotherBooking) {
+      if (!currHasTime || !currHasDate) {
+        return `¡Con mucho gusto! Tu cita anterior queda totalmente guardada y confirmada en nuestra agenda. Con todo gusto agendamos esta cita adicional.\n\n¿Para qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos esta nueva sesión? (¿Deseas registrarla con tus mismos datos de contacto o a nombre de otra persona?)`;
+      }
+    }
 
     // AUTO-CIERRE DETERMINISTA DE CITA: Si hay contacto y se proporcionó día/hora o el usuario exige confirmación
     if ((hasContact && (detectedTime || currHasTime || isDemandingBooking)) || (detectedDate && detectedTime && hasContact)) {
@@ -860,7 +868,10 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
         modality: 'online',
         price: 1200
       };
-      return `¡Excelente! He verificado la disponibilidad y tu sesión para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.\n\nHemos apartado tu espacio en la agenda de GeoSoft y te contactaremos a tu ${detectedPhone ? 'teléfono (' + detectedPhone + ')' : 'correo (' + (detectedEmail || '') + ')'} para coordinar la videollamada de 15 minutos.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
+      const prefixText = isAnotherBooking
+        ? `¡Excelente! Tu cita anterior se mantiene totalmente confirmada y guardada. He verificado la disponibilidad y tu **cita adicional** para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.`
+        : `¡Excelente! He verificado la disponibilidad y tu sesión para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.`;
+      return `${prefixText}\n\nHemos apartado tu espacio en la agenda de GeoSoft y te contactaremos a tu ${detectedPhone ? 'teléfono (' + detectedPhone + ')' : 'correo (' + (detectedEmail || '') + ')'} para coordinar la videollamada de 15 minutos.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
     }
 
     // 0.0 Si acaba de dar correo
@@ -5951,6 +5962,32 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
+  // Detección de intención de cita adicional tras cita previa
+  const ADDITIONAL_BOOKING_REGEX = /\b(?:otra\s+cita|segunda\s+cita|cita\s+adicional|nueva\s+cita\s+adicional|agendar\s+otra|reservar\s+otra|otra\s+reuni[oó]n|una\s+cita\s+m[aá]s|otro\s+espacio|agendar\s+de\s+nuevo|agendar\s+otra\s+vez|quiero\s+otra\s+cita|sacar\s+otra\s+cita|programar\s+otra\s+cita|tambi[eé]n\s+(?:quiero|deseo|necesito)\s+agendar)\b/i;
+
+  const messagesAfterCard = [];
+  if (cardIndexInHistory >= 0 && Array.isArray(history)) {
+    for (let i = cardIndexInHistory + 1; i < history.length; i++) {
+      if (history[i].sender === 'user' || history[i].role === 'user') {
+        messagesAfterCard.push(history[i].message || history[i].content || '');
+      }
+    }
+  }
+  if (currentMessage) {
+    messagesAfterCard.push(currentMessage);
+  }
+
+  const isAdditionalBookingIntent = Boolean(
+    (cardIndexInHistory >= 0 && messagesAfterCard.some(m => ADDITIONAL_BOOKING_REGEX.test(m))) ||
+    ADDITIONAL_BOOKING_REGEX.test(currentMessage || '')
+  );
+
+  // Si el cliente pide otra cita, NUNCA arrastrar la fecha ni la hora de la cita anterior
+  if (isAdditionalBookingIntent) {
+    cardDate = null;
+    cardTime = null;
+  }
+
   if (!email && cardEmail) email = cardEmail;
 
   // 1. Extracción de Email
@@ -6006,7 +6043,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  for (const msg of messagesToCheckTime) {
+  const effectiveMessagesForTime = isAdditionalBookingIntent ? messagesAfterCard : messagesToCheckTime;
+  for (const msg of effectiveMessagesForTime) {
     const flexTime = parseFlexibleTime(msg);
     if (flexTime) {
       time = flexTime;
@@ -6021,11 +6059,11 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   const wantsTimeChange = /\b(cambiar|cambio|otra\s+cita|nueva\s+cita|otra\s+hora|otro\s+horario|otro\s+d[ií]a|mover|posponer|reprogramar|en\s+la\s+mañana|en\s+la\s+manana|en\s+la\s+tarde|por\s+la\s+mañana|por\s+la\s+tarde|no\s+te\s+estoy\s+pidiendo|no\s+en\s+la\s+tarde|no\s+en\s+la\s+mañana)\b/i.test(currentMessage || '');
 
-  if (!time && cardTime && !wantsTimeChange) {
+  if (!time && cardTime && !wantsTimeChange && !isAdditionalBookingIntent) {
     time = cardTime;
   }
 
-  if (!time) {
+  if (!time && !isAdditionalBookingIntent) {
     for (let i = allUserMessages.length - 1; i >= 0; i--) {
       const flexTime = parseFlexibleTime(allUserMessages[i]);
       if (flexTime) {
@@ -6058,7 +6096,8 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  for (const msg of messagesToCheckDate) {
+  const effectiveMessagesForDate = isAdditionalBookingIntent ? messagesAfterCard : messagesToCheckDate;
+  for (const msg of effectiveMessagesForDate) {
     const cleanMsg = msg.replace(/\b(?:de|en|por)\s+la\s+(?:mañana[a-z]*|manana[a-z]*|maana|mamana)\b/gi, '');
     const compMatch = cleanMsg.match(compositeDateRegex);
     if (compMatch) {
@@ -6080,11 +6119,11 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  if (!date && cardDate) {
+  if (!date && cardDate && !isAdditionalBookingIntent) {
     date = cardDate;
   }
 
-  if (!date) {
+  if (!date && !isAdditionalBookingIntent) {
     for (let i = allUserMessages.length - 1; i >= 0; i--) {
       const cleanMsg = allUserMessages[i].replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
       const compMatch = cleanMsg.match(compositeDateRegex);
@@ -6253,7 +6292,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     name = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
 
-  const isRescheduleIntent = /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|otra\s+cita|nueva\s+cita|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?|pero\s+mañana|pero\s+manana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|no\s+es\s+\d+|no\s+te\s+estoy\s+pidiendo)\b/i.test(currentMessage || '');
+  const isRescheduleIntent = !isAdditionalBookingIntent && /\b(cambiar|cambio|reprogramar|reprogramaci[oó]n|mover|posponer|modificar|otra\s+hora|otro\s+horario|otro\s+d[ií]a|no\s+voy\s+a\s+poder|no\s+puedo\s+a\s+las?|pero\s+mañana|pero\s+manana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|no\s+es\s+\d+|no\s+te\s+estoy\s+pidiendo)\b/i.test(currentMessage || '');
   const isQuestioningDateOrTomorrow = /\b(?:pero\s+mañana|pero\s+manana|pero\s+maana|pero\s+mamana|la\s+cita\s+es\s+mañana|la\s+cita\s+es\s+manana|mañana\s+no\s+es|manana\s+no\s+es|es\s+mañana|es\s+manana|no\s+es\s+\d+)\b/i.test(currentMessage || '');
   const hasNewTimeInMsg = Boolean(parseFlexibleTime(currentMessage) || (currentMessage || '').match(timeRegex));
   const hasNewDateInMsg = Boolean((currentMessage || '').match(compositeDateRegex) || (currentMessage || '').match(simpleDayRegex));
@@ -6295,8 +6334,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     date = formatFullDayAndDate('mañana');
   }
 
-  const isAnotherBookingIntent = /\b(otra\s+cita|nueva\s+cita|segunda\s+cita|agendar\s+otra|reservar\s+otra|agendar\s+de\s+nuevo|otra\s+reuni[oó]n|nuevo\s+espacio|agendar\s+otra\s+vez|quiero\s+otra\s+cita)\b/i.test(currentMessage || '');
-  if (isAnotherBookingIntent && !hasNewDateInMsg && !hasNewTimeInMsg) {
+  if (isAdditionalBookingIntent && !hasNewDateInMsg && !hasNewTimeInMsg) {
     date = null;
     time = null;
   } else if (isRescheduleIntent && !hasNewTimeInMsg && !hasNewDateInMsg && (date || time)) {
@@ -6315,9 +6353,23 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   const isGratitudeOrFarewell = /\b(?:gracias|muchas\s*gracias|mil\s*gracias|agradezco|excelente[,\s]+muchas\s*gracias|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|hasta\s*luego|nos\s*vemos|chao|adi[oó]s|buenas\s*noches)\b/i.test(currentMessage || '');
 
-  if (isGratitudeOrFarewell && !hasNewTimeInMsg && !hasNewDateInMsg && !isRescheduleIntent) {
+  if (isGratitudeOrFarewell && !hasNewTimeInMsg && !hasNewDateInMsg && !isRescheduleIntent && !isAdditionalBookingIntent) {
     currentStep = 6;
     stepInstruction = `PASO 6 (DESPEDIDA Y AGRADECIMIENTO CORDIAL): El cliente se está despidiendo o agradeciendo la atención (ej: "${currentMessage}"). Responde con calidez ejecutiva, educación y cercanía agradeciendo su tiempo y contacto${name ? ' (' + name + ')' : ''}, y dejándole saber que estamos a su entera disposición cuando guste retomar o avanzar con su proyecto. QUEDA TERMINANTEMENTE PROHIBIDO insistir en pedir teléfono o forzar agendamiento en este turno y PROHIBIDO emitir [BOOKING_CARD].`;
+  } else if (isAdditionalBookingIntent) {
+    if (!date && !time) {
+      currentStep = 3;
+      stepInstruction = `PASO 3 (CITA ADICIONAL - MANTENER LA ANTERIOR INTACTA): El cliente desea agendar una CITA ADICIONAL ("${currentMessage || ''}"). Su cita anterior se mantiene TOTALMENTE GUARDADA, CONFIRMADA E INTACTA en nuestra agenda (PROHIBIDO cancelarla, cambiarla o sobreescribirla). Aclárale con entusiasmo que su cita previa queda intacta y que con todo gusto coordinan esta nueva cita adicional. Pregúntale para qué DÍA y en qué HORARIO le gustaría programar esta cita adicional (y consulta si desea registrarla con sus mismos datos de contacto o a nombre de otra persona). Queda TERMINANTEMENTE PROHIBIDO modificar o cancelar la cita anterior y PROHIBIDO emitir [BOOKING_CARD] hasta tener el nuevo día y horario acordados.`;
+    } else if (!time) {
+      currentStep = 4;
+      stepInstruction = `PASO 4 (HORARIO PARA CITA ADICIONAL): El cliente solicitó su cita adicional para el "${date}". Su cita anterior sigue 100% guardada e intacta. Ofrécele con amabilidad 2 o 3 opciones de horarios disponibles para su cita adicional. PROHIBIDO modificar la cita anterior y PROHIBIDO emitir [BOOKING_CARD] hasta que elija la hora.`;
+    } else if (!date) {
+      currentStep = 3;
+      stepInstruction = `PASO 3 (DÍA PARA CITA ADICIONAL): El cliente indicó la hora "${time}" para su cita adicional. Su cita anterior sigue 100% guardada e intacta. Pregúntale para qué DÍA le gustaría programar esta cita adicional. PROHIBIDO modificar la cita anterior y PROHIBIDO emitir [BOOKING_CARD] hasta acordar el día.`;
+    } else {
+      currentStep = 5;
+      stepInstruction = `PASO 5 (CONFIRMACIÓN DE CITA ADICIONAL): ¡Se tienen los datos completos para la CITA ADICIONAL para el ${date} a las ${time}! Su cita previa se mantiene totalmente intacta y guardada en la agenda. Confirma con entusiasmo en un solo párrafo breve que la nueva cita adicional ha quedado agendada para el ${date} a las ${time}, manteniendo la anterior, cerrando con "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite la tarjeta [BOOKING_CARD: {"service":"${effectiveServiceName}","date":"${date}","time":"${time}","customerName":"${name}","customerEmail":"${email || ''}","customerPhone":"${phone || ''}","modality":"${effectiveModality}","price":${effectivePrice}}]. Queda TERMINANTEMENTE PROHIBIDO modificar o borrar la cita previa.`;
+    }
   } else if (!name || !email) {
     currentStep = 1;
     if (!name && !email) {
@@ -6346,7 +6398,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
         ? `REPROGRAMACIÓN DE CITA: El cliente desea cambiar o reprogramar su cita. Responde con total amabilidad y calidez confirmándole que con mucho gusto se la reprogramas, y ofrécele 2 o 3 opciones de horarios disponibles o pregúntale a qué hora le quedaría mejor.`
         : `PASO 4: Ya tienes nombre ("${name}"), correo ("${email}"), ${phoneDisplay} y fecha ("${date}"). Ahora ofrece con cordialidad 2 o 3 OPCIONES DE HORARIOS DISPONIBLES dentro del horario de atención para que elija su HORA.`;
     }
-  } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && !isNameCorrectionIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
+  } else if (cardIndexInHistory >= 0 && !isRescheduleIntent && !isNameCorrectionIntent && !isAdditionalBookingIntent && /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(currentMessage || '')) {
     currentStep = 6;
     stepInstruction = `PASO 6 (CIERRE Y DESPEDIDA PROFESIONAL): La cita ya quedó agendada y confirmada en un turno anterior. El cliente está diciendo gracias, que así está bien, que eso es todo o despidiéndose. Responde con calidez y despedida profesional y cordial (ej: "¡Con muchísimo gusto! Estaremos muy atentos a tu sesión. Aquí estaremos a tu entera disposición para cualquier cambio cuando gustes. ¡Que tengas un excelente día!"). QUEDA TERMINANTEMENTE PROHIBIDO volver a emitir [BOOKING_CARD] y PROHIBIDO volver a confirmar la cita.`;
   } else if (isNameCorrectionIntent) {
@@ -6366,6 +6418,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     isComplete: missing.length === 0,
     hasPriorBookingCard: cardIndexInHistory >= 0,
     isRescheduleIntent,
+    isAdditionalBookingIntent,
     isNameCorrectionIntent,
     isMultipleAppointmentsIntent,
     currentStep,
@@ -8152,15 +8205,20 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
      Cierra amablemente con la pregunta: "¿Te gustaría hacer algún cambio o tienes alguna otra consulta?" y emite de inmediato la nueva tarjeta de confirmación actualizada:
      [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}]
      Queda TERMINANTEMENTE PROHIBIDO responder que es una consulta puntual o registrarla como duda no resuelta.
-8. MÚLTIPLES CITAS O AGENDAR DOS O MÁS CITAS (MÁXIMA CLARIDAD Y ORDEN):
+8. MÚLTIPLES CITAS O CITA ADICIONAL (MANTENER LA PREVIA INTACTA - NUNCA CANCELAR NI MODIFICAR):
    - Si el usuario indica que va a agendar dos o más citas (ej: "voy a agendar dos citas, una para hoy y una para mañana", "quiero agendar 2 reuniones"):
      Comprende con total agilidad ejecutiva y profesionalismo que se agendarán ambas.
      Indícale cordialmente que con gusto coordinarán las dos citas, comenzando por definir la hora para la primera cita (ej. hoy). En cuanto se confirme la primera cita, se procede inmediatamente a coordinar la segunda (ej. mañana).
      Si el usuario ya indicó horarios para ambas en su mensaje (ej. "una para hoy a las 3pm y otra para mañana a las 10am"):
      Confirma primero la más próxima con entusiasmo y emite su [BOOKING_CARD], e invita a confirmar de inmediato la segunda para emitir la siguiente tarjeta.
      JAMÁS mezcles las horas de una cita en la otra ni digas que no entendiste el contexto.
-   - Si el usuario desea agendar una segunda cita tras haber concretado una previa:
-     Trátalo con entusiasmo y profesionalismo. Dado que ya se conocen su nombre, correo y teléfono confirmados en la sesión, procede a coordinar la nueva fecha y hora. En cuanto se cuente con la fecha y hora de la nueva cita, confirma con un único párrafo breve y emite de inmediato la nueva tarjeta [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}].`;
+   - Si el usuario solicita agendar "otra cita", "segunda cita", "una cita más", "cita adicional" u "otra reunión" tras haber concretado una previa:
+     COMPRENSIÓN ABSOLUTA: Esto es una CITA ADICIONAL independiente.
+     QUEDA TERMINANTEMENTE PROHIBIDO cancelar, cambiar, mover o sobreescribir la cita que ya tiene guardada.
+     Aclárale con entusiasmo que su cita previa queda 100% guardada y confirmada en nuestra agenda, y que con todo gusto agendan esta cita adicional.
+     Pídele los datos necesarios para esta nueva cita adicional: ¿para qué DÍA y en qué HORARIO le gustaría programarla? (y consulta amablemente si desea registrarla a su mismo nombre y contacto o para alguien más).
+     QUEDA TERMINANTEMENTE PROHIBIDO emitir [BOOKING_CARD] mientras no se haya acordado el nuevo día y horario de la cita adicional. PROHIBIDO arrastrar la fecha u hora de la cita anterior.
+     ÚNICAMENTE cuando se cuente con la fecha y hora de la nueva cita adicional y disponibilidad comprobada en agenda, emite la nueva tarjeta interactiva [BOOKING_CARD: {"service":"${defaultServiceName}","date":"${cleanResolvedDate || ''}","time":"${bookingState.slots.time || ''}","customerName":"${bookingState.slots.name || ''}","customerEmail":"${bookingState.slots.email || ''}","customerPhone":"${bookingState.slots.phone || ''}","modality":"${defaultServiceModality}","price":${defaultServicePrice}}].`;
         }
 
         const systemPrompt = targetTenant.system_prompt || 'Eres el asesor comercial oficial de la tienda. Tu objetivo es guiar al usuario a comprar amablemente y con certeza.';
@@ -8222,7 +8280,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const hasCardInReply = Boolean(llmResult.text && llmResult.text.includes('[BOOKING_CARD:'));
         const isClosingMessageTurn = isClosingOrGratitude || /\b(?:gracias|muchas\s*gracias|as[ií]\s*est[aá]\s*bien|est[aá]\s*bien|eso\s*es\s*todo|eso\s*ser[ií]a\s*todo|ninguna\s*(?:duda|consulta)|todo\s*claro|todo\s*bien|hasta\s*luego|nos\s*vemos|chao|adi[oó]s)\b/i.test(message || '');
         const isNameCorrectionTurn = Boolean(bookingState.isNameCorrectionIntent || /\b(?:equivoqu[eé]|error\s+en\s+el\s+nombre|nombre\s+(?:est[aá]\s+)?mal|el\s+nombre\s+(?:dice|est[aá]|no\s+es)|cambia(?:r|me)?\s+(?:el\s+)?nombre|no\s+me\s+llamo|no\s+soy\s+[a-záéíóúñ]+|te\s+dije\s+(?:qu+e|qu+que|que)\s+soy|en\s+realidad\s+(?:me\s+llamo|soy)|mi\s+nombre\s+real\s+es)\b/i.test(message || ''));
-        const isRescheduleTurn = bookingState.isRescheduleIntent || isNameCorrectionTurn || Boolean(parseFlexibleTime(message) || (message || '').match(GLOBAL_TIME_REGEX));
+        const isRescheduleTurn = !bookingState.isAdditionalBookingIntent && (bookingState.isRescheduleIntent || isNameCorrectionTurn);
 
         // Consolidación de datos de contacto verificados (desde slots o memoria activa de la sesión)
         let bContactName = (bookingState.slots.name || activeLeadInfo?.name || body.userName || '').trim();
@@ -8243,16 +8301,20 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         // SE PERMITE Y AUTORIZA LA TARJETA DE CITA:
         // 1. NO es un cierre o despedida pura del usuario (!isClosingMessageTurn)
         // 2. Si es turno de agendamiento o confirmación verbal, priorizar registro
-        // 3. Soporte total para slots completos o confirmación de fecha/hora
+        // 3. Soporte total para slots completos o confirmación de fecha/hora (para cita adicional requiere fecha y hora reales)
         const isVerbalBookingConfirmation = /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(llmResult.text || '') ||
           /\b(?:he|hemos|acabo\s+de)\s+(?:agendar|confirmar|reservar|programar|apartar|guardar)\s+(?:tu\s+|su\s+)?(?:cita|reuni[oó]n|espacio)\b/i.test(llmResult.text || '');
 
         const isBookingTurn = isBookingContext || hasCardInReply || hasFullDateTime || isVerbalBookingConfirmation;
         const canIssueBookingCard = !isClosingMessageTurn && (!isInfoOrServiceQuery || isBookingTurn) && (
-          hasAllRequiredSlots ||
-          isVerbalBookingConfirmation ||
-          (hasCardInReply && (hasFullContact || bDateVal || bTimeVal || isBookingTurn)) ||
-          (hasFullDateTime && (bContactName || bContactPhone || bContactEmail || isBookingTurn))
+          bookingState.isAdditionalBookingIntent
+            ? Boolean(bDateVal && bTimeVal)
+            : (
+              hasAllRequiredSlots ||
+              isVerbalBookingConfirmation ||
+              (hasCardInReply && (hasFullContact || bDateVal || bTimeVal || isBookingTurn)) ||
+              (hasFullDateTime && (bContactName || bContactPhone || bContactEmail || isBookingTurn))
+            )
         );
 
         if (canIssueBookingCard) {
@@ -8261,7 +8323,7 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           const bAutoPrice = bTopProd?.price !== undefined ? bTopProd.price : (targetTenant.name === 'GeoSoft' ? 1200 : 0);
           const bAutoModality = (targetTenant.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant.name || '')) ? 'presencial' : 'online';
 
-          if (!llmResult.text.includes('[BOOKING_CARD:')) {
+          if (!llmResult.text.includes('[BOOKING_CARD:') && (!bookingState.isAdditionalBookingIntent || (bDateVal && bTimeVal))) {
             const bDateResolved = bDateVal || formatFullDayAndDate('mañana');
             const bTimeResolved = bTimeVal || '10:00 AM';
             const cardData = {
@@ -8276,7 +8338,9 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
             };
             const formattedIntroDate = formatFullDayAndDate(bDateResolved) || bDateResolved;
             if (!isVerbalBookingConfirmation) {
-              const intro = `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bTimeResolved}** ha quedado reservado.`;
+              const intro = bookingState.isAdditionalBookingIntent
+                ? `¡Excelente! Tu cita anterior se mantiene totalmente confirmada y guardada. He verificado la disponibilidad en nuestra agenda y tu **cita adicional** para el **${formattedIntroDate}** a las **${bTimeResolved}** ha quedado agendada con éxito.`
+                : `¡Excelente! He verificado la disponibilidad en nuestra agenda y tu espacio para el **${formattedIntroDate}** a las **${bTimeResolved}** ha quedado reservado.`;
               llmResult.text = `${intro}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;
             } else {
               llmResult.text = `${llmResult.text}\n\n[BOOKING_CARD: ${JSON.stringify(cardData)}]`;

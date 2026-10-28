@@ -7,12 +7,7 @@ import { LiveLabMessageItem } from './LiveLabMessageItem';
 import { LiveLabHistoryModal } from './LiveLabHistoryModal';
 
 interface VoceroAiSandboxProps {
-  tenantSlug: string;
-  tenantId?: string;
-  tenant?: any;
-  tenantName?: string;
-  products?: any[];
-  faqs?: any[];
+  tenantSlug: string; tenantId?: string; tenant?: any; tenantName?: string; products?: any[]; faqs?: any[];
   onCreateFaq?: (question: string, answer: string, category?: string) => Promise<boolean>;
 }
 
@@ -93,9 +88,10 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         let finalAnswer = d.answer || 'Respuesta generada.';
         if (!cardPayload && /\b(?:cita|reuni[oó]n|espacio|reserva)\s+(?:ha\s+quedado\s+|est[aá]\s+|qued[oó]\s+)?(?:agendad[oa]|confirmad[oa]|reservad[oa]|programad[oa]|apartad[oa]|guardad[oa])\b/i.test(finalAnswer)) {
           const timeMatch = finalAnswer.match(/(?:a\s+las?\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|\d{1,2}:\d{2})/i);
-          cardPayload = { customerName: tenantName || tenant?.name || 'Cliente Agendado', service: tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional', date: new Date().toISOString().slice(0, 10), time: timeMatch ? timeMatch[1].toUpperCase() : '10:00 AM', price: tenant?.name === 'GeoSoft' ? 1200 : 0 };
+          cardPayload = { id: d.booking?.id, customerName: tenantName || tenant?.name || 'Cliente Agendado', service: tenant?.name === 'GeoSoft' ? 'Desarrollo Web & SaaS' : 'Servicio Profesional', date: new Date().toISOString().slice(0, 10), time: timeMatch ? timeMatch[1].toUpperCase() : '10:00 AM', price: tenant?.name === 'GeoSoft' ? 1200 : 0 };
         }
         if (cardPayload) {
+          if (d.booking?.id) cardPayload.id = d.booking.id;
           if (!finalAnswer.includes('[BOOKING_CARD:')) finalAnswer = `${finalAnswer}\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
           saveSandboxBooking(cardPayload, tenant, tenantId, tenantSlug);
         }
@@ -121,18 +117,14 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <FlaskConical className="h-4 w-4 text-[#0d5bff] shrink-0" />
           <h2 className="text-[15px] sm:text-[16px] font-bold tracking-tight text-[#0a1730] shrink-0">Live Lab</h2>
-          <span className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#0d5bff]/10 text-[#0d5bff] border border-[#0d5bff]/20 shrink-0">
-            {currentSeq}
-          </span>
+          <span className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#0d5bff]/10 text-[#0d5bff] border border-[#0d5bff]/20 shrink-0">{currentSeq}</span>
           <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="truncate">{botName} ({getBotModelLabel(tenant)})</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="truncate">{botName} ({getBotModelLabel(tenant)})</span>
           </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button onClick={() => setIsHistoryOpen(true)} title="Ver historial de chats de laboratorio" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0">
-            <History className="h-3.5 w-3.5 text-[#0d5bff]" />
-            <span className="hidden sm:inline">Historial</span>
+            <History className="h-3.5 w-3.5 text-[#0d5bff]" /><span className="hidden sm:inline">Historial</span>
             {savedSessionsCount > 0 && <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-[10px] font-bold text-[#0d5bff]">{savedSessionsCount}</span>}
           </button>
           <button onClick={handleCopyChat} title="Copiar toda la conversación" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0">
@@ -162,18 +154,13 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
           <div className="px-3 sm:px-4 py-1.5 bg-[#f8fafc] border-b border-[#e8edf6] flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Pruebas Rápidas:</span>
             {getAdaptivePersonas(tenant).map((p) => (
-              <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">
-                {p.label}
-              </button>
+              <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">{p.label}</button>
             ))}
           </div>
-
           <div className="p-2.5 sm:p-3 bg-white">
             <div className="flex items-center gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendText()} placeholder={`Escribe como un cliente para probar las respuestas en vivo de ${botName}…`} className="flex-1 rounded-full border border-[#dde5f1] bg-[#f6f8fc] px-4 py-2 text-[13px] text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white transition" />
-              <button onClick={() => handleSendText()} disabled={loading || !input.trim()} className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer shrink-0">
-                <Send className="h-4 w-4" />
-              </button>
+              <button onClick={() => handleSendText()} disabled={loading || !input.trim()} className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer shrink-0"><Send className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
