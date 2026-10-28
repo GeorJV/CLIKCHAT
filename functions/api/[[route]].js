@@ -796,7 +796,8 @@ function normalizeTextForComparison(text) {
 function generateSmartFallbackReply({ context = '', history = [], userMessage = '', isSrv = false }) {
   const normUser = normalizeTextForComparison(userMessage);
   const turns = Array.isArray(history) ? history.filter(h => h.message || h.content) : [];
-  const isOngoing = turns.length > 0;
+  const userTurns = turns.filter(h => h.sender === 'user' || h.role === 'user');
+  const isOngoing = userTurns.length > 0;
 
   if (isSrv) {
     // 0. Detección Inteligente de Correo Electrónico del Cliente
@@ -1289,12 +1290,13 @@ async function callEdgeLLM({ systemPrompt, operationalRules, context, history, u
     ? `\n\n[REGLAS ESTRICTAS DE OPERACIÓN Y RESTRICCIONES DEL NEGOCIO (MÁXIMA PRIORIDAD OBLIGATORIA)]:\n${operationalRules.trim()}`
     : '';
 
-  const isOngoingConversation = Array.isArray(history) && history.length > 0;
+  const userMessagesInHistory = Array.isArray(history) ? history.filter(h => h.sender === 'user' || h.role === 'user') : [];
+  const isOngoingConversation = userMessagesInHistory.length > 0;
   const isFarewell = /\b(adios|adiós|chao|hasta\s*luego|muchas\s*gracias|gracias|bye|nos\s*vemos)\b/i.test(userMessage);
 
   const temporalInstruction = userTimeInfo
     ? `\n7. REGLAS NATURALES DE SALUDO Y DESPEDIDA SEGÚN LA HORA (${userTimeInfo.userHour !== undefined ? userTimeInfo.userHour : 16}:00 - ${userTimeInfo.greetingDesc || 'Tarde'}):
-   - CONVERSACIÓN EN CURSO: ${isOngoingConversation ? 'YA HAY MENSAJES PREVIOS EN ESTA CONVERSACIÓN. Queda TERMINANTEMENTE PROHIBIDO volver a saludar (NO digas "¡Hola!", "¡Buenas tardes!", "¡Pura vida! Te damos la bienvenida a...", ni "¿Qué se te antoja ordenar?"). Habla de forma directa, respondiendo exactamente lo que el cliente preguntó sin rodeos ni saludos repetidos.' : 'Es el primer mensaje: puedes saludar amablemente.'}
+   - CONVERSACIÓN EN CURSO: ${isOngoingConversation ? 'YA HAY MENSAJES PREVIOS DEL CLIENTE EN ESTA CONVERSACIÓN. Queda TERMINANTEMENTE PROHIBIDO volver a saludar (NO digas "¡Hola!", "¡Buenas tardes!", "¡Pura vida! Te damos la bienvenida a...", ni "¿Qué se te antoja ordenar?"). Habla de forma directa, respondiendo exactamente lo que el cliente preguntó sin rodeos ni saludos repetidos.' : 'Es el primer mensaje del cliente: si el cliente saluda (o incluye "hola"), salúdalo amablemente de vuelta al inicio antes de responder a su consulta. Queda terminantemente prohibido entrar a secas sin saludar si el cliente saludó.'}
    - PROHIBIDO DESPEDIRSE EN CADA MENSAJE: Si la conversación sigue activa respondiendo dudas o tomando el pedido, termina con tu pregunta de seguimiento comercial. NUNCA agregues frases de despedida (como "¡Que tengas una tarde divertida!", "¡Excelente tarde!", etc.) al final de respuestas intermedias.
    - CUÁNDO DESPEDIRSE: ÚNICAMENTE si el cliente se despide expresamente o se cerró/confirmó la orden. En ese caso (y solo en ese caso), usa: "${userTimeInfo.farewellPhrase || '¡Que tengas una excelente tarde!'}"
    - CONTROL DE HORARIO: ${userTimeInfo.timePeriod === 'tarde' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente día". Usa términos de tarde.' : userTimeInfo.timePeriod === 'noche' ? 'Si vas a saludar o despedirte, NUNCA digas "buen día" ni "excelente tarde". Usa términos de noche.' : 'Usa términos de mañana/día.'}`
@@ -4304,7 +4306,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       const id = segments[1];
       let body = {};
       try { body = await request.json(); } catch (e) {}
-      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, bot_response_speed_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format, custom_ai_config, message_delivery_mode } = body;
+      const { name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, slug, logo_url, tone_of_voice, response_delay_sec, bot_response_speed_sec, operational_rules, business_type, currency, custom_llm_key, sales_flow_rules, order_ticket_format, custom_ai_config, message_delivery_mode, phone, address } = body;
 
       let resolvedCustomKey = custom_llm_key;
       if (resolvedCustomKey === undefined && custom_ai_config) {
@@ -4333,7 +4335,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       }
 
       const hasCustomKey = resolvedCustomKey !== undefined;
-      const keyClause = hasCustomKey ? ', custom_llm_key = ?20' : '';
+      const keyClause = hasCustomKey ? ', custom_llm_key = ?23' : '';
       const params = [
         name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url,
         business_hours, system_prompt, slug, logo_url, tone_of_voice,
@@ -4343,6 +4345,9 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         currency !== undefined ? currency : null,
         sales_flow_rules !== undefined ? sales_flow_rules : null,
         order_ticket_format !== undefined ? order_ticket_format : null,
+        phone !== undefined ? phone : null,
+        address !== undefined ? address : null,
+        bot_response_speed_sec !== undefined ? Math.min(Math.max(Number(bot_response_speed_sec) || 0, 0), 10) : null,
         id
       ];
       if (hasCustomKey) {
@@ -4351,7 +4356,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
 
       try {
         await executeD1(
-          `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type), currency = COALESCE(?16, currency), sales_flow_rules = COALESCE(?17, sales_flow_rules), order_ticket_format = COALESCE(?18, order_ticket_format)${keyClause}, updated_at = datetime('now') WHERE id = ?19 OR slug = ?19`,
+          `UPDATE tenants SET name = COALESCE(?1, name), bot_name = COALESCE(?2, bot_name), avatar_url = COALESCE(?3, avatar_url), welcome_message = COALESCE(?4, welcome_message), primary_color = COALESCE(?5, primary_color), cta_text = COALESCE(?6, cta_text), cta_url = COALESCE(?7, cta_url), business_hours = COALESCE(?8, business_hours), system_prompt = COALESCE(?9, system_prompt), slug = COALESCE(?10, slug), logo_url = COALESCE(?11, logo_url), tone_of_voice = COALESCE(?12, tone_of_voice), response_delay_sec = COALESCE(?13, response_delay_sec), operational_rules = COALESCE(?14, operational_rules), business_type = COALESCE(?15, business_type), currency = COALESCE(?16, currency), sales_flow_rules = COALESCE(?17, sales_flow_rules), order_ticket_format = COALESCE(?18, order_ticket_format), phone = COALESCE(?19, phone), address = COALESCE(?20, address), bot_response_speed_sec = COALESCE(?21, bot_response_speed_sec)${keyClause}, updated_at = datetime('now') WHERE id = ?22 OR slug = ?22`,
           params
         );
       } catch (updateErr) {
@@ -4369,8 +4374,8 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         const insertSlug = slug || id;
         try {
           await executeD1(
-            `INSERT INTO tenants (id, slug, name, owner_email, owner_name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, sales_flow_rules, order_ticket_format, plan, status)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, 'pro', 'active')`,
+            `INSERT INTO tenants (id, slug, name, owner_email, owner_name, bot_name, avatar_url, welcome_message, primary_color, cta_text, cta_url, business_hours, system_prompt, logo_url, tone_of_voice, response_delay_sec, operational_rules, business_type, currency, sales_flow_rules, order_ticket_format, phone, address, bot_response_speed_sec, plan, status)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, 'pro', 'active')`,
             [
               insertId,
               insertSlug,
@@ -4392,7 +4397,10 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
               business_type || 'tienda',
               currency || 'CRC',
               sales_flow_rules || '',
-              order_ticket_format || ''
+              order_ticket_format || '',
+              phone || '',
+              address || '',
+              bot_response_speed_sec !== undefined ? Number(bot_response_speed_sec) : 0
             ]
           );
           updated = await executeD1('SELECT * FROM tenants WHERE id = ?1 OR slug = ?2 LIMIT 1', [insertId, insertSlug]);
@@ -4401,8 +4409,9 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         }
       }
 
-      const finalTenant = updated[0] || {
+      const finalTenant = {
         ...(memoryTenants.get(id) || memoryTenants.get(slug) || getFallbackTenant(id)),
+        ...(updated[0] || {}),
         ...body
       };
       if (message_delivery_mode) finalTenant.message_delivery_mode = message_delivery_mode;
@@ -6540,12 +6549,24 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       }
       activeLeadInfo.modality = (targetTenant?.business_type === 'servicios' && !/software|web|saas|digital|virtual/i.test(targetTenant?.name || '')) ? 'presencial' : 'online';
 
-      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (SOLO SI ES EL PRIMER TURNO / CERO RESET EN CONVERSACIONES EN CURSO)
+      // 4.0 DETECCIÓN DE SALUDO PURO Y NATURAL (SOLO SI ES EL PRIMER TURNO DEL CLIENTE)
+      const userMsgsInHist = sessionHistory.filter(h => h.sender === 'user' || h.role === 'user');
+      const isFirstUserTurn = userMsgsInHist.length === 0;
       const cleanMsgGreeting = (message || '').replace(/[¡¿!?.,:;]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-      const isPureGreeting = sessionHistory.length === 0 && /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
+      const isPureGreeting = isFirstUserTurn && /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida|buen\s*d[ií]a)(?:\s+(?:hola|buenas|hey|que\s*tal|c[oó]mo\s*est[aá]s?|c[oó]mo\s*est[aá]n|buenas\s*tardes|buenas\s*noches|buenos\s*d[ií]as|amig[oa]s?|asesor[a]?|meser[oa]|equipo))*\s*$/i.test(cleanMsgGreeting);
 
       if (isPureGreeting) {
-        const greetingReply = '¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte?';
+        const botName = targetTenant?.bot_name || (isRestaurant ? 'Mesera Virtual' : 'Asesora Virtual');
+        const storeName = targetTenant?.name || 'nuestro negocio';
+        let greetingReply = targetTenant?.welcome_message && targetTenant.welcome_message.trim()
+          ? targetTenant.welcome_message
+              .replace(/\{nombre_del_negocio\}|\{negocio\}/gi, storeName)
+              .replace(/\{asesor\}|\{bot\}/gi, botName)
+              .trim()
+          : (isRestaurant
+              ? `${userTimeInfo?.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}**, tu mesera en **${storeName}**. ¿En qué te puedo colaborar hoy o qué se te antoja ordenar?`
+              : `${userTimeInfo?.greetingPhrase || '¡Hola!'} 👋 Te saluda **${botName}** de **${storeName}**. ¿En qué te podemos colaborar el día de hoy?`);
+
         const botMsgId = 'msg_' + Date.now() + '_b';
         try {
           await executeD1(
@@ -6860,7 +6881,7 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       const isCheckoutOrOrderQuery = /\b(cuanto\s*(es|debo|vale|sale|cuesta)|cuanto\s*es\s*para\s*pagar|la\s*cuenta|total\s*a\s*pagar|para\s*pagar|confirmar\s*(el|mi)?\s*pedido|confirmar\s*orden|cerrar\s*orden|hacer\s*el\s*pedido)\b/i.test(message);
 
       // 6.5 DETECCIÓN DE SALUDO RÁPIDO Y NATURAL (CORTESÍA INMEDIATA CON ROL DE MESERA)
-      const isSimpleGreeting = sessionHistory.length === 0 && /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
+      const isSimpleGreeting = isFirstUserTurn && /^(hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting)
         && queryWords.length <= 4
         && !hasDirectProductMatch
         && !isCheckoutOrOrderQuery
@@ -7053,20 +7074,22 @@ DIRECTIVA DE ATENCIÓN CONTEXTUAL:
 2) Si el cliente pregunta por la oferta o hace referencia al anuncio (ej: "vengo por el anuncio", "quiero la promo", "cuánto vale lo del video"), reconoce la oferta de inmediato con amabilidad y responde orientándolo a aprovecharla con entusiasmo.
 3) No le pidas al cliente que te explique qué anuncio vio; atiéndelo demostrando que ya estás al tanto de su procedencia.\n`;
         }
-        if (sessionHistory.length === 0 && targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
+        if (isFirstUserTurn && targetTenant.welcome_message && targetTenant.welcome_message.trim()) {
           contextBlock += `SALUDO INICIAL OFICIAL DEL NEGOCIO: ${targetTenant.welcome_message.trim()}\n`;
         }
-        if (sessionHistory.length > 0) {
-          const uHistoryTexts = sessionHistory.filter(h => h.sender === 'user' || h.role === 'user').map(h => h.message || h.content || '').join(' ');
+        if (!isFirstUserTurn) {
+          const uHistoryTexts = userMsgsInHist.map(h => h.message || h.content || '').join(' ');
           const hasWebIntent = /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(uHistoryTexts) || /\b(?:web|p[aá]gina|sitio|software|saas|app|aplicaci[oó]n|sistema|tienda)\b/i.test(message);
 
-          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${sessionHistory.length + 1}). El Paso 1 de Bienvenida y Saludo inicial YA FUERON COMPLETADOS. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a..."), preguntar "¿Qué se te antoja ordenar hoy?" o preguntar "¿En qué proyecto o requerimiento tecnológico te podemos colaborar?". Responde DIRECTAMENTE al mensaje actual del cliente sin reiniciar la charla.\n`;
+          contextBlock += `[ESTADO CONVERSACIONAL]: CONVERSACIÓN EN CURSO (Turno activo ${userMsgsInHist.length + 1}). El cliente ya está en la conversación activa. Queda ESTRICTAMENTE PROHIBIDO volver a saludar ("¡Hola!", "¡Buenas!", "¡Pura vida! Te damos la bienvenida a..."), preguntar "¿Qué se te antoja ordenar hoy?" o preguntar "¿En qué proyecto o requerimiento tecnológico te podemos colaborar?". Responde DIRECTAMENTE al mensaje actual del cliente sin reiniciar la charla ni repetir bienvenidas.\n`;
           if (hasWebIntent) {
             contextBlock += `[PROYECTO YA IDENTIFICADO]: El cliente YA especificó previamente que busca Desarrollo Web / Solución Digital. Queda TERMINANTEMENTE PROHIBIDO volver a preguntarle qué servicio busca o en qué proyecto le colaboramos. Asume con certeza su interés en Desarrollo Web & SaaS y avanza hacia la propuesta formal, captura de datos o agendamiento.\n`;
           }
           if (bookingState?.slots?.email) {
             contextBlock += `[CORREO OBTENIDO]: Ya se cuenta con el correo electrónico del cliente: "${bookingState.slots.email}". Agradécelo amablemente y solicita su número de teléfono / WhatsApp para continuar.\n`;
           }
+        } else {
+          contextBlock += `[ESTADO CONVERSACIONAL]: PRIMER MENSAJE DEL CLIENTE. Si el cliente saluda en su mensaje (ej: "hola", "buenas"), salúdalo amablemente de vuelta al inicio de tu respuesta antes de responder sus dudas. Queda terminantemente PROHIBIDO entrar a secas sin saludar si el cliente saludó.\n`;
         }
         contextBlock += `HORARIO DE ATENCIÓN HUMANA EN OFICINA: ${targetTenant.business_hours || 'Lunes a Sábado de 8:00 AM a 7:00 PM'}\n`;
         contextBlock += `ATENCIÓN VIRTUAL & ASISTENTE IA: Activo las 24 horas del día, los 7 días de la semana (24/7)\n`;
@@ -8273,11 +8296,19 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
           }
         }
 
-        // En conversaciones en curso, erradicar cualquier saludo de bienvenida repetido en el texto final
-        if (sessionHistory.length > 0 && llmResult.text) {
+        // En conversaciones en curso (a partir del segundo turno del cliente), erradicar cualquier saludo de bienvenida repetido en el texto final
+        if (!isFirstUserTurn && llmResult.text) {
           llmResult.text = llmResult.text.replace(/^(?:¡?(?:pura\s*vida|hola|buenas(?:\s*tardes|\s*noches|\s*d[ií]as)?|buenos\s*d[ií]as)!?[\s,]*)+(?:te\s+damos\s+la\s+bienvenida\s+a\s+[^.!]+[.!](?:\s*¿en\s+qu[eé]\s+te\s+puedo\s+colaborar\s+hoy\??)?\s*)?/i, '').trim();
           if (llmResult.text) {
             llmResult.text = llmResult.text.charAt(0).toUpperCase() + llmResult.text.slice(1);
+          }
+        } else if (isFirstUserTurn && llmResult.text) {
+          // Primer mensaje del cliente: si el cliente saludó pero la respuesta del LLM omitió el saludo (a secas), anteponer el saludo oficial
+          const userGreeted = /^(?:hola|buenas|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|hey|hi|hello|saludos|que\s*tal|pura\s*vida)\b/i.test(cleanGreeting);
+          const replyHasGreeting = /^(?:¡?(?:hola|buenas|pura\s*vida|buen[oa]s|es\s+un\s+gusto|un\s+gusto|un\s+placer))/i.test(llmResult.text);
+          if (userGreeted && !replyHasGreeting) {
+            const storeName = targetTenant?.name || 'GeoSoft';
+            llmResult.text = `¡Hola! Con mucho gusto te atiendo en ${storeName}. ${llmResult.text}`;
           }
         }
 

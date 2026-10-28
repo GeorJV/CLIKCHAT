@@ -65,7 +65,7 @@ router.put('/:id', async (req, res) => {
     const {
       name, bot_name, avatar_url, welcome_message, system_prompt,
       primary_color, custom_llm_key, cta_text, cta_url, business_hours,
-      slug, logo_url, tone_of_voice
+      slug, logo_url, tone_of_voice, business_type, currency, phone, address
     } = req.body;
 
     await query(
@@ -83,17 +83,21 @@ router.put('/:id', async (req, res) => {
         slug = COALESCE($11, slug),
         logo_url = COALESCE($12, logo_url),
         tone_of_voice = COALESCE($13, tone_of_voice),
+        business_type = COALESCE($14, business_type),
+        currency = COALESCE($15, currency),
+        phone = COALESCE($16, phone),
+        address = COALESCE($17, address),
         updated_at = datetime('now')
-       WHERE id = $14`,
-      [name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, custom_llm_key, cta_text, cta_url, business_hours, slug, logo_url, tone_of_voice, id]
+       WHERE id = $18 OR slug = $18`,
+      [name, bot_name, avatar_url, welcome_message, system_prompt, primary_color, custom_llm_key, cta_text, cta_url, business_hours, slug, logo_url, tone_of_voice, business_type, currency, phone, address, id]
     );
 
-    const updatedRes = await query('SELECT * FROM tenants WHERE id = $1', [id]);
+    const updatedRes = await query('SELECT * FROM tenants WHERE id = $1 OR slug = $1 LIMIT 1', [id]);
     if (updatedRes.rows.length === 0) {
       return res.status(404).json({ error: 'Inquilino no encontrado' });
     }
 
-    return res.json({ success: true, tenant: updatedRes.rows[0] });
+    return res.json({ success: true, tenant: { ...updatedRes.rows[0], ...req.body } });
   } catch (err) {
     console.error('Error actualizando tenant:', err);
     return res.status(500).json({ error: err.message });
