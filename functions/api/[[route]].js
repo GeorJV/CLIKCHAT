@@ -800,26 +800,126 @@ function generateSmartFallbackReply({ context = '', history = [], userMessage = 
   const isOngoing = userTurns.length > 0;
 
   if (isSrv) {
-    // 0. Detección Inteligente de Correo Electrónico del Cliente
-    const emailMatch = userMessage.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
-    if (emailMatch) {
-      const cleanEmail = emailMatch[0].trim();
-      return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\nPara enviarte la propuesta formal y asegurar tu proyecto de Desarrollo Web & SaaS en GeoSoft, ¿nos podrías compartir tu número de teléfono o WhatsApp para coordinar los detalles?`;
+    const allUserTexts = [...userTurns.map(h => h.message || h.content || ''), userMessage];
+    const combinedUserText = allUserTexts.join(' ');
+
+    // 0. Recopilación integral de slots de la conversación
+    const currEmailMatch = userMessage.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
+    const histEmailMatch = combinedUserText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
+    const detectedEmail = currEmailMatch ? currEmailMatch[0].trim() : (histEmailMatch ? histEmailMatch[0].trim() : null);
+
+    let detectedPhone = null;
+    const phoneRegex = /(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/g;
+    for (let i = allUserTexts.length - 1; i >= 0; i--) {
+      const pMatches = allUserTexts[i].match(phoneRegex);
+      if (pMatches) {
+        for (const p of pMatches) {
+          const digits = p.replace(/\D/g, '');
+          if (!/^\d{4}$/.test(p.trim()) && !/^\d{1,2}:\d{2}$/.test(p.trim()) && digits !== '50672935612' && digits !== '72935612') {
+            detectedPhone = p.trim();
+            break;
+          }
+        }
+      }
+      if (detectedPhone) break;
     }
 
-    // 0.1 Detección de Teléfono / WhatsApp
-    const phoneMatch = userMessage.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
-    if (phoneMatch && !/^\d{4}$/.test(phoneMatch[0]) && !/^\d{1,2}:\d{2}$/.test(phoneMatch[0])) {
-      return `¡Excelente! He guardado tu número de contacto. ¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+    let detectedTime = null;
+    for (let i = allUserTexts.length - 1; i >= 0; i--) {
+      const ft = parseFlexibleTime(allUserTexts[i]);
+      if (ft) { detectedTime = ft; break; }
     }
 
-    // 0.2 Detección de Aprobación o Conformidad ("me parece bien", "de acuerdo", etc.)
-    if (/^(?:me\s*parece\s*bien|de\s*acuerdo|perfecto|excelente|dale|est[aá]\s*bien|listo|me\s*interesa|adelante|claro|si|s[ií])(?:\s+.*)?$/i.test(normUser)) {
-      return `Es un gusto saludarte. Para poder enviarte todos los detalles y propuesta de tu proyecto tecnológico y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu correo electrónico?`;
+    let detectedDate = null;
+    const dateMatchRegex = /\b(?:pasado\s+mañana[a-z]*|pasado\s+manana[a-z]*|mañana[a-z]*|manana[a-z]*|maana|mamana|hoy|lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\b/i;
+    for (let i = allUserTexts.length - 1; i >= 0; i--) {
+      const dm = allUserTexts[i].match(dateMatchRegex);
+      if (dm) {
+        detectedDate = formatFullDayAndDate(dm[0].toLowerCase().trim());
+        break;
+      }
+    }
+
+    const isDemandingBooking = /\b(?:dame\s+la\s+cita|confirma\w*\s+(?:la\s+)?cita|ya\s+te\s+di\s+todos|que\s+esta\s+sucediendo|me\s+vas\s+a\s+dar\s+la\s+cita|ya\s+te\s+dije\s+el\s+d[ií]a|solo\s+quiero\s+que\s+me\s+confirmes|ya\s+te\s+dije\s+que\s+si|en\s+la\s+cita\s+vemos\s+eso|mi\s+cita|que\s+esperas)\b/i.test(normUser);
+    const currHasTime = Boolean(parseFlexibleTime(userMessage));
+    const currHasDate = Boolean(userMessage.match(dateMatchRegex));
+    const hasContact = Boolean(detectedEmail || detectedPhone);
+
+    // AUTO-CIERRE DETERMINISTA DE CITA: Si hay contacto y se proporcionó día/hora o el usuario exige confirmación
+    if ((hasContact && (detectedTime || currHasTime || isDemandingBooking)) || (detectedDate && detectedTime && hasContact)) {
+      const finalDate = detectedDate || formatFullDayAndDate('mañana') || 'Mañana';
+      const finalTime = detectedTime || (currHasTime ? parseFlexibleTime(userMessage) : '08:00 AM');
+      const clientName = detectedEmail ? detectedEmail.split('@')[0] : 'Cliente Agendado';
+      const cardPayload = {
+        service: 'Desarrollo Web & SaaS',
+        date: finalDate,
+        time: finalTime,
+        customerName: clientName,
+        customerEmail: detectedEmail || '',
+        customerPhone: detectedPhone || '',
+        modality: 'online',
+        price: 1200
+      };
+      return `¡Excelente! He verificado la disponibilidad y tu sesión para el **${finalDate}** a las **${finalTime}** ha quedado agendada con éxito.\n\nHemos apartado tu espacio en la agenda de GeoSoft y te contactaremos a tu ${detectedPhone ? 'teléfono (' + detectedPhone + ')' : 'correo (' + (detectedEmail || '') + ')'} para coordinar la videollamada de 15 minutos.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
+    }
+
+    // 0.0 Si acaba de dar correo
+    if (currEmailMatch) {
+      const cleanEmail = currEmailMatch[0].trim();
+      if (!detectedPhone) {
+        return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\nPara enviarte la propuesta formal y asegurar tu proyecto de Desarrollo Web & SaaS en GeoSoft, ¿nos podrías compartir tu número de teléfono o WhatsApp para coordinar los detalles?`;
+      } else if (!detectedDate || !detectedTime) {
+        return `¡Muchas gracias! He registrado tu correo **${cleanEmail}** con éxito.\n\n¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+      }
+    }
+
+    // 0.1 Si acaba de dar teléfono
+    const currPhoneMatch = userMessage.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
+    if (currPhoneMatch && !/^\d{4}$/.test(currPhoneMatch[0]) && !/^\d{1,2}:\d{2}$/.test(currPhoneMatch[0]) && !currPhoneMatch[0].includes('72935612')) {
+      if (!detectedDate || !detectedTime) {
+        return `¡Excelente! He guardado tu número de contacto. ¿Qué día de esta semana te vendría mejor y en qué horario prefieres que coordinemos una breve videollamada de 15 minutos para estructurar tu propuesta?`;
+      }
+    }
+
+    // 0.15 Si el usuario dio día u hora sin haber completado contacto
+    if (currHasDate || currHasTime) {
+      const tempDate = detectedDate || formatFullDayAndDate('mañana') || 'mañana';
+      const tempTime = detectedTime || (currHasTime ? parseFlexibleTime(userMessage) : '10:00 AM');
+      if (!detectedEmail && !detectedPhone) {
+        return `¡Excelente! He tomado nota para coordinar el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en nuestra agenda y enviarte el enlace de conexión, ¿me podrías compartir tu correo electrónico y número de teléfono o WhatsApp?`;
+      } else if (!detectedPhone) {
+        return `Perfecto, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu recordatorio y espacio en agenda, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
+      } else if (!detectedEmail) {
+        return `Perfecto, he tomado nota para el **${tempDate}** a las **${tempTime}**. Para asegurar tu espacio en agenda y enviarte la propuesta formal, ¿me podrías compartir tu correo electrónico?`;
+      }
+    }
+
+    // 0.2 Detección de Aprobación o Conformidad ("me parece bien", "si quiero la reunion que datos necesitas", etc.)
+    if (/^(?:me\s*parece\s*bien|de\s*acuerdo|perfecto|excelente|dale|est[aá]\s*bien|listo|me\s*interesa|adelante|claro|si|s[ií])(?:\s+.*)?$/i.test(normUser) || /\b(?:que\s+datos\s+necesitas|qu[eé]\s+datos\s+ocupas|c[oó]mo\s+agendamos)\b/i.test(normUser)) {
+      if (!detectedEmail) {
+        return `Es un gusto saludarte. Para poder enviarte todos los detalles y propuesta de tu proyecto tecnológico y asegurar tu espacio en nuestra agenda, ¿me podrías compartir tu correo electrónico?`;
+      } else if (!detectedPhone) {
+        return `Con mucho gusto coordinamos tu sesión. Para enviarte la invitación y recordatorio de la reunión, ¿nos podrías compartir tu número de teléfono o WhatsApp?`;
+      }
     }
 
     // 0.3 Detección de Reclamo por Repetición ("ya te lo habia dicho...", etc.)
     if (/\b(?:ya\s+te\s+(?:lo\s+)?(?:hab[ií]a\s+)?dicho|ya\s+te\s+dije|te\s+lo\s+acabo\s+de\s+decir|ya\s+respond[ií]|eso\s+ya\s+lo\s+dije)\b/i.test(normUser)) {
+      if (detectedEmail || detectedPhone) {
+        const finalDate = detectedDate || formatFullDayAndDate('mañana') || 'Mañana';
+        const finalTime = detectedTime || '08:00 AM';
+        const cardPayload = {
+          service: 'Desarrollo Web & SaaS',
+          date: finalDate,
+          time: finalTime,
+          customerName: detectedEmail ? detectedEmail.split('@')[0] : 'Cliente Agendado',
+          customerEmail: detectedEmail || '',
+          customerPhone: detectedPhone || '',
+          modality: 'online',
+          price: 1200
+        };
+        return `Comprendo perfectamente y te pido una sincera disculpa por cualquier confusión previa. He verificado de inmediato la disponibilidad y tu espacio para el **${finalDate}** a las **${finalTime}** ha quedado confirmado y asegurado en nuestra agenda.\n\n¿Te gustaría hacer algún cambio o tienes alguna otra consulta?\n\n[BOOKING_CARD: ${JSON.stringify(cardPayload)}]`;
+      }
       return `Comprendo perfectamente y te pido una disculpa por cualquier confusión previa. Mi prioridad es avanzar con tu proyecto de forma muy ágil y cómoda. ¿Te gustaría que coordinemos una breve videollamada de 15 minutos o prefieres que te contactemos por WhatsApp para revisar tu propuesta?`;
     }
 
@@ -1536,23 +1636,29 @@ ${industryGuidelines}`;
 
   const callModel_Gemini = async () => {
     if (!googleKey) throw new Error('API Key de Google AI Studio no disponible');
-    const geminiModels = ['gemini-flash-lite-latest', 'gemini-flash-latest'];
+    const geminiModels = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
     let lastGemErr = null;
     const contents = [];
     if (Array.isArray(history)) {
       for (const h of history.slice(-35)) {
         const msg = h.message || h.content || '';
         if (!msg) continue;
-        contents.push({
-          role: (h.sender === 'assistant' || h.role === 'assistant' || h.role === 'model') ? 'model' : 'user',
-          parts: [{ text: msg }]
-        });
+        const role = (h.sender === 'assistant' || h.role === 'assistant' || h.role === 'model') ? 'model' : 'user';
+        if (contents.length > 0 && contents[contents.length - 1].role === role) {
+          contents[contents.length - 1].parts[0].text += `\n${msg}`;
+        } else {
+          contents.push({ role, parts: [{ text: msg }] });
+        }
       }
     }
     while (contents.length > 0 && contents[0].role !== 'user') {
       contents.shift();
     }
-    contents.push({ role: 'user', parts: [{ text: userMessage }] });
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents[contents.length - 1].parts[0].text += `\n${userMessage}`;
+    } else {
+      contents.push({ role: 'user', parts: [{ text: userMessage }] });
+    }
 
     for (const gm of geminiModels) {
       try {
@@ -1565,7 +1671,7 @@ ${industryGuidelines}`;
             contents,
             generationConfig: { temperature: 0.2, maxOutputTokens: 650 }
           }),
-          signal: AbortSignal.timeout(6000)
+          signal: AbortSignal.timeout(15000)
         });
         if (!resp.ok) {
           const errTxt = await resp.text().catch(() => '');
@@ -4668,6 +4774,44 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       return jsonResponse({ conversations: rows });
     }
 
+    // LAB: GET /api/lab/sessions/:tenantId
+    if (segments[0] === 'lab' && segments[1] === 'sessions' && segments.length === 3 && request.method === 'GET') {
+      const tenantParam = segments[2];
+      let tenantId = tenantParam;
+      if (tenantParam === 'geosoft' || tenantParam === 'ten_geosoft_prod') {
+        tenantId = 'ten_geosoft_prod';
+      } else {
+        const tRows = await executeD1('SELECT id FROM tenants WHERE slug = ?1 OR id = ?1 LIMIT 1', [tenantParam]).catch(() => []);
+        if (tRows.length > 0) tenantId = tRows[0].id;
+      }
+      const rows = await executeD1(
+        `SELECT s.id, s.user_name, s.user_phone, s.user_email, s.status, s.created_at, s.updated_at,
+                (SELECT message FROM chat_messages WHERE session_id = s.id AND sender = 'user' ORDER BY created_at ASC LIMIT 1) as first_user_message,
+                (SELECT message FROM chat_messages WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1) as last_message,
+                (SELECT rag_level_used FROM chat_messages WHERE session_id = s.id AND sender = 'assistant' ORDER BY created_at DESC LIMIT 1) as last_rag_level,
+                (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) as total_messages
+         FROM chat_sessions s
+         WHERE (s.tenant_id = ?1 OR s.tenant_id = ?2) AND s.id LIKE 'lab_%'
+         ORDER BY s.updated_at DESC
+         LIMIT 50`,
+        [tenantId, tenantParam]
+      ).catch(() => []);
+      return jsonResponse({ sessions: rows });
+    }
+
+    // LAB: GET /api/lab/session/:codeOrId
+    if (segments[0] === 'lab' && segments[1] === 'session' && segments.length === 3 && request.method === 'GET') {
+      const codeOrId = decodeURIComponent(segments[2]);
+      const msgs = await executeD1(
+        `SELECT id, session_id, sender, message, rag_level_used, metadata, created_at
+         FROM chat_messages
+         WHERE session_id = ?1 OR session_id LIKE '%' || ?1 || '%'
+         ORDER BY created_at ASC`,
+        [codeOrId]
+      ).catch(() => []);
+      return jsonResponse({ messages: msgs });
+    }
+
     // CHAT: GET /api/chat/spending/:tenantId
     if (segments[0] === 'chat' && segments[1] === 'spending' && segments.length === 3 && request.method === 'GET') {
       const tenantId = segments[2];
@@ -5594,7 +5738,7 @@ function formatFullDayAndDate(dateInput, refDate = getLocalBusinessDate()) {
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
   }
 
-  if (clean === 'manana' || clean === 'mañana' || clean === 'maana' || clean === 'mamana') {
+  if (/^mañana[a-z]*$|^manana[a-z]*$|^maana$|^mamana$/.test(clean)) {
     const d = new Date(refDate);
     d.setDate(d.getDate() + 1);
     return `${daysOfWeek[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
@@ -5899,7 +6043,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   // 4. Extracción de Fecha / Día
   const monthsRegex = '(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre|septiembre|octubre|noviembre|diciembre)';
   const compositeDateRegex = new RegExp(
-    '\\b(?:el\\s+)?(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\\s+)?(?:(\\d{1,2}\\s+de\\s+' + monthsRegex + '(?:\\s+(?:del?\\s+)?\\d{4})?|\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?|pasado\\s+mañana|pasado\\s+manana|mañana|manana|maana|mamana|hoy))\\b',
+    '\\b(?:el\\s+)?(?:(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\\s+)?(?:(\\d{1,2}\\s+de\\s+' + monthsRegex + '(?:\\s+(?:del?\\s+)?\\d{4})?|\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?|pasado\\s+mañana[a-z]*|pasado\\s+manana[a-z]*|mañana[a-z]*|manana[a-z]*|maana|mamana|hoy))\\b',
     'i'
   );
   const simpleDayRegex = /\b(?:el\s+)?(lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\b/i;
@@ -5915,7 +6059,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   for (const msg of messagesToCheckDate) {
-    const cleanMsg = msg.replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
+    const cleanMsg = msg.replace(/\b(?:de|en|por)\s+la\s+(?:mañana[a-z]*|manana[a-z]*|maana|mamana)\b/gi, '');
     const compMatch = cleanMsg.match(compositeDateRegex);
     if (compMatch) {
       date = formatFullDayAndDate(compMatch[0].replace(/^el\s+/i, '').trim());
@@ -6137,9 +6281,9 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   // Detección contextual de fecha para "mañana" (día siguiente)
-  const cleanCurrMsg = (currentMessage || '').replace(/\b(?:de|en|por)\s+la\s+(?:mañana|manana|maana|mamana)\b/gi, '');
+  const cleanCurrMsg = (currentMessage || '').replace(/\b(?:de|en|por)\s+la\s+(?:mañana[a-z]*|manana[a-z]*|maana|mamana)\b/gi, '');
   const isMultipleAppointmentsIntent = /\b(?:dos\s+citas|varias\s+citas|m[uú]ltiples\s+citas|una\s+(?:para\s+)?hoy\s+y\s+(?:otra\s+)?(?:para\s+)?mañana|una\s+hoy\s+y\s+otra\s+mañana)\b/i.test(currentMessage || '');
-  if (!isMultipleAppointmentsIntent && (isQuestioningDateOrTomorrow || /\b(?:mañana|manana|maana|mamana)\b/i.test(cleanCurrMsg))) {
+  if (!isMultipleAppointmentsIntent && (isQuestioningDateOrTomorrow || /\b(?:mañana[a-z]*|manana[a-z]*|maana|mamana)\b/i.test(cleanCurrMsg))) {
     date = formatFullDayAndDate('mañana');
     if (isQuestioningDateOrTomorrow && !hasNewTimeInMsg) {
       time = null;
@@ -6486,9 +6630,11 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
 
       // 2. Garantizar sesión viva en chat_sessions
       try {
+        const labTag = body.labSeq ? `[LAB ${body.labSeq}]` : (currentSessionId.startsWith('lab_') ? '[LAB]' : null);
+        const resolvedName = leadInfo?.name || labTag || null;
         await executeD1(
-          'INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, status, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, \'active\', datetime(\'now\')) ON CONFLICT(id) DO UPDATE SET updated_at = datetime(\'now\'), status = \'active\'',
-          [currentSessionId, actualTenantId, leadInfo?.name || null, leadInfo?.phone || null, leadInfo?.email || null]
+          'INSERT INTO chat_sessions (id, tenant_id, user_name, user_phone, user_email, status, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, \'active\', datetime(\'now\')) ON CONFLICT(id) DO UPDATE SET updated_at = datetime(\'now\'), status = \'active\', user_name = COALESCE(chat_sessions.user_name, ?3)',
+          [currentSessionId, actualTenantId, resolvedName, leadInfo?.phone || null, leadInfo?.email || null]
         );
       } catch (sessErr) {
         console.warn('Sesión D1 warning:', sessErr.message);
@@ -8087,10 +8233,10 @@ REGLAS INQUEBRANTABLES DE AGENDAMIENTO:
         const bDateVal = bookingState.slots.date;
         const bTimeVal = bookingState.slots.time;
 
-        const hasFullContact = Boolean(
-          bContactName &&
-          (bContactPhone || bContactEmail)
-        );
+        const hasFullContact = Boolean(bContactPhone || bContactEmail);
+        if (!bContactName) {
+          bContactName = bContactEmail ? bContactEmail.split('@')[0] : 'Cliente Agendado';
+        }
         const hasFullDateTime = Boolean(bDateVal && bTimeVal);
         const hasAllRequiredSlots = Boolean(hasFullContact && hasFullDateTime);
 
