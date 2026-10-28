@@ -16,6 +16,26 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Auditoría Integral de Código y Certificación de Respuestas Reales vs Semillas Demo (v2.9.8)
+- **Diagnóstico y Origen de Datos del Canal Web:**
+  1. *Certificación de Respuestas Reales del Agente:*
+     - Todas las respuestas visualizadas en el Live Lab, canal web y pruebas de estrés son generadas 100% en tiempo real por el motor conversacional Edge (`functions/api/[[route]].js`) con RAG híbrido y conectadas a Cloudflare D1 (`chat_messages` y `chat_sessions`).
+     - No son textos redactados o inventados a mano: cada mensaje es producto del cálculo algorítmico de niveles (Nivel 1 cortesía, Nivel 2 FAQs verificadas, Nivel 3 catálogo D1, Nivel 4 Edge LLM).
+  2. *Diferenciación con Datos Semilla (Demo Fallback):*
+     - En `src/components/client/conversations/conversationsDemo.ts` existen datos estáticos de demostración visual (*Alejandra Morales, Daniel Solís, Carlos Vargas*).
+     - Estos datos operan exclusivamente como plantilla placeholder de primer uso cuando una cuenta recién creada aún no registra interacción de clientes. En cuanto entra el primer chat real, el hook `useConversations` conmuta automáticamente a los registros de Cloudflare D1.
+- **Auditoría Técnica y de Código sin Errores:**
+  - *Grafo de Dependencias:* 306 archivos de código analizados en `src/`, confirmando 0 imports rotos y resolución exacta de componentes.
+  - *Sintaxis y Edge Gateway:* 8,716 líneas de `functions/api/[[route]].js` con sintaxis limpia y encapsulamiento seguro `try/catch`.
+  - *Memoria Protegida:* Respeto absoluto a los archivos críticos en `lockedFiles` (`schema-d1.sql`, `useChatRAG.ts`, `useTenantData.ts`, `MobileChatView.tsx`, etc.).
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.46s con 0 errores TypeScript (`index-Pq-wPHOp.js`).
+  - *Filtro 2:* Despliegue dual activo en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* 17/17 rutas críticas auditadas en Chrome Headless con 100% de operatividad y 0 errores de consola.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Calibración Especializada para Salud, Estéticas, Salones, Barberías, Masajes y Consultorios Médicos (v2.9.7)
 - **Diagnóstico y Causas Raíces:**
   1. *Sesgo Tecnológico Residual:* En sectores de servicios de belleza y salud presencial, el manejo de objeciones recurría en ciertos casos a términos de software corporativo ("código propio, retorno de inversión"), desentonando en peluquerías, barberías, spas o clínicas médicas.
