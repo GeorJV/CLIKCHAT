@@ -16,6 +16,36 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Detección Instantánea de Enlaces Abiertos en Bandeja de Entrada CRM y Radar en Vivo (v2.9.30)
+- **Diagnóstico y Necesidad:**
+  1. *Ausencia de Registro al Abrir Enlaces de Chat:*
+     - Al ingresar un cliente al enlace web de chat (`/chat/geosoft` o `/servicio`), `ServiceChatView.tsx` no emitía pings de presencia (`useLivePresencePing`), dejando a la plataforma a oscuras hasta que el usuario enviara un primer mensaje.
+  2. *Bandeja de Entrada CRM Estática sin Polling Inteligente:*
+     - `useVoceroCrm.ts` ejecutaba `loadLeads()` únicamente una vez al montarse (`useEffect` con dependencias fijas). Si un visitante abría un chat en otra pestaña o ventana, la bandeja permanecía desactualizada sin recargar manualmente la página.
+  3. *Bloqueo por Límite de Lectura Diario en D1 (HTTP 500):*
+     - `GET /api/crm/leads/:tenantId` fallaba con error 500 (`Your account has exceeded D1's free tier daily row read limit`) por carecer de bloque `try/catch` y de almacenamiento de respaldo en memoria. Además, el filtro SQL exigía al menos 1 mensaje para reconocer la conversación.
+  4. *Desconexión de Tenant en Barra de Radar de Visitantes:*
+     - `LiveVisitorsBar` no recibía la propiedad `tenantSlug` desde `VoceroConversationList` y `VoceroInbox`, impidiendo aislar correctamente las visitas en tiempo real por negocio.
+- **Solución Quirúrgica Implementada:**
+  1. *Integración de Presencia Activa en `ServiceChatView.tsx`:*
+     - Incorporado `useLivePresencePing` enviando latidos periódicos a `/api/presence/heartbeat` con `sessionId`, `tenantSlug`, `currentPath` y `activeProduct`.
+  2. *Radar y Lead Automático en Memoria (`functions/api/[[route]].js`):*
+     - En `/api/presence/heartbeat`, cada visitante que abre el enlace se registra instantáneamente en `memoryLeads` y `memoryPresence` con etiqueta `en_vivo` y detalle de la página o servicio visitado.
+     - En `GET /api/crm/leads/:tenantId`, se encapsularon las consultas D1 en `try/catch` resiliente combinándolas con `memoryLeads`. Eliminada la restricción que ocultaba sesiones sin mensajes.
+     - En `GET /api/chat/messages/:sessionId` y `/api/crm/leads/:id/message`, se implementó buffer en memoria `memoryMessages` tolerante a cuotas.
+  3. *Polling Inteligente Anti-Drain en `useVoceroCrm.ts`:*
+     - Añadido `useSmartPolling` para `loadLeads` cada 8s (con pausa automática en pestañas en segundo plano `document.hidden`) y sincronización en tiempo real de mensajes del chat seleccionado cada 6s.
+  4. *Propagación de `tenantSlug`:*
+     - Enlazado `tenantSlug` desde `VoceroCrmView` -> `VoceroInbox` -> `VoceroConversationList` -> `LiveVisitorsBar`.
+  5. *Verificación de los 3 Filtros:*
+     - Filtro 1 (Build): Vite build 0 errores en 12.86s.
+     - Filtro 2 (Deploy Dual): Cloudflare Pages exitoso en `clikchat` (`fc9eb4d1`) y `clikchatcrm` (`265dfc57`).
+     - Filtro 3 (Smoke Test): 17/17 rutas operativas con Hash Match (`index-BBvp7VWI.js`) confirmado.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Erradicación de Falsa Extracción de Nombres y Blindaje Estricto de 5 Pasos en Citas (v2.9.29)
 - **Diagnóstico y Necesidad:**
   1. *Falsa Extracción de Nombres desde Mensajes de Solicitud ("Me Das"):*

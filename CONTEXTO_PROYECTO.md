@@ -1,17 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 13:45 GMT-6
-- **Versión Actual:** 2.9.29 (Erradicación de Falsa Extracción de Nombres y Blindaje Estricto de 5 Pasos en Citas)
+- **Última Actualización:** 2026-10-28 14:12 GMT-6
+- **Versión Actual:** 2.9.30 (Detección Instantánea de Enlaces Abiertos en Bandeja CRM y Radar en Vivo)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Erradicación de Nombres Falsos: Blacklist estricta en `isValidPersonName` para verbos y pronombres ("me das", "puedo", etc.) y eliminación del bucle ciego de suposiciones de nombres.
-  - Aislamiento de Contactos entre Sesiones: Si no hay tarjeta previa en el chat, nombre, correo y teléfono inician en `null`; el bot exige Paso 1 (Nombre y Correo) y Paso 2 (Teléfono) sin heredar datos de sesiones pasadas.
-  - Bloqueo de Tarjetas Prematuras: `canIssueBookingCard` exige que los 5 slots estén 100% completos (`hasAllRequiredSlots`); cero autorizaciones o confirmaciones force-injected sin contacto verificado.
-  - Saneamiento y Botón de Reinicio: Erradicada fuga de teléfonos en `localStorage` y añadido botón de nueva conversación en `ServiceChatView.tsx`.
-  - Cumplimiento ARQMODULAR: `ServiceChatView.tsx` (180 líneas), `ServiceChatColumn.tsx` (172 líneas).
-  - Verificado con 3 Filtros: Build Vite limpio (10.14s), deploy dual activo en CDN Cloudflare Pages (Hash `index-8WunjpaL.js`, 17/17 rutas probadas en Chrome Headless).
+  - Detección de Enlaces Abiertos: `ServiceChatView.tsx` emite latidos con `useLivePresencePing`; la visita se registra de inmediato en `memoryPresence` y `memoryLeads` con etiqueta `en_vivo`.
+  - Bandeja CRM en Tiempo Real: `useVoceroCrm.ts` incorpora `useSmartPolling` anti-drain cada 8s para nuevos leads y cada 6s para mensajes del chat activo (pausa en segundo plano).
+  - Resiliencia Edge contra Límites D1: `GET /api/crm/leads` y `/api/chat/messages` encapsulados en try/catch con fallback en memoria (`memoryLeads` y `memoryMessages`), eliminando errores HTTP 500 por cuota.
+  - Radar Vinculado: `tenantSlug` propagado a `VoceroConversationList` y `LiveVisitorsBar` para segmentación por negocio.
+  - Cumplimiento ARQMODULAR: `ServiceChatView.tsx` (175 líneas), `useVoceroCrm.ts` (147 líneas), `VoceroInbox.tsx` (96 líneas), `VoceroConversationList.tsx` (142 líneas), `VoceroCrmView.tsx` (174 líneas).
+  - Verificado con 3 Filtros: Build Vite limpio (12.86s), deploy dual Cloudflare Pages (Hash `index-BBvp7VWI.js`, 17/17 rutas probadas en Chrome Headless).
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
