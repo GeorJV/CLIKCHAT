@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Restauración de Producto "Desarrollo Web Estático" en Catálogo D1 y Resiliencia Total de Consultas (v2.9.1)
+- **Diagnóstico y Causas Raíces:**
+  1. *Inexistencia de Tabla `product_metrics` en Cloudflare D1:* En `functions/api/[[route]].js`, el endpoint `GET /api/tenants/:id` ejecutaba `SELECT p.*, COALESCE(m.views, 0) as m_views, ... FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id ...`. La tabla `product_metrics` no existía físicamente en la base de datos D1 (`af3aebed-002b-4e84-aabb-4c570483a3df`), arrojando `SQLITE_ERROR: no such table: product_metrics` (código 7500).
+  2. *Supresión del Producto por Fallback Estático:* Al fallar la consulta SQL, el backend capturaba el error y cargaba `getFallbackGeoSoftProducts()`, el cual solo contenía los 3 productos históricos hardcodeados, suprimiendo el 4° producto *"Desarrollo Web Estático (Página Web Estática)"* ($300 USD) que el usuario había creado y guardado exitosamente en D1.
+  3. *Censura de Guardrail ante Objeciones de Precios Externos:* Si un cliente comparaba con un precio ajeno al catálogo (ej. "me cobran $150 en otro lado"), el guardrail estricto de precios censuraba el mensaje porque dicho monto no estaba en la lista de precios permitidos del catálogo.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Creación de Tabla `product_metrics` en D1:*
+     - Ejecutado script DDL en Cloudflare D1 creando la tabla `product_metrics` (`product_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, views INTEGER DEFAULT 0, ...`).
+  2. *Resiliencia de Doble Guardián en Backend (`functions/api/[[route]].js`):*
+     - Reintento directo a `SELECT * FROM products WHERE (tenant_id = ?1 ...) AND is_active = 1` si el `LEFT JOIN product_metrics` fallase, evitando caídas a fallbacks.
+     - Incorporado el 4° producto *"Desarrollo Web Estático (Página Web Estática)"* ($300 USD) a `getFallbackGeoSoftProducts()` y a las listas de contingencia de GeoSoft.
+     - Extracción dinámica en el guardrail de precios de montos monetarios citados por el usuario para permitir réplicas a objeciones comerciales sin censura.
+  3. *Actualización de Defaults en Frontend (`src/utils/geosoftCatalogDefaults.ts`):*
+     - Incorporado el 4° producto en `DEFAULT_GEOSOFT_PRODUCTS` con sus beneficios y detalles técnicos.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 10.81s con 0 errores TypeScript (`dist/assets/index-Pq-wPHOp.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Verificación de hash match y API en vivo (`GET /api/tenants/geosoft` retornando exactamente los 4 productos activos de D1: SaaS $1200, Agentes IA $450, Apps Móviles $1800, Desarrollo Web Estático $300). Auditoría de 17/17 rutas en Chrome Headless.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Live Lab 100% Real Sincronizado en Tiempo Real y Erradicación de Alucinaciones (v2.9.0)
 - **Diagnóstico y Causas Raíces:**
   1. *Desconexión entre Configuración Viva del CRM y Live Lab:* Al modificar ajustes en el CRM (tono de voz, reglas operativas, prompt del sistema, productos o FAQs), el Live Lab enviaba únicamente el texto y el ID del tenant sin suministrar el estado reactivo en memoria. Si la réplica de Cloudflare D1 demoraba o se empleaba caché del Worker, el Live Lab operaba con datos desactualizados o fallbacks predeterminados, provocando respuestas incongruentes o alucinaciones sobre productos y precios.

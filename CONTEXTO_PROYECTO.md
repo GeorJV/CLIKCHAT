@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 18:50 GMT-6
-- **Versión Actual:** 2.9.0 (Live Lab 100% Real Sincronizado en Tiempo Real y Erradicación de Alucinaciones)
+- **Última Actualización:** 2026-10-27 20:05 GMT-6
+- **Versión Actual:** 2.9.1 (Restauración de Catálogo D1 y Resiliencia Total de Consultas)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Live Lab Sincronizado en Vivo: Motor adaptado a la configuración viva del usuario (`liveConfig`, `liveProducts`, `liveFaqs`), erradicando lag y alucinaciones.
-  - Personas Adaptativas de Prueba: Preguntas rápidas en Live Lab contextualizadas por industria (servicios, restaurante, catálogo).
-  - Identidad Real del Bot en Live Lab: Visualización de avatar, nombre del bot y modelo oficial activo sin selectores desalineados.
-  - Validador Estricto de Nombres y Typos: Respuestas ultra concisas y catálogo oficial sin agendamiento en frío forzado.
-  - Verificado con 3 Filtros: Build local limpio (7.98s), commit f1406b8 en main, deploy dual en Pages y 17/17 rutas auditadas.
+  - Catálogo D1 100% Restaurado: Tabla `product_metrics` operativa en D1; resuelto conflicto de JOIN en API.
+  - Cuatro Productos Activos Oficiales: SaaS ($1200), Agentes IA ($450), Apps Móviles ($1800) y Desarrollo Web Estático ($300).
+  - Resiliencia Total en Backend: Consulta SQL blindada con reintento ante contingencias y guardrail de objeciones comerciales.
+  - Live Lab Sincronizado en Vivo: Motor adaptado a la configuración viva del usuario (`liveConfig`, `liveProducts`, `liveFaqs`).
+  - Verificado con 3 Filtros: Build local limpio (10.81s), deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

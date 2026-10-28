@@ -709,6 +709,21 @@ function enforceFactualPriceGuardrail({
     }
   }
 
+  // Precios o montos citados por el usuario (ej: objeciones o comparativas de competidores)
+  if (userMessage && typeof userMessage === 'string') {
+    const symRegex = /(?:[\$₡€]|USD\s*|CRC\s*|EUR\s*)\s*(\d+(?:[,\.]\d+)?)/gi;
+    let um;
+    while ((um = symRegex.exec(userMessage)) !== null) {
+      const num = parseFloat(um[1].replace(/,/g, ''));
+      if (!isNaN(num) && num > 0) allowedPrices.add(num);
+    }
+    const wordRegex = /(\d+(?:[,\.]\d+)?)\s*(?:usd|d[oó]lares|colones|crc|euros|eur)\b/gi;
+    while ((um = wordRegex.exec(userMessage)) !== null) {
+      const num = parseFloat(um[1].replace(/,/g, ''));
+      if (!isNaN(num) && num > 0) allowedPrices.add(num);
+    }
+  }
+
   // 2. Extraer todos los precios monetarios explícitos en la respuesta generada por la IA
   const detected = [];
   const symRegex = /(?:[\$₡€]|USD\s*|CRC\s*|EUR\s*)\s*(\d+(?:[,\.]\d+)?)/gi;
