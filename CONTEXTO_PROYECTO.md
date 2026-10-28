@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 08:30 GMT-6
-- **Versión Actual:** 2.9.15 (Persistencia Real de Perfil, Auto-guardado de Modalidad y 'Guardando datos...')
+- **Última Actualización:** 2026-10-28 08:45 GMT-6
+- **Versión Actual:** 2.9.16 (Sincronización Canónica y Persistencia en D1 de Citas en Panel CRM y Chat)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Persistencia Real D1: Columnas `logo_url`, `response_delay_sec`, `bot_response_speed_sec` añadidas en D1; resuelto error de guardado.
-  - Auto-guardado Inmediato: Al cambiar modalidad en Ajustes (Productos vs Servicios vs Soporte), se persiste de inmediato.
-  - Sincronización en Pipeline: El cambio de modalidad conmuta instantáneamente entre "Cita" y "Comanda" en el tablero Kanban.
-  - Etiqueta 'Guardando datos...': Erradicado "Guardando en D1" en todos los botones y modales del cliente.
+  - Persistencia Canónica D1: Citas agendadas por el bot o confirmadas manualmente se insertan inmediatamente en D1 con ID determinista.
+  - Sincronización en Tiempo Real: Retorno del objeto `booking` en `/api/chat/message`, broadcast con ID canónico y guardado reactivo en `localStorage`.
+  - Panel CRM (`VoceroBookingsView`): Consulta dual por id/slug (`ten_geosoft_prod`/`geosoft`) y fusión `idMap` sin perder citas locales ni remotas.
+  - Sanitización de Contacto: Erradicado "Cliente" y teléfonos de negocio en tarjetas; datos reales inyectados al confirmar.
   - Verificado con 3 Filtros: Build limpio, commit a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

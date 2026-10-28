@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Sincronización Canónica y Persistencia en D1 de Citas en Panel CRM y Chat de Servicios (v2.9.16)
+- **Diagnóstico y Necesidad:**
+  1. *Citas Recién Confirmadas Invisibles en el Panel de Agenda:*
+     - Al cerrar o confirmar una cita en el chat de servicios, la cita no aparecía en la vista de Agenda / Citas del panel del CRM (`VoceroBookingsView`).
+     - *Causa Raíz Backend:* En `/api/chat/message`, el auto-registro dependía estrictamente de `bDateVal && bTimeVal` provenientes de slots regex, ignorando si el LLM ya había estructurado `[BOOKING_CARD]`. Además, la respuesta JSON devolvía `bookingCard` pero omitía el objeto `booking`, impidiendo que el bus de sincronización (`bookingSyncBus`) obtuviera el ID canónico de D1.
+     - *Causa Raíz Query D1:* En `GET /api/bookings`, la consulta SQL filtraba estrictamente por `tenant_id = ?1`, ignorando alias entre el id canónico (`ten_geosoft_prod`) y el slug (`geosoft`).
+  2. *Datos de Contacto Erróneos en la Tarjeta de Confirmación:*
+     - Al pulsar el botón "Confirmo cita y guardar", se enviaba el objeto crudo desactualizado en lugar de los datos reales del usuario (`effectiveName` y `effectivePhone`).
+- **Solución Quirúrgica Implementada:**
+  1. *Backend (`functions/api/[[route]].js`):*
+     - Activación universal del auto-registro tanto por slots como por detección de `[BOOKING_CARD]`, sanitizando que `customer_name` no sea `'Cliente'` y que el teléfono no sea el de la empresa.
+     - Persistencia canónica con ID determinista e inclusión de `booking: savedBookingObj` en la respuesta JSON de `/api/chat/message`.
+     - `GET /api/bookings` optimizado con soporte dual slug/id para GeoSoft (`ten_geosoft_prod` / `geosoft`).
+  2. *Frontend (`BookingCardBubble.tsx`, `ServiceChatView.tsx`, `VoceroBookingsView.tsx`):*
+     - En `BookingCardBubble`: envío sanitizado de `{ ...bookingData, customerName: effectiveName, customerPhone: effectivePhone }` al confirmar.
+     - En `ServiceChatView`: auto-guardado en `localStorage` con el ID canónico de D1 y broadcast instantáneo a la agenda.
+     - En `VoceroBookingsView`: consulta dual sin desincronización de tenant y fusión por `idMap` preservando citas locales y remotas.
+- **Archivos Modificados:**
+  - `functions/api/[[route]].js`
+  - `src/components/chat/service/BookingCardBubble.tsx` (169 líneas, <= 180)
+  - `src/components/chat/service/ServiceChatView.tsx` (179 líneas, <= 180)
+  - `src/components/crm/bookings/VoceroBookingsView.tsx` (176 líneas, <= 180)
+- **Verificación de Tres Filtros:**
+  - Filtro 1 (Build Local): Vite compila con 0 errores.
+  - Filtro 2 (Deploy Dual): Commit `4c7dd46` en `main` y deploy exitoso en `clikchat.pages.dev` y `clikchatcrm.pages.dev`.
+  - Filtro 3 (Smoke Test Runtime): 17/17 rutas operativas en Chrome Headless.
+Agregado al historial de cambios aplicando el filtro de los tres pasos.
+
 ### [2026-10-28] Persistencia Real Inmediata de Perfil/Modalidad Comercial y Erradicación de "Guardando en D1" (v2.9.15)
 - **Diagnóstico y Necesidad:**
   1. *Fallo de Guardado y Reversión de Modalidad Comercial:*
