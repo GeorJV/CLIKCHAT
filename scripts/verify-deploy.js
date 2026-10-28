@@ -96,6 +96,7 @@ function testSingleRoute(url, label) {
           if (!wsUrl) return reject(new Error('No WebSocket for ' + url));
 
           const ws = new WebSocket(wsUrl);
+          ws.onerror = (err) => { finish(err instanceof Error ? err : new Error('WebSocket error')); };
           let errors = [];
           let pollInterval = null;
           let timeoutHandle = null;
@@ -178,7 +179,8 @@ async function runFullSuite() {
     '--headless=new',
     '--remote-debugging-port=9222',
     '--disable-gpu',
-    '--no-sandbox'
+    '--no-sandbox',
+    '--disable-dev-shm-usage'
   ]);
 
   let ready = false;
