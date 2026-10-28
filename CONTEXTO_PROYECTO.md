@@ -1,15 +1,15 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 08:05 GMT-6
-- **Versión Actual:** 2.9.10 (Visibilidad y Fijación Total del Chat Input en VoceroAiSandbox y Flexbox Viewport Blindado)
+- **Última Actualización:** 2026-10-28 08:15 GMT-6
+- **Versión Actual:** 2.9.11 (Eliminación Individual y Múltiple en Directorio de Contactos CRM con Checkboxes)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
+  - Eliminación Individual & Múltiple en Contactos: Checkboxes individuales, selector 'Seleccionar todos', barra flotante y botón masivo.
+  - Erradicación de Resurrección en Backend: Limpieza atómica en D1 de `crm_leads`, `chat_sessions` y `chat_messages`.
   - Chat Input de Live Lab 100% Visible: Entrada de texto e interactores fijados dentro de la ventana (`min-h-0` + footer shrink-0).
-  - Eliminado Desplazamiento por Banner: Main en VoceroCrmView migrado a `flex flex-col min-h-0`, evitando que banners empujen el sandbox fuera de pantalla.
   - Pipeline Dinámico Cita vs Comanda: En servicios dice 'Cita', en comida dice 'Comanda' con layout contiguo al ras.
-  - Catálogo D1 y Resiliencia Total: 4 productos activos oficiales leídos directamente desde base de datos D1.
   - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.

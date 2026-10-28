@@ -45,7 +45,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
     leads, selectedLeadId, setSelectedLeadId, selectedLead, messages,
     isLoadingLeads, isLoadingMessages, filterInbox, setFilterInbox,
     searchTerm, setSearchTerm, changeLeadStage, toggleTakeover,
-    sendAgentMessage, updateLead, createLead,
+    sendAgentMessage, updateLead, createLead, deleteLead, deleteLeads
   } = useVoceroCrm(tenant?.id || tenantId);
 
   const {
@@ -108,7 +108,9 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           {activeTab === 'pipeline' && (
             <VoceroPipelineBoard leads={leads} onSelectLead={handleSelectLeadFromPipeline} onChangeStage={changeLeadStage} onCreateLead={createLead} businessType={tenant?.business_type || (tenant as any)?.businessType} />
           )}
-          {activeTab === 'contacts' && <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} />}
+          {activeTab === 'contacts' && (
+            <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} onDeleteLead={deleteLead} onDeleteLeads={deleteLeads} />
+          )}
           {activeTab === 'bookings' && (
             <VoceroBookingsView tenantId={tenant?.id || tenantId} currency={tenant?.currency} highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking} />
           )}

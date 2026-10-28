@@ -73,10 +73,17 @@ export const ServiceChatView: React.FC<Props> = ({
       setIsLoading(true);
       const startTime = Date.now();
       try {
+        const pM = userText.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/);
+        if (pM && !pM[0].includes('72935612')) { try { localStorage.setItem('clikchat_cust_phone', pM[0].trim()); } catch (e) {} }
+        const nM = userText.match(/(?:me\s+llamo|mi\s+nombre\s+es|soy|nombre:\s*)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,})?)/i);
+        if (nM && !/^cliente$/i.test(nM[1].trim())) { try { localStorage.setItem('clikchat_cust_name', nM[1].trim()); } catch (e) {} }
+        const uName = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_name') || undefined) : undefined;
+        const uPhone = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_phone') || undefined) : undefined;
+
         const clientHist = messages.slice(-10).map((m) => ({ sender: m.sender, message: m.content }));
         const res = await fetch('/api/chat/message', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, conversationHistory: clientHist, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
+          body: JSON.stringify({ tenantSlug: tenantSlug || 'comida-callejera-xl', tenantId: (selectedService as any).tenant_id, sessionId: sessId, message: userText, conversationHistory: clientHist, userName: uName, userPhone: uPhone, clientHour: new Date().getHours(), clientTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), campaignContext: getCampaignContextFromUrl() })
         });
         if (!res.ok) throw new Error('Chat service error');
         const data = await res.json();
@@ -90,19 +97,12 @@ export const ServiceChatView: React.FC<Props> = ({
         if (cardMatch) {
           try {
             const parsed = JSON.parse(cardMatch[0].replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, ''));
-            const cData: ServiceBookingData = {
-              service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' },
-              date: parsed.date, timeSlot: parsed.time, customerName: parsed.customerName, customerEmail: parsed.customerEmail, customerPhone: parsed.customerPhone
-            };
+            const cData: ServiceBookingData = { service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' }, date: parsed.date, timeSlot: parsed.time, customerName: parsed.customerName, customerEmail: parsed.customerEmail, customerPhone: parsed.customerPhone };
             setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
             broadcastBookingCreated(tenantSlug, { id: 'apt_' + Date.now(), clientName: cData.customerName, serviceName: cData.service.title, date: cData.date, time: cData.timeSlot, price: cData.service.price });
           } catch (e) {}
-          setMessages((prev) => [...prev, {
-            id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' }
-          }]);
+          setMessages((prev) => [...prev, { id: `asst-${Date.now()}-0`, sessionId: 'sess', tenantId: 'tenant', sender: 'assistant', content: `${textWithoutCard}\n\n${cardMatch[0]}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ragTrace: { levelUsed: (lvlMap[data?.level] || 3) as any, confidence: data?.confidence || 0.95, executionTimeMs: 80, modelUsed: data?.provider || 'RAG Edge', reasoning: data?.levelLabel || 'RAG Servicios D1' } }]);
         } else {
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
           await deliverStaggeredBubbles({

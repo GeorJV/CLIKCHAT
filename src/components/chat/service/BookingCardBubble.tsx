@@ -15,6 +15,12 @@ export const BookingCardBubble: React.FC<Props> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const cleanPhone = (businessPhone || '50672935612').replace(/[^\d]/g, '');
   const displayDate = formatDisplayDate(bookingData.date) || bookingData.date || 'Próxima fecha';
+  const isInvalidName = !bookingData.customerName || /^cliente$/i.test(bookingData.customerName.trim());
+  const storedName = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_name') || localStorage.getItem('clikchat_user_name') || '') : '';
+  const effectiveName = !isInvalidName ? bookingData.customerName : (storedName || '');
+  const isBusinessPhone = bookingData.customerPhone && (bookingData.customerPhone.replace(/\D/g, '') === cleanPhone);
+  const storedPhone = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_phone') || localStorage.getItem('clikchat_user_phone') || '') : '';
+  const effectivePhone = (!bookingData.customerPhone || isBusinessPhone) ? (storedPhone || '') : bookingData.customerPhone;
 
   useEffect(() => {
     if (isRevealed) {
@@ -41,9 +47,9 @@ export const BookingCardBubble: React.FC<Props> = ({
       `• *Servicio:* ${bookingData.service?.title || 'Servicio Especializado'}\n` +
       `• *Fecha:* ${displayDate}\n` +
       `• *Horario:* ${bookingData.timeSlot}\n` +
-      `• *Cliente:* ${bookingData.customerName}\n` +
+      (effectiveName ? `• *Nombre:* ${effectiveName}\n` : '') +
       (bookingData.customerEmail ? `• *Correo:* ${bookingData.customerEmail}\n` : '') +
-      `• *WhatsApp:* ${bookingData.customerPhone}\n` +
+      (effectivePhone ? `• *WhatsApp:* ${effectivePhone}\n` : '') +
       `• *Modalidad:* ${bookingData.service?.serviceModality === 'presencial' ? 'Presencial' : 'Online (Google Meet)'}\n` +
       (bookingData.service?.price ? `• *Inversión:* $${bookingData.service.price} ${bookingData.service.currency || 'USD'}\n` : '') +
       `\n✅ Cita confirmada y registrada en ClikChat. ¡Nos vemos en la sesión!`;
@@ -107,14 +113,18 @@ export const BookingCardBubble: React.FC<Props> = ({
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
-            <User className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-zinc-400 shrink-0" />
-            <span className="text-xs sm:text-[11px] text-zinc-200 truncate">{bookingData.customerName}</span>
-          </div>
-          <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
-            <Phone className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-xs sm:text-[11px] text-zinc-200 truncate">{bookingData.customerPhone}</span>
-          </div>
+          {effectiveName ? (
+            <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+              <User className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-zinc-400 shrink-0" />
+              <span className="text-xs sm:text-[11px] text-zinc-200 font-bold truncate">{effectiveName}</span>
+            </div>
+          ) : null}
+          {effectivePhone ? (
+            <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">
+              <Phone className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+              <span className="text-xs sm:text-[11px] text-zinc-200 font-mono truncate">{effectivePhone}</span>
+            </div>
+          ) : null}
         </div>
         {bookingData.customerEmail && (
           <div className="flex items-center gap-2 bg-[#121111] px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/[0.04]">

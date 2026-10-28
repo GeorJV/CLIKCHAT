@@ -88,7 +88,7 @@ export const ServiceChatColumn: React.FC<Props> = ({
           const isAssistant = msg.sender === 'assistant';
           const isSameSender = idx > 0 && messages[idx - 1].sender === msg.sender;
           const isNextSameSender = idx < messages.length - 1 && messages[idx + 1].sender === msg.sender;
-          const { cleanContent, bookingData } = isAssistant ? parseBookingCard(msg.content) : { cleanContent: msg.content, bookingData: null };
+          const { cleanContent, bookingData } = isAssistant ? parseBookingCard(msg.content, messages) : { cleanContent: msg.content, bookingData: null };
           const activeMode: DeliveryMode = deliveryMode || (typeof window !== 'undefined' ? (localStorage.getItem('clikchat_delivery_mode') as DeliveryMode) : null) || 'moderate';
           const bubbles = isAssistant && !msg.isAudio ? splitMessageByDeliveryMode(cleanContent, activeMode) : [];
 

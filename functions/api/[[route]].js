@@ -5161,11 +5161,35 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       });
     }
 
-    // CRM: DELETE /api/crm/leads/:id -> Eliminar lead
+    // CRM: DELETE /api/crm/leads/:id -> Eliminar lead (y sus sesiones asociadas para evitar resurrección)
     if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'DELETE') {
       const leadId = segments[2];
+      const leadRows = await executeD1(`SELECT session_id FROM crm_leads WHERE id = ?1`, [leadId]).catch(() => []);
+      const sessionId = leadRows[0]?.session_id || (leadId.startsWith('lead_') ? leadId.slice(5) : null);
+      if (sessionId) {
+        await executeD1(`DELETE FROM chat_messages WHERE session_id = ?1`, [sessionId]).catch(() => {});
+        await executeD1(`DELETE FROM chat_sessions WHERE id = ?1`, [sessionId]).catch(() => {});
+      }
       await executeD1(`DELETE FROM crm_leads WHERE id = ?1`, [leadId]);
       return jsonResponse({ success: true, message: 'Lead eliminado correctamente' });
+    }
+
+    // CRM: POST /api/crm/leads/bulk-delete -> Eliminar múltiples leads seleccionados
+    if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && segments[2] === 'bulk-delete' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const ids = Array.isArray(body.ids) ? body.ids.filter(Boolean) : [];
+      if (ids.length > 0) {
+        for (const leadId of ids) {
+          const leadRows = await executeD1(`SELECT session_id FROM crm_leads WHERE id = ?1`, [leadId]).catch(() => []);
+          const sessionId = leadRows[0]?.session_id || (leadId.startsWith('lead_') ? leadId.slice(5) : null);
+          if (sessionId) {
+            await executeD1(`DELETE FROM chat_messages WHERE session_id = ?1`, [sessionId]).catch(() => {});
+            await executeD1(`DELETE FROM chat_sessions WHERE id = ?1`, [sessionId]).catch(() => {});
+          }
+          await executeD1(`DELETE FROM crm_leads WHERE id = ?1`, [leadId]).catch(() => {});
+        }
+      }
+      return jsonResponse({ success: true, count: ids.length, message: 'Leads eliminados correctamente' });
     }
 
     // CHAT: GET /api/chat/tenant-metrics/:tenantId
@@ -5738,7 +5762,6 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
   }
 
   if (!email && cardEmail) email = cardEmail;
-  if (!phone && cardPhone) phone = cardPhone;
 
   // 1. Extracción de Email
   const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i;
@@ -5750,20 +5773,27 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
-  // 2. Extracción de Teléfono (mínimo 8 dígitos) o Detección de negativa / preferencia por correo
+  // 2. Extracción de Teléfono (mínimo 8 dígitos del usuario)
+  let extractedPhone = null;
   const refusesPhoneRegex = /\b(?:no\s+(?:tengo|doy|quiero\s+dar|deseo\s+dar|voy\s+a\s+dar|darte|uso|poseo)\s+(?:tel[eé]fono|celular|whatsapp|n[uú]mero)|solo\s+(?:por\s+)?(?:correo|email)|sin\s+tel[eé]fono|sin\s+whatsapp|prefiero\s+(?:por\s+)?correo|no\s+tengo\s+n[uú]mero|no\s+te\s+voy\s+a\s+dar\s+mi\s+tel[eé]fono)\b/i;
   for (let i = allUserMessages.length - 1; i >= 0; i--) {
     const msg = allUserMessages[i];
     const pMatches = msg.match(/(?:\+?506[\s-]?)?[2678]\d{3}[\s-]?\d{4}|\+?\d{1,3}[\s-]?\d{3,4}[\s-]?\d{4}|\b\d{8,12}\b/g);
     if (pMatches) {
       for (const p of pMatches) {
-        if (!/^\d{4}$/.test(p.trim()) && !/^\d{1,2}:\d{2}$/.test(p.trim())) {
-          phone = p.trim();
+        const cleanDigits = p.replace(/\D/g, '');
+        if (!/^\d{4}$/.test(p.trim()) && !/^\d{1,2}:\d{2}$/.test(p.trim()) && cleanDigits !== '50672935612' && cleanDigits !== '72935612') {
+          extractedPhone = p.trim();
           break;
         }
       }
     }
-    if (phone) break;
+    if (extractedPhone) break;
+  }
+  if (extractedPhone) {
+    phone = extractedPhone;
+  } else if (!phone && cardPhone && !cardPhone.includes('72935612')) {
+    phone = cardPhone;
   }
   if (!phone) {
     for (let i = allUserMessages.length - 1; i >= 0; i--) {
@@ -5937,8 +5967,44 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
     }
   }
 
+  if (!extractedName && Array.isArray(history) && history.length > 0) {
+    for (let i = 0; i < history.length - 1; i++) {
+      const isAsst = history[i].sender === 'assistant' || history[i].role === 'assistant';
+      if (isAsst) {
+        const hMsg = history[i].message || history[i].content || '';
+        const asked = /(?:c[uú]al\s+es\s+tu\s+nombre|c[oó]mo\s+te\s+llamas|me\s+(?:podr[ií]as\s+)?(?:indicar|compartir|decir|dar|regalar)\s+tu\s+nombre|con\s+qui[eé]n\s+tengo\s+el\s+gusto|a\s+nombre\s+de\s+qui[eé]n|tu\s+nombre\s+completo|tu\s+nombre\s+y\s+(?:correo|email|tel[eé]fono)|nombre\s+para\s+(?:la\s+cita|el\s+registro))/i.test(hMsg);
+        if (asked) {
+          const nextUser = history[i + 1].message || history[i + 1].content || '';
+          if (nextUser) {
+            let candidate = nextUser.trim();
+            if (email && candidate.includes(email)) candidate = candidate.replace(email, '').trim();
+            if (phone && candidate.includes(phone)) candidate = candidate.replace(phone, '').trim();
+            candidate = candidate.replace(/^(?:hola|buenas|mucho gusto|un gusto|saludos)[,.\s]+/i, '').trim();
+            const wMatch = candidate.match(/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){0,2}/);
+            if (wMatch && isValidPersonName(wMatch[0].trim())) {
+              extractedName = wMatch[0].trim();
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (!extractedName) {
-    // Solo inferir nombre de 1 a 3 palabras si el turno previo del asistente preguntó explícitamente el nombre
+    for (let i = allUserMessages.length - 1; i >= 0; i--) {
+      let candidate = allUserMessages[i].trim();
+      if (email && candidate.includes(email)) candidate = candidate.replace(email, '').trim();
+      if (phone && candidate.includes(phone)) candidate = candidate.replace(phone, '').trim();
+      candidate = candidate.replace(/^(?:hola|buenas|mucho gusto|un gusto|saludos)[,.\s]+/i, '').trim();
+      if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}){1,2}$/.test(candidate) && isValidPersonName(candidate)) {
+        extractedName = candidate;
+        break;
+      }
+    }
+  }
+
+  if (!extractedName) {
     let assistantAskedForName = false;
     if (Array.isArray(history) && history.length > 0) {
       for (let i = history.length - 1; i >= 0; i--) {
@@ -5967,7 +6033,7 @@ function extractBookingSlots(history, currentMessage, leadInfo = {}) {
 
   if (extractedName) {
     name = extractedName;
-  } else if (!name && cardName && isValidPersonName(cardName)) {
+  } else if (!name && cardName && isValidPersonName(cardName) && cardName.toLowerCase() !== 'cliente') {
     name = cardName;
   }
 
@@ -6452,13 +6518,16 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
       if (activeLeadInfo.name && activeLeadInfo.name.toLowerCase() === 'cliente') {
         delete activeLeadInfo.name;
       }
+      if (!activeLeadInfo.name && body.userName && body.userName.toLowerCase() !== 'cliente') activeLeadInfo.name = body.userName;
+      if (!activeLeadInfo.phone && body.userPhone && !body.userPhone.includes('72935612')) activeLeadInfo.phone = body.userPhone;
+      if (!activeLeadInfo.email && body.userEmail) activeLeadInfo.email = body.userEmail;
       try {
         const sessRows = await executeD1('SELECT user_name, user_phone, user_email FROM chat_sessions WHERE id = ?1 LIMIT 1', [currentSessionId]);
         if (sessRows.length > 0) {
           const s = sessRows[0];
           if (!activeLeadInfo.name && s.user_name && s.user_name.toLowerCase() !== 'cliente') activeLeadInfo.name = s.user_name;
           if (!activeLeadInfo.email && s.user_email) activeLeadInfo.email = s.user_email;
-          if (!activeLeadInfo.phone && s.user_phone) activeLeadInfo.phone = s.user_phone;
+          if (!activeLeadInfo.phone && s.user_phone && !s.user_phone.includes('72935612')) activeLeadInfo.phone = s.user_phone;
         }
       } catch (sessReadErr) {}
 

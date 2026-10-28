@@ -16,6 +16,33 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Eliminación Individual y Masiva en Directorio de Contactos CRM con Checkboxes (v2.9.11)
+- **Diagnóstico y Necesidad:**
+  1. *Ausencia de Mecanismo de Eliminación en Directorio:*
+     - En `VoceroContactsView.tsx`, la lista de contactos solo permitía visualizar datos, filtrar por canal, buscar y exportar a CSV, pero no contaba con ningún botón para eliminar contactos de forma individual ni masiva.
+  2. *Riesgo Crítico de Resurrección en Backend:*
+     - Al invocar `GET /api/crm/leads/:tenantId`, el backend ejecutaba `INSERT OR IGNORE INTO crm_leads ... SELECT 'lead_' || s.id ... FROM chat_sessions s`. Si solo se borraba el registro de `crm_leads` sin eliminar la sesión y mensajes asociados, el lead volvía a aparecer automáticamente en la siguiente recarga o consulta.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Selector Masivo y Checkboxes en `VoceroContactsView.tsx` (167 líneas):*
+     - Botón selector maestro *"Seleccionar todos"* / *"Deseleccionar todos"*.
+     - Barra contextual superior reactiva que indica la cantidad de contactos seleccionados (`X seleccionados`) y botón de acción destacado: `🗑️ Eliminar seleccionados (X)`.
+  2. *Fila Modular con Checkbox y Acción Individual en `VoceroContactItem.tsx` (78 líneas):*
+     - Checkbox interactivo en cada contacto para marcar con check múltiple.
+     - Botón de papelera individual (`Trash2`) con hover rojo suave para eliminar un contacto directamente uno por uno.
+  3. *Modal Atómico de Confirmación en `VoceroDeleteContactModal.tsx` (74 líneas):*
+     - Modal de confirmación claro y seguro que advierte sobre la irreversibilidad de la acción tanto para 1 contacto como para N contactos seleccionados.
+  4. *Gestión de Estado y API en `useVoceroCrm.ts` (142 líneas) & `functions/api/[[route]].js`:*
+     - Funciones `deleteLead(leadId)` y `deleteLeads(leadIds)` con actualización optimista de estado local en memoria.
+     - Endpoint `DELETE /api/crm/leads/:id` y `POST /api/crm/leads/bulk-delete` en Cloudflare D1 que eliminan atómicamente el lead en `crm_leads`, su sesión en `chat_sessions` y sus mensajes en `chat_messages`, erradicando cualquier resurrección.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 12.81s con 0 errores TypeScript (`dist/assets/index-DrL9i-Jk.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-28] Visibilidad y Fijación Total del Input de Chat en VoceroAiSandbox y Blindaje Viewport Flexbox (v2.9.10)
 - **Diagnóstico y Causas Raíces:**
   1. *Desplazamiento por Banner de Nueva Cita en Contenedor Block:* En `VoceroCrmView.tsx`, `<main>` estaba configurado como un contenedor en bloque estándar (`flex-1 h-full min-w-0 overflow-hidden relative`). Cuando un usuario confirmaba una cita (o existía una cita nueva en `localStorage`), `NewBookingBanner` se renderizaba al inicio ocupando ~65px. Directamente debajo, `VoceroAiSandbox` solicitaba `h-full` (100% de la altura de la pantalla), lo que sumaba 100vh + 65px. Debido al `overflow-hidden` del padre, los 65px inferiores de `VoceroAiSandbox` quedaban expulsados hacia abajo fuera de la pantalla, dejando únicamente el borde superior ("orillita") de los botones de pruebas rápidas y cortando por completo la barra de entrada de texto (`<input>`).
