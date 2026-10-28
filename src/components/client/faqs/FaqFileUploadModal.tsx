@@ -124,7 +124,7 @@ export const FaqFileUploadModal: React.FC<FaqFileUploadModalProps> = ({
               Cargar otro archivo
             </button>
             <button type="button" onClick={handleImport} disabled={selectedCount === 0 || isSubmitting} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer">
-              {isSubmitting ? 'Guardando en D1...' : `Importar ${selectedCount} FAQs a D1`}
+              {isSubmitting ? 'Guardando datos...' : `Importar ${selectedCount} FAQs`}
             </button>
           </div>
         )}

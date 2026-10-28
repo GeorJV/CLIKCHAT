@@ -421,7 +421,7 @@ export function useClientPortal(initialSlug: string = 'comida-callejera-xl') {
       if (res.ok) {
         const data = await res.json();
         if (data.tenant) {
-          const finalTenant: Tenant = { ...merged, ...data.tenant };
+          const finalTenant: Tenant = { ...merged, ...data.tenant, ...updates };
           setTenant(finalTenant);
           saveCachedTenant(finalTenant);
           if (finalTenant.slug && finalTenant.slug !== tenantSlug) {

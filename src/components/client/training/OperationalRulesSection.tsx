@@ -125,7 +125,7 @@ export const OperationalRulesSection: React.FC<OperationalRulesSectionProps> = (
             }`}
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{isSaving ? 'Guardando en D1...' : 'Guardar Reglas de Operación'}</span>
+            <span>{isSaving ? 'Guardando datos...' : 'Guardar Reglas de Operación'}</span>
           </button>
         </div>
       </div>

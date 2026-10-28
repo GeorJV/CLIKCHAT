@@ -99,7 +99,10 @@ export function saveCachedTenant(tenant: Tenant): void {
     if (slug) {
       if (slug === 'comida-callejera-xl') {
         if (!tenant.bot_name || tenant.bot_name === 'Asesor Comercial') tenant.bot_name = 'Valeria (Mesera Virtual)';
-        tenant.business_type = 'restaurante';
+        if (!tenant.business_type) tenant.business_type = 'restaurante';
+      }
+      if (tenant.id) {
+        try { localStorage.setItem(`clikchat_tenant_${tenant.id}`, JSON.stringify(tenant)); } catch (e) {}
       }
       const existing = localStorage.getItem(`clikchat_tenant_${slug}`);
       if (existing) {

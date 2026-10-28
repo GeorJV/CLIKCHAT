@@ -24,17 +24,25 @@ export const VoceroBusinessProfileSettings: React.FC<VoceroBusinessProfileSettin
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    if (tenant) {
-      if (tenant.name) setName(tenant.name);
-      if (tenant.slug) setSlug(tenant.slug);
-      if (tenant.business_type) setBizType(tenant.business_type);
-      if (tenant.phone) setPhone(tenant.phone);
-      if (tenant.address) setAddress(tenant.address);
-      if (tenant.business_hours) setHours(tenant.business_hours);
-      if (tenant.currency) setCurrency(tenant.currency);
-      if (tenant.bot_name) setBotName(tenant.bot_name);
-    }
+    if (!tenant) return;
+    if (tenant.name) setName(tenant.name);
+    if (tenant.slug) setSlug(tenant.slug);
+    if (tenant.business_type) setBizType(tenant.business_type);
+    if (tenant.phone) setPhone(tenant.phone);
+    if (tenant.address) setAddress(tenant.address);
+    if (tenant.business_hours) setHours(tenant.business_hours);
+    if (tenant.currency) setCurrency(tenant.currency);
+    if (tenant.bot_name) setBotName(tenant.bot_name);
   }, [tenant]);
+
+  const handleBizTypeChange = async (newType: string) => {
+    setBizType(newType);
+    try {
+      await onUpdateSettings({ business_type: newType });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    } catch (err) { console.warn('Auto-save failed:', err); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +74,7 @@ export const VoceroBusinessProfileSettings: React.FC<VoceroBusinessProfileSettin
       <div className="rounded-2xl border border-[#e2e8f0] bg-white p-5 shadow-xs">
         <h3 className="text-sm font-bold text-[#0a1730] mb-1">Giro y Modalidad Comercial</h3>
         <p className="text-xs text-[#62728d] mb-4">Define cómo se comporta la IA al vender y atender a tus clientes.</p>
-        <BusinessTypeSelector value={bizType} onChange={setBizType} />
+        <BusinessTypeSelector value={bizType} onChange={handleBizTypeChange} />
       </div>
 
       {/* Tarjeta de Información General */}
@@ -160,7 +168,7 @@ export const VoceroBusinessProfileSettings: React.FC<VoceroBusinessProfileSettin
             className="flex items-center gap-2 rounded-xl bg-[#0d5bff] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#0047e1] transition cursor-pointer disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
-            <span>{isSaving ? 'Guardando en D1...' : 'Guardar Perfil'}</span>
+            <span>{isSaving ? 'Guardando datos...' : 'Guardar Perfil'}</span>
           </button>
         </div>
       </div>

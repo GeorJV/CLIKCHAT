@@ -160,7 +160,7 @@ export const BusinessIdentitySubTab: React.FC<BusinessIdentitySubTabProps> = ({
           )}
           <button type="submit" disabled={isSaving} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer">
             <Save className="w-3.5 h-3.5" />
-            <span>{isSaving ? 'Guardando en D1...' : 'Guardar Cambios'}</span>
+            <span>{isSaving ? 'Guardando datos...' : 'Guardar Cambios'}</span>
           </button>
         </div>
       </form>

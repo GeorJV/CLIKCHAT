@@ -122,7 +122,7 @@ export const ClikChatConfigPanel: React.FC<Props> = ({ tenant, onUpdateSettings 
             className="flex items-center gap-1.5 rounded-xl bg-[#0d5bff] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#0047e1] transition cursor-pointer disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
-            <span>{isSaving ? 'Guardando en D1...' : 'Guardar Ajustes'}</span>
+            <span>{isSaving ? 'Guardando datos...' : 'Guardar Ajustes'}</span>
           </button>
         </div>
       </div>

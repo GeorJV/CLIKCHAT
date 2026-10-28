@@ -147,7 +147,7 @@ export const BusinessDetailModal: React.FC<Props> = ({
             className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow flex items-center gap-1.5 transition disabled:opacity-50"
           >
             <CheckCircle2 size={13} />
-            <span>{isSaving ? 'Guardando en D1...' : 'Guardar en D1'}</span>
+            <span>{isSaving ? 'Guardando datos...' : 'Guardar Cambios'}</span>
           </button>
         </div>
       </div>

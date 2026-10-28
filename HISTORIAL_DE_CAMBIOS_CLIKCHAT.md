@@ -16,6 +16,36 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Persistencia Real Inmediata de Perfil/Modalidad Comercial y Erradicación de "Guardando en D1" (v2.9.15)
+- **Diagnóstico y Necesidad:**
+  1. *Fallo de Guardado y Reversión de Modalidad Comercial:*
+     - Al cambiar entre "Vendo Productos/Comida", "Vendo Servicios/Agendo Citas" o "Servicio al Cliente" y pulsar "Guardar Perfil", el perfil se revertía automáticamente a la opción previa.
+     - *Causa Raíz:* La tabla `tenants` en Cloudflare D1 carecía de las columnas `logo_url`, `response_delay_sec` y `bot_response_speed_sec`. Al ejecutar `UPDATE tenants`, D1 arrojaba `SQLITE_ERROR: no such column: logo_url`. El backend capturaba el error y retornaba el registro antiguo de D1 sin modificar, sobrescribiendo la actualización optimista del frontend.
+  2. *Texto Técnico "Guardando en D1":*
+     - Los botones de guardado mostraban el término interno "Guardando en D1...", inapropiado para usuarios finales comerciales.
+  3. *Reflejo Dinámico Inmediato en Pipeline de Ventas:*
+     - El pipeline debe alternar instantáneamente la columna y etapa entre "Cita" (servicios) y "Comanda" (comida/tienda) apenas el usuario guarde o seleccione la modalidad.
+- **Solución Quirúrgica Implementada:**
+  1. *Esquema y Migración en D1:*
+     - Ejecutado `ALTER TABLE tenants ADD COLUMN logo_url TEXT`, `response_delay_sec INTEGER DEFAULT 1`, `bot_response_speed_sec INTEGER DEFAULT 0` directamente en la base D1 de Cloudflare.
+  2. *Refactorización del Gateway Edge (`functions/api/[[route]].js`) & Servidor Express (`server/routes/tenants.js`):*
+     - Vinculación exacta de parámetros `phone`, `address`, `business_type`, `currency` y `updated_at`.
+     - Fusión segura `finalTenant = { ...(updated[0] || {}), ...body }` para que la respuesta de red siempre confirme los cambios del cliente.
+  3. *Auto-guardado Inmediato y Etiqueta Amigable en `VoceroBusinessProfileSettings.tsx` (178 líneas):*
+     - Creado `handleBizTypeChange`: al hacer clic en cualquier tarjeta de modalidad comercial, se persiste de inmediato en background.
+     - Texto del botón y toasts reemplazado por `Guardando datos...` en todos los paneles de usuario.
+  4. *Corrección de Fallback y Reactividad en Pipeline (`fallbackTenant.ts` y `useClientPortal.ts`):*
+     - Eliminada sobreescritura estática de `business_type = 'restaurante'` en `saveCachedTenant`.
+     - Inyección reactiva a `VoceroPipelineBoard`: al alternar a "Vendo Productos/Comida", la columna del pipeline cambia de inmediato a **"Comanda"**, y en "Servicios" a **"Cita"**.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia en 13.71s con 0 errores (`dist/assets/index-C-j-U1pm.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main`.
+  - *Filtro 3:* Despliegue dual verificado en Cloudflare Pages (`clikchat` y `clikchatcrm`) con 17/17 rutas operativas.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+---
+
 ### [2026-10-28] Blindaje de Saludo Cordial en 1er Mensaje ("hola") y Continuidad Directa en Subsiguientes (v2.9.14)
 - **Diagnóstico y Necesidad:**
   - Al escribir "hola" en el primer mensaje, el bot no saludaba y entraba "a secas" o con respuestas impersonales ("Totalmente de acuerdo...").
