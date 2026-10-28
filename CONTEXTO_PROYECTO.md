@@ -1,15 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 18:22 GMT-6
-- **Versión Actual:** 2.8.8 (Blindaje de Citas Múltiples y Erradicación del Bloqueo en Segunda Cita)
+- **Última Actualización:** 2026-10-27 18:41 GMT-6
+- **Versión Actual:** 2.8.9 (Erradicación de Extracción Ciega de Nombres, Typos Comerciales y Blindaje de Respuestas Cortas)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Citas Consecutivas Sin Bloqueo: Erradicado el filtro de tarjeta previa que purgaba segundas citas ("una sí y una no").
-  - Múltiples Citas en D1: Citas adicionales insertadas como registros independientes en D1 en lugar de sobreescribirse.
-  - Sincronización Inmediata en Live Lab: `VoceroAiSandbox` emite y notifica al CRM con cada cita confirmada sin excepción.
-  - Verificado con 3 Filtros: Build local limpio, commit a `main`, deploy dual en Pages y 17/17 rutas auditadas.
+  - Validador Estricto de Nombres: Erradicado el fallback ciego que tomaba preguntas o palabras de 1 a 3 palabras como nombres de persona.
+  - Inmunidad a Typos en Consultas de Servicios: Detecta "que serivcios ofrecen" y variantes de catálogo de forma instantánea sin forzar agendamiento en frío.
+  - Eliminado Agendamiento Forzado: GeoSoft ya no fuerza slots de agendamiento en consultas informativas o de catálogo.
+  - Concisión Suprema (Respuestas Cortas): Máximo 2-3 oraciones breves directas, amables y sin relleno motivacional.
+  - Verificado con 3 Filtros: Build local limpio, commit fb7ce1f en main, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

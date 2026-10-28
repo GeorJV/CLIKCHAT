@@ -16,6 +16,29 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Erradicación de Extracción Ciega de Nombres, Typos en Consultas Comerciales y Blindaje de Respuestas Cortas (v2.8.9)
+- **Diagnóstico y Causas Raíces:**
+  1. *Extracción Ciega de Nombres (`functions/api/[[route]].js`):* El bucle de respaldo de nombres iteraba sobre cualquier mensaje del historial que tuviera de 1 a 3 palabras (`/^[A-ZÁ...]{2,}(?:\s+[A-ZÁ...]{2,}){0,2}$/`). Ante consultas como `"que serivcios ofrecen"` (3 palabras con typo), el sistema no encontraba la palabra en la lista de stop words y asignaba erróneamente `name = "Que Serivcios Ofrecen"`, provocando que el bot llamara al usuario por ese nombre y le pidiera su correo en frío.
+  2. *Agendamiento Forzado para GeoSoft:* La condición `else if (isBookingContext || targetTenant.business_type === 'servicios' || targetTenant.name === 'GeoSoft')` obligaba a que GeoSoft tratara cualquier mensaje como agendamiento en frío si no coincidía exactamente con el regex de catálogo.
+  3. *Fragilidad ante Typos en Consultas Comerciales (`isInfoOrServiceQuery`):* No detectaba variaciones como `serivcios`, `serbicios`, `ofrecen`, `hacen`, etc., dejando de catalogar la intención de servicio del cliente.
+  4. *Directiva Comercial Verbosa:* Inyectaba un bloque con 5 directivas extensas sobre SEO, responsive, tiempos de entrega y diagnósticos, produciendo párrafos de más de 10 líneas a pesar de tener configurado "respuestas cortas".
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Validador Estricto de Nombres Humanos (`isValidPersonName`):*
+     - Erradicada la inferencia ciega: solo se admite un mensaje de 1 a 3 palabras como nombre si en el turno inmediatamente anterior el asistente preguntó explícitamente su nombre (`assistantAskedForName`), y el texto pasa estrictamente filtros de palabras interrogativas, comerciales, de catálogo o de cortesía.
+     - Si no cumple, el nombre permanece en `null`.
+  2. *Inmunidad a Typos en Consultas de Catálogo:*
+     - Regex ampliado con soporte a variantes y typos (`servici\w*`, `serivci\w*`, `serbici\w*`, `ofrecen`, `hacen`, `venden`, `desarrollan`), clasificando de inmediato la intención comercial sin forzar citas.
+  3. *Eliminación del Agendamiento Forzado:*
+     - Removida la imposición `targetTenant.name === 'GeoSoft'`. El agendamiento solo se activa cuando el usuario expresa intención real de cita o reserva.
+  4. *Directiva Ultra Concisa y Breve:*
+     - Redactada directiva comercial que exige respuestas de máximo 2 a 3 oraciones cortas (menos de 50 palabras): presenta la solución oficial ($1200 USD para web/SaaS y $450 USD para agentes IA) y cierra con una sola pregunta breve, prohibiendo discursos motivacionales vacíos y solicitud de datos en frío.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 9.59s con 0 errores TypeScript (`dist/assets/index-gaQVEoph.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`, commit `fb7ce1f`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless. Prueba HTTP en vivo con `"que serivcios ofrecen"` confirmó respuesta directa de 2 oraciones sobre servicios oficiales de GeoSoft, sin suponer nombres ni forzar citas.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-27] Blindaje de Citas Consecutivas en Live Lab/Web y Erradicación del Bloqueo en Segunda Cita (v2.8.8)
 - **Diagnóstico y Causas Raíces:**
   1. *Filtro Rígido de Tarjeta Previa (`functions/api/[[route]].js`):* La condición `canIssueBookingCard` exigía `(!hasPriorBookingCardInHist || isRescheduleTurn)`. Cuando un usuario o probador en Live Lab confirmaba una primera cita y luego agendaba una segunda cita, `hasPriorBookingCardInHist` era `true`. Como la segunda cita no era una reprogramación sino una cita nueva, el backend entraba al bloque `else` y purgaba quirúrgicamente con regex el tag `[BOOKING_CARD:]` del mensaje de la IA. El usuario veía el texto diciendo *"aquí te dejo el resumen... espero que sea lo que estabas buscando"*, pero la tarjeta interactiva había sido eliminada del payload y no se enviaba al CRM ("una sí y una no").
