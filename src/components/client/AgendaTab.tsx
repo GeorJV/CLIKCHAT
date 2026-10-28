@@ -29,13 +29,16 @@ export const AgendaTab: React.FC<AgendaTabProps> = ({ tenantId, highlightedBooki
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (highlightedBookingId) {
+    const handleTarget = (targetId?: string) => {
+      if (!targetId) return;
       setFilter('all');
-      setTimeout(() => {
-        const el = document.getElementById(`apt-card-${highlightedBookingId}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
+      const scroll = () => { document.getElementById(`apt-card-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+      setTimeout(scroll, 80); setTimeout(scroll, 220); setTimeout(scroll, 450);
+    };
+    if (highlightedBookingId) handleTarget(highlightedBookingId);
+    const onCustomFocus = (e: any) => handleTarget(e?.detail?.bookingId || e?.detail?.id || e?.detail?.booking?.id);
+    window.addEventListener('clikchat_focus_booking', onCustomFocus);
+    return () => window.removeEventListener('clikchat_focus_booking', onCustomFocus);
   }, [highlightedBookingId]);
 
   const fetchBookings = async (silent = true) => {

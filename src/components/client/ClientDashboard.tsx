@@ -106,7 +106,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {newBooking && (
             <NewBookingBanner
               booking={newBooking}
-              onViewBooking={(b) => { focusBooking(b); navigate(getTenantTabPath(currentSlug || activeSlug, 'agenda')); }}
+              onViewBooking={(b) => { focusBooking(b); navigate(getTenantTabPath(currentSlug || activeSlug, 'agenda')); dismissAlert(); }}
               onDismiss={dismissAlert}
             />
           )}
