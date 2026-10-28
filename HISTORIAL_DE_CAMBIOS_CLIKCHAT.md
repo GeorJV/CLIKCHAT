@@ -16,6 +16,34 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Badge de Chat No Leído "1" tipo Correo y Monitor de Chats Atendidos por el Bot (v2.9.32)
+- **Diagnóstico y Necesidad:**
+  1. *Ausencia de Notificador de Mensajes Nuevos en Bandeja:*
+     - Al abrirse un chat nuevo o recibir mensajes no leídos, la bandeja de entrada no destacaba visualmente qué conversaciones estaban pendientes de revisión.
+     - No existía un badge numérico dinámico tipo bandeja de correo electrónico que se descontara al hacer clic.
+  2. *Falta de Visibilidad sobre la Carga de Atención del Bot:*
+     - El dueño del negocio no contaba con un indicador en tiempo real que le mostrara cuántos chats y clientes simultáneos está atendiendo activamente el Asistente Virtual.
+- **Solución Quirúrgica Implementada:**
+  1. *Sistema de Lectura y Badges Dinámicos en `useVoceroCrm.ts`:*
+     - Incorporado estado `readLeadIds` persistido en `localStorage` (`clikcrm_read_<tenantId>`).
+     - Al entrar un nuevo chat o lead no leído, se computa `unreadCount` y se refleja con badge numérico en la pestaña `Bandeja de Entrada` de la barra lateral (`VoceroAppNav.tsx`).
+     - En `VoceroConversationItem.tsx`, las conversaciones no leídas se resaltan con borde azul, tipografía destacada y una píldora con el número `1` ("Chat nuevo sin leer").
+     - Al hacer clic sobre la conversación (`onSelect`), se ejecuta `markLeadAsRead`, desapareciendo de inmediato el número `1` y reduciendo el contador global a cero exactamente como en una bandeja de correo.
+  2. *Monitor de Chats Atendidos por el Bot:*
+     - Calculado `botAttendingCount` (`!l.ai_paused && (l.stage === 'lead' || l.stage === 'qualifying')`).
+     - Añadido indicador visual en la cabecera de `VoceroConversationList.tsx`: `🤖 Bot en vivo | X chats activos` con pulso esmeralda interactivo.
+     - Incorporada etiqueta `🤖 Bot` en cada conversación donde la IA se encuentra operando activamente.
+  3. *Cumplimiento Estricto ARQMODULAR (<150-180 líneas):*
+     - `useVoceroCrm.ts` (144 líneas), `VoceroConversationItem.tsx` (114 líneas), `VoceroConversationList.tsx` (170 líneas), `VoceroInbox.tsx` (105 líneas), `VoceroCrmView.tsx` (176 líneas).
+  4. *Verificación de los 3 Filtros:*
+     - Filtro 1 (Build): Vite build limpio en 9.98s (0 errores).
+     - Filtro 2 (Deploy Dual): Cloudflare Pages completado con éxito en `clikchat` (`372cbe66`) y `clikchatcrm` (`164d5035`).
+     - Filtro 3 (Smoke Test): 17/17 rutas operativas en Chrome Headless (Hash Match `index-BLgaj1Ss.js` verificado en CDN en intento 1).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos*
+
+---
+
 ### [2026-10-28] Habilitación de Acceso Directo y Vista de "Mi Cuenta & Suscripción" en Vocero CRM y Ajustes (v2.9.31)
 - **Diagnóstico y Necesidad:**
   1. *Inaccesibilidad de los Datos de la Cuenta y Suscripción:*
