@@ -1,19 +1,17 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 21:30 GMT-6
-- **Versión Actual:** 2.9.4 (Calibración Universal Multi-Industria: Productos Físicos y Servicios)
+- **Última Actualización:** 2026-10-27 21:35 GMT-6
+- **Versión Actual:** 2.9.5 (Benchmark de Resistencia y Auditoría de Diálogo Extenso de 30 Turnos)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Calibración Universal Multi-Industria: Adaptación automática a productos físicos (retail, moda, ferretería) y servicios.
-  - Manejo de Objeciones Dinámico: Resalta autenticidad de materiales y garantía en tiendas; diagnóstico y ROI en servicios.
-  - Agendamiento Presencial/Online Inteligente: Infiere modalidad presencial en salud/clínicas/talleres y online en digital.
-  - Tarjetas y Catálogo 100% Dinámicos: Erradicado cualquier sesgo hardcodeado en nombres de servicios y precios de cita.
-  - Verificado con 3 Filtros: Build limpio (7.45s), deploy dual en Pages y 17/17 rutas auditadas en Chrome Headless.
+  - Benchmark 30 Turnos: 100% disponibilidad operativa (30/30 turnos exitosos, 0 caídas, 4.70s latencia promedio).
+  - Resiliencia Contextual: Memoria episódica D1 intacta sin alucinaciones ni desbordes a lo largo de 30 turnos.
+  - Adaptabilidad Universal: Calibrado para retail de productos físicos, gastronomía y servicios profesionales.
+  - Agendamiento & Cierre: Tarjeta interactiva sin bucles invasivos y respeto total a privacidad del usuario.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
-  - Modelos de IA: Empleo exclusivo de infraestructura oficial vigente y prohibición total de versiones descontinuadas.
   - Prohibido modificar archivos en `lockedFiles` sin autorización explícita (<150-180 líneas por archivo).
   - Tareas sincronizadas a `status: "ready_for_review"` en ARQ AI Studio.

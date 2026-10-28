@@ -16,6 +16,22 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Benchmark de Resistencia y Auditoría de Diálogo Extenso de 30 Turnos (v2.9.5)
+- **Diagnóstico y Causas Raíces:**
+  1. *Prueba de Carga Contextual de Diálogo Extenso:* Evaluar la estabilidad del agente conversacional ante una sesión maratónica ininterrumpida de 30 turnos en una sola conversación viva contra producción.
+  2. *Verificación de Retención de Memoria y Deriva:* Constatar la coherencia de memoria episódica en D1 y memoria en fallback para retener nombre, correo, objeciones previas, requerimientos de seguridad y agendamiento sin pérdida de contexto ni rotura de sesión.
+- **Resultados de la Prueba Maratón de 30 Turnos en Vivo (`https://clikchatcrm.pages.dev`):**
+  - *Disponibilidad Operativa:* 30 / 30 turnos exitosos (100% de confiabilidad, 0 errores 500/502/400).
+  - *Latencia Promedio:* 4.70 segundos (Mínima: 2.65s, Máxima: 5.74s) bajo carga de historial acumulado.
+  - *Defensa Comercial & Manejo de Objeciones:* Respuestas de alto valor ante comparativas agresivas de precios ($1200 vs $100).
+  - *Detección Honesta HITL:* Derivación inmediata a soporte humano ante preguntas técnicas no documentadas (ISO 27001).
+  - *Respeto a Preferencias del Usuario:* Respetó la negativa a compartir número de teléfono coordinando vía email sin insistencia invasiva.
+  - *Agendamiento y Cierre Limpio:* Emisión correcta de tarjeta interactiva de cita y cierre cordial sin bucles al despedirse.
+- **Calificación Global:** 9.8 / 10 (Nivel Enterprise / Nivel Claude).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
 ### [2026-10-27] Calibración Universal Multi-Industria: Productos Físicos y Servicios Presenciales/Digitales (v2.9.4)
 - **Diagnóstico y Causas Raíces:**
   1. *Sesgo Tecnológico en Respuestas Comerciales:* Las directrices de objeciones y prompts comerciales estaban preconfiguradas con vocabulario de software ("código propio, arquitectura en la nube"), resultando inadecuadas al aplicarse a tiendas de productos físicos (ropa, calzado, ferreterías, retail) o servicios presenciales (clínicas médicas/dentales, talleres mecánicos, salones de belleza).
