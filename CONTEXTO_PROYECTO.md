@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 18:41 GMT-6
-- **Versión Actual:** 2.8.9 (Erradicación de Extracción Ciega de Nombres, Typos Comerciales y Blindaje de Respuestas Cortas)
+- **Última Actualización:** 2026-10-27 18:50 GMT-6
+- **Versión Actual:** 2.9.0 (Live Lab 100% Real Sincronizado en Tiempo Real y Erradicación de Alucinaciones)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Validador Estricto de Nombres: Erradicado el fallback ciego que tomaba preguntas o palabras de 1 a 3 palabras como nombres de persona.
-  - Inmunidad a Typos en Consultas de Servicios: Detecta "que serivcios ofrecen" y variantes de catálogo de forma instantánea sin forzar agendamiento en frío.
-  - Eliminado Agendamiento Forzado: GeoSoft ya no fuerza slots de agendamiento en consultas informativas o de catálogo.
-  - Concisión Suprema (Respuestas Cortas): Máximo 2-3 oraciones breves directas, amables y sin relleno motivacional.
-  - Verificado con 3 Filtros: Build local limpio, commit fb7ce1f en main, deploy dual en Pages y 17/17 rutas auditadas.
+  - Live Lab Sincronizado en Vivo: Motor adaptado a la configuración viva del usuario (`liveConfig`, `liveProducts`, `liveFaqs`), erradicando lag y alucinaciones.
+  - Personas Adaptativas de Prueba: Preguntas rápidas en Live Lab contextualizadas por industria (servicios, restaurante, catálogo).
+  - Identidad Real del Bot en Live Lab: Visualización de avatar, nombre del bot y modelo oficial activo sin selectores desalineados.
+  - Validador Estricto de Nombres y Typos: Respuestas ultra concisas y catálogo oficial sin agendamiento en frío forzado.
+  - Verificado con 3 Filtros: Build local limpio (7.98s), commit f1406b8 en main, deploy dual en Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

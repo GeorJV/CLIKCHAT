@@ -16,6 +16,28 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Live Lab 100% Real Sincronizado en Tiempo Real y Erradicación de Alucinaciones (v2.9.0)
+- **Diagnóstico y Causas Raíces:**
+  1. *Desconexión entre Configuración Viva del CRM y Live Lab:* Al modificar ajustes en el CRM (tono de voz, reglas operativas, prompt del sistema, productos o FAQs), el Live Lab enviaba únicamente el texto y el ID del tenant sin suministrar el estado reactivo en memoria. Si la réplica de Cloudflare D1 demoraba o se empleaba caché del Worker, el Live Lab operaba con datos desactualizados o fallbacks predeterminados, provocando respuestas incongruentes o alucinaciones sobre productos y precios.
+  2. *Selectores Desalineados de Modelos en Live Lab:* El Live Lab contaba con botones fijos de modelos ("⚡ Gemini", "🥇 GLM 5", "🥈 GPT", "🥉 Meta") que permitían probar con motores distintos al configurado por el usuario en sus ajustes, impidiendo comprobar fielmente el comportamiento real de su bot oficial.
+  3. *Personas de Prueba Descontextualizadas:* Los accesos rápidos de prueba incluían textos genéricos no acordes a la industria del usuario (ej. pedir comida en una empresa de desarrollo tecnológico SaaS).
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Fusión en Tiempo Real de `liveConfig`, `liveProducts` y `liveFaqs` (`functions/api/[[route]].js` y `VoceroAiSandbox.tsx`):*
+     - En cada envío desde el Live Lab, se transmiten en el payload la configuración reactiva del tenant (`liveConfig`), catálogo de productos activo (`liveProducts`) y FAQs (`liveFaqs`).
+     - El backend fusiona inmediatamente estos datos en tiempo real sobre `targetTenant` y el contexto RAG de productos/FAQs en milisegundos, erradicando cualquier desfase de base de datos o alucinación de catálogo.
+  2. *Live Lab 100% Sincronizado con la Identidad Real del Bot:*
+     - Encabezado con badge reactivo en verde: `🟢 Sincronizado: [Nombre del Bot] ([Modelo Activo])`.
+     - Mensajes del asistente renderizados con avatar oficial y nombre real del bot del negocio (`LiveLabMessageItem.tsx` - 98 líneas).
+     - Desacoplada la lógica pesada a `sandboxConstants.ts` (139 líneas) y preservado `VoceroAiSandbox.tsx` en 178 líneas cumpliendo estrictamente ARQMODULAR (<180 líneas).
+  3. *Pruebas Rápidas Adaptativas por Tipo de Negocio:*
+     - Botones rápidos contextualizados automáticamente según la industria: servicios/SaaS (planes, desarrollo, citas, garantías), restaurante (menú, combos, express, horarios) o tienda/catálogo.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.98s con 0 errores TypeScript (`dist/assets/index-GOkrUhY_.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`, commit `f1406b8`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless. Prueba HTTP en vivo inyectando `liveProducts` y `liveConfig` confirmó que el motor cita el producto y precio en vivo en milisegundos con cero alucinaciones.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
 ### [2026-10-27] Erradicación de Extracción Ciega de Nombres, Typos en Consultas Comerciales y Blindaje de Respuestas Cortas (v2.8.9)
 - **Diagnóstico y Causas Raíces:**
   1. *Extracción Ciega de Nombres (`functions/api/[[route]].js`):* El bucle de respaldo de nombres iteraba sobre cualquier mensaje del historial que tuviera de 1 a 3 palabras (`/^[A-ZÁ...]{2,}(?:\s+[A-ZÁ...]{2,}){0,2}$/`). Ante consultas como `"que serivcios ofrecen"` (3 palabras con typo), el sistema no encontraba la palabra en la lista de stop words y asignaba erróneamente `name = "Que Serivcios Ofrecen"`, provocando que el bot llamara al usuario por ese nombre y le pidiera su correo en frío.
