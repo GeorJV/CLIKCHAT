@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-27 20:05 GMT-6
-- **Versión Actual:** 2.9.1 (Restauración de Catálogo D1 y Resiliencia Total de Consultas)
+- **Última Actualización:** 2026-10-27 20:07 GMT-6
+- **Versión Actual:** 2.9.2 (Agente Comercial 10/10, Manejo de Objeciones, Cero Fricción y HITL)
 - **Deploy en Vivo:** https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Catálogo D1 100% Restaurado: Tabla `product_metrics` operativa en D1; resuelto conflicto de JOIN en API.
-  - Cuatro Productos Activos Oficiales: SaaS ($1200), Agentes IA ($450), Apps Móviles ($1800) y Desarrollo Web Estático ($300).
-  - Resiliencia Total en Backend: Consulta SQL blindada con reintento ante contingencias y guardrail de objeciones comerciales.
-  - Live Lab Sincronizado en Vivo: Motor adaptado a la configuración viva del usuario (`liveConfig`, `liveProducts`, `liveFaqs`).
-  - Verificado con 3 Filtros: Build local limpio (10.81s), deploy dual en Pages y 17/17 rutas auditadas.
+  - Agente Comercial Nivel 10/10: Calibrado con manejo ejecutivo de objeciones de precio ($1200 vs $150 de competidores).
+  - Agendamiento Cero Fricción: Soporte nativo para coordinación por correo sin atascos si el usuario no desea dar teléfono.
+  - Guardrail de Precios Inteligente: Admite montos citados por el usuario para refutar propuestas externas sin censura.
+  - Detección HITL Automática: Consultas fuera de catálogo (ISO/SOC2) registradas en `unresolved_queries` en D1.
+  - Verificado con 3 Filtros: Build limpio (7.09s), deploy dual en Pages y 17/17 rutas auditadas en Chrome Headless.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.

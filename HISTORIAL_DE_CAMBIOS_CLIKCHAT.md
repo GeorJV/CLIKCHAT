@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-27] Agente Comercial 10/10: Manejo Maestro de Objeciones, Agendamiento Cero Fricción y Human-in-the-Loop Nativo (v2.9.2)
+- **Diagnóstico y Causas Raíces:**
+  1. *Objeciones de Precios Externos Censuradas por Guardrail:* Cuando un cliente comparaba con competidores baratos (ej. $150 frente a $1200), el guardrail determinista de precios trataba el monto mencionado como precio alucinado del catálogo y censuraba la réplica de la IA.
+  2. *Fricción de Agendamiento ante Negativa de Teléfono:* Si el cliente solicitaba explícitamente comunicarse únicamente por correo electrónico o rehusaba brindar su número telefónico, el extractor de slots se quedaba atascado en el Paso 2 insistiendo en el teléfono.
+  3. *Detección de Consultas Fuera de Catálogo (Compliance / Enterprise):* Preguntas sobre certificaciones complejas o normativas no catalogadas (ej. ISO 27001, SOC 2) requerían un protocolo robusto para responder con honestidad y registrar la consulta de inmediato en `unresolved_queries` en Cloudflare D1.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Manejo Maestro de Objeciones de Valor (Regla 10):* Calibrado el prompt del sistema con directrices de nivel asesor senior para validar la perspectiva del cliente con empatía, destacar el retorno de inversión del código propio, arquitectura en la nube de alta velocidad, base de datos privada y proponer una sesión estratégica de 15 minutos sin costo.
+  2. *Exención Inteligente en Guardrail de Precios (`enforceFactualPriceGuardrail`):* Extracción automática de montos citados por el usuario (`userMessage`) agregándolos a `allowedPrices`, facultando a la IA a refutar precios de la competencia sin censura.
+  3. *Agendamiento Flexible con Respeto Total a la Privacidad (`extractBookingSlots`):* Detección de negativa/preferencia por correo (`refusesPhoneRegex`), fijando `customerPhone: "Contacto por correo"` para avanzar de inmediato a la selección de fecha y hora sin fricción.
+  4. *Protocolo Human-in-the-Loop Nativo (Regla 11 & Marcador `<!--UNRESOLVED_QUERY-->`):* Respuesta honesta ante especificaciones no oficiales con registro automático en D1 de `unresolved_queries` para seguimiento del equipo comercial.
+  5. *Optimización de Latencia:* Limitación precisa de tokens de salida (`maxOutputTokens: 450`) logrando respuestas ágiles, sin suspenso y directas al grano.
+- **Verificación en Producción (3 Filtros & Suite Empírica):**
+  - *Filtro 1:* Compilación Vite limpia (`npm run build`) en 7.09s con 0 errores TypeScript (`dist/assets/index-Pq-wPHOp.js`).
+  - *Filtro 2:* Despliegue dual exitoso en Cloudflare Pages (`https://clikchatcrm.pages.dev` y `https://clikchat.pages.dev`).
+  - *Filtro 3:* Hash match confirmado al 100% y 17/17 rutas operativas en Chrome Headless.
+  - *Validación Empírica en Vivo (Endpoint Real):*
+    * Test 1 (Objeción de precio $1200 vs $150): Réplica ejecutiva con contraste de tecnología propia vs plantillas genéricas.
+    * Test 2 (Agendamiento sin teléfono): Aceptación respetuosa inmediata y avance directo al Paso 3 (fecha).
+    * Test 3 (Conflicto y selección de hora): Comprobación de disponibilidad real en agenda D1 y emisión final de `[BOOKING_CARD]` al confirmar slot libre.
+    * Test 4 (HITL Compliance): Consulta ISO 27001 registrada con éxito en D1 como `fallback_hitl`.
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-27] Restauración de Producto "Desarrollo Web Estático" en Catálogo D1 y Resiliencia Total de Consultas (v2.9.1)
 - **Diagnóstico y Causas Raíces:**
   1. *Inexistencia de Tabla `product_metrics` en Cloudflare D1:* En `functions/api/[[route]].js`, el endpoint `GET /api/tenants/:id` ejecutaba `SELECT p.*, COALESCE(m.views, 0) as m_views, ... FROM products p LEFT JOIN product_metrics m ON p.id = m.product_id ...`. La tabla `product_metrics` no existía físicamente en la base de datos D1 (`af3aebed-002b-4e84-aabb-4c570483a3df`), arrojando `SQLITE_ERROR: no such table: product_metrics` (código 7500).
