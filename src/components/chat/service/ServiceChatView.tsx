@@ -3,7 +3,7 @@ import { MessageSquare, Sparkles } from 'lucide-react';
 import { ServiceItem, ServiceBookingData } from '../../../types/serviceChat';
 import { ProductChatMessage } from '../../../types/productChat';
 import { ServiceChatColumn } from './ServiceChatColumn'; import { ServiceShowcase } from './ServiceShowcase'; import { ServiceDetailModal } from './ServiceDetailModal'; import { ServiceBookingModal } from './ServiceBookingModal'; import { BookedAppointmentModal } from './BookedAppointmentModal'; import { ProductFullscreenModal } from '../product/ProductFullscreenModal';
-import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher'; import { generateClientChatFallback } from '../../../services/clientChatFallback'; import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter'; import { getCampaignContextFromUrl } from '../../../utils/campaignTracking'; import { broadcastBookingCreated } from '../../../utils/bookingSyncBus';
+import { DEFAULT_SERVICE } from './serviceChatMock'; import { useMessageBatcher } from '../../../hooks/useMessageBatcher'; import { generateClientChatFallback } from '../../../services/clientChatFallback'; import { DeliveryMode, deliverStaggeredBubbles } from '../../../utils/messageSplitter'; import { getCampaignContextFromUrl } from '../../../utils/campaignTracking'; import { broadcastBookingCreated } from '../../../utils/bookingSyncBus'; import { useLivePresencePing } from '../../../hooks/useLivePresencePing';
 
 interface Props {
   storeName?: string; agentName?: string; agentAvatar?: string; tenantSlug?: string; whatsappNumber?: string; services?: ServiceItem[]; initialService?: ServiceItem; responseDelaySec?: number; botResponseSpeedSec?: number; deliveryMode?: DeliveryMode; welcomeMessage?: string; onExit?: () => void;
@@ -40,13 +40,11 @@ export const ServiceChatView: React.FC<Props> = ({
     }
     return 'sess_' + Date.now().toString(36);
   });
+  useLivePresencePing({ tenantSlug: tenantSlug || 'geosoft', sessionId: sessId, currentPath: typeof window !== 'undefined' ? window.location.pathname : '/servicio', activeProduct: selectedService?.title || 'Servicios' });
   const handleResetChat = () => {
     const newId = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
     setSessId(newId); setMessages([]); setConfirmedBooking(null);
-    if (typeof window !== 'undefined') {
-      [storageKey, msgStorageKey, confirmKey, 'clikchat_cust_phone', 'clikchat_cust_name'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-      try { localStorage.setItem(storageKey, newId); } catch (e) {}
-    }
+    if (typeof window !== 'undefined') { [storageKey, msgStorageKey, confirmKey, 'clikchat_cust_phone', 'clikchat_cust_name'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} }); try { localStorage.setItem(storageKey, newId); } catch (e) {} }
   };
 
   useEffect(() => {
@@ -90,12 +88,13 @@ export const ServiceChatView: React.FC<Props> = ({
         if (cardMatch) {
           try {
             const parsed = JSON.parse(cardMatch[0].replace(/^\[BOOKING_CARD:\s*/, '').replace(/\s*\]$/, ''));
-            const resName = (parsed.customerName && !/^cliente$/i.test(parsed.customerName)) ? parsed.customerName : (uName || '');
-            const resPhone = (parsed.customerPhone && !parsed.customerPhone.includes('72935612')) ? parsed.customerPhone : (uPhone || '');
+            const cName = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_name') || '') : '';
+            const cPhone = typeof window !== 'undefined' ? (localStorage.getItem('clikchat_cust_phone') || '') : '';
+            const resName = (parsed.customerName && !/^cliente$/i.test(parsed.customerName)) ? parsed.customerName : cName;
+            const resPhone = (parsed.customerPhone && !parsed.customerPhone.includes('72935612')) ? parsed.customerPhone : cPhone;
             const realId = data?.booking?.id || ('apt_' + Date.now());
             const cData: ServiceBookingData = { service: { id: parsed.serviceId || 'srv_selected', title: parsed.service || selectedService.title, price: Number(parsed.price) || 1200, currency: parsed.currency || 'USD', image: '', serviceModality: parsed.modality || 'online' }, date: parsed.date, timeSlot: parsed.time, customerName: resName, customerEmail: parsed.customerEmail, customerPhone: resPhone };
-            (cData as any).id = realId;
-            setConfirmedBooking(cData);
+            (cData as any).id = realId; setConfirmedBooking(cData);
             try { localStorage.setItem(confirmKey, JSON.stringify(cData)); } catch (e) {}
             const memApt = { id: realId, clientName: resName || 'Cliente Agendado', email: cData.customerEmail || '', serviceName: cData.service.title, date: cData.date, dateKey: cData.date, displayDate: cData.date, time: cData.timeSlot, status: 'confirmed', channel: 'web', phone: resPhone, notes: '', price: cData.service.price || 0 };
             [tenantSlug, 'geosoft', 'ten_geosoft_prod'].filter(Boolean).forEach(k => {
@@ -161,11 +160,7 @@ export const ServiceChatView: React.FC<Props> = ({
       </div>
       <div className="flex-1 w-full h-full flex lg:grid lg:grid-cols-2 overflow-hidden min-h-0">
         <div className={`h-full w-full ${mobileTab === 'chat' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
-          <ServiceChatColumn
-            storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title} messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking} businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode} onInputChange={setInputValue} onSendMessage={handleSendMessage}
-            onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
-            onExit={onExit} onReset={handleResetChat} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking}
-          />
+          <ServiceChatColumn storeName={storeName} agentName={agentName} agentAvatar={agentAvatar} serviceTitle={selectedService.title} messages={messages} inputValue={inputValue} isLoading={isLoading} confirmedBooking={confirmedBooking} businessPhone={whatsappNumber || (selectedService as any).phone || '50672935612'} deliveryMode={deliveryMode} onInputChange={setInputValue} onSendMessage={handleSendMessage} onAudioRecorded={(a) => setMessages((prev) => [...prev, { id: `audio-${Date.now()}`, sessionId: 'sess', tenantId: 'tenant', sender: 'user', content: '', isAudio: true, audioDuration: a.duration, audioUrl: a.audioUrl, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])} onExit={onExit} onReset={handleResetChat} onOpenBooking={() => setBookingOpen(true)} onOpenConfirmedModal={() => setViewConfirmedModal(true)} onConfirmBookingFromCard={handleConfirmBooking} />
         </div>
         <div className={`h-full w-full ${mobileTab === 'service' ? 'flex' : 'hidden'} lg:flex min-h-0 overflow-hidden`}>
           <ServiceShowcase service={selectedService} onOpenIncludes={() => setDetailModal('includes')} onOpenRequirements={() => setDetailModal('requirements')} onOpenFullscreen={() => setFullscreenOpen(true)} onBookNow={() => setBookingOpen(true)} />

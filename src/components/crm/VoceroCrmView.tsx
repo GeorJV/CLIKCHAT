@@ -18,6 +18,7 @@ import { VoceroAiAnalystView } from './analyst/VoceroAiAnalystView';
 import { VoceroProductsView } from './products/VoceroProductsView';
 import { VoceroFaqRagView } from './faqs/VoceroFaqRagView';
 import { VoceroAiReportsView } from './reports/VoceroAiReportsView';
+import { MyAccountTab } from '../client/account/MyAccountTab';
 import { FlaskConical } from 'lucide-react';
 import { useNewBookingAlert } from '../../hooks/useNewBookingAlert';
 import { NewBookingBanner } from '../client/NewBookingBanner';
@@ -62,7 +63,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
   useEffect(() => {
     const canonical = getVoceroTabPath(tenantSlug, activeTab);
-    const isSubSetting = ['/perfil', '/canales', '/whatsapp', '/catalogo', '/ia', '/motor-ia', '/zernio', '/ajustes'].some(s => pathname.includes(s));
+    const isSubSetting = ['/perfil', '/canales', '/whatsapp', '/catalogo', '/ia', '/motor-ia', '/zernio', '/cuenta', '/ajustes'].some(s => pathname.includes(s));
     if (!isSubSetting && pathname !== canonical && !pathname.endsWith(`/${activeTab}`) && !pathname.includes(`/${activeTab}`)) {
       navigate(canonical, { replace: true });
     }
@@ -145,6 +146,11 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
           {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
           {activeTab === 'settings' && (
             <VoceroSettingsView tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
+          )}
+          {activeTab === 'account' && (
+            <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#0b0c10]">
+              <MyAccountTab tenant={tenant} user={null} onUpdateSettings={updateSettings} />
+            </div>
           )}
         </div>
 

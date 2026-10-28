@@ -2155,6 +2155,26 @@ const memoryUsers = new Map([
 const memoryTenants = new Map();
 const memoryPresence = new Map();
 const memoryTyping = new Map();
+const memoryLeads = new Map();
+const memoryMessages = new Map();
+
+function saveMemoryMessage(sessionId, tenantId, sender, message, level = 'level_1', metadata = null) {
+  if (!sessionId || !message) return;
+  const list = memoryMessages.get(sessionId) || [];
+  const msgObj = {
+    id: 'msg_mem_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+    session_id: sessionId,
+    tenant_id: tenantId,
+    sender,
+    message,
+    rag_level_used: level,
+    metadata,
+    created_at: new Date().toISOString()
+  };
+  list.push(msgObj);
+  if (list.length > 100) list.shift();
+  memoryMessages.set(sessionId, list);
+}
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -2189,14 +2209,43 @@ export async function onRequest(context) {
     if (segments[0] === 'presence' && segments[1] === 'heartbeat' && request.method === 'POST') {
       const b = await request.json().catch(() => ({}));
       const sessionId = b.sessionId || ('anon_' + Math.random().toString(36).substring(2, 9));
+      const tSlug = b.tenantSlug || 'geosoft';
+      const actualTenantId = (tSlug === 'geosoft' || tSlug === 'ten_geosoft_prod') ? 'ten_geosoft_prod' : tSlug;
       memoryPresence.set(sessionId, {
         sessionId,
-        tenantSlug: b.tenantSlug || 'comida-callejera-xl',
+        tenantSlug: tSlug,
         currentPath: b.currentPath || '/',
         activeProduct: b.activeProduct || '',
         hasCart: Boolean(b.hasCart),
         cartTotal: Number(b.cartTotal || 0),
         lastSeen: Date.now()
+      });
+
+      // Registrar visitante en tiempo real en memoryLeads para visualización inmediata en Bandeja de Entrada
+      const leadId = 'lead_' + sessionId;
+      const existingLead = memoryLeads.get(leadId);
+      const isWa = sessionId.startsWith('wa_');
+      const nowIso = new Date().toISOString();
+      const productInfo = b.activeProduct ? ('Viendo: ' + b.activeProduct) : ('Ruta: ' + (b.currentPath || '/chat'));
+      memoryLeads.set(leadId, {
+        id: leadId,
+        tenant_id: actualTenantId,
+        session_id: sessionId,
+        name: existingLead?.name || (isWa ? ('WhatsApp ' + sessionId.slice(3)) : ('Visitante Web (' + sessionId.slice(-4) + ')')),
+        phone: existingLead?.phone || '',
+        email: existingLead?.email || '',
+        channel: isWa ? 'whatsapp' : 'web',
+        stage: existingLead?.stage || 'lead',
+        deal_value: existingLead?.deal_value || (b.cartTotal || 0),
+        tags: existingLead?.tags || ['en_vivo', 'web'],
+        notes: existingLead?.notes || productInfo,
+        ai_paused: existingLead?.ai_paused || false,
+        last_message: existingLead?.last_message || ('Abrió enlace (' + (b.activeProduct || b.currentPath || '/chat') + ')'),
+        last_message_at: nowIso,
+        created_at: existingLead?.created_at || nowIso,
+        updated_at: nowIso,
+        source: 'web',
+        source_detail: 'Visita Web Directa'
       });
 
       const now = Date.now();
@@ -2214,7 +2263,10 @@ export async function onRequest(context) {
       const active = [];
       for (const [sId, entry] of memoryPresence.entries()) {
         if (now - entry.lastSeen <= 60000) {
-          if (!tenant || entry.tenantSlug === tenant) {
+          const matches = !tenant || entry.tenantSlug === tenant ||
+            (tenant === 'ten_geosoft_prod' && entry.tenantSlug === 'geosoft') ||
+            (tenant === 'geosoft' && entry.tenantSlug === 'ten_geosoft_prod');
+          if (matches) {
             active.push({ ...entry, secondsAgo: Math.round((now - entry.lastSeen) / 1000) });
           }
         } else {
@@ -4719,10 +4771,26 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     // CHAT: GET /api/chat/messages/:sessionId
     if (segments[0] === 'chat' && segments[1] === 'messages' && segments.length === 3 && request.method === 'GET') {
       const sessionId = decodeURIComponent(segments[2]);
-      const rows = await executeD1(
-        'SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM (SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at DESC LIMIT 100) sub ORDER BY created_at ASC',
-        [sessionId]
-      );
+      let rows = [];
+      try {
+        rows = await executeD1(
+          'SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM (SELECT id, session_id, sender, message, rag_level_used, metadata, created_at FROM chat_messages WHERE session_id = ?1 ORDER BY created_at DESC LIMIT 100) sub ORDER BY created_at ASC',
+          [sessionId]
+        );
+      } catch (d1Err) {
+        console.warn('D1 read messages fallback to memory:', d1Err.message);
+      }
+
+      // Fusionar con memoryMessages (en memoria) para tolerancia a cuota y visualización en tiempo real
+      const memList = memoryMessages.get(sessionId) || [];
+      const seenIds = new Set(rows.map(r => r.id));
+      for (const m of memList) {
+        if (!seenIds.has(m.id)) {
+          rows.push(m);
+          seenIds.add(m.id);
+        }
+      }
+      rows.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
       let activeOrder = null;
       try {
         const orderRows = await executeD1(
@@ -5072,7 +5140,7 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
     // CRM: GET /api/crm/leads/:tenantId
     if (segments[0] === 'crm' && segments[1] === 'leads' && segments.length === 3 && request.method === 'GET') {
       const tenantParam = segments[2];
-      await ensureCrmLeadsTable();
+      try { await ensureCrmLeadsTable(); } catch (e) {}
 
       let tenantId = tenantParam;
       if (tenantParam === 'geosoft' || tenantParam === 'ten_geosoft_prod') {
@@ -5106,19 +5174,37 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
             s.created_at,
             s.updated_at
           FROM chat_sessions s
-          WHERE (s.tenant_id = ?1 OR s.tenant_id = ?2) AND (SELECT COUNT(*) FROM chat_messages WHERE session_id = s.id) > 0
+          WHERE (s.tenant_id = ?1 OR s.tenant_id = ?2)
         `, [tenantId, tenantParam]);
       } catch (syncErr) {
         console.warn('Sync crm_leads warning:', syncErr.message);
       }
 
-      const rows = await executeD1(
-        `SELECT id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at
-         FROM crm_leads
-         WHERE tenant_id = ?1 OR tenant_id = ?2
-         ORDER BY updated_at DESC`,
-        [tenantId, tenantParam]
-      );
+      let rows = [];
+      try {
+        rows = await executeD1(
+          `SELECT id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, created_at, updated_at
+           FROM crm_leads
+           WHERE tenant_id = ?1 OR tenant_id = ?2
+           ORDER BY updated_at DESC`,
+          [tenantId, tenantParam]
+        );
+      } catch (d1Err) {
+        console.warn('D1 read leads fallback to memory:', d1Err.message);
+      }
+
+      // Fusionar leads de D1 con memoryLeads (en memoria) para asegurar visualización de enlaces abiertos y visitantes en vivo
+      const existingSessionIds = new Set(rows.map(r => r.session_id).filter(Boolean));
+      const existingLeadIds = new Set(rows.map(r => r.id));
+
+      for (const [mId, mLead] of memoryLeads.entries()) {
+        const matchesTenant = !mLead.tenant_id || mLead.tenant_id === tenantId || mLead.tenant_id === tenantParam || tenantParam === 'geosoft' || tenantId === 'ten_geosoft_prod';
+        if (matchesTenant && !existingLeadIds.has(mLead.id) && !existingSessionIds.has(mLead.session_id)) {
+          rows.unshift(mLead);
+          existingLeadIds.add(mLead.id);
+          if (mLead.session_id) existingSessionIds.add(mLead.session_id);
+        }
+      }
 
       const parsedLeads = rows.map(r => {
         const rawTags = Array.isArray(r.tags) ? r.tags : (typeof r.tags === 'string' && r.tags.startsWith('[') ? JSON.parse(r.tags) : []);
@@ -5304,13 +5390,22 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
       if (!message || !message.trim()) return jsonResponse({ error: 'Mensaje requerido' }, 400);
 
       // Obtener datos del lead
-      const rows = await executeD1(
-        `SELECT id, tenant_id, session_id, phone, channel FROM crm_leads WHERE id = ?1 OR session_id = ?1 LIMIT 1`,
-        [leadId]
-      );
-      if (rows.length === 0) return jsonResponse({ error: 'Lead no encontrado' }, 404);
+      let lead = null;
+      try {
+        const rows = await executeD1(
+          `SELECT id, tenant_id, session_id, phone, channel FROM crm_leads WHERE id = ?1 OR session_id = ?1 LIMIT 1`,
+          [leadId]
+        );
+        if (rows.length > 0) lead = rows[0];
+      } catch (e) {}
 
-      const lead = rows[0];
+      if (!lead) {
+        lead = memoryLeads.get(leadId) || memoryLeads.get('lead_' + leadId);
+      }
+      if (!lead) {
+        lead = { id: leadId, tenant_id: tenantId || 'ten_geosoft_prod', session_id: leadId, phone: '', channel: 'web' };
+      }
+
       let actualTenantId = tenantId || lead.tenant_id;
       const targetSessionId = lead.session_id || leadId;
       const agentMsgId = 'msg_' + Date.now() + '_agent';
@@ -5336,18 +5431,31 @@ PASO 4 (Cierre & Canalización a WhatsApp): Confirma la intención de compra, re
         console.warn('Session init warning:', sessErr.message);
       }
 
+      // Guardar en memoria para disponibilidad inmediata
+      saveMemoryMessage(targetSessionId, actualTenantId, 'agent', message.trim(), 'human_takeover');
+      const memLead = memoryLeads.get(lead.id) || memoryLeads.get('lead_' + targetSessionId);
+      if (memLead) {
+        memLead.last_message = message.trim();
+        memLead.last_message_at = new Date().toISOString();
+        memLead.updated_at = new Date().toISOString();
+      }
+
       // 1. Guardar mensaje en chat_messages como sender = 'agent'
-      await executeD1(
-        `INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used)
-         VALUES (?1, ?2, ?3, 'agent', ?4, 'human_takeover')`,
-        [agentMsgId, targetSessionId, actualTenantId, message.trim()]
-      );
+      try {
+        await executeD1(
+          `INSERT INTO chat_messages (id, session_id, tenant_id, sender, message, rag_level_used)
+           VALUES (?1, ?2, ?3, 'agent', ?4, 'human_takeover')`,
+          [agentMsgId, targetSessionId, actualTenantId, message.trim()]
+        );
+      } catch (e) {}
 
       // 2. Actualizar último mensaje en crm_leads
-      await executeD1(
-        `UPDATE crm_leads SET last_message = ?1, last_message_at = datetime('now'), updated_at = datetime('now') WHERE id = ?2`,
-        [message.trim(), lead.id]
-      );
+      try {
+        await executeD1(
+          `UPDATE crm_leads SET last_message = ?1, last_message_at = datetime('now'), updated_at = datetime('now') WHERE id = ?2`,
+          [message.trim(), lead.id]
+        );
+      } catch (e) {}
 
       // 3. Si el canal es WhatsApp, despachar directamente por Meta Cloud API
       let waDelivered = false;
@@ -6725,7 +6833,9 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
         console.warn('Msg D1 warning:', msgErr.message);
       }
 
-      // Sincronizar automáticamente hacia crm_leads (Vocero CRM)
+      saveMemoryMessage(currentSessionId, actualTenantId, 'user', message);
+
+      // Sincronizar automáticamente hacia crm_leads (Vocero CRM) y memoryLeads
       try {
         const leadTags = [];
         if (adCamp) leadTags.push(`camp:${adCamp}`);
@@ -6736,6 +6846,31 @@ function checkSlotAvailability(requestedDate, requestedTime, existingBookings = 
           adDesc ? `Anuncio visto: ${adDesc}` : '',
           adUrl ? `URL: ${adUrl}` : ''
         ].filter(Boolean).join(' | ');
+
+        const leadId = 'lead_' + currentSessionId;
+        const memLead = memoryLeads.get(leadId);
+        const isWa = currentSessionId.startsWith('wa_');
+        const nowIso = new Date().toISOString();
+        memoryLeads.set(leadId, {
+          id: leadId,
+          tenant_id: actualTenantId,
+          session_id: currentSessionId,
+          name: leadInfo?.name || memLead?.name || (isWa ? ('WhatsApp ' + currentSessionId.slice(3)) : ('Visitante Web (' + currentSessionId.slice(-4) + ')')),
+          phone: leadInfo?.phone || (isWa ? currentSessionId.replace('wa_', '') : (memLead?.phone || '')),
+          email: leadInfo?.email || memLead?.email || '',
+          channel: adSource || memLead?.channel || (isWa ? 'whatsapp' : 'web'),
+          stage: memLead?.stage || 'lead',
+          deal_value: memLead?.deal_value || 0,
+          tags: leadTags.length > 0 ? leadTags : (memLead?.tags || ['web']),
+          notes: leadNotes || memLead?.notes || '',
+          ai_paused: memLead?.ai_paused || false,
+          last_message: message,
+          last_message_at: nowIso,
+          created_at: memLead?.created_at || nowIso,
+          updated_at: nowIso,
+          source: 'web',
+          source_detail: 'Visita Web Directa'
+        });
 
         await executeD1(`
           INSERT INTO crm_leads (id, tenant_id, session_id, name, phone, email, channel, stage, deal_value, tags, notes, ai_paused, last_message, last_message_at, updated_at)

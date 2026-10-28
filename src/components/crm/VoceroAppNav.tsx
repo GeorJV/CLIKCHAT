@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { VoceroBrandLogo } from './VoceroBrandLogo';
 
-export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'faqs' | 'lab' | 'analyst' | 'results' | 'reports' | 'settings';
+export type VoceroNavTab = 'inbox' | 'pipeline' | 'contacts' | 'bookings' | 'clikchat' | 'products' | 'onboarding' | 'agent' | 'faqs' | 'lab' | 'analyst' | 'results' | 'reports' | 'settings' | 'account';
 
 interface VoceroAppNavProps {
   activeTab: VoceroNavTab;
@@ -119,18 +119,32 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
           <span className="flex-1 text-left">Ajustes</span>
         </button>
 
-        {/* Perfil del Operador */}
-        <div className="flex items-center gap-2 rounded-lg bg-[#070e20] p-2 border border-[#263866]/60">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1f3f82] text-[11px] font-bold text-[#6f9eff]">
+        {/* Perfil del Operador & Acceso Directo a Mi Cuenta */}
+        <div
+          onClick={() => onSelectTab('account')}
+          role="button"
+          tabIndex={0}
+          title="Ver Mi Cuenta, Plan, Facturación y Vencimiento"
+          className={`flex items-center gap-2 rounded-lg p-2 border transition-all cursor-pointer group ${
+            activeTab === 'account'
+              ? 'bg-[#0d5bff] border-[#3b82f6] shadow-md shadow-[#0d5bff]/25'
+              : 'bg-[#070e20] hover:bg-[#132247] border-[#263866]/60'
+          }`}
+        >
+          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+            activeTab === 'account' ? 'bg-white text-[#0d5bff]' : 'bg-[#1f3f82] text-[#6f9eff] group-hover:bg-[#0d5bff] group-hover:text-white'
+          }`}>
             {(userName || 'AD').slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-white leading-tight">{userName || 'Negocio'}</p>
-            <p className="truncate text-[10px] text-[#7688b0] leading-tight">Propietario · En línea</p>
+            <p className={`truncate text-[10px] leading-tight ${activeTab === 'account' ? 'text-blue-100 font-bold' : 'text-[#7688b0] group-hover:text-emerald-400'}`}>
+              Mi Cuenta & Suscripción
+            </p>
           </div>
           {onLogout && (
             <button
-              onClick={onLogout}
+              onClick={(e) => { e.stopPropagation(); onLogout(); }}
               title="Cerrar Sesión"
               className="p-1 rounded text-[#7688b0] hover:text-rose-400 transition cursor-pointer"
             >
@@ -138,7 +152,7 @@ export const VoceroAppNav: React.FC<VoceroAppNavProps> = ({
             </button>
           )}
           <button
-            onClick={onSwitchToClassic}
+            onClick={(e) => { e.stopPropagation(); onSwitchToClassic(); }}
             title="Volver a ClikChat Clásico"
             className="p-1 rounded text-[#7688b0] hover:text-[#3fdcff] transition cursor-pointer"
           >

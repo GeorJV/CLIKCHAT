@@ -1,55 +1,51 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tenant, Product } from '../../../types';
-import { MessageSquare, Store, ShoppingBag, Cpu, Settings, Network, Menu, Check } from 'lucide-react';
+import { MessageSquare, Store, ShoppingBag, Cpu, Settings, Network, Menu, Check, UserCheck } from 'lucide-react';
 import { VoceroChannelsSettings } from './VoceroChannelsSettings';
 import { VoceroZernioSettings } from './VoceroZernioSettings';
 import { VoceroBusinessProfileSettings } from './VoceroBusinessProfileSettings';
 import { VoceroCatalogSettings } from './VoceroCatalogSettings';
 import { VoceroAiModelSettings } from './VoceroAiModelSettings';
+import { MyAccountTab } from '../../client/account/MyAccountTab';
 
 interface VoceroSettingsViewProps {
-  tenant: Tenant | null;
-  tenantSlug: string;
-  products: Product[];
+  tenant: Tenant | null; tenantSlug: string; products: Product[];
   onUpdateSettings: (updates: Partial<Tenant>) => Promise<boolean>;
   onCreateProduct: (data: Partial<Product> & { name: string; price: number }) => Promise<boolean>;
   onUpdateProduct: (id: string, updates: Partial<Product>) => Promise<boolean>;
   onDeleteProduct: (id: string) => Promise<boolean>;
 }
 
+type SettingsSubTab = 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio' | 'cuenta';
+
 export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
-  tenant, tenantSlug, products, onUpdateSettings,
-  onCreateProduct, onUpdateProduct, onDeleteProduct,
+  tenant, tenantSlug, products, onUpdateSettings, onCreateProduct, onUpdateProduct, onDeleteProduct,
 }) => {
-  const getInitialSubTab = (): 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio' => {
+  const getInitialSubTab = (): SettingsSubTab => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname.toLowerCase();
       if (p.includes('/canales') || p.includes('/whatsapp')) return 'canales';
       if (p.includes('/catalogo')) return 'catalogo';
       if (p.includes('/ia') || p.includes('/motor-ia') || p.includes('/motor-ai')) return 'ia';
       if (p.includes('/zernio')) return 'zernio';
-      if (p.includes('/perfil')) return 'perfil';
+      if (p.includes('/cuenta') || p.includes('/mi-cuenta')) return 'cuenta';
       const saved = localStorage.getItem('clikchat_settings_subtab_' + tenantSlug);
-      if (saved === 'canales' || saved === 'catalogo' || saved === 'ia' || saved === 'zernio' || saved === 'perfil') return saved;
+      if (['canales', 'catalogo', 'ia', 'zernio', 'cuenta', 'perfil'].includes(saved as any)) return saved as SettingsSubTab;
     }
     return 'perfil';
   };
 
-  const [subTab, setSubTab] = useState<'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio'>(getInitialSubTab);
+  const [subTab, setSubTab] = useState<SettingsSubTab>(getInitialSubTab);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onSync = () => setSubTab(getInitialSubTab());
-    window.addEventListener('popstate', onSync);
-    window.addEventListener('app-navigate', onSync);
-    return () => {
-      window.removeEventListener('popstate', onSync);
-      window.removeEventListener('app-navigate', onSync);
-    };
+    window.addEventListener('popstate', onSync); window.addEventListener('app-navigate', onSync);
+    return () => { window.removeEventListener('popstate', onSync); window.removeEventListener('app-navigate', onSync); };
   }, [tenantSlug]);
 
-  const handleSelectSubTab = (tabId: 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio') => {
+  const handleSelectSubTab = (tabId: SettingsSubTab) => {
     setSubTab(tabId);
     if (typeof window !== 'undefined' && tenantSlug) {
       localStorage.setItem('clikchat_settings_subtab_' + tenantSlug, tabId);
@@ -59,9 +55,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsMenuOpen(false);
-    };
+    const handleClickOutside = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsMenuOpen(false); };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -72,6 +66,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
     { id: 'catalogo' as const, label: 'Catálogo / Menú', shortLabel: 'Catálogo', icon: ShoppingBag, badge: products.length },
     { id: 'ia' as const, label: 'Motor de IA', shortLabel: 'Motor IA', icon: Cpu },
     { id: 'zernio' as const, label: 'Zernio Multicanal', shortLabel: 'Zernio', icon: Network },
+    { id: 'cuenta' as const, label: 'Mi Cuenta & Suscripción', shortLabel: 'Mi Cuenta', icon: UserCheck },
   ];
 
   return (
@@ -173,6 +168,7 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
           />
         )}
         {subTab === 'ia' && <VoceroAiModelSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
+        {subTab === 'cuenta' && <MyAccountTab tenant={tenant} user={null} onUpdateSettings={onUpdateSettings} />}
       </main>
     </div>
   );

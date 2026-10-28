@@ -14,6 +14,7 @@ interface VoceroConversationListProps {
   onSetSearchTerm: (term: string) => void;
   onOpenNewLeadModal: () => void;
   isLoading: boolean;
+  tenantSlug?: string;
 }
 
 export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
@@ -26,6 +27,7 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
   onSetSearchTerm,
   onOpenNewLeadModal,
   isLoading,
+  tenantSlug,
 }) => {
   const filteredLeads = leads.filter(l => {
     const term = (searchTerm || '').toLowerCase();
@@ -63,7 +65,7 @@ export const VoceroConversationList: React.FC<VoceroConversationListProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <LiveVisitorsBar onSelectLeadChat={onSelectLead} />
+            <LiveVisitorsBar tenantSlug={tenantSlug} onSelectLeadChat={onSelectLead} />
             <button
               onClick={onOpenNewLeadModal}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ebf1ff] hover:bg-[#d3e2ff] text-[#0038d8] text-[11.5px] font-bold transition cursor-pointer"

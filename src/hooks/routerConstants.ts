@@ -61,6 +61,7 @@ export const VOCERO_TAB_ROUTE_MAP: Record<VoceroNavTab, string> = {
   results: 'resultados',
   reports: 'reportes',
   settings: 'ajustes',
+  account: 'mi-cuenta',
 };
 
 export const ROUTE_VOCERO_TAB_MAP: Record<string, VoceroNavTab> = {
@@ -115,6 +116,10 @@ export const ROUTE_VOCERO_TAB_MAP: Record<string, VoceroNavTab> = {
   chatbot: 'clikchat',
   'mi-negocio': 'settings',
   dashboard: 'settings',
+  'mi-cuenta': 'account',
+  cuenta: 'account',
+  account: 'account',
+  user: 'account',
 };
 
 export function getTenantTabPath(slug?: string, tab: ClientTab = 'business'): string {

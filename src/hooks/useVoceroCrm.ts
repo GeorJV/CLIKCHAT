@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CrmLead, CrmMessage, CrmStageId, CrmInboxFilter } from '../types/crm';
+import { useSmartPolling } from './useSmartPolling';
 
 export function useVoceroCrm(tenantId?: string) {
   const [leads, setLeads] = useState<CrmLead[]>([]);
@@ -12,7 +13,6 @@ export function useVoceroCrm(tenantId?: string) {
 
   const loadLeads = useCallback(async () => {
     if (!tenantId) return;
-    setIsLoadingLeads(true);
     try {
       const res = await fetch(`/api/crm/leads/${tenantId}`);
       if (res.ok) {
@@ -33,13 +33,13 @@ export function useVoceroCrm(tenantId?: string) {
     }
   }, [tenantId]);
 
-  useEffect(() => { loadLeads(); }, [loadLeads]);
+  useEffect(() => { setIsLoadingLeads(true); loadLeads(); }, [loadLeads]);
+  useSmartPolling(loadLeads, { intervalMs: 8000, enabled: Boolean(tenantId), runImmediatelyOnFocus: true });
   useEffect(() => { if (leads.length > 0 && !selectedLeadId) setSelectedLeadId(leads[0].id); }, [leads, selectedLeadId]);
 
-  const selectedLead = leads.find(l => l.id === selectedLeadId) || null;
+  const selectedLead = leads.find(l => l.id === selectedLeadId || l.session_id === selectedLeadId) || null;
 
   const loadMessages = useCallback(async (sessionId: string) => {
-    setIsLoadingMessages(true);
     try {
       const res = await fetch(`/api/chat/messages/${sessionId}`);
       if (res.ok) { const data = await res.json(); setMessages(data.messages || []); }
@@ -48,9 +48,14 @@ export function useVoceroCrm(tenantId?: string) {
   }, []);
 
   useEffect(() => {
-    if (selectedLead?.session_id) loadMessages(selectedLead.session_id);
+    if (selectedLead?.session_id) { setIsLoadingMessages(true); loadMessages(selectedLead.session_id); }
     else setMessages([]);
   }, [selectedLead?.session_id, loadMessages]);
+
+  const pollActiveMessages = useCallback(() => {
+    if (selectedLead?.session_id) loadMessages(selectedLead.session_id);
+  }, [selectedLead?.session_id, loadMessages]);
+  useSmartPolling(pollActiveMessages, { intervalMs: 6000, enabled: Boolean(selectedLead?.session_id), runImmediatelyOnFocus: true });
 
   const changeLeadStage = useCallback(async (leadId: string, stage: CrmStageId) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage } : l));
