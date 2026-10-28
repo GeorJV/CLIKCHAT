@@ -62,7 +62,7 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
   useEffect(() => {
     const canonical = getVoceroTabPath(tenantSlug, activeTab);
-    const isSubSetting = pathname.includes('/perfil') || pathname.includes('/canales') || pathname.includes('/whatsapp');
+    const isSubSetting = ['/perfil', '/canales', '/whatsapp', '/catalogo', '/ia', '/motor-ia', '/zernio', '/ajustes'].some(s => pathname.includes(s));
     if (!isSubSetting && pathname !== canonical && !pathname.endsWith(`/${activeTab}`) && !pathname.includes(`/${activeTab}`)) {
       navigate(canonical, { replace: true });
     }
@@ -70,7 +70,11 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
 
   const handleSelectTab = (tab: VoceroNavTab, subPath?: string) => {
     setActiveTab(tab);
-    const targetPath = subPath ? `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${subPath}` : getVoceroTabPath(tenantSlug, tab);
+    let targetPath = subPath ? `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${subPath}` : getVoceroTabPath(tenantSlug, tab);
+    if (tab === 'settings' && !subPath && typeof window !== 'undefined') {
+      const saved = localStorage.getItem('clikchat_settings_subtab_' + tenantSlug);
+      if (saved) targetPath = `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${saved}`;
+    }
     if (pathname !== targetPath) navigate(targetPath);
   };
 

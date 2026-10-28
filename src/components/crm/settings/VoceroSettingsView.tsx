@@ -26,8 +26,11 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
       const p = window.location.pathname.toLowerCase();
       if (p.includes('/canales') || p.includes('/whatsapp')) return 'canales';
       if (p.includes('/catalogo')) return 'catalogo';
-      if (p.includes('/ia')) return 'ia';
+      if (p.includes('/ia') || p.includes('/motor-ia') || p.includes('/motor-ai')) return 'ia';
       if (p.includes('/zernio')) return 'zernio';
+      if (p.includes('/perfil')) return 'perfil';
+      const saved = localStorage.getItem('clikchat_settings_subtab_' + tenantSlug);
+      if (saved === 'canales' || saved === 'catalogo' || saved === 'ia' || saved === 'zernio' || saved === 'perfil') return saved;
     }
     return 'perfil';
   };
@@ -37,15 +40,21 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onPop = () => setSubTab(getInitialSubTab());
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
+    const onSync = () => setSubTab(getInitialSubTab());
+    window.addEventListener('popstate', onSync);
+    window.addEventListener('app-navigate', onSync);
+    return () => {
+      window.removeEventListener('popstate', onSync);
+      window.removeEventListener('app-navigate', onSync);
+    };
+  }, [tenantSlug]);
 
   const handleSelectSubTab = (tabId: 'perfil' | 'canales' | 'catalogo' | 'ia' | 'zernio') => {
     setSubTab(tabId);
     if (typeof window !== 'undefined' && tenantSlug) {
+      localStorage.setItem('clikchat_settings_subtab_' + tenantSlug, tabId);
       window.history.pushState({}, '', `/user/mi-negocio/${encodeURIComponent(tenantSlug)}/${tabId}`);
+      window.dispatchEvent(new Event('app-navigate'));
     }
   };
 
@@ -96,18 +105,14 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
                   type="button"
                   onClick={() => handleSelectSubTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0 ${
-                    active
-                      ? 'bg-white text-[#0d5bff] shadow-xs'
-                      : 'text-[#475569] hover:text-[#0a1730] hover:bg-white/60'
+                    active ? 'bg-white text-[#0d5bff] shadow-xs' : 'text-[#475569] hover:text-[#0a1730] hover:bg-white/60'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span className="hidden xl:inline">{tab.label}</span>
                   <span className="inline xl:hidden">{tab.shortLabel}</span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="ml-1 rounded-full bg-[#e8edf6] px-1.5 py-0.2 text-[10px] font-bold text-[#42506b]">
-                      {tab.badge}
-                    </span>
+                    <span className="ml-1 rounded-full bg-[#e8edf6] px-1.5 py-0.2 text-[10px] font-bold text-[#42506b]">{tab.badge}</span>
                   )}
                 </button>
               );
@@ -163,12 +168,8 @@ export const VoceroSettingsView: React.FC<VoceroSettingsViewProps> = ({
         {subTab === 'perfil' && <VoceroBusinessProfileSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
         {subTab === 'catalogo' && (
           <VoceroCatalogSettings
-            products={products}
-            currency={tenant?.currency}
-            tenantSlug={tenantSlug}
-            onCreateProduct={onCreateProduct}
-            onUpdateProduct={onUpdateProduct}
-            onDeleteProduct={onDeleteProduct}
+            products={products} currency={tenant?.currency} tenantSlug={tenantSlug}
+            onCreateProduct={onCreateProduct} onUpdateProduct={onUpdateProduct} onDeleteProduct={onDeleteProduct}
           />
         )}
         {subTab === 'ia' && <VoceroAiModelSettings tenant={tenant} onUpdateSettings={onUpdateSettings} />}
