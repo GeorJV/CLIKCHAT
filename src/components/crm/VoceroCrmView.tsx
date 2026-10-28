@@ -88,75 +88,58 @@ export const VoceroCrmView: React.FC<VoceroCrmViewProps> = ({ tenantId, tenantSl
         userName={tenant?.name || tenantName || tenantSlug} onSwitchToClassic={() => setVoceroMode(false)} onLogout={onLogout}
       />
 
-      <main className="flex-1 h-full min-w-0 overflow-hidden relative bg-[#f6f8fc]">
+      <main className="flex-1 h-full min-w-0 flex flex-col overflow-hidden relative bg-[#f6f8fc]">
         {newBooking && (
-          <div className="px-4 sm:px-6 pt-3">
+          <div className="shrink-0 px-4 sm:px-6 pt-3">
             <NewBookingBanner booking={newBooking} onViewBooking={(b) => { focusBooking(b); handleSelectTab('bookings'); }} onDismiss={dismissAlert} />
           </div>
         )}
-        {activeTab === 'inbox' && (
-          <VoceroInbox
-            leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
-            onSelectLead={setSelectedLeadId} messages={messages} isLoadingLeads={isLoadingLeads}
-            isLoadingMessages={isLoadingMessages} filterInbox={filterInbox} onSetFilterInbox={setFilterInbox}
-            searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
-            onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
-            businessType={tenant?.business_type || (tenant as any)?.businessType}
-          />
-        )}
-        {activeTab === 'pipeline' && (
-          <VoceroPipelineBoard leads={leads} onSelectLead={handleSelectLeadFromPipeline} onChangeStage={changeLeadStage} onCreateLead={createLead} businessType={tenant?.business_type || (tenant as any)?.businessType} />
-        )}
-        {activeTab === 'contacts' && (
-          <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} />
-        )}
-        {activeTab === 'bookings' && (
-          <VoceroBookingsView
-            tenantId={tenant?.id || tenantId} currency={tenant?.currency}
-            highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking}
-          />
-        )}
-        {activeTab === 'clikchat' && (
-          <VoceroClikChatView
-            tenant={tenant} tenantSlug={tenantSlug} leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
-            onSelectLead={setSelectedLeadId} messages={messages} onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateSettings={updateSettings}
-          />
-        )}
-        {activeTab === 'products' && (
-          <VoceroProductsView products={products} tenant={tenant} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
-        )}
-        {activeTab === 'onboarding' && (
-          <VoceroOnboardingView
-            tenant={tenant}
-            products={products}
-            faqs={faqs}
-            onNavigateTab={handleSelectTab}
-            onUpdateSettings={updateSettings}
-            onCreateProduct={createProduct}
-            onCreateFaq={createFaq}
-          />
-        )}
-        {activeTab === 'agent' && (
-          <VoceroAgentView
-            tenant={tenant} tenantSlug={tenantSlug} faqs={faqs} onUpdateSettings={updateSettings}
-            onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq}
-          />
-        )}
-        {activeTab === 'faqs' && (
-          <VoceroFaqRagView
-            faqs={faqs} unresolved={unresolved} onCreateFaq={createFaq}
-            onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onResolveQuery={resolveQuery}
-          />
-        )}
-        {activeTab === 'lab' && (
-          <VoceroAiSandbox tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} tenant={tenant} tenantName={tenant?.name || tenantName} products={products} faqs={faqs} onCreateFaq={createFaq} />
-        )}
-        {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
-        {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} onOpenInboxLead={() => handleSelectTab('inbox')} />}
-        {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
-        {activeTab === 'settings' && (
-          <VoceroSettingsView tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
-        )}
+        <div className="flex-1 min-h-0 h-full w-full overflow-hidden">
+          {activeTab === 'inbox' && (
+            <VoceroInbox
+              leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
+              onSelectLead={setSelectedLeadId} messages={messages} isLoadingLeads={isLoadingLeads}
+              isLoadingMessages={isLoadingMessages} filterInbox={filterInbox} onSetFilterInbox={setFilterInbox}
+              searchTerm={searchTerm} onSetSearchTerm={setSearchTerm} onChangeStage={changeLeadStage}
+              onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateLead={updateLead} onOpenNewLeadModal={() => handleSelectTab('pipeline')}
+              businessType={tenant?.business_type || (tenant as any)?.businessType}
+            />
+          )}
+          {activeTab === 'pipeline' && (
+            <VoceroPipelineBoard leads={leads} onSelectLead={handleSelectLeadFromPipeline} onChangeStage={changeLeadStage} onCreateLead={createLead} businessType={tenant?.business_type || (tenant as any)?.businessType} />
+          )}
+          {activeTab === 'contacts' && <VoceroContactsView leads={leads} onSelectLead={handleSelectLeadFromPipeline} />}
+          {activeTab === 'bookings' && (
+            <VoceroBookingsView tenantId={tenant?.id || tenantId} currency={tenant?.currency} highlightedBookingId={highlightedBookingId} onAcknowledgeBooking={acknowledgeBooking} />
+          )}
+          {activeTab === 'clikchat' && (
+            <VoceroClikChatView
+              tenant={tenant} tenantSlug={tenantSlug} leads={leads} selectedLead={selectedLead} selectedLeadId={selectedLeadId}
+              onSelectLead={setSelectedLeadId} messages={messages} onToggleTakeover={toggleTakeover} onSendMessage={sendAgentMessage} onUpdateSettings={updateSettings}
+            />
+          )}
+          {activeTab === 'products' && (
+            <VoceroProductsView products={products} tenant={tenant} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
+          )}
+          {activeTab === 'onboarding' && (
+            <VoceroOnboardingView tenant={tenant} products={products} faqs={faqs} onNavigateTab={handleSelectTab} onUpdateSettings={updateSettings} onCreateProduct={createProduct} onCreateFaq={createFaq} />
+          )}
+          {activeTab === 'agent' && (
+            <VoceroAgentView tenant={tenant} tenantSlug={tenantSlug} faqs={faqs} onUpdateSettings={updateSettings} onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} />
+          )}
+          {activeTab === 'faqs' && (
+            <VoceroFaqRagView faqs={faqs} unresolved={unresolved} onCreateFaq={createFaq} onUpdateFaq={updateFaq} onDeleteFaq={deleteFaq} onResolveQuery={resolveQuery} />
+          )}
+          {activeTab === 'lab' && (
+            <VoceroAiSandbox tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} tenant={tenant} tenantName={tenant?.name || tenantName} products={products} faqs={faqs} onCreateFaq={createFaq} />
+          )}
+          {activeTab === 'analyst' && <VoceroAiAnalystView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} currency={tenant?.currency} />}
+          {activeTab === 'reports' && <VoceroAiReportsView tenantSlug={tenantSlug} tenantId={tenant?.id || tenantId} onOpenInboxLead={() => handleSelectTab('inbox')} />}
+          {activeTab === 'results' && <VoceroResultsView leads={leads} tenantSlug={tenantSlug} currency={tenant?.currency} products={products} onTrackProductEvent={trackProductEvent} />}
+          {activeTab === 'settings' && (
+            <VoceroSettingsView tenant={tenant} tenantSlug={tenantSlug} products={products} onUpdateSettings={updateSettings} onCreateProduct={createProduct} onUpdateProduct={updateProduct} onDeleteProduct={deleteProduct} />
+          )}
+        </div>
 
         {/* Botón flotante para probar el bot al instante desde cualquier pantalla */}
         {activeTab !== 'lab' && (

@@ -16,6 +16,31 @@
 
 ## 📦 REGISTRO DE HITOS APROBADOS
 
+### [2026-10-28] Visibilidad y Fijación Total del Input de Chat en VoceroAiSandbox y Blindaje Viewport Flexbox (v2.9.10)
+- **Diagnóstico y Causas Raíces:**
+  1. *Desplazamiento por Banner de Nueva Cita en Contenedor Block:* En `VoceroCrmView.tsx`, `<main>` estaba configurado como un contenedor en bloque estándar (`flex-1 h-full min-w-0 overflow-hidden relative`). Cuando un usuario confirmaba una cita (o existía una cita nueva en `localStorage`), `NewBookingBanner` se renderizaba al inicio ocupando ~65px. Directamente debajo, `VoceroAiSandbox` solicitaba `h-full` (100% de la altura de la pantalla), lo que sumaba 100vh + 65px. Debido al `overflow-hidden` del padre, los 65px inferiores de `VoceroAiSandbox` quedaban expulsados hacia abajo fuera de la pantalla, dejando únicamente el borde superior ("orillita") de los botones de pruebas rápidas y cortando por completo la barra de entrada de texto (`<input>`).
+  2. *Ausencia de `min-h-0` en Contenedores Flexbox Anidados:* El área de mensajes con scroll (`containerRef`) en `VoceroAiSandbox.tsx` y el `<main>` en `App.tsx` carecían de la propiedad CSS `min-h-0`. Por especificación W3C de Flexbox, el valor predeterminado es `min-height: auto`, lo que en ciertas resoluciones y redimensionamientos impedía que el contenedor de mensajes se encogiera por debajo de su contenido, empujando los elementos inferiores fuera del viewport.
+  3. *Pie de Entrada No Agrupado:* Las pruebas rápidas y la barra de input estaban divididas en divs sueltos sin un pie `<footer>` unificado con `shrink-0 bg-white border-t z-10`.
+- **Solución Quirúrgica Implementada (ARQMODULAR & KISS):**
+  1. *Blindaje Flexbox en `VoceroCrmView.tsx` (160 líneas):*
+     - `<main>` convertido a `flex flex-col flex-1 h-full min-w-0 overflow-hidden`.
+     - `NewBookingBanner` configurado con `shrink-0` para tomar solo su espacio natural.
+     - Contenedor de vistas activo encapsulado en `<div className="flex-1 min-h-0 h-full w-full overflow-hidden">`, garantizando que `VoceroAiSandbox` reciba exactamente el 100% del espacio restante sin desbordar ni 1 píxel.
+  2. *Estructura Inmóvil y Viewport Seguro en `VoceroAiSandbox.tsx` (176 líneas):*
+     - Contenedor raíz blindado con `h-full max-h-full min-h-0 overflow-hidden`.
+     - Mensajes con `flex-1 min-h-0 overflow-y-auto`, permitiendo que el área de scroll se ajuste fluidamente a cualquier pantalla o teclado.
+     - Pruebas Rápidas y barra de texto agrupadas en `<footer className="shrink-0 bg-white border-t border-[#e8edf6] z-10">`, fijas y visibles siempre dentro de la ventana.
+  3. *Blindaje en `src/App.tsx`:*
+     - Agregado `min-h-0` al `<main>` de nivel superior para garantizar el respeto incondicional de `100dvh`.
+- **Verificación en Producción (3 Filtros):**
+  - *Filtro 1:* Compilación TypeScript/Vite limpia (`npm run build`) en 14.43s con 0 errores (`dist/assets/index-BWowIvko.js`).
+  - *Filtro 2:* Sincronización en GitHub rama `main` y despliegue dual vía Wrangler en `https://clikchat.pages.dev` y `https://clikchatcrm.pages.dev`.
+  - *Filtro 3:* Hash match 100% y 17/17 rutas operativas en Chrome Headless (`verify-deploy.js`).
+
+*Agregado al historial de cambios aplicando el filtro de los tres pasos.*
+
+
+
 ### [2026-10-28] Pipeline de Ventas Dinámico: Adaptación de Etapa 'Cita' vs 'Comanda' según Modalidad Comercial y Rediseño Flush Contiguo (v2.9.9)
 - **Diagnóstico y Necesidad:**
   1. *Etiqueta Inadecuada de Etapa en Negocios de Servicios:*

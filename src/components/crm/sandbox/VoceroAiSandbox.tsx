@@ -30,11 +30,8 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
   const [activeCorrection, setActiveCorrection] = useState<{ msg: SandboxMsg; userQuestion: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sincronización inmediata al cambiar ajustes del tenant
   useEffect(() => {
-    if (tenant && messages.length === 1 && messages[0].sender === 'assistant') {
-      setMessages([{ ...messages[0], text: getWelcome() }]);
-    }
+    if (tenant && messages.length === 1 && messages[0].sender === 'assistant') setMessages([{ ...messages[0], text: getWelcome() }]);
   }, [tenant?.welcome_message, tenant?.bot_name, tenant?.name]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior });
@@ -115,7 +112,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
   const botLabel = getBotModelLabel(tenant);
 
   return (
-    <div className="flex flex-col h-full bg-[#f6f8fc] font-sans overflow-hidden">
+    <div className="flex flex-col h-full max-h-full min-h-0 bg-[#f6f8fc] font-sans overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e8edf6] bg-white px-3 sm:px-5 shadow-xs gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <FlaskConical className="h-4 w-4 text-[#0d5bff] shrink-0" />
@@ -127,10 +124,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setLabSessionId('lab_' + Date.now().toString(36));
-              setMessages([{ id: String(Date.now()), sender: 'assistant', rag: 'L1 · Bienvenida', score: 99, isGolden: true, text: getWelcome() }]);
-            }}
+            onClick={() => { setLabSessionId('lab_' + Date.now().toString(36)); setMessages([{ id: String(Date.now()), sender: 'assistant', rag: 'L1 · Bienvenida', score: 99, isGolden: true, text: getWelcome() }]); }}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-[#dde5f1] bg-white text-xs font-semibold text-[#42506b] hover:bg-[#f6f8fc] cursor-pointer shrink-0"
           >
             <RefreshCw className="h-3 w-3" /><span className="hidden sm:inline">Reiniciar</span>
@@ -138,7 +132,7 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         </div>
       </header>
 
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 max-w-3xl w-full mx-auto space-y-3 pb-8">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-y-auto p-4 max-w-3xl w-full mx-auto space-y-3 pb-4">
         {messages.map((m) => (
           <LiveLabMessageItem key={m.id} message={m} agentName={botName} agentAvatar={tenant?.avatar_url} onOpenCorrection={handleOpenCorrection} />
         ))}
@@ -150,27 +144,31 @@ export const VoceroAiSandbox: React.FC<VoceroAiSandboxProps> = ({
         )}
       </div>
 
-      <div className="px-4 py-2 bg-[#f8fafc] border-t border-[#e8edf6] max-w-3xl w-full mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Pruebas Rápidas:</span>
-        {adaptivePersonas.map((p) => (
-          <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <footer className="shrink-0 bg-white border-t border-[#e8edf6] z-10">
+        <div className="max-w-3xl w-full mx-auto">
+          <div className="px-3 sm:px-4 py-1.5 bg-[#f8fafc] border-b border-[#e8edf6] flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8391aa] shrink-0">Pruebas Rápidas:</span>
+            {adaptivePersonas.map((p) => (
+              <button key={p.label} onClick={() => handleSendText(p.text)} disabled={loading} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#dde5f1] hover:border-[#0d5bff] hover:text-[#0d5bff] text-[#42506b] shadow-2xs whitespace-nowrap transition cursor-pointer">
+                {p.label}
+              </button>
+            ))}
+          </div>
 
-      <div className="p-3 bg-white border-t border-[#e8edf6] max-w-3xl w-full mx-auto shrink-0">
-        <div className="flex items-center gap-2">
-          <input
-            value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
-            placeholder={`Escribe como un cliente para probar las respuestas en vivo de ${botName}…`}
-            className="flex-1 rounded-full border border-[#dde5f1] bg-[#f6f8fc] px-4 py-2 text-[13px] text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white"
-          />
-          <button onClick={() => handleSendText()} disabled={loading || !input.trim()} className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer">
-            <Send className="h-4 w-4" />
-          </button>
+          <div className="p-2.5 sm:p-3 bg-white">
+            <div className="flex items-center gap-2">
+              <input
+                value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
+                placeholder={`Escribe como un cliente para probar las respuestas en vivo de ${botName}…`}
+                className="flex-1 rounded-full border border-[#dde5f1] bg-[#f6f8fc] px-4 py-2 text-[13px] text-[#0a1730] outline-none focus:border-[#0d5bff] focus:bg-white transition"
+              />
+              <button onClick={() => handleSendText()} disabled={loading || !input.trim()} className="p-2.5 rounded-full bg-[#0d5bff] text-white hover:bg-[#0047e1] disabled:opacity-40 transition cursor-pointer shrink-0">
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </footer>
 
       <LiveLabCorrectionModal isOpen={Boolean(activeCorrection)} userQuestion={activeCorrection?.userQuestion || ''} originalAnswer={activeCorrection?.msg.text || ''} messageId={activeCorrection?.msg.id || ''} onClose={() => setActiveCorrection(null)} onSaveCorrection={handleSaveCorrection} />
     </div>

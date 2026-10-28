@@ -1,16 +1,16 @@
 # Estado & Contexto del Proyecto: ClikchatWeb
 - **Tipo de Proyecto:** SaaS Multi-Tenant B2B2C de Bots de Ventas con RAG Híbrido Completo y Portal del Dueño.
 - **Estándar Arquitectónico:** ARQMODULAR (3 capas: types, hooks, UI <150-180 líneas por archivo).
-- **Última Actualización:** 2026-10-28 07:58 GMT-6
-- **Versión Actual:** 2.9.9 (Pipeline Dinámico Cita vs Comanda según Modalidad & Layout Flush Contiguo)
+- **Última Actualización:** 2026-10-28 08:05 GMT-6
+- **Versión Actual:** 2.9.10 (Visibilidad y Fijación Total del Chat Input en VoceroAiSandbox y Flexbox Viewport Blindado)
 - **Deploy en Vivo:** https://clikchat.pages.dev y https://clikchatcrm.pages.dev
 - **Repositorio Git:** https://github.com/GeorJV/CLIKCHAT (rama `main`)
 - **Estado Actual del Sistema:**
-  - Etapas Dinámicas Cita vs Comanda: En 'Vendo Servicios / Citas', la etapa dice estrictamente 'Cita' y toast 'Cita registrada'. En 'Comida/Tienda', dice 'Comanda'.
-  - Pipeline Flush Contiguo: Eliminados márgenes exteriores y cajas anidadas; columnas unidas borde a borde (`divide-x`).
-  - Vista Previa de Mensajes: Cada tarjeta de lead exhibe el texto real (`last_message`), canal (WA/WEB) y teléfono.
-  - Arquitectura ARQMODULAR: VoceroPipelineBoard (178 lín), Column (105 lín), LeadCard (165 lín), CrmView (177 lín), crm.ts (113 lín).
-  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas en Chrome Headless.
+  - Chat Input de Live Lab 100% Visible: Entrada de texto e interactores fijados dentro de la ventana (`min-h-0` + footer shrink-0).
+  - Eliminado Desplazamiento por Banner: Main en VoceroCrmView migrado a `flex flex-col min-h-0`, evitando que banners empujen el sandbox fuera de pantalla.
+  - Pipeline Dinámico Cita vs Comanda: En servicios dice 'Cita', en comida dice 'Comanda' con layout contiguo al ras.
+  - Catálogo D1 y Resiliencia Total: 4 productos activos oficiales leídos directamente desde base de datos D1.
+  - Verificado con 3 Filtros: Build local 0 errores, push a `main`, deploy dual en Cloudflare Pages y 17/17 rutas auditadas.
 - **Decisiones Técnicas Inmutables:**
   - Validación obligatoria con los 3 filtros antes de dar por terminado.
   - Registro automático obligatorio en HISTORIAL_DE_CAMBIOS_CLIKCHAT.md al finalizar con los 3 filtros.
